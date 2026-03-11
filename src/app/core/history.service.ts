@@ -1,15 +1,12 @@
 import { Injectable } from '@angular/core';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
 import { History } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class HistoryService {
-  private db: SupabaseClient;
+  private get db() { return this.supabase.client; }
 
-  constructor(private supabase: SupabaseService) {
-    this.db = supabase.client;
-  }
+  constructor(private supabase: SupabaseService) {}
 
   async getByMember(memberId: string): Promise<History[]> {
     const { data, error } = await this.db

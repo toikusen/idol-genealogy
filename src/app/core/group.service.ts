@@ -1,15 +1,12 @@
 import { Injectable } from '@angular/core';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
 import { Group, Team } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
-  private db: SupabaseClient;
+  private get db() { return this.supabase.client; }
 
-  constructor(private supabase: SupabaseService) {
-    this.db = supabase.client;
-  }
+  constructor(private supabase: SupabaseService) {}
 
   async getAll(): Promise<Group[]> {
     const { data, error } = await this.db
@@ -19,9 +16,10 @@ export class GroupService {
   }
 
   async search(query: string): Promise<Group[]> {
+    const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
     const { data, error } = await this.db
       .from('groups').select('*')
-      .or(`name.ilike.%${query}%,name_jp.ilike.%${query}%`);
+      .or(`name.ilike.%${safe}%,name_jp.ilike.%${safe}%`);
     if (error) throw error;
     return data ?? [];
   }
@@ -29,7 +27,10 @@ export class GroupService {
   async getById(id: string): Promise<Group | null> {
     const { data, error } = await this.db
       .from('groups').select('*').eq('id', id).single();
-    if (error) throw error;
+    if (error) {
+      if ((error as any).code === 'PGRST116') return null;
+      throw error;
+    }
     return data;
   }
 

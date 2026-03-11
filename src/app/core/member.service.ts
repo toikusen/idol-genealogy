@@ -1,21 +1,20 @@
 import { Injectable } from '@angular/core';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
 import { Member } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class MemberService {
-  private db: SupabaseClient;
+  private get db() { return this.supabase.client; }
 
-  constructor(private supabase: SupabaseService) {
-    this.db = supabase.client;
-  }
+  constructor(private supabase: SupabaseService) {}
 
   async search(query: string): Promise<Member[]> {
+    // Escape % and _ which are SQL LIKE wildcards
+    const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
     const { data, error } = await this.db
       .from('members')
       .select('*')
-      .or(`name.ilike.%${query}%,name_jp.ilike.%${query}%`);
+      .or(`name.ilike.%${safe}%,name_jp.ilike.%${safe}%`);
     if (error) throw error;
     return data ?? [];
   }
@@ -26,7 +25,10 @@ export class MemberService {
       .select('*')
       .eq('id', id)
       .single();
-    if (error) throw error;
+    if (error) {
+      if ((error as any).code === 'PGRST116') return null;
+      throw error;
+    }
     return data;
   }
 
