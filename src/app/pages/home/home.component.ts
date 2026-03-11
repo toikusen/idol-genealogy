@@ -19,13 +19,24 @@ export class HomeComponent implements OnInit {
   groupResults: Group[] = [];
   searching = false;
 
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(
     private memberService: MemberService,
     private groupService: GroupService
   ) {}
 
   async ngOnInit() {
-    this.recentMembers = await this.memberService.getRecent(10);
+    try {
+      this.recentMembers = await this.memberService.getRecent(10);
+    } catch {
+      this.recentMembers = [];
+    }
+  }
+
+  onQueryChange() {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.search(), 300);
   }
 
   async search() {
@@ -35,13 +46,19 @@ export class HomeComponent implements OnInit {
       return;
     }
     this.searching = true;
-    const [members, groups] = await Promise.all([
-      this.memberService.search(this.query),
-      this.groupService.search(this.query)
-    ]);
-    this.memberResults = members;
-    this.groupResults = groups;
-    this.searching = false;
+    try {
+      const [members, groups] = await Promise.all([
+        this.memberService.search(this.query),
+        this.groupService.search(this.query)
+      ]);
+      this.memberResults = members;
+      this.groupResults = groups;
+    } catch {
+      this.memberResults = [];
+      this.groupResults = [];
+    } finally {
+      this.searching = false;
+    }
   }
 
   getInitial(member: Member): string {
@@ -51,8 +68,13 @@ export class HomeComponent implements OnInit {
 
   formatDate(dateStr: string | null): string {
     if (!dateStr) return '—';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'short' });
+    } catch {
+      return '—';
+    }
   }
 
   get hasResults(): boolean {

@@ -79,7 +79,7 @@
           <input
             type="text"
             [(ngModel)]="query"
-            (input)="search()"
+            (input)="onQueryChange()"
             placeholder="メンバー・グループを検索　Search members and groups…"
             style="
               flex: 1; border: none; outline: none; background: transparent;
@@ -144,17 +144,7 @@
                 @for (member of memberResults; track member.id) {
                   <a
                     [routerLink]="['/members', member.id]"
-                    style="
-                      display: flex; align-items: center; gap: 14px;
-                      padding: 12px 16px;
-                      background: rgba(255,255,255,0.6);
-                      border: 1px solid rgba(232,121,160,0.1);
-                      border-radius: 2px;
-                      text-decoration: none;
-                      transition: all 0.25s ease;
-                    "
-                    onmouseover="this.style.background='rgba(252,228,239,0.55)'; this.style.borderColor='rgba(232,121,160,0.25)'; this.style.transform='translateX(3px)';"
-                    onmouseout="this.style.background='rgba(255,255,255,0.6)'; this.style.borderColor='rgba(232,121,160,0.1)'; this.style.transform='translateX(0)';"
+                    class="member-result-card"
                   >
                     <!-- Avatar -->
                     <div style="
@@ -207,17 +197,7 @@
                 @for (group of groupResults; track group.id) {
                   <a
                     [routerLink]="['/groups', group.id]"
-                    style="
-                      display: flex; align-items: center; gap: 14px;
-                      padding: 12px 16px;
-                      background: rgba(255,255,255,0.6);
-                      border: 1px solid rgba(124,108,242,0.1);
-                      border-radius: 2px;
-                      text-decoration: none;
-                      transition: all 0.25s ease;
-                    "
-                    onmouseover="this.style.background='rgba(240,244,255,0.65)'; this.style.borderColor='rgba(124,108,242,0.25)'; this.style.transform='translateX(3px)';"
-                    onmouseout="this.style.background='rgba(255,255,255,0.6)'; this.style.borderColor='rgba(124,108,242,0.1)'; this.style.transform='translateX(0)';"
+                    class="group-result-card"
                   >
                     <!-- Color dot -->
                     <div style="
@@ -334,30 +314,7 @@
             @for (member of recentMembers; track member.id; let i = $index) {
               <a
                 [routerLink]="['/members', member.id]"
-                style="
-                  display: flex; align-items: center; gap: 16px;
-                  padding: 18px 20px;
-                  background: rgba(255,255,255,0.65);
-                  backdrop-filter: blur(10px);
-                  -webkit-backdrop-filter: blur(10px);
-                  border: 1px solid rgba(232,121,160,0.1);
-                  border-radius: 3px;
-                  text-decoration: none;
-                  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-                  box-shadow: 0 1px 8px rgba(45,27,46,0.03);
-                "
-                onmouseover="
-                  this.style.background='rgba(252,228,239,0.5)';
-                  this.style.borderColor='rgba(232,121,160,0.3)';
-                  this.style.transform='translateY(-2px)';
-                  this.style.boxShadow='0 6px 24px rgba(232,121,160,0.12), 0 2px 8px rgba(45,27,46,0.05)';
-                "
-                onmouseout="
-                  this.style.background='rgba(255,255,255,0.65)';
-                  this.style.borderColor='rgba(232,121,160,0.1)';
-                  this.style.transform='translateY(0)';
-                  this.style.boxShadow='0 1px 8px rgba(45,27,46,0.03)';
-                "
+                class="recent-member-card"
               >
                 <!-- Avatar circle -->
                 <div style="
@@ -458,5 +415,63 @@
   input::placeholder {
     color: rgba(184, 160, 184, 0.6);
     font-family: 'Shippori Mincho', serif;
+  }
+
+  .member-result-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(232,121,160,0.1);
+    border-radius: 2px;
+    text-decoration: none;
+    transition: all 0.25s ease;
+  }
+
+  .member-result-card:hover {
+    background: rgba(252,228,239,0.55);
+    border-color: rgba(232,121,160,0.25);
+    transform: translateX(3px);
+  }
+
+  .group-result-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(124,108,242,0.1);
+    border-radius: 2px;
+    text-decoration: none;
+    transition: all 0.25s ease;
+  }
+
+  .group-result-card:hover {
+    background: rgba(240,244,255,0.65);
+    border-color: rgba(124,108,242,0.25);
+    transform: translateX(3px);
+  }
+
+  .recent-member-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(232,121,160,0.1);
+    border-radius: 3px;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 1px 8px rgba(45,27,46,0.03);
+  }
+
+  .recent-member-card:hover {
+    background: rgba(252,228,239,0.5);
+    border-color: rgba(232,121,160,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(232,121,160,0.12), 0 2px 8px rgba(45,27,46,0.05);
   }
 </style>
