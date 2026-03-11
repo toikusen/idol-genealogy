@@ -38,15 +38,20 @@ export class AdminHistoryComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    const [histories, members, groups] = await Promise.all([
-      this.historyService.getAll(),
-      this.memberService.getRecent(500),
-      this.groupService.getAll()
-    ]);
-    this.histories = histories;
-    this.members = members;
-    this.groups = groups;
-    this.loading = false;
+    try {
+      const [histories, members, groups] = await Promise.all([
+        this.historyService.getAll(),
+        this.memberService.getRecent(500),
+        this.groupService.getAll()
+      ]);
+      this.histories = histories;
+      this.members = members;
+      this.groups = groups;
+    } catch (e: any) {
+      this.error = e.message || '載入失敗';
+    } finally {
+      this.loading = false;
+    }
   }
 
   async onGroupChange() {
@@ -59,7 +64,7 @@ export class AdminHistoryComponent implements OnInit {
   }
 
   openCreate() { this.editing = {}; this.teams = []; this.isEdit = false; this.error = ''; this.showModal = true; }
-  openEdit(h: History) { this.editing = { ...h }; this.isEdit = true; this.error = ''; this.showModal = true; this.onGroupChange(); }
+  openEdit(h: History) { this.editing = { ...h }; this.isEdit = true; this.error = ''; this.showModal = true; void this.onGroupChange(); }
 
   async save() {
     if (!this.editing.member_id) { this.error = '請選擇成員'; return; }
