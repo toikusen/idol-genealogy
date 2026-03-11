@@ -1,0 +1,132 @@
+<div class="p-6">
+  <h1 class="font-['Cormorant_Garamond'] text-2xl font-semibold text-gray-800 mb-6">變更記錄</h1>
+
+  <!-- Filters -->
+  <div class="flex gap-4 mb-4">
+    <select [(ngModel)]="filterTable" (change)="load()"
+      class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300">
+      <option value="">全部資料表</option>
+      @for (t of tableOptions; track t) {
+        <option [value]="t">{{ t }}</option>
+      }
+    </select>
+    <select [(ngModel)]="filterOperation" (change)="load()"
+      class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300">
+      <option value="">全部操作</option>
+      @for (op of operationOptions; track op) {
+        <option [value]="op">{{ operationLabel(op) }}</option>
+      }
+    </select>
+    <button (click)="load()" class="px-3 py-1.5 text-sm text-gray-500 hover:text-pink-600 transition-colors">
+      重新載入
+    </button>
+  </div>
+
+  <!-- Loading / error -->
+  @if (loading) {
+    <div class="text-sm text-gray-400 py-8 text-center">載入中…</div>
+  } @else if (error) {
+    <div class="text-sm text-red-500 py-4">{{ error }}</div>
+  } @else if (logs.length === 0) {
+    <div class="text-sm text-gray-400 py-8 text-center">尚無變更記錄</div>
+  } @else {
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">時間</th>
+            <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">操作者</th>
+            <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">資料表</th>
+            <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">操作</th>
+            <th class="px-4 py-3 text-right text-xs text-gray-500 font-medium">還原</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of logs; track log.id) {
+            <!-- Main row -->
+            <tr
+              class="border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer transition-colors"
+              (click)="toggleExpand(log.id)"
+            >
+              <td class="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                {{ log.created_at | date:'yyyy/MM/dd HH:mm' }}
+              </td>
+              <td class="px-4 py-3 text-gray-600 text-xs">
+                {{ log.user_email ?? '—' }}
+              </td>
+              <td class="px-4 py-3 text-gray-600 text-xs font-mono">{{ log.table_name }}</td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded-full text-xs font-medium" [ngClass]="operationClass(log.operation)">
+                  {{ operationLabel(log.operation) }}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right" (click)="$event.stopPropagation()">
+                @if (revertSuccess[log.id]) {
+                  <span class="text-xs text-green-600">✓ 已還原</span>
+                } @else if (revertError[log.id]) {
+                  <span class="text-xs text-red-500" [title]="revertError[log.id]">還原失敗</span>
+                } @else if (showConfirm === log.id) {
+                  <div class="flex items-center gap-2 justify-end">
+                    <span class="text-xs text-gray-500">{{ revertActionLabel(log.operation) }}？</span>
+                    <button (click)="executeRevert(log)"
+                      class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                      確認
+                    </button>
+                    <button (click)="cancelRevert()"
+                      class="px-2 py-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                      取消
+                    </button>
+                  </div>
+                } @else {
+                  <button
+                    (click)="confirmRevert(log.id)"
+                    [disabled]="reverting[log.id]"
+                    class="px-3 py-1 text-xs border border-orange-300 text-orange-600 rounded hover:bg-orange-50 transition-colors disabled:opacity-40"
+                  >
+                    還原
+                  </button>
+                }
+              </td>
+            </tr>
+
+            <!-- Expanded diff row -->
+            @if (expandedId === log.id) {
+              <tr class="bg-gray-50">
+                <td colspan="5" class="px-6 py-4">
+                  @let diffs = getDiff(log);
+                  @if (diffs.length === 0) {
+                    <span class="text-xs text-gray-400">無欄位差異</span>
+                  } @else {
+                    <table class="text-xs w-full max-w-2xl">
+                      <thead>
+                        <tr class="text-gray-400">
+                          <th class="text-left pb-1 pr-4 font-medium">欄位</th>
+                          <th class="text-left pb-1 pr-4 font-medium">改前</th>
+                          <th class="text-left pb-1 font-medium">改後</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (d of diffs; track d.field) {
+                          <tr class="border-t border-gray-100">
+                            <td class="py-1 pr-4 font-mono text-gray-500">{{ d.field }}</td>
+                            <td class="py-1 pr-4 text-red-600 font-mono">{{ d.before ?? '—' }}</td>
+                            <td class="py-1 text-green-700 font-mono">{{ d.after ?? '—' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  }
+                  @if (revertError[log.id]) {
+                    <div class="mt-2 text-xs text-red-500">
+                      ⚠ {{ revertError[log.id] }}（可能原因：關聯資料已被刪除，無法還原）
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
