@@ -1,0 +1,494 @@
+<div style="min-height: 100vh; position: relative; overflow-x: hidden;">
+
+  <!-- ── Ambient background orbs (tinted by group color via CSS var) ── -->
+  <div style="
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 10% 0%, rgba(232,121,160,0.09) 0%, transparent 65%),
+      radial-gradient(ellipse 45% 45% at 90% 90%, rgba(124,108,242,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 35% 30% at 75% 20%, rgba(249,209,224,0.11) 0%, transparent 55%);
+  "></div>
+
+  <!-- ── Main content ── -->
+  <div style="position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 0 32px 96px;">
+
+    <!-- ── Loading state ── -->
+    @if (loading) {
+      <div style="
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        min-height: 60vh; gap: 20px;
+      ">
+        <div style="
+          width: 44px; height: 44px; border-radius: 50%;
+          border: 2px solid rgba(232,121,160,0.15);
+          border-top-color: rgba(232,121,160,0.7);
+          animation: spin 0.8s linear infinite;
+        "></div>
+        <p style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 0.75rem; letter-spacing: 0.3em;
+          color: rgba(184,160,184,0.6);
+        ">読み込み中…</p>
+      </div>
+    }
+
+    <!-- ── Error state ── -->
+    @if (!loading && error) {
+      <div style="
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        min-height: 60vh; gap: 16px; text-align: center;
+      ">
+        <div style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 3rem; color: rgba(232,121,160,0.18); line-height: 1;
+          margin-bottom: 8px;
+        ">エラー</div>
+        <p style="
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-style: italic; font-size: 1.1rem;
+          color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
+        ">Could not load group data</p>
+        <a routerLink="/" style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 0.78rem; letter-spacing: 0.18em;
+          color: rgba(232,121,160,0.65);
+          text-decoration: none; margin-top: 8px;
+          border-bottom: 1px solid rgba(232,121,160,0.25);
+          padding-bottom: 2px;
+        ">← 記録庫へ戻る</a>
+      </div>
+    }
+
+    <!-- ── Not found state ── -->
+    @if (!loading && !error && group === null) {
+      <div style="
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        min-height: 60vh; gap: 16px; text-align: center;
+      ">
+        <div style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 3rem; color: rgba(232,121,160,0.18); line-height: 1;
+          margin-bottom: 8px;
+        ">見つかりません</div>
+        <p style="
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-style: italic; font-size: 1.1rem;
+          color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
+        ">This group could not be found in the archive</p>
+        <a routerLink="/" style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 0.78rem; letter-spacing: 0.18em;
+          color: rgba(232,121,160,0.65);
+          text-decoration: none; margin-top: 8px;
+          border-bottom: 1px solid rgba(232,121,160,0.25);
+          padding-bottom: 2px;
+        ">← 記録庫へ戻る</a>
+      </div>
+    }
+
+    <!-- ── Group profile ── -->
+    @if (!loading && !error && group !== null) {
+
+      <!-- Back link -->
+      <div style="padding-top: 48px; margin-bottom: 36px;">
+        <a routerLink="/" class="back-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M5 12l7-7M5 12l7 7"/>
+          </svg>
+          <span>記録庫へ戻る</span>
+        </a>
+      </div>
+
+      <!-- ══ Group header with accent color ══ -->
+      <header style="
+        position: relative; overflow: hidden;
+        padding: 36px 36px 32px;
+        margin-bottom: 40px;
+        background: rgba(255,255,255,0.7);
+        backdrop-filter: blur(16px) saturate(1.2);
+        -webkit-backdrop-filter: blur(16px) saturate(1.2);
+        border-radius: 4px;
+        border: 1px solid rgba(255,255,255,0.85);
+        box-shadow: 0 2px 24px rgba(45,27,46,0.05);
+      ">
+        <!-- Color accent bar at top -->
+        <div style="
+          position: absolute; top: 0; left: 0; right: 0;
+          height: 3px;
+        " [style.background]="group.color"></div>
+
+        <!-- Color accent glow -->
+        <div style="
+          position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+          pointer-events: none;
+          background: radial-gradient(ellipse 80% 60% at 50% 0%,
+            rgba({{ hexToRgb(group.color) }},0.06) 0%, transparent 70%);
+        "></div>
+
+        <div style="position: relative;">
+          <!-- Archive mark -->
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <!-- Color dot -->
+            <div style="
+              width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+              box-shadow: 0 0 8px rgba({{ hexToRgb(group.color) }}, 0.4);
+            " [style.background]="group.color"></div>
+            <span style="
+              font-family: 'Shippori Mincho', serif;
+              font-size: 0.62rem; letter-spacing: 0.38em;
+              text-transform: uppercase; color: rgba(122,90,122,0.4);
+            ">Group · グループ</span>
+            <div style="flex: 1; height: 1px; background: rgba(232,121,160,0.1);"></div>
+          </div>
+
+          <!-- Group name -->
+          <h1 style="
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            font-weight: 300; line-height: 1.05;
+            letter-spacing: 0.02em; color: #2d1b2e;
+            margin: 0 0 6px;
+          ">{{ group.name_jp || group.name }}</h1>
+
+          <!-- Roman name -->
+          @if (group.name_jp) {
+            <p style="
+              font-family: 'Cormorant Garamond', Georgia, serif;
+              font-style: italic; font-size: 1.05rem;
+              color: rgba(122,90,122,0.48); letter-spacing: 0.07em;
+              margin: 0 0 16px;
+            ">{{ group.name }}</p>
+          }
+
+          <!-- Founded / disbanded dates -->
+          <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 12px;">
+            @if (group.founded_at) {
+              <div style="display: flex; align-items: center; gap: 7px;">
+                <span style="
+                  font-family: 'Shippori Mincho', serif;
+                  font-size: 0.62rem; letter-spacing: 0.25em;
+                  color: rgba(122,90,122,0.38); text-transform: uppercase;
+                ">結成</span>
+                <span style="
+                  font-family: 'Cormorant Garamond', Georgia, serif;
+                  font-size: 0.95rem; color: rgba(122,90,122,0.6);
+                  letter-spacing: 0.05em;
+                ">{{ formatDateShort(group.founded_at) }}</span>
+              </div>
+            }
+            @if (group.disbanded_at) {
+              <div style="display: flex; align-items: center; gap: 7px;">
+                <div style="width: 16px; height: 1px; background: rgba(122,90,122,0.2);"></div>
+                <span style="
+                  font-family: 'Shippori Mincho', serif;
+                  font-size: 0.62rem; letter-spacing: 0.25em;
+                  color: rgba(122,90,122,0.38); text-transform: uppercase;
+                ">解散</span>
+                <span style="
+                  font-family: 'Cormorant Garamond', Georgia, serif;
+                  font-size: 0.95rem; color: rgba(122,90,122,0.6);
+                  letter-spacing: 0.05em;
+                ">{{ formatDateShort(group.disbanded_at) }}</span>
+              </div>
+            }
+            @if (!group.disbanded_at && group.founded_at) {
+              <div style="display: flex; align-items: center; gap: 7px;">
+                <span style="
+                  font-family: 'Shippori Mincho', serif;
+                  font-size: 0.65rem; letter-spacing: 0.2em;
+                  color: rgba({{ hexToRgb(group.color) }},0.65);
+                  padding: 2px 10px;
+                  border: 1px solid rgba({{ hexToRgb(group.color) }},0.2);
+                  border-radius: 2px;
+                ">活動中</span>
+              </div>
+            }
+          </div>
+        </div>
+      </header>
+
+      <!-- ══ Selected member detail panel ══ -->
+      @if (selectedHistory !== null) {
+        <div class="member-panel" style="
+          margin-bottom: 32px;
+          background: rgba(255,255,255,0.82);
+          backdrop-filter: blur(16px) saturate(1.2);
+          -webkit-backdrop-filter: blur(16px) saturate(1.2);
+          border: 1px solid rgba(255,255,255,0.9);
+          border-radius: 4px;
+          box-shadow: 0 4px 32px rgba(45,27,46,0.07), 0 1px 0 rgba(255,255,255,0.9) inset;
+          overflow: hidden;
+        ">
+          <!-- Accent bar using group color -->
+          <div style="height: 2px;" [style.background]="group.color"></div>
+
+          <div style="padding: 24px 28px;">
+            <div style="display: flex; align-items: flex-start; gap: 20px;">
+
+              <!-- Avatar -->
+              @if (selectedHistory.member?.photo_url) {
+                <img
+                  [src]="selectedHistory.member!.photo_url!"
+                  [alt]="selectedHistory.member?.name"
+                  style="
+                    width: 80px; height: 80px; border-radius: 50%;
+                    object-fit: cover; flex-shrink: 0;
+                    border: 2px solid rgba(255,255,255,0.9);
+                    box-shadow: 0 2px 16px rgba(45,27,46,0.1);
+                  "
+                />
+              } @else {
+                <div style="
+                  width: 80px; height: 80px; border-radius: 50%; flex-shrink: 0;
+                  background: linear-gradient(135deg, rgba(232,121,160,0.15) 0%, rgba(124,108,242,0.1) 100%);
+                  border: 2px solid rgba(255,255,255,0.9);
+                  box-shadow: 0 2px 12px rgba(45,27,46,0.07);
+                  display: flex; align-items: center; justify-content: center;
+                  font-family: 'Shippori Mincho', serif;
+                  font-size: 1.8rem; font-weight: 500;
+                  color: rgba({{ hexToRgb(group.color) }},0.65);
+                ">{{ getInitial(selectedHistory) }}</div>
+              }
+
+              <!-- Member details -->
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+                  <div>
+                    <!-- Name -->
+                    <h2 style="
+                      font-family: 'Cormorant Garamond', Georgia, serif;
+                      font-size: 1.6rem; font-weight: 300;
+                      color: #2d1b2e; margin: 0 0 2px;
+                      letter-spacing: 0.02em; line-height: 1.2;
+                    ">{{ selectedHistory.member?.name_jp || selectedHistory.member?.name || '—' }}</h2>
+                    @if (selectedHistory.member?.name_jp) {
+                      <p style="
+                        font-family: 'Cormorant Garamond', Georgia, serif;
+                        font-style: italic; font-size: 0.88rem;
+                        color: rgba(122,90,122,0.45); margin: 0 0 12px;
+                        letter-spacing: 0.05em;
+                      ">{{ selectedHistory.member?.name }}</p>
+                    }
+                  </div>
+
+                  <!-- Close / dismiss -->
+                  <button
+                    (click)="selectMember(selectedHistory!)"
+                    style="
+                      background: none; border: none; cursor: pointer; padding: 4px;
+                      color: rgba(184,160,184,0.55); flex-shrink: 0;
+                      transition: color 0.2s;
+                    "
+                    title="閉じる"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Meta grid -->
+                <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 4px;">
+
+                  <!-- Dates -->
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="
+                      font-family: 'Shippori Mincho', serif;
+                      font-size: 0.6rem; letter-spacing: 0.28em;
+                      text-transform: uppercase; color: rgba(122,90,122,0.38);
+                    ">在籍</span>
+                    <span style="
+                      font-family: 'Cormorant Garamond', Georgia, serif;
+                      font-size: 0.85rem; color: rgba(122,90,122,0.6);
+                      letter-spacing: 0.04em;
+                    ">
+                      {{ formatDateShort(selectedHistory.joined_at) }}
+                      @if (!selectedHistory.left_at) {
+                        <span style="color: rgba({{ hexToRgb(group.color) }},0.65);">〜 現在</span>
+                      } @else {
+                        〜 {{ formatDateShort(selectedHistory.left_at) }}
+                      }
+                    </span>
+                  </div>
+
+                  <!-- Role -->
+                  @if (selectedHistory.role) {
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="
+                        font-family: 'Shippori Mincho', serif;
+                        font-size: 0.6rem; letter-spacing: 0.28em;
+                        text-transform: uppercase; color: rgba(122,90,122,0.38);
+                      ">役職</span>
+                      <span style="
+                        font-family: 'Shippori Mincho', serif;
+                        font-size: 0.82rem; color: rgba(122,90,122,0.6);
+                        letter-spacing: 0.08em;
+                      ">{{ selectedHistory.role }}</span>
+                    </div>
+                  }
+
+                  <!-- Status badge -->
+                  @if (selectedHistory.status) {
+                    <span style="
+                      display: inline-flex; align-items: center;
+                      font-family: 'Shippori Mincho', serif;
+                      font-size: 0.62rem; letter-spacing: 0.18em;
+                      padding: 2px 10px; border-radius: 2px;
+                    "
+                    [style.background]="selectedHistory.status === 'active' ? 'rgba(' + hexToRgb(group.color) + ',0.1)' : 'rgba(184,160,184,0.1)'"
+                    [style.color]="selectedHistory.status === 'active' ? group.color : 'rgba(122,90,122,0.5)'"
+                    [style.border]="selectedHistory.status === 'active' ? '1px solid rgba(' + hexToRgb(group.color) + ',0.2)' : '1px solid rgba(184,160,184,0.2)'"
+                    >
+                      @if (selectedHistory.status === 'active') { 活動中 }
+                      @if (selectedHistory.status === 'graduated') { 卒業 }
+                      @if (selectedHistory.status === 'transferred') { 移籍 }
+                      @if (selectedHistory.status === 'concurrent') { 兼任 }
+                    </span>
+                  }
+
+                  <!-- Birthdate -->
+                  @if (selectedHistory.member?.birthdate) {
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="
+                        font-family: 'Shippori Mincho', serif;
+                        font-size: 0.6rem; letter-spacing: 0.28em;
+                        text-transform: uppercase; color: rgba(122,90,122,0.38);
+                      ">生年月日</span>
+                      <span style="
+                        font-family: 'Cormorant Garamond', Georgia, serif;
+                        font-size: 0.85rem; color: rgba(122,90,122,0.6);
+                        letter-spacing: 0.04em;
+                      ">{{ formatDateLong(selectedHistory.member!.birthdate) }}</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Notes -->
+                @if (selectedHistory.notes) {
+                  <p style="
+                    font-family: 'Shippori Mincho', serif;
+                    font-size: 0.8rem; line-height: 1.7;
+                    color: rgba(122,90,122,0.55); font-style: italic;
+                    margin-top: 12px;
+                    border-left: 2px solid rgba({{ hexToRgb(group.color) }},0.2);
+                    padding-left: 10px;
+                  ">{{ selectedHistory.notes }}</p>
+                }
+
+                <!-- Link to member page -->
+                <div style="margin-top: 14px;">
+                  <a
+                    [routerLink]="['/members', selectedHistory.member_id]"
+                    style="
+                      display: inline-flex; align-items: center; gap: 6px;
+                      font-family: 'Shippori Mincho', serif;
+                      font-size: 0.72rem; letter-spacing: 0.2em;
+                      text-decoration: none; padding: 6px 14px;
+                      border-radius: 2px;
+                      transition: all 0.2s;
+                    "
+                    [style.color]="group.color"
+                    [style.border]="'1px solid rgba(' + hexToRgb(group.color) + ',0.25)'"
+                    [style.background]="'rgba(' + hexToRgb(group.color) + ',0.06)'"
+                    class="member-link"
+                  >
+                    <span>メンバーページを見る</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ══ Member list section ══ -->
+      <section>
+
+        <!-- Section label -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
+          <div style="height: 1px; width: 20px;" [style.background]="group.color + '66'"></div>
+          <span style="
+            font-family: 'Shippori Mincho', serif;
+            font-size: 0.65rem; letter-spacing: 0.38em;
+            text-transform: uppercase; color: rgba(122,90,122,0.45);
+            white-space: nowrap;
+          ">成員列表</span>
+          <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.18), transparent);"></div>
+        </div>
+
+        <!-- Group tree component -->
+        <app-group-tree
+          [group]="group"
+          [histories]="histories"
+          [teams]="teams"
+          (selectMember)="selectMember($event)"
+        ></app-group-tree>
+
+      </section>
+
+      <!-- ══ Footer flourish ══ -->
+      <footer style="margin-top: 80px; text-align: center;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px;">
+          <div style="height: 1px; width: 40px; background: linear-gradient(to right, transparent, rgba(232,121,160,0.22));"></div>
+          <div style="width: 3px; height: 3px; border-radius: 50%; background: rgba(232,121,160,0.28);"></div>
+          <div style="width: 3px; height: 3px; border-radius: 50%;" [style.background]="group.color + '44'"></div>
+          <div style="width: 3px; height: 3px; border-radius: 50%; background: rgba(232,121,160,0.28);"></div>
+          <div style="height: 1px; width: 40px; background: linear-gradient(to left, transparent, rgba(232,121,160,0.22));"></div>
+        </div>
+        <p style="
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-style: italic; font-size: 0.75rem;
+          color: rgba(184,160,184,0.45); letter-spacing: 0.15em;
+        ">偶像成員記録 · Idol Archive</p>
+      </footer>
+
+    }
+
+  </div>
+
+</div>
+
+<style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    color: rgba(122,90,122,0.5);
+    text-decoration: none;
+    transition: color 0.2s, gap 0.2s;
+  }
+
+  .back-link:hover {
+    color: rgba(232,121,160,0.75);
+    gap: 10px;
+  }
+
+  .member-panel {
+    animation: slideIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .member-link:hover {
+    filter: brightness(0.88);
+    transform: translateX(2px);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
