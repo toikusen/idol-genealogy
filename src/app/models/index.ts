@@ -51,3 +51,22 @@ export interface SearchResult {
   members: Member[];
   groups: Group[];
 }
+
+export interface UserRole {
+  id: string;
+  email: string;
+  role: 'admin' | 'editor';
+  created_at: string;
+}
+
+export interface AuditLog {
+  id: string;
+  table_name: string;
+  record_id: string;
+  operation: 'INSERT' | 'UPDATE' | 'DELETE';
+  user_id: string | null;
+  user_email: string | null;
+  old_data: Record<string, any> | null;
+  new_data: Record<string, any> | null;
+  created_at: string;
+}
