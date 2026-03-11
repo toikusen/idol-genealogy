@@ -1,28 +1,25 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Router, RouterStateSnapshot } from '@angular/router';
 import { authGuard } from './auth.guard';
 import { SupabaseService } from './supabase.service';
-import { BehaviorSubject } from 'rxjs';
 
 describe('authGuard', () => {
   let routerSpy: jasmine.SpyObj<Router>;
-  let authState$: BehaviorSubject<any>;
 
-  beforeEach(() => {
-    authState$ = new BehaviorSubject(null);
+  function setup(session: any) {
     routerSpy = jasmine.createSpyObj('Router', ['navigate', 'createUrlTree']);
     routerSpy.createUrlTree.and.returnValue('/login' as any);
 
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: routerSpy },
-        { provide: SupabaseService, useValue: { authState$ } }
+        { provide: SupabaseService, useValue: { getSessionOnce: () => Promise.resolve(session) } }
       ]
     });
-  });
+  }
 
   it('should block unauthenticated users', async () => {
-    authState$.next(null);
+    setup(null);
     const result = await TestBed.runInInjectionContext(() =>
       authGuard(null as any, { url: '/admin' } as RouterStateSnapshot)
     );
@@ -31,7 +28,7 @@ describe('authGuard', () => {
   });
 
   it('should allow authenticated users', async () => {
-    authState$.next({ user: { id: 'uid-1' } });
+    setup({ user: { id: 'uid-1' } });
     const result = await TestBed.runInInjectionContext(() =>
       authGuard(null as any, { url: '/admin' } as RouterStateSnapshot)
     );

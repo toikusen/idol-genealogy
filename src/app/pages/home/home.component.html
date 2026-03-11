@@ -143,7 +143,7 @@
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 @for (member of memberResults; track member.id) {
                   <a
-                    [routerLink]="['/members', member.id]"
+                    [routerLink]="['/member', member.id]"
                     class="member-result-card"
                   >
                     <!-- Avatar -->
@@ -196,7 +196,7 @@
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 @for (group of groupResults; track group.id) {
                   <a
-                    [routerLink]="['/groups', group.id]"
+                    [routerLink]="['/group', group.id]"
                     class="group-result-card"
                   >
                     <!-- Color dot -->
@@ -313,7 +313,7 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
             @for (member of recentMembers; track member.id; let i = $index) {
               <a
-                [routerLink]="['/members', member.id]"
+                [routerLink]="['/member', member.id]"
                 class="recent-member-card"
               >
                 <!-- Avatar circle -->

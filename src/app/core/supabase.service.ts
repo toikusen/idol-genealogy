@@ -28,6 +28,11 @@ export class SupabaseService implements OnDestroy {
     this._authSubscription?.unsubscribe();
   }
 
+  /** Resolves with the current session after getSession() has returned (avoids cold-start race). */
+  getSessionOnce(): Promise<Session | null> {
+    return this.client.auth.getSession().then(({ data }) => data.session);
+  }
+
   signInWithGoogle(): Promise<void> {
     return this.client.auth.signInWithOAuth({ provider: 'google' }).then(() => {});
   }
