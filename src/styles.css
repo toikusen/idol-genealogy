@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Shippori+Mincho:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --petal: #fce4ef;
+  --blush: #fdf4f9;
+  --lavender: #f0f4ff;
+  --idol-pink: #e879a0;
+  --idol-purple: #7c6cf2;
+  --idol-mint: #4ade80;
+  --text-primary: #2d1b2e;
+  --text-secondary: #7a5a7a;
+  --text-muted: #b8a0b8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: #fdf6fb;
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(232, 121, 160, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(124, 108, 242, 0.06) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+  min-height: 100vh;
+  font-family: 'Shippori Mincho', 'Noto Sans JP', sans-serif;
+  color: var(--text-primary);
+}
+
+h1, h2, h3 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+::selection {
+  background: rgba(232, 121, 160, 0.2);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232, 121, 160, 0.3); border-radius: 2px; }
