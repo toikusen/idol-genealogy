@@ -56,12 +56,14 @@
             >
               編輯
             </button>
-            <button
-              (click)="delete(m)"
-              class="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50 transition-colors"
-            >
-              刪除
-            </button>
+            @if (isAdmin) {
+              <button
+                (click)="delete(m)"
+                class="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50 transition-colors"
+              >
+                刪除
+              </button>
+            }
           </td>
         </tr>
       </tbody>

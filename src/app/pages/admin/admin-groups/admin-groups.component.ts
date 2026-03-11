@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { GroupService } from '../../../core/group.service';
+import { AdminRoleService } from '../../../core/admin-role.service';
 import { Group } from '../../../models';
 
 @Component({
@@ -10,7 +12,7 @@ import { Group } from '../../../models';
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-groups.component.html',
 })
-export class AdminGroupsComponent implements OnInit {
+export class AdminGroupsComponent implements OnInit, OnDestroy {
   groups: Group[] = [];
   loading = true;
   showModal = false;
@@ -18,8 +20,17 @@ export class AdminGroupsComponent implements OnInit {
   isEdit = false;
   saving = false;
   error = '';
+  isAdmin = false;
+  private _sub: Subscription;
 
-  constructor(private groupService: GroupService) {}
+  constructor(
+    private groupService: GroupService,
+    private adminRole: AdminRoleService
+  ) {
+    this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
+  }
+
+  ngOnDestroy(): void { this._sub.unsubscribe(); }
 
   async ngOnInit() { await this.load(); }
 

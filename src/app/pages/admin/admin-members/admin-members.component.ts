@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { MemberService } from '../../../core/member.service';
+import { AdminRoleService } from '../../../core/admin-role.service';
 import { Member } from '../../../models';
 
 @Component({
@@ -10,7 +12,7 @@ import { Member } from '../../../models';
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-members.component.html',
 })
-export class AdminMembersComponent implements OnInit {
+export class AdminMembersComponent implements OnInit, OnDestroy {
   members: Member[] = [];
   loading = true;
   showModal = false;
@@ -18,8 +20,17 @@ export class AdminMembersComponent implements OnInit {
   isEdit = false;
   saving = false;
   error = '';
+  isAdmin = false;
+  private _sub: Subscription;
 
-  constructor(private memberService: MemberService) {}
+  constructor(
+    private memberService: MemberService,
+    private adminRole: AdminRoleService
+  ) {
+    this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
+  }
+
+  ngOnDestroy(): void { this._sub.unsubscribe(); }
 
   async ngOnInit() { await this.load(); }
 

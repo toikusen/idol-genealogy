@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { HistoryService } from '../../../core/history.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
+import { AdminRoleService } from '../../../core/admin-role.service';
 import { History, Member, Group, Team } from '../../../models';
 
 @Component({
@@ -12,7 +14,7 @@ import { History, Member, Group, Team } from '../../../models';
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-history.component.html',
 })
-export class AdminHistoryComponent implements OnInit {
+export class AdminHistoryComponent implements OnInit, OnDestroy {
   histories: History[] = [];
   members: Member[] = [];
   groups: Group[] = [];
@@ -23,6 +25,8 @@ export class AdminHistoryComponent implements OnInit {
   isEdit = false;
   saving = false;
   error = '';
+  isAdmin = false;
+  private _sub: Subscription;
 
   statusOptions = [
     { value: 'active', label: '正常在籍' },
@@ -34,8 +38,13 @@ export class AdminHistoryComponent implements OnInit {
   constructor(
     private historyService: HistoryService,
     private memberService: MemberService,
-    private groupService: GroupService
-  ) {}
+    private groupService: GroupService,
+    private adminRole: AdminRoleService
+  ) {
+    this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
+  }
+
+  ngOnDestroy(): void { this._sub.unsubscribe(); }
 
   async ngOnInit() {
     try {
