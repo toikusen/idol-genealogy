@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
+import { adminGuard } from './core/admin.guard';
 
 export const routes: Routes = [
   {
@@ -26,6 +27,16 @@ export const routes: Routes = [
       { path: 'members', loadComponent: () => import('./pages/admin/admin-members/admin-members.component').then(m => m.AdminMembersComponent) },
       { path: 'groups', loadComponent: () => import('./pages/admin/admin-groups/admin-groups.component').then(m => m.AdminGroupsComponent) },
       { path: 'history', loadComponent: () => import('./pages/admin/admin-history/admin-history.component').then(m => m.AdminHistoryComponent) },
+      {
+        path: 'audit-log',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./pages/admin/admin-audit-log/admin-audit-log.component').then(m => m.AdminAuditLogComponent)
+      },
+      {
+        path: 'roles',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./pages/admin/admin-roles/admin-roles.component').then(m => m.AdminRolesComponent)
+      },
       { path: '', redirectTo: 'members', pathMatch: 'full' }
     ]
   },
