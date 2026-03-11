@@ -2559,7 +2559,7 @@ Expected: All routes render without console errors.
 ng test --watch=false
 ```
 
-Expected: All specs pass (SupabaseService: 3, MemberService: 4, GroupService: 4, AuthGuard: 3).
+Expected: All specs pass (SupabaseService: 3, MemberService: 4, GroupService: 4, HistoryService: 3, AuthGuard: 3).
 
 - [ ] **Step 3: Production build**
 
