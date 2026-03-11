@@ -116,4 +116,34 @@ describe('AuditLogService', () => {
     dbSpy.from.and.returnValue(chain);
     await expectAsync(service.revert(log)).toBeRejectedWithError('FK violation');
   });
+
+  it('getAll() applies operation filter when provided', async () => {
+    const eqSpy = jasmine.createSpy('eq').and.returnValue({
+      order: jasmine.createSpy().and.returnValue({
+        limit: jasmine.createSpy().and.returnValue(Promise.resolve({ data: [], error: null }))
+      })
+    });
+    const chain = {
+      select: jasmine.createSpy().and.returnValue({ eq: eqSpy })
+    };
+    dbSpy.from.and.returnValue(chain);
+    await service.getAll({ operation: 'INSERT' });
+    expect(eqSpy).toHaveBeenCalledWith('operation', 'INSERT');
+  });
+
+  it('getAll() applies both table_name and operation filters when both provided', async () => {
+    const eqOperationSpy = jasmine.createSpy('eqOperation').and.returnValue({
+      order: jasmine.createSpy().and.returnValue({
+        limit: jasmine.createSpy().and.returnValue(Promise.resolve({ data: [], error: null }))
+      })
+    });
+    const eqTableSpy = jasmine.createSpy('eqTable').and.returnValue({ eq: eqOperationSpy });
+    const chain = {
+      select: jasmine.createSpy().and.returnValue({ eq: eqTableSpy })
+    };
+    dbSpy.from.and.returnValue(chain);
+    await service.getAll({ table_name: 'members', operation: 'UPDATE' });
+    expect(eqTableSpy).toHaveBeenCalledWith('table_name', 'members');
+    expect(eqOperationSpy).toHaveBeenCalledWith('operation', 'UPDATE');
+  });
 });
