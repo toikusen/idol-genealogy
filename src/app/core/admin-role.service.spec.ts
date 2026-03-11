@@ -109,4 +109,49 @@ describe('AdminRoleService', () => {
     await expectAsync(service.remove('role-id-1')).toBeResolved();
     expect(eqSpy).toHaveBeenCalledWith('id', 'role-id-1');
   });
+
+  it('isAdmin() returns false when session is null', async () => {
+    const supabase = TestBed.inject(SupabaseService) as any;
+    supabase.getSessionOnce.and.returnValue(Promise.resolve(null));
+    const result = await service.isAdmin();
+    expect(result).toBeFalse();
+  });
+
+  it('isAdmin() returns false when Supabase returns an error', async () => {
+    const supabase = TestBed.inject(SupabaseService) as any;
+    supabase.getSessionOnce.and.returnValue(Promise.resolve({ user: { email: 'a@b.com' } }));
+    const limitSpy = jasmine.createSpy('limit').and.returnValue(
+      Promise.resolve({ data: null, error: { message: 'db error' } })
+    );
+    const eqRoleSpy = jasmine.createSpy('eqRole').and.returnValue({ limit: limitSpy });
+    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ eq: eqRoleSpy });
+    dbSpy.from.and.returnValue({ select: jasmine.createSpy().and.returnValue({ eq: eqEmailSpy }) });
+    const result = await service.isAdmin();
+    expect(result).toBeFalse();
+  });
+
+  it('getAll() throws when Supabase returns an error', async () => {
+    const fromChain = {
+      select: jasmine.createSpy().and.returnValue({ data: null, error: { message: 'fetch error' } })
+    };
+    dbSpy.from.and.returnValue(fromChain);
+    await expectAsync(service.getAll()).toBeRejected();
+  });
+
+  it('add() throws when Supabase returns an error', async () => {
+    const fromChain = {
+      insert: jasmine.createSpy().and.returnValue(Promise.resolve({ error: { message: 'insert error' } }))
+    };
+    dbSpy.from.and.returnValue(fromChain);
+    await expectAsync(service.add('x@y.com', 'editor')).toBeRejected();
+  });
+
+  it('remove() throws when Supabase returns an error', async () => {
+    const eqSpy = jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: { message: 'delete error' } }));
+    const fromChain = {
+      delete: jasmine.createSpy().and.returnValue({ eq: eqSpy })
+    };
+    dbSpy.from.and.returnValue(fromChain);
+    await expectAsync(service.remove('role-id-1')).toBeRejected();
+  });
 });
