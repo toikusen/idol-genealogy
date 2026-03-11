@@ -1,0 +1,121 @@
+<h2>族譜的主要視覺結構</h2>
+<p class="subtitle">選擇你偏好的排版方式</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="timeline" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f0f1a;padding:16px;font-family:monospace;font-size:11px;color:#ccc;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#e879a0;flex-shrink:0;"></div>
+        <div>
+          <div style="color:#fff;font-weight:bold;font-size:12px;">山田花子</div>
+          <div style="color:#888;font-size:10px;">搜尋成員</div>
+        </div>
+      </div>
+      <div style="position:relative;padding-left:20px;border-left:2px solid #e879a0;">
+        <div style="margin-bottom:10px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#e879a0;position:absolute;left:-5px;margin-top:2px;"></div>
+          <div style="background:#1e1e2e;border-radius:6px;padding:6px 10px;margin-left:8px;">
+            <div style="color:#e879a0;font-size:10px;font-weight:bold;">AKB48 Team A</div>
+            <div style="color:#aaa;font-size:9px;">2013.04 ～ 2016.08</div>
+            <div style="color:#666;font-size:9px;">研究生→正式成員</div>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#7c6cf2;position:absolute;left:-5px;margin-top:2px;"></div>
+          <div style="background:#1e1e2e;border-radius:6px;padding:6px 10px;margin-left:8px;">
+            <div style="color:#7c6cf2;font-size:10px;font-weight:bold;">SKE48 兼任</div>
+            <div style="color:#aaa;font-size:9px;">2015.01 ～ 2016.08</div>
+          </div>
+        </div>
+        <div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#4ade80;position:absolute;left:-5px;margin-top:2px;"></div>
+          <div style="background:#1e1e2e;border-radius:6px;padding:6px 10px;margin-left:8px;">
+            <div style="color:#4ade80;font-size:10px;font-weight:bold;">NGT48 移籍</div>
+            <div style="color:#aaa;font-size:9px;">2016.09 ～ 2019.03</div>
+            <div style="color:#666;font-size:9px;">畢業</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — 垂直時間線</h3>
+      <p>以成員為主軸，由上到下按時間展開，每個組合是一個節點。清楚易讀，適合「查單一成員」模式。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="tree" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f0f1a;padding:16px;text-align:center;">
+      <div style="display:inline-block;background:#1a1a2e;border:1px solid #7c6cf2;border-radius:8px;padding:6px 14px;margin-bottom:8px;color:#7c6cf2;font-size:11px;font-weight:bold;">AKB48</div>
+      <div style="display:flex;justify-content:center;gap:4px;margin-top:4px;">
+        <div style="width:1px;height:16px;background:#555;margin:0 30px;"></div>
+        <div style="width:1px;height:16px;background:#555;margin:0 30px;"></div>
+        <div style="width:1px;height:16px;background:#555;margin:0 15px;"></div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="background:#2a1a2e;border:1px solid #e879a0;border-radius:6px;padding:4px 8px;font-size:9px;color:#e879a0;">Team A</div>
+          <div style="display:flex;gap:3px;">
+            <div style="width:22px;height:22px;border-radius:50%;background:#e879a0;opacity:0.8;"></div>
+            <div style="width:22px;height:22px;border-radius:50%;background:#e879a0;opacity:0.6;"></div>
+            <div style="width:22px;height:22px;border-radius:50%;background:#e879a0;opacity:0.4;"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="background:#1a2a1e;border:1px solid #4ade80;border-radius:6px;padding:4px 8px;font-size:9px;color:#4ade80;">Team K</div>
+          <div style="display:flex;gap:3px;">
+            <div style="width:22px;height:22px;border-radius:50%;background:#4ade80;opacity:0.8;"></div>
+            <div style="width:22px;height:22px;border-radius:50%;background:#4ade80;opacity:0.6;"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="background:#1a1a2e;border:1px solid #60a5fa;border-radius:6px;padding:4px 8px;font-size:9px;color:#60a5fa;">Team B</div>
+          <div style="display:flex;gap:3px;">
+            <div style="width:22px;height:22px;border-radius:50%;background:#60a5fa;opacity:0.8;"></div>
+            <div style="width:22px;height:22px;border-radius:50%;background:#60a5fa;opacity:0.6;"></div>
+            <div style="width:22px;height:22px;border-radius:50%;background:#60a5fa;opacity:0.4;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — 組合樹狀圖</h3>
+      <p>以組合為根節點，往下展開 Team / 成員。適合「查某組合所有成員」模式，可看出組織架構。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="flow" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f0f1a;padding:16px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:#ccc;flex-wrap:wrap;justify-content:center;">
+        <div style="background:#2a1a2e;border:1px solid #e879a0;border-radius:20px;padding:4px 10px;color:#e879a0;white-space:nowrap;">AKB48</div>
+        <div style="color:#555;">→</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#555;border:2px solid #fff;"></div>
+        <div style="color:#555;">→</div>
+        <div style="background:#1a1a2e;border:1px solid #60a5fa;border-radius:20px;padding:4px 10px;color:#60a5fa;white-space:nowrap;">HKT48</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:#ccc;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+        <div style="background:#2a1a2e;border:1px solid #e879a0;border-radius:20px;padding:4px 10px;color:#e879a0;white-space:nowrap;">AKB48</div>
+        <div style="color:#555;">→</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#777;border:2px solid #fff;"></div>
+        <div style="color:#555;">→</div>
+        <div style="background:#1a2a1e;border:1px solid #4ade80;border-radius:20px;padding:4px 10px;color:#4ade80;white-space:nowrap;">NMB48</div>
+        <div style="color:#555;">→</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#aaa;border:2px solid #fff;"></div>
+        <div style="color:#555;">→</div>
+        <div style="background:#1a1a2e;border:1px solid #7c6cf2;border-radius:20px;padding:4px 10px;color:#7c6cf2;white-space:nowrap;">NGT48</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:9px;margin-top:8px;justify-content:center;">
+        <div style="background:#2a1a2e;border:1px solid #e879a0;border-radius:20px;padding:4px 10px;color:#e879a0;white-space:nowrap;">SKE48</div>
+        <div style="color:#555;">→</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:#999;border:2px solid #fff;"></div>
+        <div style="color:#555;">→</div>
+        <div style="background:#2a1a1a;border:1px solid #f87171;border-radius:20px;padding:4px 10px;color:#f87171;white-space:nowrap;">畢業</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — 流向圖（Sankey 風格）</h3>
+      <p>以箭頭連線呈現成員在組合間的移動，視覺化「流量」。適合看整體遷移趨勢，但單一成員資訊較少。</p>
+    </div>
+  </div>
+
+</div>

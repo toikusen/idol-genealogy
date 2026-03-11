@@ -1,0 +1,14 @@
+{"type":"server-started","port":58558,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:58558","screen_dir":"/Users/seitumbp2025/idol-genealogy/.superpowers/brainstorm/32246-1773201269"}
+{"type":"screen-added","file":"/Users/seitumbp2025/idol-genealogy/.superpowers/brainstorm/32246-1773201269/node-info.html"}
+{"source":"user-event","type":"click","text":"A\n    \n      成員照片\n      頭像 / 大頭照顯示在節點上","choice":"photo","id":null,"timestamp":1773201440932}
+{"source":"user-event","type":"click","text":"A\n    \n      成員照片\n      頭像 / 大頭照顯示在節點上","choice":"photo","id":null,"timestamp":1773201441625}
+{"source":"user-event","type":"click","text":"A\n    \n      成員照片\n      頭像 / 大頭照顯示在節點上","choice":"photo","id":null,"timestamp":1773201453495}
+{"source":"user-event","type":"click","text":"A\n    \n      成員照片\n      頭像 / 大頭照顯示在節點上","choice":"photo","id":null,"timestamp":1773201454883}
+{"source":"user-event","type":"click","text":"A\n    \n      成員照片\n      頭像 / 大頭照顯示在節點上","choice":"photo","id":null,"timestamp":1773201460232}
+{"source":"user-event","type":"click","text":"B\n    \n      加入／離開日期\n      在組合中的時間區間（例如 2015.04 ～ 2019.12）","choice":"dates","id":null,"timestamp":1773201462366}
+{"source":"user-event","type":"click","text":"A\n    \n      成員照片\n      頭像 / 大頭照顯示在節點上","choice":"photo","id":null,"timestamp":1773201463353}
+{"source":"user-event","type":"click","text":"B\n    \n      加入／離開日期\n      在組合中的時間區間（例如 2015.04 ～ 2019.12）","choice":"dates","id":null,"timestamp":1773201463806}
+{"type":"screen-added","file":"/Users/seitumbp2025/idol-genealogy/.superpowers/brainstorm/32246-1773201269/layout-structure.html"}
+{"type":"screen-added","file":"/Users/seitumbp2025/idol-genealogy/.superpowers/brainstorm/32246-1773201269/visual-style.html"}
+{"type":"screen-added","file":"/Users/seitumbp2025/idol-genealogy/.superpowers/brainstorm/32246-1773201269/waiting.html"}
+{"type":"screen-updated","file":"/Users/seitumbp2025/idol-genealogy/.superpowers/brainstorm/32246-1773201269/waiting.html"}
