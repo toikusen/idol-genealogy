@@ -11,8 +11,6 @@ create table user_roles (
   created_at timestamptz default now()
 );
 
-create index on user_roles (email);
-
 -- ============================================================
 -- 2. audit_log table
 -- ============================================================
@@ -93,6 +91,9 @@ create policy "admins can insert user_roles" on user_roles
   );
 create policy "admins can update user_roles" on user_roles
   for update using (
+    exists (select 1 from user_roles where email = auth.email() and role = 'admin')
+  )
+  with check (
     exists (select 1 from user_roles where email = auth.email() and role = 'admin')
   );
 create policy "admins can delete user_roles" on user_roles
