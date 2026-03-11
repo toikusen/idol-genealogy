@@ -29,6 +29,26 @@
       >
         歷史記錄
       </a>
+
+      <!-- Admin-only links -->
+      @if (isAdmin) {
+        <div class="pt-2 mt-2 border-t border-gray-100">
+          <a
+            routerLink="/admin/audit-log"
+            routerLinkActive="bg-purple-100 text-purple-700 font-medium"
+            class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+          >
+            變更記錄
+          </a>
+          <a
+            routerLink="/admin/roles"
+            routerLinkActive="bg-purple-100 text-purple-700 font-medium"
+            class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+          >
+            角色管理
+          </a>
+        </div>
+      }
     </nav>
 
     <!-- Bottom actions -->
