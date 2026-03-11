@@ -1,0 +1,280 @@
+<div style="min-height: 100vh; position: relative; overflow-x: hidden;">
+
+  <!-- ── Ambient background orbs ── -->
+  <div style="
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 55% 45% at 15% 5%, rgba(232,121,160,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 85% 85%, rgba(124,108,242,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 30% at 70% 15%, rgba(249,209,224,0.13) 0%, transparent 55%);
+  "></div>
+
+  <!-- ── Main content ── -->
+  <div style="position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 0 32px 96px;">
+
+    <!-- ── Loading state ── -->
+    @if (loading) {
+      <div style="
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        min-height: 60vh; gap: 20px;
+      ">
+        <div style="
+          width: 44px; height: 44px; border-radius: 50%;
+          border: 2px solid rgba(232,121,160,0.15);
+          border-top-color: rgba(232,121,160,0.7);
+          animation: spin 0.8s linear infinite;
+        "></div>
+        <p style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 0.75rem; letter-spacing: 0.3em;
+          color: rgba(184,160,184,0.6);
+        ">読み込み中…</p>
+      </div>
+    }
+
+    <!-- ── Error state ── -->
+    @if (!loading && error) {
+      <div style="
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        min-height: 60vh; gap: 16px; text-align: center;
+      ">
+        <div style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 3rem; color: rgba(232,121,160,0.18); line-height: 1;
+          margin-bottom: 8px;
+        ">エラー</div>
+        <p style="
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-style: italic; font-size: 1.1rem;
+          color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
+        ">Could not load member data</p>
+        <a routerLink="/" style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 0.78rem; letter-spacing: 0.18em;
+          color: rgba(232,121,160,0.65);
+          text-decoration: none; margin-top: 8px;
+          border-bottom: 1px solid rgba(232,121,160,0.25);
+          padding-bottom: 2px;
+          transition: color 0.2s;
+        ">← 記録庫へ戻る</a>
+      </div>
+    }
+
+    <!-- ── Not found state ── -->
+    @if (!loading && !error && member === null) {
+      <div style="
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        min-height: 60vh; gap: 16px; text-align: center;
+      ">
+        <div style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 3rem; color: rgba(232,121,160,0.18); line-height: 1;
+          margin-bottom: 8px;
+        ">見つかりません</div>
+        <p style="
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-style: italic; font-size: 1.1rem;
+          color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
+        ">This member could not be found in the archive</p>
+        <a routerLink="/" style="
+          font-family: 'Shippori Mincho', serif;
+          font-size: 0.78rem; letter-spacing: 0.18em;
+          color: rgba(232,121,160,0.65);
+          text-decoration: none; margin-top: 8px;
+          border-bottom: 1px solid rgba(232,121,160,0.25);
+          padding-bottom: 2px;
+        ">← 記録庫へ戻る</a>
+      </div>
+    }
+
+    <!-- ── Member profile ── -->
+    @if (!loading && !error && member !== null) {
+
+      <!-- Back link -->
+      <div style="padding-top: 48px; margin-bottom: 40px;">
+        <a routerLink="/" class="back-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M5 12l7-7M5 12l7 7"/>
+          </svg>
+          <span>記録庫へ戻る</span>
+        </a>
+      </div>
+
+      <!-- ══ Member header ══ -->
+      <header style="
+        display: flex; gap: 32px; align-items: flex-start;
+        padding-bottom: 44px; margin-bottom: 44px;
+        border-bottom: 1px solid rgba(232,121,160,0.12);
+      ">
+
+        <!-- Large avatar -->
+        <div style="flex-shrink: 0;">
+          @if (member.photo_url) {
+            <img
+              [src]="member.photo_url"
+              [alt]="member.name"
+              style="
+                width: 112px; height: 112px; border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid rgba(255,255,255,0.9);
+                box-shadow:
+                  0 0 0 1px rgba(232,121,160,0.18),
+                  0 8px 32px rgba(232,121,160,0.15),
+                  0 2px 8px rgba(45,27,46,0.08);
+              "
+            />
+          } @else {
+            <div style="
+              width: 112px; height: 112px; border-radius: 50%;
+              background: linear-gradient(135deg, rgba(232,121,160,0.18) 0%, rgba(124,108,242,0.12) 100%);
+              border: 2px solid rgba(255,255,255,0.9);
+              box-shadow:
+                0 0 0 1px rgba(232,121,160,0.18),
+                0 8px 32px rgba(232,121,160,0.12),
+                0 2px 8px rgba(45,27,46,0.06);
+              display: flex; align-items: center; justify-content: center;
+              font-family: 'Shippori Mincho', serif;
+              font-size: 2.5rem; font-weight: 500;
+              color: rgba(232,121,160,0.65);
+            ">
+              {{ getInitial(member) }}
+            </div>
+          }
+        </div>
+
+        <!-- Member info -->
+        <div style="flex: 1; min-width: 0; padding-top: 4px;">
+
+          <!-- Archive mark -->
+          <div style="
+            display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+          ">
+            <div style="height: 1px; width: 20px; background: rgba(232,121,160,0.4);"></div>
+            <span style="
+              font-family: 'Shippori Mincho', serif;
+              font-size: 0.62rem; letter-spacing: 0.38em;
+              text-transform: uppercase; color: rgba(122,90,122,0.4);
+            ">Member · メンバー</span>
+          </div>
+
+          <!-- Primary name -->
+          <h1 style="
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: clamp(1.9rem, 5vw, 3rem);
+            font-weight: 300; line-height: 1.1;
+            letter-spacing: 0.02em; color: #2d1b2e;
+            margin: 0 0 6px;
+          ">{{ member.name_jp || member.name }}</h1>
+
+          <!-- Roman name (if Japanese name exists) -->
+          @if (member.name_jp) {
+            <p style="
+              font-family: 'Cormorant Garamond', Georgia, serif;
+              font-style: italic; font-size: 1rem;
+              color: rgba(122,90,122,0.5); letter-spacing: 0.06em;
+              margin: 0 0 14px;
+            ">{{ member.name }}</p>
+          }
+
+          <!-- Meta: birthdate -->
+          @if (member.birthdate) {
+            <div style="
+              display: flex; align-items: center; gap: 8px;
+              margin-top: 10px;
+            ">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(232,121,160,0.5)" stroke-width="1.5">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span style="
+                font-family: 'Shippori Mincho', serif;
+                font-size: 0.78rem; color: rgba(122,90,122,0.55);
+                letter-spacing: 0.1em;
+              ">{{ formatDate(member.birthdate) }}</span>
+            </div>
+          }
+
+          <!-- Notes -->
+          @if (member.notes) {
+            <p style="
+              font-family: 'Shippori Mincho', serif;
+              font-size: 0.85rem; line-height: 1.7;
+              color: rgba(122,90,122,0.6);
+              margin-top: 14px; font-style: italic;
+              border-left: 2px solid rgba(232,121,160,0.2);
+              padding-left: 12px;
+            ">{{ member.notes }}</p>
+          }
+
+        </div>
+      </header>
+
+      <!-- ══ Activity history section ══ -->
+      <section>
+
+        <!-- Section label -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
+          <div style="height: 1px; width: 20px; background: rgba(232,121,160,0.45);"></div>
+          <span style="
+            font-family: 'Shippori Mincho', serif;
+            font-size: 0.65rem; letter-spacing: 0.38em;
+            text-transform: uppercase; color: rgba(122,90,122,0.45);
+            white-space: nowrap;
+          ">活動歷程</span>
+          <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.22), transparent);"></div>
+        </div>
+
+        <!-- Timeline component -->
+        <app-member-timeline [histories]="histories"></app-member-timeline>
+
+      </section>
+
+      <!-- ══ Footer flourish ══ -->
+      <footer style="margin-top: 80px; text-align: center;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px;">
+          <div style="height: 1px; width: 40px; background: linear-gradient(to right, transparent, rgba(232,121,160,0.22));"></div>
+          <div style="width: 3px; height: 3px; border-radius: 50%; background: rgba(232,121,160,0.28);"></div>
+          <div style="width: 3px; height: 3px; border-radius: 50%; background: rgba(124,108,242,0.22);"></div>
+          <div style="width: 3px; height: 3px; border-radius: 50%; background: rgba(232,121,160,0.28);"></div>
+          <div style="height: 1px; width: 40px; background: linear-gradient(to left, transparent, rgba(232,121,160,0.22));"></div>
+        </div>
+        <p style="
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-style: italic; font-size: 0.75rem;
+          color: rgba(184,160,184,0.45); letter-spacing: 0.15em;
+        ">偶像成員記録 · Idol Archive</p>
+      </footer>
+
+    }
+
+  </div>
+
+</div>
+
+<style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    color: rgba(122,90,122,0.5);
+    text-decoration: none;
+    transition: color 0.2s, gap 0.2s;
+  }
+
+  .back-link:hover {
+    color: rgba(232,121,160,0.75);
+    gap: 10px;
+  }
+</style>
