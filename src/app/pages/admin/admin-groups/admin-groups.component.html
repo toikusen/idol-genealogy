@@ -1,0 +1,162 @@
+<div class="p-8">
+  <!-- Page header -->
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-semibold text-gray-800">組合管理</h1>
+    <button
+      (click)="openCreate()"
+      class="px-4 py-2 bg-purple-500 text-white text-sm rounded-md hover:bg-purple-600 transition-colors"
+    >
+      + 新增組合
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="text-center py-16 text-gray-400">載入中…</div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && groups.length === 0" class="text-center py-16 text-gray-400">
+    尚無組合資料
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && groups.length > 0" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">色</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名稱</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日文名</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成立</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">解散</th>
+          <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr *ngFor="let g of groups" class="hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3">
+            <span
+              class="inline-block w-4 h-4 rounded-full"
+              [style.background-color]="g.color"
+            ></span>
+          </td>
+          <td class="px-4 py-3 font-medium text-gray-800">{{ g.name }}</td>
+          <td class="px-4 py-3 text-gray-500">{{ g.name_jp || '—' }}</td>
+          <td class="px-4 py-3 text-gray-500">{{ g.founded_at || '—' }}</td>
+          <td class="px-4 py-3 text-gray-500">{{ g.disbanded_at || '—' }}</td>
+          <td class="px-4 py-3 text-right space-x-2">
+            <button
+              (click)="openEdit(g)"
+              class="text-xs px-2 py-1 rounded text-purple-600 hover:bg-purple-50 transition-colors"
+            >
+              編輯
+            </button>
+            <button
+              (click)="delete(g)"
+              class="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50 transition-colors"
+            >
+              刪除
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div
+  *ngIf="showModal"
+  class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+  (click)="showModal = false"
+>
+  <div
+    class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6"
+    (click)="$event.stopPropagation()"
+  >
+    <h2 class="text-lg font-semibold text-gray-800 mb-5">
+      {{ isEdit ? '編輯組合' : '新增組合' }}
+    </h2>
+
+    <div class="space-y-4">
+      <!-- name (required) -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">組合名稱 <span class="text-red-400">*</span></label>
+        <input
+          type="text"
+          [(ngModel)]="editing.name"
+          placeholder="組合名稱"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- name_jp -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">日文名</label>
+        <input
+          type="text"
+          [(ngModel)]="editing.name_jp"
+          placeholder="日本語名前"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- color: color picker + hex input side by side -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">顏色</label>
+        <div class="flex items-center gap-3">
+          <input
+            type="color"
+            [(ngModel)]="editing.color"
+            class="w-10 h-10 rounded border border-gray-200 cursor-pointer p-0.5"
+          />
+          <input
+            type="text"
+            [(ngModel)]="editing.color"
+            placeholder="#e879a0"
+            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      <!-- founded_at -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">成立日期</label>
+        <input
+          type="date"
+          [(ngModel)]="editing.founded_at"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- disbanded_at -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">解散日期</label>
+        <input
+          type="date"
+          [(ngModel)]="editing.disbanded_at"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- Error -->
+      <p *ngIf="error" class="text-xs text-red-500">{{ error }}</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-3 mt-6">
+      <button
+        (click)="showModal = false"
+        class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+      >
+        取消
+      </button>
+      <button
+        (click)="save()"
+        [disabled]="saving"
+        class="px-4 py-2 bg-purple-500 text-white text-sm rounded-md hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        {{ saving ? '儲存中…' : '儲存' }}
+      </button>
+    </div>
+  </div>
+</div>

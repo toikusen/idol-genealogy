@@ -1,0 +1,55 @@
+<div class="flex h-screen bg-gray-50">
+  <!-- Left Sidebar -->
+  <aside class="w-52 bg-white shadow-md flex flex-col flex-shrink-0">
+    <!-- App name -->
+    <div class="px-6 py-6 border-b border-gray-100">
+      <span class="font-['Cormorant_Garamond'] text-xl font-semibold text-gray-800 tracking-wide">族譜管理</span>
+    </div>
+
+    <!-- Nav links -->
+    <nav class="flex-1 px-3 py-4 space-y-1">
+      <a
+        routerLink="/admin/members"
+        routerLinkActive="bg-pink-100 text-pink-700 font-medium"
+        class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+      >
+        成員管理
+      </a>
+      <a
+        routerLink="/admin/groups"
+        routerLinkActive="bg-pink-100 text-pink-700 font-medium"
+        class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+      >
+        組合管理
+      </a>
+      <a
+        routerLink="/admin/history"
+        routerLinkActive="bg-pink-100 text-pink-700 font-medium"
+        class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+      >
+        歷史記錄
+      </a>
+    </nav>
+
+    <!-- Bottom actions -->
+    <div class="px-4 py-4 border-t border-gray-100 space-y-2">
+      <a
+        routerLink="/"
+        class="flex items-center px-3 py-2 rounded-md text-sm text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+      >
+        ← 回到首頁
+      </a>
+      <button
+        (click)="signOut()"
+        class="w-full text-left px-3 py-2 rounded-md text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+      >
+        登出
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content area -->
+  <main class="flex-1 overflow-auto">
+    <router-outlet />
+  </main>
+</div>
