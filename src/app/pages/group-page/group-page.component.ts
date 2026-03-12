@@ -3,8 +3,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
+import { SeoService } from '../../core/seo.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
 import { Group, Team, History } from '../../models';
+
+const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
   selector: 'app-group-page',
@@ -23,7 +26,8 @@ export class GroupPageComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private groupService: GroupService,
-    private historyService: HistoryService
+    private historyService: HistoryService,
+    private seo: SeoService
   ) {}
 
   async ngOnInit() {
@@ -37,6 +41,30 @@ export class GroupPageComponent implements OnInit {
       this.group = group;
       this.teams = teams;
       this.histories = histories;
+
+      if (group) {
+        const displayName = group.name_jp ?? group.name;
+        this.seo.setPage(
+          `${displayName} - 台灣地下偶像族譜`,
+          `${displayName}的成員組成與活動記錄。`,
+          `${SITE_URL}/group/${id}`
+          // no image — groups have no photo_url; falls back to og-default.png
+        );
+
+        const jsonLd: Record<string, any> = {
+          '@context': 'https://schema.org',
+          '@type': 'MusicGroup',
+          name: displayName,
+          url: `${SITE_URL}/group/${id}`,
+        };
+        if (group.founded_at) jsonLd['foundingDate'] = group.founded_at;
+        const members = histories
+          .filter(h => h.member)
+          .map(h => ({ '@type': 'Person', name: h.member!.name_jp ?? h.member!.name }));
+        if (members.length > 0) jsonLd['member'] = members;
+
+        this.seo.setJsonLd(jsonLd);
+      }
     } catch {
       this.error = true;
     } finally {
@@ -77,7 +105,6 @@ export class GroupPageComponent implements OnInit {
   }
 
   hexToRgb(hex: string): string {
-    // Returns "r,g,b" for use in rgba()
     const clean = hex.replace('#', '');
     const r = parseInt(clean.substring(0, 2), 16) || 232;
     const g = parseInt(clean.substring(2, 4), 16) || 121;
