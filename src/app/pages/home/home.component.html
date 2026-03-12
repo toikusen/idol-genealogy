@@ -270,10 +270,106 @@
       </div>
     }
 
-    <!-- ══ RECENT MEMBERS ══ -->
     @if (!hasResults) {
-      <section>
+      <!-- ══ ALL GROUPS ══ -->
+      <section style="margin-top: 72px;">
 
+        <!-- Section header -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+          <div style="height: 1px; width: 24px; background: rgba(124,108,242,0.4);"></div>
+          <span style="
+            font-family: 'Shippori Mincho', serif;
+            font-size: 0.68rem; letter-spacing: 0.35em;
+            text-transform: uppercase; color: rgba(122,90,122,0.45);
+            white-space: nowrap;
+          ">GROUPS · グループ一覧</span>
+          <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(124,108,242,0.2), transparent);"></div>
+        </div>
+
+        <!-- Tab bar -->
+        <div style="display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid rgba(124,108,242,0.1);">
+          <button
+            (click)="activeGroupTab = 'active'"
+            class="group-tab"
+            [class.group-tab--active]="activeGroupTab === 'active'"
+          >現役 <span class="tab-count">{{activeGroups.length}}</span></button>
+          <button
+            (click)="activeGroupTab = 'disbanded'"
+            class="group-tab"
+            [class.group-tab--active]="activeGroupTab === 'disbanded'"
+          >解散・休止 <span class="tab-count">{{disbandedGroups.length}}</span></button>
+          <button
+            (click)="activeGroupTab = 'trainee'"
+            class="group-tab"
+            [class.group-tab--active]="activeGroupTab === 'trainee'"
+          >研修・見習 <span class="tab-count">{{traineeGroups.length}}</span></button>
+        </div>
+
+        <!-- Group grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px;">
+          @for (group of displayedGroups; track group.id) {
+            <a [routerLink]="['/group', group.id]" class="browse-group-card">
+
+              <!-- Color dot -->
+              <div style="
+                width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
+              " [style.background]="group.color || '#7c6cf2'"></div>
+
+              <!-- Info -->
+              <div style="min-width: 0; flex: 1;">
+                <div style="
+                  font-family: 'Shippori Mincho', serif;
+                  font-size: 0.88rem; font-weight: 500; color: #2d1b2e;
+                  line-height: 1.4;
+                  overflow: hidden; display: -webkit-box;
+                  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+                ">{{group.name}}</div>
+
+                @if (getGroupLabel(group); as label) {
+                  <div style="
+                    font-family: 'Cormorant Garamond', Georgia, serif;
+                    font-size: 0.72rem; color: rgba(122,90,122,0.45);
+                    letter-spacing: 0.04em; margin-top: 3px;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                  ">{{label}}</div>
+                }
+              </div>
+
+              <!-- Year badge -->
+              <div style="flex-shrink: 0; text-align: right;">
+                @if (group.founded_at) {
+                  <div style="
+                    font-family: 'Cormorant Garamond', Georgia, serif;
+                    font-size: 0.7rem; color: rgba(124,108,242,0.45);
+                    letter-spacing: 0.05em;
+                  ">{{group.founded_at | slice:0:4}}</div>
+                }
+                @if (activeGroupTab === 'disbanded' && group.disbanded_at) {
+                  <div style="
+                    font-family: 'Cormorant Garamond', Georgia, serif;
+                    font-size: 0.68rem; color: rgba(184,160,184,0.5);
+                    letter-spacing: 0.03em; margin-top: 2px;
+                  ">→ {{group.disbanded_at | slice:0:4}}</div>
+                }
+              </div>
+
+            </a>
+          }
+        </div>
+
+        @if (displayedGroups.length === 0 && allGroups.length > 0) {
+          <div style="
+            padding: 40px; text-align: center;
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-style: italic; font-size: 1rem;
+            color: rgba(122,90,122,0.4);
+          ">此分類暫無資料</div>
+        }
+
+      </section>
+
+      <section>
+    <!-- ══ RECENT MEMBERS ══ -->
         <!-- Section header -->
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
           <div style="height: 1px; width: 24px; background: rgba(232,121,160,0.4);"></div>
@@ -377,103 +473,6 @@
               </a>
             }
           </div>
-        }
-
-      </section>
-
-      <!-- ══ ALL GROUPS ══ -->
-      <section style="margin-top: 72px;">
-
-        <!-- Section header -->
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-          <div style="height: 1px; width: 24px; background: rgba(124,108,242,0.4);"></div>
-          <span style="
-            font-family: 'Shippori Mincho', serif;
-            font-size: 0.68rem; letter-spacing: 0.35em;
-            text-transform: uppercase; color: rgba(122,90,122,0.45);
-            white-space: nowrap;
-          ">GROUPS · グループ一覧</span>
-          <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(124,108,242,0.2), transparent);"></div>
-        </div>
-
-        <!-- Tab bar -->
-        <div style="display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid rgba(124,108,242,0.1);">
-          <button
-            (click)="activeGroupTab = 'active'"
-            class="group-tab"
-            [class.group-tab--active]="activeGroupTab === 'active'"
-          >現役 <span class="tab-count">{{activeGroups.length}}</span></button>
-          <button
-            (click)="activeGroupTab = 'disbanded'"
-            class="group-tab"
-            [class.group-tab--active]="activeGroupTab === 'disbanded'"
-          >解散・休止 <span class="tab-count">{{disbandedGroups.length}}</span></button>
-          <button
-            (click)="activeGroupTab = 'trainee'"
-            class="group-tab"
-            [class.group-tab--active]="activeGroupTab === 'trainee'"
-          >研修・見習 <span class="tab-count">{{traineeGroups.length}}</span></button>
-        </div>
-
-        <!-- Group grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px;">
-          @for (group of displayedGroups; track group.id) {
-            <a [routerLink]="['/group', group.id]" class="browse-group-card">
-
-              <!-- Color dot -->
-              <div style="
-                width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
-              " [style.background]="group.color || '#7c6cf2'"></div>
-
-              <!-- Info -->
-              <div style="min-width: 0; flex: 1;">
-                <div style="
-                  font-family: 'Shippori Mincho', serif;
-                  font-size: 0.88rem; font-weight: 500; color: #2d1b2e;
-                  line-height: 1.4;
-                  overflow: hidden; display: -webkit-box;
-                  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-                ">{{group.name}}</div>
-
-                @if (getGroupLabel(group); as label) {
-                  <div style="
-                    font-family: 'Cormorant Garamond', Georgia, serif;
-                    font-size: 0.72rem; color: rgba(122,90,122,0.45);
-                    letter-spacing: 0.04em; margin-top: 3px;
-                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                  ">{{label}}</div>
-                }
-              </div>
-
-              <!-- Year badge -->
-              <div style="flex-shrink: 0; text-align: right;">
-                @if (group.founded_at) {
-                  <div style="
-                    font-family: 'Cormorant Garamond', Georgia, serif;
-                    font-size: 0.7rem; color: rgba(124,108,242,0.45);
-                    letter-spacing: 0.05em;
-                  ">{{group.founded_at | slice:0:4}}</div>
-                }
-                @if (activeGroupTab === 'disbanded' && group.disbanded_at) {
-                  <div style="
-                    font-family: 'Cormorant Garamond', Georgia, serif;
-                    font-size: 0.68rem; color: rgba(184,160,184,0.5);
-                    letter-spacing: 0.03em; margin-top: 2px;
-                  ">→ {{group.disbanded_at | slice:0:4}}</div>
-                }
-              </div>
-
-            </a>
-          }
-        </div>
-
-        @if (displayedGroups.length === 0 && allGroups.length > 0) {
-          <div style="
-            padding: 40px; text-align: center;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic; font-size: 1rem;
-            color: rgba(122,90,122,0.4);
-          ">此分類暫無資料</div>
         }
 
       </section>
