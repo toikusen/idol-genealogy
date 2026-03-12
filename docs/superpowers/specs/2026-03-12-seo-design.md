@@ -92,19 +92,27 @@ Install `@angular/ssr`:
 ng add @angular/ssr --skip-application-builder
 ```
 
+The `--skip-application-builder` flag prevents `ng add` from auto-modifying `angular.json`; the `server` and `prerender` keys are added manually as described below.
+
 This creates two files that Angular's prerender pipeline requires:
 - `src/main.server.ts` — server entry point
 - `src/app/app.config.server.ts` — server-side app config with `provideServerRendering()`
 
 ### `angular.json` build options
 
-Under the `build` architect target (which uses `@angular-devkit/build-angular:application`), add these two sibling keys alongside the existing `"options"`:
+In `angular.json`, locate the `build` architect target's `"options"` object and add `server` and `prerender` **inside** `"options"` (not as siblings of it):
 
 ```json
-"server": "src/main.server.ts",
-"prerender": {
-  "discoverRoutes": false,
-  "routesFile": "prerender-routes.txt"
+"options": {
+  "outputPath": "dist/idol-genealogy",
+  "index": "src/index.html",
+  "browser": "src/main.ts",
+  "server": "src/main.server.ts",
+  "prerender": {
+    "discoverRoutes": false,
+    "routesFile": "prerender-routes.txt"
+  },
+  ...existing options...
 }
 ```
 
@@ -258,6 +266,7 @@ Structure:
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://idol-genealogy.pages.dev/</loc>
+    <lastmod>{build date, e.g. 2026-03-12 — use new Date().toISOString().slice(0,10)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
