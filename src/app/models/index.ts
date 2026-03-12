@@ -4,6 +4,7 @@ export interface Member {
   name_jp: string | null;
   photo_url: string | null;
   birthdate: string | null;
+  sns: string | null;
   notes: string | null;
   updated_at: string;
   created_at: string;
