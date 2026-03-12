@@ -22,6 +22,9 @@ export class HomeComponent implements OnInit {
   groupResults: Group[] = [];
   searching = false;
 
+  allGroups: Group[] = [];
+  activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
+
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -61,9 +64,15 @@ export class HomeComponent implements OnInit {
     }
 
     try {
-      this.recentMembers = await this.memberService.getRecent(10);
+      const [recent, groups] = await Promise.all([
+        this.memberService.getRecent(10),
+        this.groupService.getAll(),
+      ]);
+      this.recentMembers = recent;
+      this.allGroups = groups;
     } catch {
       this.recentMembers = [];
+      this.allGroups = [];
     }
   }
 
@@ -108,6 +117,35 @@ export class HomeComponent implements OnInit {
     } catch {
       return '—';
     }
+  }
+
+  get activeGroups(): Group[] {
+    return this.allGroups
+      .filter(g => !g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
+      .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+  }
+
+  get disbandedGroups(): Group[] {
+    return this.allGroups
+      .filter(g => !!g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
+      .sort((a, b) => (b.disbanded_at ?? '').localeCompare(a.disbanded_at ?? ''));
+  }
+
+  get traineeGroups(): Group[] {
+    return this.allGroups
+      .filter(g => g.notes?.includes('類型：研修・見習'))
+      .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+  }
+
+  get displayedGroups(): Group[] {
+    if (this.activeGroupTab === 'disbanded') return this.disbandedGroups;
+    if (this.activeGroupTab === 'trainee') return this.traineeGroups;
+    return this.activeGroups;
+  }
+
+  getGroupLabel(group: Group): string | null {
+    const match = group.notes?.match(/所屬：([^|]+)/);
+    return match ? match[1].trim() : null;
   }
 
   get hasResults(): boolean {

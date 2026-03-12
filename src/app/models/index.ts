@@ -16,6 +16,7 @@ export interface Group {
   color: string;
   founded_at: string | null;
   disbanded_at: string | null;
+  notes: string | null;
   updated_at: string;
   created_at: string;
 }
