@@ -28,6 +28,7 @@
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日文名</th>
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">生日</th>
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SNS</th>
+
           <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28">操作</th>
         </tr>
       </thead>
@@ -51,14 +52,29 @@
           <td class="px-4 py-3 text-gray-500">{{ m.name_jp || '—' }}</td>
           <td class="px-4 py-3 text-gray-500">{{ m.birthdate || '—' }}</td>
           <td class="px-4 py-3">
-            <a
-              *ngIf="m.sns"
-              [href]="m.sns"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-pink-500 hover:text-pink-700 text-xs underline underline-offset-2 truncate max-w-[140px] block"
-            >{{ m.sns }}</a>
-            <span *ngIf="!m.sns" class="text-gray-400">—</span>
+            <div class="flex items-center gap-2">
+              <a *ngIf="m.instagram" [href]="m.instagram" target="_blank" rel="noopener noreferrer"
+                class="text-pink-400 hover:text-pink-600 transition-colors" title="Instagram">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="2" y="2" width="20" height="20" rx="5"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
+                </svg>
+              </a>
+              <a *ngIf="m.facebook" [href]="m.facebook" target="_blank" rel="noopener noreferrer"
+                class="text-blue-400 hover:text-blue-600 transition-colors" title="Facebook">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                </svg>
+              </a>
+              <a *ngIf="m.x" [href]="m.x" target="_blank" rel="noopener noreferrer"
+                class="text-gray-500 hover:text-gray-800 transition-colors" title="X">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+              <span *ngIf="!m.instagram && !m.facebook && !m.x" class="text-gray-400 text-xs">—</span>
+            </div>
           </td>
           <td class="px-4 py-3 text-right space-x-2">
             <button
@@ -130,13 +146,52 @@
         />
       </div>
 
-      <!-- sns -->
+      <!-- instagram -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">SNS 連結</label>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-pink-400">
+            <rect x="2" y="2" width="20" height="20" rx="5"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
+          </svg>
+          Instagram
+        </label>
         <input
           type="url"
-          [(ngModel)]="editing.sns"
-          placeholder="https://twitter.com/... 或 https://instagram.com/..."
+          [(ngModel)]="editing.instagram"
+          placeholder="https://instagram.com/..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- facebook -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-blue-400">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+          </svg>
+          Facebook
+        </label>
+        <input
+          type="url"
+          [(ngModel)]="editing.facebook"
+          placeholder="https://facebook.com/..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- x -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="text-gray-600">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          X (Twitter)
+        </label>
+        <input
+          type="url"
+          [(ngModel)]="editing.x"
+          placeholder="https://x.com/..."
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
         />
       </div>

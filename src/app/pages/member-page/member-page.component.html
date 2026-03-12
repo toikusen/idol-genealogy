@@ -199,6 +199,53 @@
             </div>
           }
 
+          <!-- SNS links -->
+          @if (member.instagram || member.facebook || member.x) {
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 14px;">
+              @if (member.instagram) {
+                <a
+                  [href]="member.instagram"
+                  target="_blank" rel="noopener noreferrer"
+                  class="sns-link sns-link--ig"
+                  title="Instagram"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="2" y="2" width="20" height="20" rx="5"/>
+                    <circle cx="12" cy="12" r="4"/>
+                    <circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none"/>
+                  </svg>
+                  <span>Instagram</span>
+                </a>
+              }
+              @if (member.facebook) {
+                <a
+                  [href]="member.facebook"
+                  target="_blank" rel="noopener noreferrer"
+                  class="sns-link sns-link--fb"
+                  title="Facebook"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                  </svg>
+                  <span>Facebook</span>
+                </a>
+              }
+              @if (member.x) {
+                <a
+                  [href]="member.x"
+                  target="_blank" rel="noopener noreferrer"
+                  class="sns-link sns-link--x"
+                  title="X"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                  <span>X</span>
+                </a>
+              }
+            </div>
+          }
+
           <!-- Notes -->
           @if (member.notes) {
             <p style="
@@ -276,5 +323,49 @@
   .back-link:hover {
     color: rgba(232,121,160,0.75);
     gap: 10px;
+  }
+
+  .sns-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .sns-link--ig {
+    color: #c2507a;
+    border-color: rgba(194,80,122,0.25);
+    background: rgba(194,80,122,0.05);
+  }
+  .sns-link--ig:hover {
+    background: rgba(194,80,122,0.1);
+    border-color: rgba(194,80,122,0.45);
+  }
+
+  .sns-link--fb {
+    color: #3b6ec2;
+    border-color: rgba(59,110,194,0.25);
+    background: rgba(59,110,194,0.05);
+  }
+  .sns-link--fb:hover {
+    background: rgba(59,110,194,0.1);
+    border-color: rgba(59,110,194,0.45);
+  }
+
+  .sns-link--x {
+    color: #2a2a2a;
+    border-color: rgba(42,42,42,0.18);
+    background: rgba(42,42,42,0.04);
+  }
+  .sns-link--x:hover {
+    background: rgba(42,42,42,0.08);
+    border-color: rgba(42,42,42,0.35);
   }
 </style>
