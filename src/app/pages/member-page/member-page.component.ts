@@ -3,8 +3,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MemberService } from '../../core/member.service';
 import { HistoryService } from '../../core/history.service';
+import { SeoService } from '../../core/seo.service';
 import { MemberTimelineComponent } from '../../shared/member-timeline/member-timeline.component';
 import { Member, History } from '../../models';
+
+const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
   selector: 'app-member-page',
@@ -21,7 +24,8 @@ export class MemberPageComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private memberService: MemberService,
-    private historyService: HistoryService
+    private historyService: HistoryService,
+    private seo: SeoService
   ) {}
 
   async ngOnInit() {
@@ -33,6 +37,32 @@ export class MemberPageComponent implements OnInit {
       ]);
       this.member = member;
       this.histories = histories;
+
+      if (member) {
+        const displayName = member.name_jp ?? member.name;
+        this.seo.setPage(
+          `${displayName} - 台灣地下偶像族譜`,
+          `${displayName}的完整活動記錄，包含所屬組合與歷史經歷。`,
+          `${SITE_URL}/member/${id}`,
+          member.photo_url ?? undefined
+        );
+
+        const jsonLd: Record<string, any> = {
+          '@context': 'https://schema.org',
+          '@type': 'Person',
+          name: displayName,
+          url: `${SITE_URL}/member/${id}`,
+        };
+        if (member.birthdate) jsonLd['birthDate'] = member.birthdate;
+        if (member.notes) jsonLd['description'] = member.notes;
+        if (member.photo_url) jsonLd['image'] = member.photo_url;
+        const groups = histories
+          .filter(h => h.group)
+          .map(h => ({ '@type': 'MusicGroup', name: h.group!.name }));
+        if (groups.length > 0) jsonLd['memberOf'] = groups;
+
+        this.seo.setJsonLd(jsonLd);
+      }
     } catch {
       this.error = true;
     } finally {
