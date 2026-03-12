@@ -146,6 +146,20 @@
         </select>
       </div>
 
+      <!-- name_at_time -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">
+          當時名義
+          <span class="font-normal text-gray-400 ml-1">（改名前的名字，可留空）</span>
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="editing.name_at_time"
+          placeholder="例：山田花子（加入時的本名）"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+        />
+      </div>
+
       <!-- role -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">角色 / 職位</label>

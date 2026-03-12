@@ -48,6 +48,19 @@ interface TimelineSegment {
                     <span class="text-xs text-blue-400">移籍</span>
                   }
                 </div>
+                @if (seg.history.name_at_time) {
+                  <p class="text-xs mt-1" style="color: rgba(122,90,122,0.65);">
+                    <span style="
+                      display: inline-block;
+                      padding: 1px 7px;
+                      border-radius: 10px;
+                      border: 1px solid rgba(232,121,160,0.25);
+                      background: rgba(232,121,160,0.06);
+                      font-size: 0.7rem;
+                      letter-spacing: 0.04em;
+                    ">當時名義：{{ seg.history.name_at_time }}</span>
+                  </p>
+                }
                 @if (seg.history.role) {
                   <p class="text-xs text-gray-500 leading-relaxed">{{ seg.history.role }}</p>
                 }
