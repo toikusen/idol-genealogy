@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "node scripts/generate-routes.mjs && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:idol-genealogy": "node dist/idol-genealogy/server/server.mjs"
