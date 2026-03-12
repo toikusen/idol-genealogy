@@ -5,9 +5,18 @@ import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SupabaseService implements OnDestroy {
+  private readonly isBrowser = typeof window !== 'undefined';
+
   readonly client: SupabaseClient = createClient(
     environment.supabaseUrl,
-    environment.supabaseAnonKey
+    environment.supabaseAnonKey,
+    {
+      auth: {
+        autoRefreshToken: this.isBrowser,
+        detectSessionInUrl: this.isBrowser,
+        persistSession: this.isBrowser,
+      }
+    }
   );
 
   private _authState = new BehaviorSubject<Session | null>(null);
@@ -15,6 +24,7 @@ export class SupabaseService implements OnDestroy {
   private _authSubscription: { unsubscribe: () => void } | null = null;
 
   constructor() {
+    if (!this.isBrowser) return;
     this.client.auth.getSession().then(({ data }) => {
       this._authState.next(data.session);
     });
