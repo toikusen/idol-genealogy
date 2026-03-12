@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
+import { SeoService } from '../../core/seo.service';
 import { Member, Group } from '../../models';
+
+const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
   selector: 'app-home',
@@ -23,10 +26,40 @@ export class HomeComponent implements OnInit {
 
   constructor(
     private memberService: MemberService,
-    private groupService: GroupService
+    private groupService: GroupService,
+    private seo: SeoService,
+    private route: ActivatedRoute
   ) {}
 
   async ngOnInit() {
+    // Set page-level SEO
+    this.seo.setPage(
+      '台灣地下偶像族譜 | 成員・組合完整記錄',
+      '台灣地下偶像成員與組合的完整族譜記錄。查詢偶像成員經歷、所屬組合歷史、活動記錄。',
+      `${SITE_URL}/`
+    );
+    this.seo.setJsonLd({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: '台灣地下偶像族譜',
+      url: `${SITE_URL}/`,
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${SITE_URL}/?q={search_term_string}`
+        },
+        'query-input': 'required name=search_term_string'
+      }
+    });
+
+    // Read ?q= query param (used by Google SearchAction sitelinks)
+    const q = this.route.snapshot.queryParamMap.get('q');
+    if (q) {
+      this.query = q;
+      await this.search();
+    }
+
     try {
       this.recentMembers = await this.memberService.getRecent(10);
     } catch {
