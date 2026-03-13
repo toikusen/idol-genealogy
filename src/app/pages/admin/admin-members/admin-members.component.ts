@@ -81,15 +81,8 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     this.fetchingIg = true;
     this.igFetchError = '';
     try {
-      const session = await this.supabase.getSessionOnce();
       const res = await fetch(
-        `${environment.supabaseUrl}/functions/v1/ig-photo?username=${encodeURIComponent(username)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token ?? environment.supabaseAnonKey}`,
-            'apikey': environment.supabaseAnonKey,
-          }
-        }
+        `${environment.supabaseUrl}/functions/v1/ig-photo?username=${encodeURIComponent(username)}`
       );
       const json = await res.json();
       if (json.photo_url) {
