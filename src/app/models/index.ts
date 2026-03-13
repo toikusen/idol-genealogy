@@ -60,7 +60,8 @@ export interface SearchResult {
 export interface UserRole {
   id: string;
   email: string;
-  role: 'admin' | 'editor';
+  role: 'superadmin' | 'admin' | 'editor';
+  display_name: string | null;
   created_at: string;
 }
 
