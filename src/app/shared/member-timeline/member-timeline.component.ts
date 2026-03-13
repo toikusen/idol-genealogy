@@ -70,9 +70,9 @@ interface TimelineSegment {
               </div>
               <div class="text-right flex-shrink-0">
                 <p class="text-xs text-gray-400 whitespace-nowrap font-light">
-                  {{ seg.history.joined_at.slice(0,7).replace('-','.') }}
+                  {{ seg.history.joined_at.slice(0,10).replaceAll('-','.') }}
                   @if (!seg.history.left_at) { <span class="text-idol-pink">〜</span> }
-                  @else { 〜 {{ seg.history.left_at.slice(0,7).replace('-','.') }} }
+                  @else { 〜 {{ seg.history.left_at.slice(0,10).replaceAll('-','.') }} }
                 </p>
               </div>
             </div>

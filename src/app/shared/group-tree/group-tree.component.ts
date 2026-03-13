@@ -136,8 +136,8 @@ export class GroupTreeComponent implements OnChanges {
 
   private historyToNode(h: History): TreeNode {
     const name = h.member?.name_jp || h.member?.name || '—';
-    const joined = h.joined_at.slice(0, 7).replace('-', '.');
-    const left = h.left_at ? h.left_at.slice(0, 7).replace('-', '.') : '現在';
+    const joined = h.joined_at.slice(0, 10).replaceAll('-', '.');
+    const left = h.left_at ? h.left_at.slice(0, 10).replaceAll('-', '.') : '現在';
     return {
       type: 'member',
       id: h.id,
