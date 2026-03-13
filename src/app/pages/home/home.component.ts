@@ -21,6 +21,7 @@ export class HomeComponent implements OnInit {
   recentMembers: Member[] = [];
   memberResults: Member[] = [];
   groupResults: Group[] = [];
+  companyResults: string[] = [];
   searching = false;
 
   allGroups: Group[] = [];
@@ -86,19 +87,23 @@ export class HomeComponent implements OnInit {
     if (!this.query.trim()) {
       this.memberResults = [];
       this.groupResults = [];
+      this.companyResults = [];
       return;
     }
     this.searching = true;
     try {
-      const [members, groups] = await Promise.all([
+      const [members, groups, companies] = await Promise.all([
         this.memberService.search(this.query),
-        this.groupService.search(this.query)
+        this.groupService.search(this.query),
+        this.groupService.searchCompanies(this.query),
       ]);
       this.memberResults = members;
       this.groupResults = groups;
+      this.companyResults = companies;
     } catch {
       this.memberResults = [];
       this.groupResults = [];
+      this.companyResults = [];
     } finally {
       this.searching = false;
     }
@@ -149,7 +154,7 @@ export class HomeComponent implements OnInit {
   }
 
   get hasResults(): boolean {
-    return this.memberResults.length > 0 || this.groupResults.length > 0;
+    return this.memberResults.length > 0 || this.groupResults.length > 0 || this.companyResults.length > 0;
   }
 
   get noResults(): boolean {

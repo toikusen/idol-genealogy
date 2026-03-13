@@ -24,6 +24,17 @@ export class GroupService {
     return data ?? [];
   }
 
+  async searchCompanies(query: string): Promise<string[]> {
+    const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
+    const { data, error } = await this.db
+      .from('groups').select('company')
+      .ilike('company', `%${safe}%`)
+      .not('company', 'is', null);
+    if (error) throw error;
+    const unique = [...new Set((data ?? []).map(g => g.company as string))];
+    return unique.sort();
+  }
+
   async getById(id: string): Promise<Group | null> {
     const { data, error } = await this.db
       .from('groups').select('*').eq('id', id).single();
