@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { MemberService } from '../../../core/member.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
+import { SupabaseService } from '../../../core/supabase.service';
 import { Member } from '../../../models';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-admin-members',
@@ -19,13 +21,16 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
   editing: Partial<Member> = {};
   isEdit = false;
   saving = false;
+  fetchingIg = false;
+  igFetchError = '';
   error = '';
   isAdmin = false;
   private _sub: Subscription;
 
   constructor(
     private memberService: MemberService,
-    private adminRole: AdminRoleService
+    private adminRole: AdminRoleService,
+    private supabase: SupabaseService
   ) {
     this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
   }
@@ -43,8 +48,8 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     }
   }
 
-  openCreate() { this.editing = {}; this.isEdit = false; this.error = ''; this.showModal = true; }
-  openEdit(m: Member) { this.editing = { ...m }; this.isEdit = true; this.error = ''; this.showModal = true; }
+  openCreate() { this.editing = {}; this.isEdit = false; this.error = ''; this.igFetchError = ''; this.showModal = true; }
+  openEdit(m: Member) { this.editing = { ...m }; this.isEdit = true; this.error = ''; this.igFetchError = ''; this.showModal = true; }
 
   async save() {
     if (!this.editing.name?.trim()) { this.error = '姓名為必填'; return; }
@@ -60,6 +65,43 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     } catch (e: any) {
       this.error = e.message || '儲存失敗';
     } finally { this.saving = false; }
+  }
+
+  extractIgUsername(igUrl: string): string | null {
+    const match = igUrl.match(/instagram\.com\/([^/?#\s]+)/);
+    return match?.[1] ?? null;
+  }
+
+  async fetchIgPhoto() {
+    const igUrl = this.editing.instagram;
+    if (!igUrl) return;
+    const username = this.extractIgUsername(igUrl);
+    if (!username) { this.igFetchError = '無法解析 Instagram 帳號'; return; }
+
+    this.fetchingIg = true;
+    this.igFetchError = '';
+    try {
+      const session = await this.supabase.getSessionOnce();
+      const res = await fetch(
+        `${environment.supabaseUrl}/functions/v1/ig-photo?username=${encodeURIComponent(username)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token ?? environment.supabaseAnonKey}`,
+            'apikey': environment.supabaseAnonKey,
+          }
+        }
+      );
+      const json = await res.json();
+      if (json.photo_url) {
+        this.editing.photo_url = json.photo_url;
+      } else {
+        this.igFetchError = json.hint ?? json.error ?? '抓取失敗';
+      }
+    } catch (e: any) {
+      this.igFetchError = e.message || '網路錯誤';
+    } finally {
+      this.fetchingIg = false;
+    }
   }
 
   async delete(m: Member) {

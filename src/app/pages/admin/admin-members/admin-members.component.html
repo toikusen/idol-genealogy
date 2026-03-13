@@ -138,12 +138,30 @@
       <!-- photo_url -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">頭像 URL</label>
-        <input
-          type="url"
-          [(ngModel)]="editing.photo_url"
-          placeholder="https://..."
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
-        />
+        <div class="flex gap-2">
+          <input
+            type="url"
+            [(ngModel)]="editing.photo_url"
+            placeholder="https://..."
+            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+          />
+          <button
+            type="button"
+            (click)="fetchIgPhoto()"
+            [disabled]="!editing.instagram || fetchingIg"
+            title="從 Instagram 抓取大頭貼"
+            class="flex-shrink-0 px-3 py-2 rounded-md border border-gray-200 text-pink-400 hover:bg-pink-50 hover:border-pink-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs flex items-center gap-1.5"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="2" width="20" height="20" rx="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
+            </svg>
+            {{ fetchingIg ? '抓取中…' : '從 IG 抓取' }}
+          </button>
+        </div>
+        <p *ngIf="igFetchError" class="text-xs text-red-400 mt-1">{{ igFetchError }}</p>
+        <p *ngIf="editing.photo_url && !igFetchError" class="text-xs text-gray-400 mt-1 truncate">{{ editing.photo_url }}</p>
       </div>
 
       <!-- instagram -->
