@@ -78,7 +78,7 @@
   (click)="showModal = false"
 >
   <div
-    class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6"
+    class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto"
     (click)="$event.stopPropagation()"
   >
     <h2 class="text-lg font-semibold text-gray-800 mb-5">
@@ -153,6 +153,83 @@
         <input
           type="date"
           [(ngModel)]="editing.disbanded_at"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- style -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">風格</label>
+        <input
+          type="text"
+          [(ngModel)]="editing.style"
+          placeholder="例：清純系、地下偶像…"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- instagram -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-pink-400">
+            <rect x="2" y="2" width="20" height="20" rx="5"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
+          </svg>
+          Instagram
+        </label>
+        <input
+          type="url"
+          [(ngModel)]="editing.instagram"
+          placeholder="https://instagram.com/..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- facebook -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-blue-400">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+          </svg>
+          Facebook
+        </label>
+        <input
+          type="url"
+          [(ngModel)]="editing.facebook"
+          placeholder="https://facebook.com/..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- x -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="text-gray-600">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          X (Twitter)
+        </label>
+        <input
+          type="url"
+          [(ngModel)]="editing.x"
+          placeholder="https://x.com/..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- youtube -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="text-red-500">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+          YouTube
+        </label>
+        <input
+          type="url"
+          [(ngModel)]="editing.youtube"
+          placeholder="https://youtube.com/..."
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
         />
       </div>

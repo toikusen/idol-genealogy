@@ -41,17 +41,26 @@
       <tbody class="divide-y divide-gray-100">
         <tr *ngFor="let m of filteredMembers" class="hover:bg-gray-50 transition-colors">
           <td class="px-4 py-3">
-            <img
-              *ngIf="m.photo_url"
-              [src]="m.photo_url"
-              [alt]="m.name"
-              class="w-8 h-8 rounded-full object-cover"
-            />
-            <div
-              *ngIf="!m.photo_url"
-              class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-400 text-xs font-medium"
-            >
-              {{ m.name.charAt(0) }}
+            <div class="relative inline-block">
+              <img
+                *ngIf="m.photo_url"
+                [src]="m.photo_url"
+                [alt]="m.name"
+                class="w-8 h-8 rounded-full object-cover"
+              />
+              <div
+                *ngIf="!m.photo_url"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
+                [style.background]="m.color ? m.color + '22' : '#fce7f3'"
+                [style.color]="m.color || '#f472b6'"
+              >
+                {{ m.name.charAt(0) }}
+              </div>
+              <span
+                *ngIf="m.color"
+                class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
+                [style.background]="m.color"
+              ></span>
             </div>
           </td>
           <td class="px-4 py-3 font-medium text-gray-800">{{ m.name }}</td>
@@ -168,6 +177,24 @@
         </div>
         <p *ngIf="igFetchError" class="text-xs text-red-400 mt-1">{{ igFetchError }}</p>
         <p *ngIf="editing.photo_url && !igFetchError" class="text-xs text-gray-400 mt-1 truncate">{{ editing.photo_url }}</p>
+      </div>
+
+      <!-- color -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">代表色</label>
+        <div class="flex items-center gap-3">
+          <input
+            type="color"
+            [(ngModel)]="editing.color"
+            class="w-10 h-10 rounded border border-gray-200 cursor-pointer p-0.5"
+          />
+          <input
+            type="text"
+            [(ngModel)]="editing.color"
+            placeholder="#e879a0"
+            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+          />
+        </div>
       </div>
 
       <!-- instagram -->

@@ -3,6 +3,7 @@ export interface Member {
   name: string;
   name_jp: string | null;
   photo_url: string | null;
+  color: string | null;
   birthdate: string | null;
   instagram: string | null;
   facebook: string | null;
@@ -21,6 +22,11 @@ export interface Group {
   founded_at: string | null;
   disbanded_at: string | null;
   notes: string | null;
+  style: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  x: string | null;
+  youtube: string | null;
   updated_at: string;
   created_at: string;
 }
