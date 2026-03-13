@@ -20,6 +20,7 @@ export class HomeComponent implements OnInit {
   query = '';
   recentMembers: Member[] = [];
   memberResults: Member[] = [];
+  aliasResults: { member: Member; alias: string }[] = [];
   groupResults: Group[] = [];
   companyResults: string[] = [];
   searching = false;
@@ -87,22 +88,28 @@ export class HomeComponent implements OnInit {
   async search() {
     if (!this.query.trim()) {
       this.memberResults = [];
+      this.aliasResults = [];
       this.groupResults = [];
       this.companyResults = [];
       return;
     }
     this.searching = true;
     try {
-      const [members, groups, companies] = await Promise.all([
+      const [members, aliasHits, groups, companies] = await Promise.all([
         this.memberService.search(this.query),
+        this.memberService.searchByAlias(this.query),
         this.groupService.search(this.query),
         this.groupService.searchCompanies(this.query),
       ]);
       this.memberResults = members;
+      // Exclude alias hits whose member already appears in direct results
+      const directIds = new Set(members.map(m => m.id));
+      this.aliasResults = aliasHits.filter(r => !directIds.has(r.member.id));
       this.groupResults = groups;
       this.companyResults = companies;
     } catch {
       this.memberResults = [];
+      this.aliasResults = [];
       this.groupResults = [];
       this.companyResults = [];
     } finally {
@@ -176,7 +183,7 @@ export class HomeComponent implements OnInit {
   }
 
   get hasResults(): boolean {
-    return this.memberResults.length > 0 || this.groupResults.length > 0 || this.companyResults.length > 0;
+    return this.memberResults.length > 0 || this.aliasResults.length > 0 || this.groupResults.length > 0 || this.companyResults.length > 0;
   }
 
   get noResults(): boolean {

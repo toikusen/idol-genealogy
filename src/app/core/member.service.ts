@@ -19,6 +19,28 @@ export class MemberService {
     return data ?? [];
   }
 
+  async searchByAlias(query: string): Promise<{ member: Member; alias: string }[]> {
+    const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
+    const { data, error } = await this.db
+      .from('history')
+      .select('name_at_time, member:members(*)')
+      .ilike('name_at_time', `%${safe}%`)
+      .not('name_at_time', 'is', null);
+    if (error) throw error;
+
+    // Deduplicate by member id, keep first matched alias
+    const seen = new Set<string>();
+    const results: { member: Member; alias: string }[] = [];
+    for (const row of data ?? []) {
+      const m = row.member as unknown as Member | null;
+      if (m && !seen.has(m.id)) {
+        seen.add(m.id);
+        results.push({ member: m, alias: row.name_at_time as string });
+      }
+    }
+    return results;
+  }
+
   async getById(id: string): Promise<Member | null> {
     const { data, error } = await this.db
       .from('members')
