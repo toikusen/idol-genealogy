@@ -158,10 +158,10 @@ export class HomeComponent implements OnInit {
       map.get(key)!.push(g);
     }
     const entries = [...map.entries()];
-    entries.sort(([a], [b]) => {
+    entries.sort(([a, ga], [b, gb]) => {
       if (a === '獨立・其他') return 1;
       if (b === '獨立・其他') return -1;
-      return a.localeCompare(b);
+      return gb.length - ga.length || a.localeCompare(b);
     });
     return entries.map(([name, groups]) => ({
       name,

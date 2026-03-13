@@ -48,10 +48,10 @@ export class CompaniesComponent implements OnInit {
     }
 
     // 排序：有公司名稱的放前面，「獨立・其他」最後
-    const entries = [...map.entries()].sort(([a], [b]) => {
+    const entries = [...map.entries()].sort(([a, ga], [b, gb]) => {
       if (a === '獨立・其他') return 1;
       if (b === '獨立・其他') return -1;
-      return a.localeCompare(b, 'zh-Hant');
+      return gb.length - ga.length || a.localeCompare(b, 'zh-Hant');
     });
 
     return entries.map(([name, gs]) => {
