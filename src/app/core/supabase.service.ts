@@ -44,7 +44,13 @@ export class SupabaseService implements OnDestroy {
   }
 
   signInWithGoogle(): Promise<void> {
-    return this.client.auth.signInWithOAuth({ provider: 'google' }).then(() => {});
+    const redirectTo = this.isBrowser
+      ? `${window.location.origin}/login`
+      : undefined;
+    return this.client.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo }
+    }).then(() => {});
   }
 
   signOut(): Promise<void> {
