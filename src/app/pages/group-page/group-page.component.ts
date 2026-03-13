@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
@@ -24,7 +25,7 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
   imports: [CommonModule, RouterLink, GroupTreeComponent, AdBannerComponent, SafeUrlPipe],
   templateUrl: './group-page.component.html',
 })
-export class GroupPageComponent implements OnInit {
+export class GroupPageComponent implements OnInit, OnDestroy {
   group: Group | null = null;
   teams: Team[] = [];
   histories: History[] = [];
@@ -37,6 +38,7 @@ export class GroupPageComponent implements OnInit {
 
   ganttRows: GanttRow[] = [];
   ganttYears: { label: string; leftPct: number }[] = [];
+  private _routeSub?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -45,8 +47,23 @@ export class GroupPageComponent implements OnInit {
     private seo: SeoService
   ) {}
 
-  async ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id')!;
+  ngOnInit() {
+    this._routeSub = this.route.paramMap.subscribe(params => {
+      this.load(params.get('id')!);
+    });
+  }
+
+  ngOnDestroy() { this._routeSub?.unsubscribe(); }
+
+  private async load(id: string) {
+    this.loading = true;
+    this.error = false;
+    this.group = null;
+    this.selectedHistory = null;
+    this.playingVideoId = null;
+    this.ganttRows = [];
+    this.ganttYears = [];
+    this.similarGroups = [];
     try {
       const [group, teams, histories, videos] = await Promise.all([
         this.groupService.getById(id),
