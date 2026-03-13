@@ -59,6 +59,15 @@ export interface History {
   member?: Member;
 }
 
+export interface GroupVideo {
+  id: string;
+  group_id: string;
+  url: string;
+  title: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface SearchResult {
   members: Member[];
   groups: Group[];

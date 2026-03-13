@@ -6,7 +6,8 @@ import { HistoryService } from '../../core/history.service';
 import { SeoService } from '../../core/seo.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
-import { Group, Team, History } from '../../models';
+import { SafeUrlPipe } from '../../shared/safe-url.pipe';
+import { Group, GroupVideo, Team, History } from '../../models';
 
 interface GanttRow {
   history: History;
@@ -20,14 +21,16 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, GroupTreeComponent, AdBannerComponent],
+  imports: [CommonModule, RouterLink, GroupTreeComponent, AdBannerComponent, SafeUrlPipe],
   templateUrl: './group-page.component.html',
 })
 export class GroupPageComponent implements OnInit {
   group: Group | null = null;
   teams: Team[] = [];
   histories: History[] = [];
+  videos: GroupVideo[] = [];
   selectedHistory: History | null = null;
+  playingVideoId: string | null = null;
   loading = true;
   error = false;
 
@@ -44,14 +47,16 @@ export class GroupPageComponent implements OnInit {
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
     try {
-      const [group, teams, histories] = await Promise.all([
+      const [group, teams, histories, videos] = await Promise.all([
         this.groupService.getById(id),
         this.groupService.getTeamsByGroup(id),
-        this.historyService.getByGroup(id)
+        this.historyService.getByGroup(id),
+        this.groupService.getVideosByGroup(id),
       ]);
       this.group = group;
       this.teams = teams;
       this.histories = histories;
+      this.videos = videos;
       this.buildGantt(histories, group);
 
       if (group) {
@@ -82,6 +87,15 @@ export class GroupPageComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  extractYouTubeId(url: string): string | null {
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  playVideo(videoId: string) {
+    this.playingVideoId = this.playingVideoId === videoId ? null : videoId;
   }
 
   selectMember(h: History) {

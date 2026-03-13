@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { GroupService } from '../../../core/group.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
-import { Group } from '../../../models';
+import { Group, GroupVideo } from '../../../models';
 
 @Component({
   selector: 'app-admin-groups',
@@ -23,6 +23,13 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   error = '';
   isAdmin = false;
   private _sub: Subscription;
+
+  // Videos
+  videos: GroupVideo[] = [];
+  newVideoUrl = '';
+  newVideoTitle = '';
+  videoError = '';
+  savingVideo = false;
 
   constructor(
     private groupService: GroupService,
@@ -54,8 +61,70 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     }
   }
 
-  openCreate() { this.editing = { color: '#e879a0' }; this.isEdit = false; this.error = ''; this.showModal = true; }
-  openEdit(g: Group) { this.editing = { ...g }; this.isEdit = true; this.error = ''; this.showModal = true; }
+  openCreate() {
+    this.editing = { color: '#e879a0' };
+    this.isEdit = false;
+    this.error = '';
+    this.videos = [];
+    this.newVideoUrl = '';
+    this.newVideoTitle = '';
+    this.videoError = '';
+    this.showModal = true;
+  }
+
+  async openEdit(g: Group) {
+    this.editing = { ...g };
+    this.isEdit = true;
+    this.error = '';
+    this.newVideoUrl = '';
+    this.newVideoTitle = '';
+    this.videoError = '';
+    this.showModal = true;
+    this.videos = await this.groupService.getVideosByGroup(g.id);
+  }
+
+  extractYouTubeId(url: string): string | null {
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  async addVideo() {
+    this.videoError = '';
+    if (!this.newVideoUrl.trim()) return;
+    if (!this.extractYouTubeId(this.newVideoUrl)) {
+      this.videoError = '請輸入有效的 YouTube 網址';
+      return;
+    }
+    if (this.videos.length >= 3) {
+      this.videoError = '最多只能新增 3 部影片';
+      return;
+    }
+    this.savingVideo = true;
+    try {
+      await this.groupService.createVideo({
+        group_id: this.editing.id!,
+        url: this.newVideoUrl.trim(),
+        title: this.newVideoTitle.trim() || null,
+        sort_order: this.videos.length,
+      });
+      this.videos = await this.groupService.getVideosByGroup(this.editing.id!);
+      this.newVideoUrl = '';
+      this.newVideoTitle = '';
+    } catch (e: any) {
+      this.videoError = e.message || '新增失敗';
+    } finally {
+      this.savingVideo = false;
+    }
+  }
+
+  async removeVideo(v: GroupVideo) {
+    try {
+      await this.groupService.deleteVideo(v.id);
+      this.videos = this.videos.filter(x => x.id !== v.id);
+    } catch (e: any) {
+      this.videoError = e.message || '刪除失敗';
+    }
+  }
 
   async save() {
     if (!this.editing.name?.trim()) { this.error = '組合名稱為必填'; return; }

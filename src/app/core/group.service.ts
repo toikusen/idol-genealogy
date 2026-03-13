@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Group, Team } from '../models';
+import { Group, GroupVideo, Team } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
@@ -64,6 +64,23 @@ export class GroupService {
 
   async delete(id: string): Promise<void> {
     const { error } = await this.db.from('groups').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async getVideosByGroup(groupId: string): Promise<GroupVideo[]> {
+    const { data, error } = await this.db
+      .from('group_videos').select('*').eq('group_id', groupId).order('sort_order');
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async createVideo(video: Omit<GroupVideo, 'id' | 'created_at'>): Promise<void> {
+    const { error } = await this.db.from('group_videos').insert(video);
+    if (error) throw error;
+  }
+
+  async deleteVideo(id: string): Promise<void> {
+    const { error } = await this.db.from('group_videos').delete().eq('id', id);
     if (error) throw error;
   }
 
