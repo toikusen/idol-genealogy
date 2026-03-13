@@ -1,6 +1,6 @@
 <router-outlet />
 
-@if (session$ | async) {
+@if ((session$ | async) && !isAdminRoute) {
   <a
     routerLink="/admin"
     style="
