@@ -38,12 +38,14 @@ export class HistoryService {
   }
 
   async create(history: Partial<History>): Promise<void> {
-    const { error } = await this.db.from('history').insert(history);
+    const { member, group, team, ...payload } = history as any;
+    const { error } = await this.db.from('history').insert(payload);
     if (error) throw error;
   }
 
   async update(id: string, history: Partial<History>): Promise<void> {
-    const { error } = await this.db.from('history').update(history).eq('id', id);
+    const { member, group, team, ...payload } = history as any;
+    const { error } = await this.db.from('history').update(payload).eq('id', id);
     if (error) throw error;
   }
 
