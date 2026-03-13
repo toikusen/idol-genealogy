@@ -134,7 +134,7 @@ interface FlatGroup {
       </div>
     }
 
-    @if (teamNodes.length === 0) {
+    @if (teamNodes.length === 0 && flatGroup.activeNodes.length === 0 && flatGroup.formerNodes.length === 0) {
       <div class="py-12 text-center">
         <p class="text-4xl text-gray-200 mb-3" style="font-family:'Cormorant Garamond',serif;">空</p>
         <p class="text-sm text-gray-400">此組合尚無成員資料</p>
