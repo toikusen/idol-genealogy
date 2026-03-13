@@ -412,6 +412,110 @@
         </div>
       }
 
+      <!-- ══ Member timeline chart ══ -->
+      @if (ganttRows.length > 0) {
+        <section style="margin-bottom: 48px;">
+
+          <!-- Section label -->
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+            <div style="height: 1px; width: 20px;" [style.background]="group.color + '66'"></div>
+            <span style="
+              font-family: 'Shippori Mincho', serif;
+              font-size: 0.65rem; letter-spacing: 0.38em;
+              text-transform: uppercase; color: rgba(122,90,122,0.45);
+              white-space: nowrap;
+            ">在籍期間</span>
+            <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.18), transparent);"></div>
+          </div>
+
+          <!-- Chart container -->
+          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="min-width: 480px;">
+
+              <!-- Year axis -->
+              <div style="display: flex; margin-left: 130px; position: relative; height: 20px; margin-bottom: 4px;">
+                @for (yr of ganttYears; track yr.label) {
+                  <span style="
+                    position: absolute;
+                    left: {{ yr.leftPct }}%;
+                    font-family: 'Cormorant Garamond', Georgia, serif;
+                    font-size: 0.68rem; color: rgba(122,90,122,0.35);
+                    letter-spacing: 0.05em;
+                    transform: translateX(-50%);
+                    white-space: nowrap;
+                  ">{{ yr.label }}</span>
+                }
+              </div>
+
+              <!-- Rows -->
+              @for (row of ganttRows; track row.history.id) {
+                <div
+                  (click)="selectMember(row.history)"
+                  style="
+                    display: flex; align-items: center;
+                    height: 30px; margin-bottom: 4px;
+                    cursor: pointer; border-radius: 4px;
+                    transition: background 0.15s;
+                  "
+                  [style.background]="selectedHistory?.id === row.history.id ? 'rgba(' + hexToRgb(group.color) + ',0.06)' : 'transparent'"
+                >
+                  <!-- Member name -->
+                  <div style="
+                    width: 130px; flex-shrink: 0;
+                    padding-right: 12px; text-align: right;
+                    font-family: 'Shippori Mincho', serif;
+                    font-size: 0.75rem;
+                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                    transition: color 0.15s;
+                  "
+                  [style.color]="selectedHistory?.id === row.history.id ? group.color : 'rgba(60,30,60,0.65)'"
+                  >
+                    {{ row.history.member?.name_jp || row.history.member?.name || '—' }}
+                  </div>
+
+                  <!-- Bar track -->
+                  <div style="flex: 1; position: relative; height: 10px;">
+
+                    <!-- Year grid lines -->
+                    @for (yr of ganttYears; track yr.label) {
+                      <div style="
+                        position: absolute; top: -10px; bottom: -10px;
+                        width: 1px; pointer-events: none;
+                        background: rgba(180,160,180,0.12);
+                      " [style.left]="yr.leftPct + '%'"></div>
+                    }
+
+                    <!-- Bar -->
+                    <div style="
+                      position: absolute; top: 0; height: 100%;
+                      border-radius: 3px;
+                      transition: opacity 0.15s;
+                    "
+                    [style.left]="row.leftPct + '%'"
+                    [style.width]="row.widthPct + '%'"
+                    [style.background]="row.isActive
+                      ? group.color
+                      : 'rgba(' + hexToRgb(group.color) + ',0.45)'"
+                    [style.opacity]="selectedHistory && selectedHistory.id !== row.history.id ? '0.5' : '1'"
+                    ></div>
+
+                  </div>
+                </div>
+              }
+
+              <!-- Bottom axis line -->
+              <div style="
+                margin-left: 130px;
+                height: 1px;
+                background: linear-gradient(to right, rgba(180,160,180,0.2), transparent);
+                margin-top: 4px;
+              "></div>
+
+            </div>
+          </div>
+        </section>
+      }
+
       <!-- ══ Member list section ══ -->
       <section>
 

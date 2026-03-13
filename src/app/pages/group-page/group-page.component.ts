@@ -8,6 +8,13 @@ import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { Group, Team, History } from '../../models';
 
+interface GanttRow {
+  history: History;
+  leftPct: number;
+  widthPct: number;
+  isActive: boolean;
+}
+
 const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
@@ -23,6 +30,9 @@ export class GroupPageComponent implements OnInit {
   selectedHistory: History | null = null;
   loading = true;
   error = false;
+
+  ganttRows: GanttRow[] = [];
+  ganttYears: { label: string; leftPct: number }[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -42,6 +52,7 @@ export class GroupPageComponent implements OnInit {
       this.group = group;
       this.teams = teams;
       this.histories = histories;
+      this.buildGantt(histories, group);
 
       if (group) {
         const displayName = group.name_jp ?? group.name;
@@ -102,6 +113,48 @@ export class GroupPageComponent implements OnInit {
       return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch {
       return '—';
+    }
+  }
+
+  private buildGantt(histories: History[], group: Group | null) {
+    if (!histories.length) return;
+
+    const now = Date.now();
+    const endBound = group?.disbanded_at
+      ? Math.max(new Date(group.disbanded_at).getTime(), now)
+      : now;
+
+    const minMs = Math.min(...histories.map(h => new Date(h.joined_at).getTime()));
+    const maxMs = Math.max(
+      ...histories.map(h => h.left_at ? new Date(h.left_at).getTime() : endBound),
+      endBound
+    );
+    const totalMs = maxMs - minMs || 1;
+
+    const sorted = [...histories].sort((a, b) =>
+      new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime()
+    );
+
+    this.ganttRows = sorted.map(h => {
+      const start = new Date(h.joined_at).getTime();
+      const end = h.left_at ? new Date(h.left_at).getTime() : maxMs;
+      return {
+        history: h,
+        leftPct: (start - minMs) / totalMs * 100,
+        widthPct: Math.max((end - start) / totalMs * 100, 0.5),
+        isActive: !h.left_at,
+      };
+    });
+
+    const minYear = new Date(minMs).getFullYear();
+    const maxYear = new Date(maxMs).getFullYear();
+    this.ganttYears = [];
+    for (let y = minYear; y <= maxYear; y++) {
+      const yMs = new Date(y, 0, 1).getTime();
+      const pct = (yMs - minMs) / totalMs * 100;
+      if (pct >= 0 && pct <= 100) {
+        this.ganttYears.push({ label: String(y), leftPct: pct });
+      }
     }
   }
 
