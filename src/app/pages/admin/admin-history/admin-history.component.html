@@ -85,15 +85,20 @@
 <div
   *ngIf="showModal"
   class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-  (click)="showModal = false"
 >
   <div
     class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto"
-    (click)="$event.stopPropagation()"
   >
-    <h2 class="text-lg font-semibold text-gray-800 mb-5">
-      {{ isEdit ? '編輯記錄' : '新增記錄' }}
-    </h2>
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-semibold text-gray-800">
+        {{ isEdit ? '編輯記錄' : '新增記錄' }}
+      </h2>
+      <button (click)="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
 
     <div class="space-y-4">
       <!-- member_id -->
