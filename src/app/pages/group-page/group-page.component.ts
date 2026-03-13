@@ -85,7 +85,13 @@ export class GroupPageComponent implements OnInit {
   }
 
   selectMember(h: History) {
-    this.selectedHistory = this.selectedHistory?.id === h.id ? null : h;
+    const isDeselect = this.selectedHistory?.id === h.id;
+    this.selectedHistory = isDeselect ? null : h;
+    if (!isDeselect) {
+      setTimeout(() => {
+        document.getElementById('member-detail-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 30);
+    }
   }
 
   getInitial(h: History): string {
