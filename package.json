@@ -7,7 +7,9 @@
     "build": "node scripts/generate-routes.mjs && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:idol-genealogy": "node dist/idol-genealogy/server/server.mjs"
+    "serve:ssr:idol-genealogy": "node dist/idol-genealogy/server/server.mjs",
+    "sync:wiki": "node scripts/sync-from-wikiversity.mjs",
+    "sync:wiki:dry": "node scripts/sync-from-wikiversity.mjs --dry-run"
   },
   "private": true,
   "dependencies": {

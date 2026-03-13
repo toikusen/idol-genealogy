@@ -1,12 +1,16 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, RouterLink } from '@angular/router';
+import { AsyncPipe } from '@angular/common';
+import { SupabaseService } from './core/supabase.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RouterLink, AsyncPipe],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'idol-genealogy';
+  readonly session$;
+  constructor(private supabase: SupabaseService) {
+    this.session$ = supabase.authState$;
+  }
 }
