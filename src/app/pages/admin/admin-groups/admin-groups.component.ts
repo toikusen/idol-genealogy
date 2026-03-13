@@ -27,7 +27,6 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   // Videos
   videos: GroupVideo[] = [];
   newVideoUrl = '';
-  newVideoTitle = '';
   videoError = '';
   savingVideo = false;
 
@@ -67,7 +66,6 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     this.error = '';
     this.videos = [];
     this.newVideoUrl = '';
-    this.newVideoTitle = '';
     this.videoError = '';
     this.showModal = true;
   }
@@ -77,7 +75,6 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     this.isEdit = true;
     this.error = '';
     this.newVideoUrl = '';
-    this.newVideoTitle = '';
     this.videoError = '';
     this.showModal = true;
     this.videos = await this.groupService.getVideosByGroup(g.id);
@@ -90,8 +87,9 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   async addVideo() {
     this.videoError = '';
-    if (!this.newVideoUrl.trim()) return;
-    if (!this.extractYouTubeId(this.newVideoUrl)) {
+    const url = this.newVideoUrl.trim();
+    if (!url) return;
+    if (!this.extractYouTubeId(url)) {
       this.videoError = '請輸入有效的 YouTube 網址';
       return;
     }
@@ -101,15 +99,24 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     }
     this.savingVideo = true;
     try {
+      // Fetch title from YouTube oEmbed (no API key needed)
+      let title: string | null = null;
+      try {
+        const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+        if (res.ok) {
+          const json = await res.json();
+          title = json.title ?? null;
+        }
+      } catch { /* ignore, save without title */ }
+
       await this.groupService.createVideo({
         group_id: this.editing.id!,
-        url: this.newVideoUrl.trim(),
-        title: this.newVideoTitle.trim() || null,
+        url,
+        title,
         sort_order: this.videos.length,
       });
       this.videos = await this.groupService.getVideosByGroup(this.editing.id!);
       this.newVideoUrl = '';
-      this.newVideoTitle = '';
     } catch (e: any) {
       this.videoError = e.message || '新增失敗';
     } finally {

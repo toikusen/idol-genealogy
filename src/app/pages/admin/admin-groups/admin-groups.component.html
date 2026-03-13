@@ -269,28 +269,20 @@
         </div>
 
         <!-- Add new video -->
-        <div *ngIf="videos.length < 3" class="space-y-2">
+        <div *ngIf="videos.length < 3" class="flex gap-2">
           <input
             type="url"
             [(ngModel)]="newVideoUrl"
             placeholder="YouTube 網址 https://youtu.be/..."
-            class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
           />
-          <div class="flex gap-2">
-            <input
-              type="text"
-              [(ngModel)]="newVideoTitle"
-              placeholder="標題（選填）"
-              class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
-            />
-            <button
-              (click)="addVideo()"
-              [disabled]="savingVideo || !newVideoUrl"
-              class="px-3 py-2 bg-red-500 text-white text-xs rounded-md hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-            >
-              {{ savingVideo ? '…' : '新增' }}
-            </button>
-          </div>
+          <button
+            (click)="addVideo()"
+            [disabled]="savingVideo || !newVideoUrl"
+            class="px-3 py-2 bg-red-500 text-white text-xs rounded-md hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+          >
+            {{ savingVideo ? '抓取中…' : '新增' }}
+          </button>
         </div>
         <p *ngIf="videoError" class="text-xs text-red-400 mt-1">{{ videoError }}</p>
         <p *ngIf="!isEdit" class="text-xs text-gray-400 mt-1">請先儲存組合後再新增影片</p>

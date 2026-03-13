@@ -80,13 +80,19 @@ export class GroupService {
   async getVideosByGroup(groupId: string): Promise<GroupVideo[]> {
     const { data, error } = await this.db
       .from('group_videos').select('*').eq('group_id', groupId).order('sort_order');
-    if (error) throw error;
+    if (error) {
+      if ((error as any).code === 'PGRST205') return []; // table not yet migrated
+      throw error;
+    }
     return data ?? [];
   }
 
   async createVideo(video: Omit<GroupVideo, 'id' | 'created_at'>): Promise<void> {
     const { error } = await this.db.from('group_videos').insert(video);
-    if (error) throw error;
+    if (error) {
+      if ((error as any).code === 'PGRST205') throw new Error('請先在 Supabase 執行 015_create_group_videos.sql');
+      throw error;
+    }
   }
 
   async deleteVideo(id: string): Promise<void> {
