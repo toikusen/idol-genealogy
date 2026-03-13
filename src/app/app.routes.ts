@@ -34,7 +34,6 @@ export const routes: Routes = [
       },
       {
         path: 'roles',
-        canActivate: [adminGuard],
         loadComponent: () => import('./pages/admin/admin-roles/admin-roles.component').then(m => m.AdminRolesComponent)
       },
       { path: '', redirectTo: 'members', pathMatch: 'full' },

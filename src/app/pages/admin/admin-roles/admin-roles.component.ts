@@ -15,13 +15,26 @@ export class AdminRolesComponent implements OnInit {
   roles: UserRole[] = [];
   loading = true;
   error = '';
+
+  // 新增
   newEmail = '';
   newRole: 'admin' | 'editor' = 'editor';
   newDisplayName = '';
   saving = false;
   saveError = '';
+
+  // 編輯
+  showEditModal = false;
+  editTarget: UserRole | null = null;
+  editDisplayName = '';
+  editRole: 'superadmin' | 'admin' | 'editor' = 'editor';
+  editSaving = false;
+  editError = '';
+
   currentEmail = '';
   isSuperAdmin = false;
+  isAdmin = false;   // admin（不含 superadmin）
+  isEditor = false;
 
   constructor(
     private adminRole: AdminRoleService,
@@ -32,6 +45,9 @@ export class AdminRolesComponent implements OnInit {
     const session = await this.supabase.getSessionOnce();
     this.currentEmail = session?.user?.email ?? '';
     this.isSuperAdmin = this.currentEmail === SUPERADMIN_EMAIL;
+    const adminCheck = await this.adminRole.isAdmin();
+    this.isAdmin = adminCheck && !this.isSuperAdmin;
+    this.isEditor = !adminCheck;
     await this.load();
   }
 
@@ -39,7 +55,11 @@ export class AdminRolesComponent implements OnInit {
     this.loading = true;
     this.error = '';
     try {
-      this.roles = await this.adminRole.getAll();
+      const all = await this.adminRole.getAll();
+      // editor 只看自己
+      this.roles = this.isEditor
+        ? all.filter(r => r.email === this.currentEmail)
+        : all;
     } catch (e: any) {
       this.error = e.message || '載入失敗';
     } finally {
@@ -64,11 +84,47 @@ export class AdminRolesComponent implements OnInit {
     }
   }
 
-  /** 判斷目前登入者是否可刪除某筆角色 */
-  canDelete(role: UserRole): boolean {
-    // 系統管理員可刪任何人
+  // --- 編輯 ---
+  canEdit(role: UserRole): boolean {
     if (this.isSuperAdmin) return true;
-    // admin 只能刪自己或 editor
+    if (this.isAdmin) return role.role === 'admin' || role.role === 'editor';
+    return role.email === this.currentEmail; // editor 只能編輯自己
+  }
+
+  /** 是否可修改 role 欄位（editor 不能改 role） */
+  canEditRoleField(role: UserRole): boolean {
+    if (this.isSuperAdmin) return true;
+    if (this.isAdmin) return role.role === 'admin' || role.role === 'editor';
+    return false;
+  }
+
+  openEdit(role: UserRole) {
+    this.editTarget = role;
+    this.editDisplayName = role.display_name ?? '';
+    this.editRole = role.role;
+    this.editError = '';
+    this.showEditModal = true;
+  }
+
+  async saveEdit() {
+    if (!this.editTarget) return;
+    this.editSaving = true;
+    this.editError = '';
+    try {
+      const newRole = this.canEditRoleField(this.editTarget) ? this.editRole : undefined;
+      await this.adminRole.update(this.editTarget.id, this.editDisplayName.trim() || null, newRole);
+      this.showEditModal = false;
+      await this.load();
+    } catch (e: any) {
+      this.editError = e.message || '儲存失敗';
+    } finally {
+      this.editSaving = false;
+    }
+  }
+
+  // --- 刪除 ---
+  canDelete(role: UserRole): boolean {
+    if (this.isSuperAdmin) return true;
     return role.email === this.currentEmail || role.role === 'editor';
   }
 

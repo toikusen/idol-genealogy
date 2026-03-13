@@ -62,6 +62,16 @@ export class AdminRoleService implements OnDestroy {
     if (error) throw error;
   }
 
+  async update(id: string, displayName: string | null, role?: 'admin' | 'editor' | 'superadmin'): Promise<void> {
+    const payload: any = { display_name: displayName };
+    if (role !== undefined) payload['role'] = role;
+    const { error } = await this.supabase.client
+      .from('user_roles')
+      .update(payload)
+      .eq('id', id);
+    if (error) throw error;
+  }
+
   async remove(id: string): Promise<void> {
     const { error } = await this.supabase.client
       .from('user_roles')
