@@ -67,6 +67,16 @@ export class GroupService {
     if (error) throw error;
   }
 
+  async getSimilarByStyle(style: string, excludeId: string): Promise<Group[]> {
+    const { data, error } = await this.db
+      .from('groups').select('*')
+      .eq('style', style)
+      .neq('id', excludeId)
+      .limit(6);
+    if (error) throw error;
+    return data ?? [];
+  }
+
   async getVideosByGroup(groupId: string): Promise<GroupVideo[]> {
     const { data, error } = await this.db
       .from('group_videos').select('*').eq('group_id', groupId).order('sort_order');

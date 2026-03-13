@@ -29,6 +29,7 @@ export class GroupPageComponent implements OnInit {
   teams: Team[] = [];
   histories: History[] = [];
   videos: GroupVideo[] = [];
+  similarGroups: Group[] = [];
   selectedHistory: History | null = null;
   playingVideoId: string | null = null;
   loading = true;
@@ -58,6 +59,9 @@ export class GroupPageComponent implements OnInit {
       this.histories = histories;
       this.videos = videos;
       this.buildGantt(histories, group);
+      if (group?.style) {
+        this.similarGroups = await this.groupService.getSimilarByStyle(group.style, id);
+      }
 
       if (group) {
         const displayName = group.name_jp ?? group.name;

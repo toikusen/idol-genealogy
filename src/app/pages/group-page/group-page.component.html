@@ -706,6 +706,78 @@
 
       </section>
 
+      <!-- ══ Similar groups ══ -->
+      @if (similarGroups.length > 0) {
+        <section style="margin-top: 64px; margin-bottom: 16px;">
+
+          <!-- Section label -->
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+            <div style="height: 1px; width: 20px; background: rgba(184,160,184,0.4);"></div>
+            <span style="
+              font-family: 'Shippori Mincho', serif;
+              font-size: 0.65rem; letter-spacing: 0.38em;
+              text-transform: uppercase; color: rgba(122,90,122,0.38);
+              white-space: nowrap;
+            ">同風格團體 · {{ group!.style }}</span>
+            <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(184,160,184,0.2), transparent);"></div>
+          </div>
+
+          <!-- Cards -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;">
+            @for (g of similarGroups; track g.id) {
+              <a
+                [routerLink]="['/group', g.id]"
+                style="text-decoration: none; display: block; border-radius: 4px; overflow: hidden;
+                  background: rgba(255,255,255,0.6);
+                  border: 1px solid rgba(255,255,255,0.85);
+                  box-shadow: 0 1px 8px rgba(45,27,46,0.04);
+                  transition: transform 0.2s, box-shadow 0.2s;
+                "
+                class="similar-card"
+              >
+                <!-- Color bar -->
+                <div style="height: 3px;" [style.background]="g.color"></div>
+
+                <div style="padding: 14px 16px 16px;">
+                  <!-- Color dot + name -->
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                    <span style="
+                      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+                    " [style.background]="g.color"></span>
+                    <p style="
+                      font-family: 'Cormorant Garamond', Georgia, serif;
+                      font-size: 0.95rem; font-weight: 400;
+                      color: #2d1b2e; margin: 0;
+                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                      line-height: 1.3;
+                    ">{{ g.name_jp || g.name }}</p>
+                  </div>
+
+                  @if (g.name_jp) {
+                    <p style="
+                      font-family: 'Cormorant Garamond', Georgia, serif;
+                      font-style: italic; font-size: 0.75rem;
+                      color: rgba(122,90,122,0.42); margin: 0 0 6px;
+                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                    ">{{ g.name }}</p>
+                  }
+
+                  @if (g.company) {
+                    <p style="
+                      font-family: 'Shippori Mincho', serif;
+                      font-size: 0.62rem; letter-spacing: 0.1em;
+                      color: rgba(122,90,122,0.35); margin: 0;
+                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                    ">{{ g.company }}</p>
+                  }
+                </div>
+              </a>
+            }
+          </div>
+
+        </section>
+      }
+
       <!-- ══ Footer flourish ══ -->
       <footer style="margin-top: 80px; text-align: center;">
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px;">
@@ -762,6 +834,11 @@
   .member-link:hover {
     filter: brightness(0.88);
     transform: translateX(2px);
+  }
+
+  .similar-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(45,27,46,0.09) !important;
   }
 
   div:hover > .video-thumb {
