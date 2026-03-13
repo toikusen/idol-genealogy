@@ -80,7 +80,7 @@
             type="text"
             [(ngModel)]="query"
             (input)="onQueryChange()"
-            placeholder="メンバー・グループを検索　Search members and groups…"
+            placeholder="搜尋成員或團體　Search members and groups…"
             style="
               flex: 1; border: none; outline: none; background: transparent;
               padding: 20px 16px;
@@ -108,7 +108,7 @@
             font-family: 'Shippori Mincho', serif;
             font-size: 0.68rem; color: rgba(184,160,184,0.6);
             letter-spacing: 0.15em; white-space: nowrap;
-          ">検索</div>
+          ">搜尋</div>
         </div>
       </div>
     </section>
@@ -128,7 +128,7 @@
               <circle cx="12" cy="8" r="4"/>
               <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
             </svg>
-            <span class="nav-tab-jp">成員</span>
+            <span class="nav-tab-tw">成員</span>
             <span class="nav-tab-en">Members</span>
           </button>
 
@@ -144,7 +144,7 @@
               <path d="M2 20c0-3.3 3.1-6 7-6 1.2 0 2.3.3 3.3.8"/>
               <path d="M13.5 20c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5"/>
             </svg>
-            <span class="nav-tab-jp">団体</span>
+            <span class="nav-tab-tw">團體</span>
             <span class="nav-tab-en">Groups</span>
             <span class="nav-tab-count">{{allGroups.length}}</span>
           </button>
@@ -158,7 +158,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="tab-icon">
               <path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M8 10v2M8 15v2M12 10v2M12 15v2M16 10v2M16 15v2"/>
             </svg>
-            <span class="nav-tab-jp">公司</span>
+            <span class="nav-tab-tw">公司</span>
             <span class="nav-tab-en">Companies</span>
             <span class="nav-tab-count">{{companySections.length}}</span>
           </button>
