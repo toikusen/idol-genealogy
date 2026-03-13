@@ -25,6 +25,7 @@ export class HomeComponent implements OnInit {
   searching = false;
 
   allGroups: Group[] = [];
+  activeTab: 'members' | 'groups' | 'companies' = 'members';
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -147,6 +148,27 @@ export class HomeComponent implements OnInit {
     if (this.activeGroupTab === 'disbanded') return this.disbandedGroups;
     if (this.activeGroupTab === 'trainee') return this.traineeGroups;
     return this.activeGroups;
+  }
+
+  get companySections(): { name: string; groups: Group[]; activeCount: number; disbandedCount: number }[] {
+    const map = new Map<string, Group[]>();
+    for (const g of this.allGroups) {
+      const key = g.company || '獨立・其他';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(g);
+    }
+    const entries = [...map.entries()];
+    entries.sort(([a], [b]) => {
+      if (a === '獨立・其他') return 1;
+      if (b === '獨立・其他') return -1;
+      return a.localeCompare(b);
+    });
+    return entries.map(([name, groups]) => ({
+      name,
+      groups: groups.sort((a, b) => (!a.disbanded_at ? -1 : !b.disbanded_at ? 1 : 0)),
+      activeCount: groups.filter(g => !g.disbanded_at).length,
+      disbandedCount: groups.filter(g => !!g.disbanded_at).length,
+    }));
   }
 
   getGroupLabel(group: Group): string | null {
