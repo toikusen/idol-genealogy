@@ -19,6 +19,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   members: Member[] = [];
   groups: Group[] = [];
   teams: Team[] = [];
+  searchQuery = '';
   loading = true;
   showModal = false;
   editing: Partial<History> = {};
@@ -61,6 +62,32 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     } finally {
       this.loading = false;
     }
+  }
+
+  get groupedHistories(): { memberId: string; memberName: string; photo_url: string | null; records: History[] }[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    const filtered = q
+      ? this.histories.filter(h =>
+          (h.member?.name ?? '').toLowerCase().includes(q) ||
+          (h.member?.name_jp ?? '').toLowerCase().includes(q) ||
+          (h.group?.name ?? '').toLowerCase().includes(q)
+        )
+      : this.histories;
+
+    const map = new Map<string, { memberId: string; memberName: string; photo_url: string | null; records: History[] }>();
+    for (const h of filtered) {
+      const key = h.member_id;
+      if (!map.has(key)) {
+        map.set(key, {
+          memberId: key,
+          memberName: h.member?.name_jp || h.member?.name || h.member_id,
+          photo_url: (h.member as any)?.photo_url ?? null,
+          records: [],
+        });
+      }
+      map.get(key)!.records.push(h);
+    }
+    return [...map.values()];
   }
 
   async onGroupChange() {

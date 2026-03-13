@@ -10,16 +10,22 @@
     </button>
   </div>
 
+  <!-- Search -->
+  <div *ngIf="!loading" class="mb-4">
+    <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋組合名稱或事務所…"
+      class="w-full max-w-sm border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+  </div>
+
   <!-- Loading state -->
   <div *ngIf="loading" class="text-center py-16 text-gray-400">載入中…</div>
 
   <!-- Empty state -->
-  <div *ngIf="!loading && groups.length === 0" class="text-center py-16 text-gray-400">
-    尚無組合資料
+  <div *ngIf="!loading && filteredGroups.length === 0" class="text-center py-16 text-gray-400">
+    {{ searchQuery ? '查無結果' : '尚無組合資料' }}
   </div>
 
   <!-- Table -->
-  <div *ngIf="!loading && groups.length > 0" class="bg-white rounded-lg shadow-sm overflow-hidden">
+  <div *ngIf="!loading && filteredGroups.length > 0" class="bg-white rounded-lg shadow-sm overflow-hidden">
     <table class="w-full text-sm">
       <thead class="bg-gray-50 border-b border-gray-200">
         <tr>
@@ -32,7 +38,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
-        <tr *ngFor="let g of groups" class="hover:bg-gray-50 transition-colors">
+        <tr *ngFor="let g of filteredGroups" class="hover:bg-gray-50 transition-colors">
           <td class="px-4 py-3">
             <span
               class="inline-block w-4 h-4 rounded-full"

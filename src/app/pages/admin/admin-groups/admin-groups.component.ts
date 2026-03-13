@@ -14,6 +14,7 @@ import { Group } from '../../../models';
 })
 export class AdminGroupsComponent implements OnInit, OnDestroy {
   groups: Group[] = [];
+  searchQuery = '';
   loading = true;
   showModal = false;
   editing: Partial<Group> = {};
@@ -33,6 +34,16 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void { this._sub.unsubscribe(); }
 
   async ngOnInit() { await this.load(); }
+
+  get filteredGroups(): Group[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (!q) return this.groups;
+    return this.groups.filter(g =>
+      g.name.toLowerCase().includes(q) ||
+      (g.name_jp ?? '').toLowerCase().includes(q) ||
+      (g.company ?? '').toLowerCase().includes(q)
+    );
+  }
 
   async load() {
     this.loading = true;

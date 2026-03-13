@@ -16,6 +16,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class AdminMembersComponent implements OnInit, OnDestroy {
   members: Member[] = [];
+  searchQuery = '';
   loading = true;
   showModal = false;
   editing: Partial<Member> = {};
@@ -38,6 +39,15 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void { this._sub.unsubscribe(); }
 
   async ngOnInit() { await this.load(); }
+
+  get filteredMembers(): Member[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (!q) return this.members;
+    return this.members.filter(m =>
+      m.name.toLowerCase().includes(q) ||
+      (m.name_jp ?? '').toLowerCase().includes(q)
+    );
+  }
 
   async load() {
     this.loading = true;

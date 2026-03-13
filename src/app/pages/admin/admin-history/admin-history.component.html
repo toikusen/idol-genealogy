@@ -10,81 +10,74 @@
     </button>
   </div>
 
+  <!-- Search -->
+  <div *ngIf="!loading" class="mb-4">
+    <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋成員名稱或組合…"
+      class="w-full max-w-sm border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+  </div>
+
   <!-- Loading state -->
   <div *ngIf="loading" class="text-center py-16 text-gray-400">載入中…</div>
 
   <!-- Empty state -->
-  <div *ngIf="!loading && histories.length === 0" class="text-center py-16 text-gray-400">
-    尚無歷史記錄
+  <div *ngIf="!loading && groupedHistories.length === 0" class="text-center py-16 text-gray-400">
+    {{ searchQuery ? '查無結果' : '尚無歷史記錄' }}
   </div>
 
-  <!-- Table -->
-  <div *ngIf="!loading && histories.length > 0" class="bg-white rounded-lg shadow-sm overflow-hidden">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 border-b border-gray-200">
-        <tr>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成員</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">組合</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">期間</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">狀態</th>
-          <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28">操作</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        <tr *ngFor="let h of histories" class="hover:bg-gray-50 transition-colors">
-          <td class="px-4 py-3 font-medium text-gray-800">
-            {{ h.member?.name || h.member_id }}
-          </td>
-          <td class="px-4 py-3">
-            <span class="flex items-center gap-2">
-              <span
-                *ngIf="h.group?.color"
-                class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
-                [style.background-color]="h.group!.color"
-              ></span>
+  <!-- Grouped list -->
+  <div *ngIf="!loading && groupedHistories.length > 0" class="space-y-4">
+    <div *ngFor="let group of groupedHistories" class="bg-white rounded-lg shadow-sm overflow-hidden">
+
+      <!-- Member header -->
+      <div class="flex items-center gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+        <div class="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center text-pink-400 text-xs font-medium flex-shrink-0 overflow-hidden">
+          <img *ngIf="group.photo_url" [src]="group.photo_url" [alt]="group.memberName" class="w-full h-full object-cover"/>
+          <span *ngIf="!group.photo_url">{{ group.memberName.charAt(0) }}</span>
+        </div>
+        <span class="text-sm font-semibold text-gray-700">{{ group.memberName }}</span>
+        <span class="text-xs text-gray-400 ml-auto">{{ group.records.length }} 筆記錄</span>
+      </div>
+
+      <!-- Records table -->
+      <table class="w-full text-sm">
+        <tbody class="divide-y divide-gray-50">
+          <tr *ngFor="let h of group.records" class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-2.5 w-6">
+              <span *ngIf="h.group?.color" class="inline-block w-2.5 h-2.5 rounded-full" [style.background-color]="h.group!.color"></span>
+            </td>
+            <td class="py-2.5 pr-4 text-gray-700">
               {{ h.group?.name || h.group_id }}
-            </span>
-          </td>
-          <td class="px-4 py-3 text-gray-500 text-xs">
-            {{ h.joined_at }} — {{ h.left_at || '現在' }}
-          </td>
-          <td class="px-4 py-3">
-            <span
-              class="inline-block px-2 py-0.5 rounded-full text-xs font-medium"
-              [ngClass]="{
-                'bg-green-100 text-green-700':   h.status === 'active',
-                'bg-blue-100 text-blue-700':     h.status === 'concurrent',
-                'bg-orange-100 text-orange-700': h.status === 'transferred',
-                'bg-gray-100 text-gray-600':     h.status === 'graduated',
-                'bg-gray-50 text-gray-400':      !h.status
-              }"
-            >
-              {{ h.status === 'active' ? '正常在籍'
-               : h.status === 'concurrent' ? '兼任'
-               : h.status === 'transferred' ? '移籍'
-               : h.status === 'graduated' ? '畢業'
-               : '—' }}
-            </span>
-          </td>
-          <td class="px-4 py-3 text-right space-x-2">
-            <button
-              (click)="openEdit(h)"
-              class="text-xs px-2 py-1 rounded text-pink-600 hover:bg-pink-50 transition-colors"
-            >
-              編輯
-            </button>
-            @if (isAdmin) {
-              <button
-                (click)="delete(h)"
-                class="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50 transition-colors"
-              >
-                刪除
-              </button>
-            }
-          </td>
-        </tr>
-      </tbody>
-    </table>
+              <span *ngIf="h.name_at_time" class="ml-1 text-xs text-pink-400">({{ h.name_at_time }})</span>
+            </td>
+            <td class="py-2.5 pr-4 text-gray-400 text-xs whitespace-nowrap">
+              {{ h.joined_at }} — {{ h.left_at || '現在' }}
+            </td>
+            <td class="py-2.5 pr-4">
+              <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium"
+                [ngClass]="{
+                  'bg-green-100 text-green-700':   h.status === 'active',
+                  'bg-blue-100 text-blue-700':     h.status === 'concurrent',
+                  'bg-orange-100 text-orange-700': h.status === 'transferred',
+                  'bg-gray-100 text-gray-600':     h.status === 'graduated',
+                  'bg-gray-50 text-gray-400':      !h.status
+                }">
+                {{ h.status === 'active' ? '正常在籍'
+                 : h.status === 'concurrent' ? '兼任'
+                 : h.status === 'transferred' ? '移籍'
+                 : h.status === 'graduated' ? '畢業'
+                 : '—' }}
+              </span>
+            </td>
+            <td class="py-2.5 pr-4 text-right whitespace-nowrap">
+              <button (click)="openEdit(h)" class="text-xs px-2 py-1 rounded text-pink-600 hover:bg-pink-50 transition-colors">編輯</button>
+              @if (isAdmin) {
+                <button (click)="delete(h)" class="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50 transition-colors">刪除</button>
+              }
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -126,13 +119,11 @@
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white"
         >
           <option value="">— 選擇組合 —</option>
-          <option *ngFor="let g of groups" [value]="g.id">
-            {{ g.name }}
-          </option>
+          <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
         </select>
       </div>
 
-      <!-- team_id (shown when teams available) -->
+      <!-- team_id -->
       <div *ngIf="teams.length > 0">
         <label class="block text-xs font-medium text-gray-600 mb-1">隊伍（可選）</label>
         <select
@@ -140,9 +131,7 @@
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white"
         >
           <option [value]="undefined">— 不指定 —</option>
-          <option *ngFor="let t of teams" [value]="t.id">
-            {{ t.name }}
-          </option>
+          <option *ngFor="let t of teams" [value]="t.id">{{ t.name }}</option>
         </select>
       </div>
 
@@ -152,85 +141,56 @@
           當時名義
           <span class="font-normal text-gray-400 ml-1">（改名前的名字，可留空）</span>
         </label>
-        <input
-          type="text"
-          [(ngModel)]="editing.name_at_time"
-          placeholder="例：山田花子（加入時的本名）"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
-        />
+        <input type="text" [(ngModel)]="editing.name_at_time" placeholder="例：山田花子（加入時的本名）"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
       </div>
 
       <!-- role -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">角色 / 職位</label>
-        <input
-          type="text"
-          [(ngModel)]="editing.role"
-          placeholder="隊長、福隊長…"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
-        />
+        <input type="text" [(ngModel)]="editing.role" placeholder="隊長、福隊長…"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
       </div>
 
       <!-- status -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">狀態</label>
-        <select
-          [(ngModel)]="editing.status"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white"
-        >
+        <select [(ngModel)]="editing.status"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white">
           <option value="">— 選擇狀態 —</option>
           <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
         </select>
       </div>
 
-      <!-- joined_at (required) -->
+      <!-- joined_at -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">加入日期 <span class="text-red-400">*</span></label>
-        <input
-          type="date"
-          [(ngModel)]="editing.joined_at"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
-        />
+        <input type="date" [(ngModel)]="editing.joined_at"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
       </div>
 
-      <!-- left_at (optional) -->
+      <!-- left_at -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">離開日期（可選）</label>
-        <input
-          type="date"
-          [(ngModel)]="editing.left_at"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
-        />
+        <input type="date" [(ngModel)]="editing.left_at"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
       </div>
 
       <!-- notes -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">備注</label>
-        <textarea
-          [(ngModel)]="editing.notes"
-          rows="3"
-          placeholder="備注資訊…"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent resize-none"
-        ></textarea>
+        <textarea [(ngModel)]="editing.notes" rows="3" placeholder="備注資訊…"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent resize-none"></textarea>
       </div>
 
-      <!-- Error -->
       <p *ngIf="error" class="text-xs text-red-500">{{ error }}</p>
     </div>
 
     <!-- Actions -->
     <div class="flex justify-end gap-3 mt-6">
-      <button
-        (click)="showModal = false"
-        class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-      >
-        取消
-      </button>
-      <button
-        (click)="save()"
-        [disabled]="saving"
-        class="px-4 py-2 bg-pink-500 text-white text-sm rounded-md hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
+      <button (click)="showModal = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">取消</button>
+      <button (click)="save()" [disabled]="saving"
+        class="px-4 py-2 bg-pink-500 text-white text-sm rounded-md hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
         {{ saving ? '儲存中…' : '儲存' }}
       </button>
     </div>

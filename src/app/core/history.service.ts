@@ -31,7 +31,7 @@ export class HistoryService {
   async getAll(): Promise<History[]> {
     const { data, error } = await this.db
       .from('history')
-      .select('*, member:members(name,name_jp), group:groups(name,color), team:teams(name)')
+      .select('*, member:members(name,name_jp,photo_url), group:groups(name,color), team:teams(name)')
       .order('joined_at', { ascending: false });
     if (error) throw error;
     return data ?? [];
