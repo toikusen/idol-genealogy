@@ -145,8 +145,7 @@ export class HomeComponent implements OnInit {
   }
 
   getGroupLabel(group: Group): string | null {
-    const match = group.notes?.match(/所屬：([^|]+)/);
-    return match ? match[1].trim() : null;
+    return group.company ?? null;
   }
 
   get hasResults(): boolean {
