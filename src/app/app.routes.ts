@@ -41,5 +41,9 @@ export const routes: Routes = [
       { path: '**', redirectTo: 'members' }
     ]
   },
+  {
+    path: 'privacy',
+    loadComponent: () => import('./pages/privacy/privacy.component').then(m => m.PrivacyComponent)
+  },
   { path: '**', redirectTo: '' }
 ];

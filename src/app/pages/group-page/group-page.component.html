@@ -210,6 +210,9 @@
         </div>
       </header>
 
+      <!-- ══ Ad banner ══ -->
+      <app-ad-banner adSlot="4061570176"></app-ad-banner>
+
       <!-- ══ Selected member detail panel ══ -->
       @if (selectedHistory !== null) {
         <div class="member-panel" style="
@@ -447,7 +450,12 @@
           font-family: 'Cormorant Garamond', Georgia, serif;
           font-style: italic; font-size: 0.75rem;
           color: rgba(184,160,184,0.45); letter-spacing: 0.15em;
+          margin-bottom: 14px;
         ">偶像成員記録 · Idol Archive</p>
+        <a routerLink="/privacy" style="
+          font-size: 0.72rem; color: rgba(122,90,122,0.45);
+          text-decoration: none; letter-spacing: 0.04em;
+        ">隱私政策</a>
       </footer>
 
     }

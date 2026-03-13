@@ -5,6 +5,7 @@ import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
 import { SeoService } from '../../core/seo.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
+import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { Group, Team, History } from '../../models';
 
 const SITE_URL = 'https://idol-genealogy.pages.dev';
@@ -12,7 +13,7 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, GroupTreeComponent],
+  imports: [CommonModule, RouterLink, GroupTreeComponent, AdBannerComponent],
   templateUrl: './group-page.component.html',
 })
 export class GroupPageComponent implements OnInit {

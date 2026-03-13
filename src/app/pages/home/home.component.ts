@@ -6,13 +6,14 @@ import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { SeoService } from '../../core/seo.service';
 import { Member, Group } from '../../models';
+import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 
 const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AdBannerComponent],
   templateUrl: './home.component.html',
 })
 export class HomeComponent implements OnInit {
