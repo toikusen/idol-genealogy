@@ -5,6 +5,7 @@ export interface Member {
   photo_url: string | null;
   color: string | null;
   birthdate: string | null;
+  nickname: string | null;
   instagram: string | null;
   facebook: string | null;
   x: string | null;

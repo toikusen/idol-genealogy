@@ -169,14 +169,24 @@
             margin: 0 0 6px;
           ">{{ member.name_roman || member.name }}</h1>
 
-          <!-- Roman name (if Japanese name exists) -->
+          <!-- Roman name (if exists) -->
           @if (member.name_roman) {
             <p style="
               font-family: 'Cormorant Garamond', Georgia, serif;
               font-style: italic; font-size: 1rem;
               color: rgba(122,90,122,0.5); letter-spacing: 0.06em;
-              margin: 0 0 14px;
+              margin: 0 0 6px;
             ">{{ member.name }}</p>
+          }
+
+          <!-- Nickname -->
+          @if (member.nickname) {
+            <p style="
+              font-family: 'Shippori Mincho', serif;
+              font-size: 0.75rem; letter-spacing: 0.18em;
+              color: rgba(232,121,160,0.65);
+              margin: 0 0 14px;
+            ">「{{ member.nickname }}」</p>
           }
 
           <!-- Meta: birthdate -->
