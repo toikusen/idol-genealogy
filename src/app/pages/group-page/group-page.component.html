@@ -332,16 +332,16 @@
                       font-size: 1.6rem; font-weight: 300;
                       color: #2d1b2e; margin: 0 0 2px;
                       letter-spacing: 0.02em; line-height: 1.2;
-                    ">{{ selectedHistory.name_at_time || selectedHistory.member?.name_jp || selectedHistory.member?.name || '—' }}</h2>
+                    ">{{ selectedHistory.name_at_time || selectedHistory.member?.name_roman || selectedHistory.member?.name || '—' }}</h2>
                     <!-- Show current name if name_at_time differs -->
-                    @if (selectedHistory.name_at_time && selectedHistory.name_at_time !== (selectedHistory.member?.name_jp || selectedHistory.member?.name)) {
+                    @if (selectedHistory.name_at_time && selectedHistory.name_at_time !== (selectedHistory.member?.name_roman || selectedHistory.member?.name)) {
                       <p style="
                         font-family: 'Cormorant Garamond', Georgia, serif;
                         font-style: italic; font-size: 0.88rem;
                         color: rgba(122,90,122,0.45); margin: 0 0 12px;
                         letter-spacing: 0.05em;
-                      ">現名：{{ selectedHistory.member?.name_jp || selectedHistory.member?.name }}</p>
-                    } @else if (!selectedHistory.name_at_time && selectedHistory.member?.name_jp) {
+                      ">現名：{{ selectedHistory.member?.name_roman || selectedHistory.member?.name }}</p>
+                    } @else if (!selectedHistory.name_at_time && selectedHistory.member?.name_roman) {
                       <p style="
                         font-family: 'Cormorant Garamond', Georgia, serif;
                         font-style: italic; font-size: 0.88rem;
@@ -544,7 +544,7 @@
                   "
                   [style.color]="selectedHistory?.id === row.history.id ? group.color : 'rgba(60,30,60,0.65)'"
                   >
-                    {{ row.history.name_at_time || row.history.member?.name_jp || row.history.member?.name || '—' }}
+                    {{ row.history.name_at_time || row.history.member?.name_roman || row.history.member?.name || '—' }}
                   </div>
 
                   <!-- Bar track -->

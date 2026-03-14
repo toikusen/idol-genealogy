@@ -110,7 +110,7 @@
         >
           <option value="">— 選擇成員 —</option>
           <option *ngFor="let m of members" [value]="m.id">
-            {{ m.name }}{{ m.name_jp ? '（' + m.name_jp + '）' : '' }}
+            {{ m.name }}{{ m.name_roman ? '（' + m.name_roman + '）' : '' }}
           </option>
         </select>
       </div>

@@ -202,7 +202,7 @@ export class GroupTreeComponent implements OnChanges {
   }
 
   private historyToNode(h: History): TreeNode {
-    const currentName = h.member?.name_jp || h.member?.name || '—';
+    const currentName = h.member?.name_roman || h.member?.name || '—';
     const label = h.name_at_time || currentName;
     const joined = h.joined_at.slice(0, 10).replaceAll('-', '.');
     const left = h.left_at ? h.left_at.slice(0, 10).replaceAll('-', '.') : '現在';

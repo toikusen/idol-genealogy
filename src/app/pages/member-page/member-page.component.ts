@@ -40,7 +40,7 @@ export class MemberPageComponent implements OnInit {
       this.histories = histories;
 
       if (member) {
-        const displayName = member.name_jp ?? member.name;
+        const displayName = member.name_roman ?? member.name;
         this.seo.setPage(
           `${displayName} - 台灣地下偶像族譜`,
           `${displayName}的完整活動記錄，包含所屬組合與歷史經歷。`,
@@ -72,7 +72,7 @@ export class MemberPageComponent implements OnInit {
   }
 
   getInitial(member: Member): string {
-    if (member.name_jp) return member.name_jp.charAt(0);
+    if (member.name_roman) return member.name_roman.charAt(0);
     return member.name.charAt(0).toUpperCase();
   }
 

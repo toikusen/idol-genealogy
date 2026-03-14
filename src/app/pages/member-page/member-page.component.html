@@ -167,10 +167,10 @@
             font-weight: 300; line-height: 1.1;
             letter-spacing: 0.02em; color: #2d1b2e;
             margin: 0 0 6px;
-          ">{{ member.name_jp || member.name }}</h1>
+          ">{{ member.name_roman || member.name }}</h1>
 
           <!-- Roman name (if Japanese name exists) -->
-          @if (member.name_jp) {
+          @if (member.name_roman) {
             <p style="
               font-family: 'Cormorant Garamond', Georgia, serif;
               font-style: italic; font-size: 1rem;

@@ -118,7 +118,7 @@ export class HomeComponent implements OnInit {
   }
 
   getInitial(member: Member): string {
-    if (member.name_jp) return member.name_jp.charAt(0);
+    if (member.name_roman) return member.name_roman.charAt(0);
     return member.name.charAt(0).toUpperCase();
   }
 

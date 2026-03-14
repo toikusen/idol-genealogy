@@ -69,7 +69,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     const filtered = q
       ? this.histories.filter(h =>
           (h.member?.name ?? '').toLowerCase().includes(q) ||
-          (h.member?.name_jp ?? '').toLowerCase().includes(q) ||
+          (h.member?.name_roman ?? '').toLowerCase().includes(q) ||
           (h.group?.name ?? '').toLowerCase().includes(q)
         )
       : this.histories;
@@ -80,7 +80,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
       if (!map.has(key)) {
         map.set(key, {
           memberId: key,
-          memberName: h.member?.name_jp || h.member?.name || h.member_id,
+          memberName: h.member?.name_roman || h.member?.name || h.member_id,
           photo_url: (h.member as any)?.photo_url ?? null,
           records: [],
         });

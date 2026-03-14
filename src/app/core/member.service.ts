@@ -14,7 +14,7 @@ export class MemberService {
     const { data, error } = await this.db
       .from('members')
       .select('*')
-      .or(`name.ilike.%${safe}%,name_jp.ilike.%${safe}%`);
+      .or(`name.ilike.%${safe}%,name_roman.ilike.%${safe}%`);
     if (error) throw error;
     return data ?? [];
   }

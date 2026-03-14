@@ -45,7 +45,7 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     if (!q) return this.members;
     return this.members.filter(m =>
       m.name.toLowerCase().includes(q) ||
-      (m.name_jp ?? '').toLowerCase().includes(q)
+      (m.name_roman ?? '').toLowerCase().includes(q)
     );
   }
 

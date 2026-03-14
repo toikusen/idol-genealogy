@@ -1,7 +1,7 @@
 export interface Member {
   id: string;
   name: string;
-  name_jp: string | null;
+  name_roman: string | null;
   photo_url: string | null;
   color: string | null;
   birthdate: string | null;
