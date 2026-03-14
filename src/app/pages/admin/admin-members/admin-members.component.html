@@ -65,7 +65,7 @@
           </td>
           <td class="px-4 py-3 font-medium text-gray-800">{{ m.name }}</td>
           <td class="px-4 py-3 text-gray-500">{{ m.name_roman || '—' }}</td>
-          <td class="px-4 py-3 text-gray-500">{{ m.birthdate || '—' }}</td>
+          <td class="px-4 py-3 text-gray-500">{{ formatBirthdate(m.birthdate) }}</td>
           <td class="px-4 py-3">
             <div class="flex items-center gap-1.5">
               <a *ngIf="m.instagram" [href]="m.instagram" target="_blank" rel="noopener noreferrer"
@@ -265,12 +265,24 @@
 
       <!-- birthdate -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">生日</label>
-        <input
-          type="date"
-          [(ngModel)]="editing.birthdate"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
-        />
+        <label class="block text-xs font-medium text-gray-600 mb-1">生日（月日）</label>
+        <div class="flex items-center gap-2">
+          <select
+            [(ngModel)]="birthdateMonth"
+            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+          >
+            <option [value]="0">— 月 —</option>
+            <option *ngFor="let m of months" [value]="m">{{ m }} 月</option>
+          </select>
+          <select
+            [(ngModel)]="birthdateDay"
+            [disabled]="!birthdateMonth"
+            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent disabled:opacity-50"
+          >
+            <option [value]="0">— 日 —</option>
+            <option *ngFor="let d of days" [value]="d">{{ d }} 日</option>
+          </select>
+        </div>
       </div>
 
       <!-- notes -->

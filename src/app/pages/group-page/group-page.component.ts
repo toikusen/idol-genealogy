@@ -148,13 +148,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
   formatDateLong(dateStr: string | null): string {
     if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return '—';
-      return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
-    } catch {
-      return '—';
-    }
+    const mmdd = dateStr.match(/^(\d{1,2})-(\d{1,2})$/);
+    if (mmdd) return `${+mmdd[1]}月${+mmdd[2]}日`;
+    const full = dateStr.match(/^\d{4}-(\d{1,2})-(\d{1,2})$/);
+    if (full) return `${+full[1]}月${+full[2]}日`;
+    return '—';
   }
 
   private buildGantt(histories: History[], group: Group | null) {
