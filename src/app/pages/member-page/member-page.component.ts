@@ -85,4 +85,32 @@ export class MemberPageComponent implements OnInit {
     if (full) return `${+full[1]}月${+full[2]}日`;
     return '—';
   }
+
+  hexToRgb(hex: string): string {
+    const clean = hex.replace('#', '');
+    const r = parseInt(clean.substring(0, 2), 16) || 232;
+    const g = parseInt(clean.substring(2, 4), 16) || 121;
+    const b = parseInt(clean.substring(4, 6), 16) || 160;
+    return `${r},${g},${b}`;
+  }
+
+  fallbackPortraitStyle(color: string | null): Record<string, string> {
+    const rgb = this.hexToRgb(color || '#e879a0');
+    return {
+      'background': `linear-gradient(135deg, rgba(${rgb}, 0.15) 0%, rgba(124,108,242,0.1) 100%)`,
+      'color': `rgba(${rgb}, 0.6)`,
+      'box-shadow': `0 0 0 1px rgba(${rgb}, 0.2), 0 12px 40px rgba(${rgb}, 0.15)`
+    };
+  }
+
+  nicknameStyle(color: string | null): Record<string, string> {
+    const rgb = this.hexToRgb(color || '#e879a0');
+    return {
+      'font-family': "'Shippori Mincho', serif",
+      'font-size': '0.76rem',
+      'letter-spacing': '0.2em',
+      'color': `rgba(${rgb}, 0.7)`,
+      'margin': '0 0 14px'
+    };
+  }
 }

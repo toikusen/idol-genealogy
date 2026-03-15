@@ -68,7 +68,7 @@
           <td class="px-4 py-3">
             <div *ngIf="m.color" class="flex items-center gap-2">
               <span class="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0" [style.background]="m.color"></span>
-              <span class="text-xs text-gray-400 font-mono">{{ m.color }}</span>
+              <span class="text-xs text-gray-600">{{ m.color_name || m.color }}</span>
             </div>
             <span *ngIf="!m.color" class="text-gray-400">—</span>
           </td>
@@ -205,7 +205,7 @@
       <!-- color -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">代表色</label>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 mb-2">
           <input
             type="color"
             [(ngModel)]="editing.color"
@@ -214,10 +214,16 @@
           <input
             type="text"
             [(ngModel)]="editing.color"
-            placeholder="#e879a0"
+            placeholder="#e879a0 或 red"
             class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
           />
         </div>
+        <input
+          type="text"
+          [(ngModel)]="editing.color_name"
+          placeholder="顏色名稱，例如：珊瑚粉、紅色"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+        />
       </div>
 
       <!-- instagram -->

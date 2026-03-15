@@ -104,171 +104,160 @@
       </div>
 
       <!-- ══ Member header ══ -->
-      <header style="
-        display: flex; gap: 32px; align-items: flex-start;
-        padding-bottom: 44px; margin-bottom: 44px;
-        border-bottom: 1px solid rgba(232,121,160,0.12);
-      ">
+      <header class="member-header">
 
-        <!-- Large avatar -->
-        <div style="flex-shrink: 0;">
-          @if (member.photo_url) {
-            <img
-              [src]="member.photo_url"
-              [alt]="member.name"
-              style="
-                width: 112px; height: 112px; border-radius: 50%;
-                object-fit: cover;
-                border: 2px solid rgba(255,255,255,0.9);
-                box-shadow:
-                  0 0 0 1px rgba(232,121,160,0.18),
-                  0 8px 32px rgba(232,121,160,0.15),
-                  0 2px 8px rgba(45,27,46,0.08);
-              "
-            />
-          } @else {
-            <div style="
-              width: 112px; height: 112px; border-radius: 50%;
-              background: linear-gradient(135deg, rgba(232,121,160,0.18) 0%, rgba(124,108,242,0.12) 100%);
-              border: 2px solid rgba(255,255,255,0.9);
-              box-shadow:
-                0 0 0 1px rgba(232,121,160,0.18),
-                0 8px 32px rgba(232,121,160,0.12),
-                0 2px 8px rgba(45,27,46,0.06);
-              display: flex; align-items: center; justify-content: center;
-              font-family: 'Shippori Mincho', serif;
-              font-size: 2.5rem; font-weight: 500;
-              color: rgba(232,121,160,0.65);
-            ">
-              {{ getInitial(member) }}
-            </div>
-          }
+        <!-- Archive mark -->
+        <div style="
+          display: flex; align-items: center;
+          gap: 10px; margin-bottom: 24px;
+        ">
+          <div style="height: 1px; width: 24px; background: rgba(232,121,160,0.35);"></div>
+          <span style="
+            font-family: 'Shippori Mincho', serif;
+            font-size: 0.6rem; letter-spacing: 0.42em;
+            text-transform: uppercase; color: rgba(122,90,122,0.38);
+          ">Member · メンバー</span>
+          <div style="height: 1px; flex: 1; background: linear-gradient(to right, rgba(232,121,160,0.25), transparent);"></div>
         </div>
 
-        <!-- Member info -->
-        <div style="flex: 1; min-width: 0; padding-top: 4px;">
+        <!-- Hero card: photo + info side by side -->
+        <div class="member-hero-card">
 
-          <!-- Archive mark -->
-          <div style="
-            display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
-          ">
-            <div style="height: 1px; width: 20px; background: rgba(232,121,160,0.4);"></div>
-            <span style="
-              font-family: 'Shippori Mincho', serif;
-              font-size: 0.62rem; letter-spacing: 0.38em;
-              text-transform: uppercase; color: rgba(122,90,122,0.4);
-            ">Member · メンバー</span>
+          <!-- Portrait column -->
+          <div class="member-portrait-col">
+            <div style="position: relative; display: inline-block;">
+              @if (member.photo_url) {
+                <img
+                  [src]="member.photo_url"
+                  [alt]="member.name"
+                  class="member-portrait"
+                />
+              } @else {
+                <div class="member-portrait member-portrait--fallback"
+                  [ngStyle]="fallbackPortraitStyle(member.color)">
+                  {{ getInitial(member) }}
+                </div>
+              }
+            </div>
           </div>
 
-          <!-- Primary name -->
-          <h1 style="
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: clamp(1.9rem, 5vw, 3rem);
-            font-weight: 300; line-height: 1.1;
-            letter-spacing: 0.02em; color: #2d1b2e;
-            margin: 0 0 6px;
-          ">{{ member.name_roman || member.name }}</h1>
+          <!-- Info column -->
+          <div class="member-info-col">
 
-          <!-- Roman name (if exists) -->
-          @if (member.name_roman) {
-            <p style="
+            <!-- Primary name -->
+            <h1 style="
               font-family: 'Cormorant Garamond', Georgia, serif;
-              font-style: italic; font-size: 1rem;
-              color: rgba(122,90,122,0.5); letter-spacing: 0.06em;
-              margin: 0 0 6px;
-            ">{{ member.name }}</p>
-          }
+              font-size: clamp(1.8rem, 5vw, 2.8rem);
+              font-weight: 300; line-height: 1.05;
+              letter-spacing: 0.03em; color: #2d1b2e;
+              margin: 0 0 4px;
+            ">{{ member.name_roman || member.name }}</h1>
 
-          <!-- Nickname -->
-          @if (member.nickname) {
-            <p style="
-              font-family: 'Shippori Mincho', serif;
-              font-size: 0.75rem; letter-spacing: 0.18em;
-              color: rgba(232,121,160,0.65);
-              margin: 0 0 14px;
-            ">「{{ member.nickname }}」</p>
-          }
-
-          <!-- Meta: birthdate -->
-          @if (member.birthdate) {
-            <div style="
-              display: flex; align-items: center; gap: 8px;
-              margin-top: 10px;
-            ">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(232,121,160,0.5)" stroke-width="1.5">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              <span style="
+            <!-- Japanese name -->
+            @if (member.name_roman) {
+              <p style="
                 font-family: 'Shippori Mincho', serif;
-                font-size: 0.78rem; color: rgba(122,90,122,0.55);
-                letter-spacing: 0.1em;
-              ">{{ formatDate(member.birthdate) }}</span>
-            </div>
-          }
+                font-size: 0.95rem; color: rgba(122,90,122,0.5);
+                letter-spacing: 0.12em; margin: 0 0 4px;
+              ">{{ member.name }}</p>
+            }
 
-          <!-- SNS links -->
-          @if (member.instagram || member.facebook || member.x) {
-            <div style="display: flex; align-items: center; gap: 10px; margin-top: 14px;">
-              @if (member.instagram) {
-                <a
-                  [href]="member.instagram"
-                  target="_blank" rel="noopener noreferrer"
-                  class="sns-link sns-link--ig"
-                  title="Instagram"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <rect x="2" y="2" width="20" height="20" rx="5"/>
-                    <circle cx="12" cy="12" r="4"/>
-                    <circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none"/>
-                  </svg>
-                  <span>Instagram</span>
-                </a>
-              }
-              @if (member.facebook) {
-                <a
-                  [href]="member.facebook"
-                  target="_blank" rel="noopener noreferrer"
-                  class="sns-link sns-link--fb"
-                  title="Facebook"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-                  </svg>
-                  <span>Facebook</span>
-                </a>
-              }
-              @if (member.x) {
-                <a
-                  [href]="member.x"
-                  target="_blank" rel="noopener noreferrer"
-                  class="sns-link sns-link--x"
-                  title="X"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                  <span>X</span>
-                </a>
-              }
-            </div>
-          }
+            <!-- Nickname -->
+            @if (member.nickname) {
+              <p [ngStyle]="nicknameStyle(member.color)">
+                「{{ member.nickname }}」
+              </p>
+            }
 
-          <!-- Notes -->
-          @if (member.notes) {
-            <p style="
-              font-family: 'Shippori Mincho', serif;
-              font-size: 0.85rem; line-height: 1.7;
-              color: rgba(122,90,122,0.6);
-              margin-top: 14px; font-style: italic;
-              border-left: 2px solid rgba(232,121,160,0.2);
-              padding-left: 12px;
-            ">{{ member.notes }}</p>
-          }
+            <!-- Color -->
+            @if (member.color) {
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                <div style="
+                  width: 16px; height: 16px; border-radius: 50%;
+                  border: 2px solid rgba(255,255,255,0.9);
+                  box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.12);
+                  flex-shrink: 0;
+                " [style.background]="member.color"></div>
+                <span style="
+                  font-family: 'Shippori Mincho', serif;
+                  font-size: 0.78rem; color: rgba(122,90,122,0.55);
+                  letter-spacing: 0.08em;
+                ">{{ member.color_name || member.color }}</span>
+              </div>
+            }
 
+            <!-- Birthdate -->
+            @if (member.birthdate) {
+              <div style="
+                display: flex; align-items: center; gap: 6px;
+                margin-top: 10px; margin-bottom: 0;
+              ">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(232,121,160,0.5)" stroke-width="1.5">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span style="
+                  font-family: 'Shippori Mincho', serif;
+                  font-size: 0.78rem; color: rgba(122,90,122,0.55);
+                  letter-spacing: 0.1em;
+                ">{{ formatDate(member.birthdate) }}</span>
+              </div>
+            }
+
+            <!-- SNS links -->
+            @if (member.instagram || member.facebook || member.x) {
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 16px;">
+                @if (member.instagram) {
+                  <a [href]="member.instagram" target="_blank" rel="noopener noreferrer"
+                    class="sns-link sns-link--ig" title="Instagram">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <rect x="2" y="2" width="20" height="20" rx="5"/>
+                      <circle cx="12" cy="12" r="4"/>
+                      <circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none"/>
+                    </svg>
+                    <span>Instagram</span>
+                  </a>
+                }
+                @if (member.facebook) {
+                  <a [href]="member.facebook" target="_blank" rel="noopener noreferrer"
+                    class="sns-link sns-link--fb" title="Facebook">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                    </svg>
+                    <span>Facebook</span>
+                  </a>
+                }
+                @if (member.x) {
+                  <a [href]="member.x" target="_blank" rel="noopener noreferrer"
+                    class="sns-link sns-link--x" title="X">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    <span>X</span>
+                  </a>
+                }
+              </div>
+            }
+
+            <!-- Notes -->
+            @if (member.notes) {
+              <p style="
+                font-family: 'Shippori Mincho', serif;
+                font-size: 0.82rem; line-height: 1.85;
+                color: rgba(122,90,122,0.58);
+                margin-top: 16px; font-style: italic;
+                border-left: 2px solid rgba(232,121,160,0.2);
+                padding-left: 12px;
+              ">{{ member.notes }}</p>
+            }
+
+          </div>
         </div>
+
+        <div style="height: 1px; background: rgba(232,121,160,0.12); margin-top: 36px;"></div>
+
       </header>
 
       <!-- ══ Ad banner ══ -->
@@ -385,5 +374,72 @@
   .sns-link--x:hover {
     background: rgba(42,42,42,0.08);
     border-color: rgba(42,42,42,0.35);
+  }
+
+  /* ── Member header layout ── */
+  .member-header {
+    padding-bottom: 0;
+    margin-bottom: 44px;
+  }
+
+  .member-hero-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 36px;
+  }
+
+  .member-portrait-col {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .member-portrait {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    border: 3px solid rgba(255,255,255,0.95);
+  }
+
+  .member-portrait--fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 3.2rem;
+    font-weight: 300;
+  }
+
+  .member-info-col {
+    flex: 1;
+    min-width: 0;
+    padding-top: 8px;
+  }
+
+  /* Mobile: stack vertically */
+  @media (max-width: 520px) {
+    .member-hero-card {
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .member-info-col {
+      text-align: center;
+      padding-top: 0;
+      width: 100%;
+    }
+    .member-info-col div[style*="display: flex"] {
+      justify-content: center;
+    }
+    .member-portrait {
+      width: 130px;
+      height: 130px;
+    }
+    .member-portrait--fallback {
+      width: 130px;
+      height: 130px;
+    }
   }
 </style>

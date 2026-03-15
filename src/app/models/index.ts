@@ -4,6 +4,7 @@ export interface Member {
   name_roman: string | null;
   photo_url: string | null;
   color: string | null;
+  color_name: string | null;
   birthdate: string | null;
   nickname: string | null;
   instagram: string | null;
