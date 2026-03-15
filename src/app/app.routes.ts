@@ -42,10 +42,6 @@ export const routes: Routes = [
     ]
   },
   {
-    path: 'companies',
-    loadComponent: () => import('./pages/companies/companies.component').then(m => m.CompaniesComponent)
-  },
-  {
     path: 'company/:id',
     loadComponent: () => import('./pages/company-page/company-page.component').then(m => m.CompanyPageComponent)
   },

@@ -27,7 +27,7 @@
     @if (!loading && error) {
       <div style="text-align:center;padding:80px 0;">
         <p style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:rgba(122,90,122,0.6);">載入失敗</p>
-        <a routerLink="/companies" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 返回事務所列表</a>
+        <a routerLink="/" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 首頁</a>
       </div>
     }
 
@@ -35,7 +35,7 @@
     @if (!loading && !error && company === null) {
       <div style="text-align:center;padding:80px 0;">
         <p style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:rgba(122,90,122,0.6);">找不到此事務所</p>
-        <a routerLink="/companies" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 返回事務所列表</a>
+        <a routerLink="/" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 首頁</a>
       </div>
     }
 
@@ -44,13 +44,13 @@
 
       <!-- Back link -->
       <div style="padding-top: 32px; margin-bottom: 0;">
-        <a routerLink="/companies" style="
+        <a routerLink="/" style="
           display:inline-flex;align-items:center;gap:6px;
           font-family:'Shippori Mincho',serif;
           font-size:0.72rem;letter-spacing:0.2em;
           color:rgba(122,90,122,0.5);text-decoration:none;
           transition:color 0.2s;
-        ">← 事務所一覽</a>
+        ">← 首頁</a>
       </div>
 
       <!-- ══ Banner + Logo ══ -->
