@@ -204,7 +204,7 @@
           </div>
         }
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="results-grid">
 
           <!-- Member results -->
           @if (memberResults.length > 0 || aliasResults.length > 0) {
@@ -751,6 +751,16 @@
   /* Tab content fade-in */
   .tab-content {
     animation: fadeTab 0.22s ease both;
+  }
+
+  /* ── Results grid ── */
+  .results-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  }
+  @media (max-width: 520px) {
+    .results-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* ── Result cards ── */
