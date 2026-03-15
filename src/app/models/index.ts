@@ -22,6 +22,7 @@ export interface Group {
   photo_url: string | null;
   color: string;
   company: string | null;
+  company_id: string | null;
   founded_at: string | null;
   disbanded_at: string | null;
   notes: string | null;
@@ -69,6 +70,22 @@ export interface GroupVideo {
   title: string | null;
   sort_order: number;
   created_at: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  description: string | null;
+  photo_url: string | null;
+  color: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  x: string | null;
+  youtube: string | null;
+  website: string | null;
+  founded_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SearchResult {
