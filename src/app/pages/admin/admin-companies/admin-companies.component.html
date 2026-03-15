@@ -1,0 +1,189 @@
+<!-- src/app/pages/admin/admin-companies/admin-companies.component.html -->
+<div class="p-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-semibold text-gray-800">公司管理</h1>
+    <button (click)="openCreate()"
+      class="px-4 py-2 bg-purple-500 text-white text-sm rounded-md hover:bg-purple-600 transition-colors">
+      + 新增公司
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-16 text-gray-400">載入中…</div>
+  <div *ngIf="!loading && companies.length === 0" class="text-center py-16 text-gray-400">尚無公司資料</div>
+
+  <div *ngIf="!loading && companies.length > 0" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">頭像</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名稱</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">簡介</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">旗下組合數</th>
+          <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <tr *ngFor="let c of companies" class="hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3">
+            <img *ngIf="c.photo_url" [src]="c.photo_url" [alt]="c.name"
+              class="w-8 h-8 rounded-full object-cover"/>
+            <div *ngIf="!c.photo_url"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium text-white"
+              [style.background]="c.color || '#7c6cf2'">
+              {{ getInitial(c.name) }}
+            </div>
+          </td>
+          <td class="px-4 py-3 font-medium text-gray-800">{{ c.name }}</td>
+          <td class="px-4 py-3 text-gray-500 max-w-xs truncate">{{ c.description || '—' }}</td>
+          <td class="px-4 py-3 text-gray-500 text-center">{{ groupCounts[c.id] ?? 0 }}</td>
+          <td class="px-4 py-3 text-right space-x-2">
+            <button (click)="openEdit(c)"
+              class="text-xs px-2 py-1 rounded text-purple-600 hover:bg-purple-50 transition-colors">
+              編輯
+            </button>
+            <button *ngIf="isAdmin" (click)="delete(c)"
+              class="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50 transition-colors">
+              刪除
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-semibold text-gray-800">{{ isEdit ? '編輯公司' : '新增公司' }}</h2>
+      <button (click)="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <!-- Name -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">公司名稱 <span class="text-red-400">*</span></label>
+        <input type="text" [(ngModel)]="editing.name" placeholder="公司／事務所名稱"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+      </div>
+
+      <!-- photo_url + IG fetch -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">頭像 URL</label>
+        <div class="flex gap-2">
+          <input type="url" [(ngModel)]="editing.photo_url" placeholder="https://..."
+            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+          <button type="button" (click)="fetchIgPhoto()"
+            [disabled]="!editing.instagram || fetchingIg"
+            class="flex-shrink-0 px-3 py-2 rounded-md border border-gray-200 text-pink-400 hover:bg-pink-50 hover:border-pink-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs flex items-center gap-1.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="2" width="20" height="20" rx="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
+            </svg>
+            {{ fetchingIg ? '抓取中…' : '從 IG 抓取' }}
+          </button>
+        </div>
+        <p *ngIf="igFetchError" class="text-xs text-red-400 mt-1">{{ igFetchError }}</p>
+      </div>
+
+      <!-- Color -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">代表色</label>
+        <div class="flex items-center gap-3">
+          <input type="color" [(ngModel)]="editing.color"
+            class="w-10 h-10 rounded border border-gray-200 cursor-pointer p-0.5"/>
+          <input type="text" [(ngModel)]="editing.color" placeholder="#7c6cf2"
+            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">簡介</label>
+        <textarea [(ngModel)]="editing.description" rows="3" placeholder="公司簡介…"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"></textarea>
+      </div>
+
+      <!-- Website -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">官網</label>
+        <input type="url" [(ngModel)]="editing.website" placeholder="https://..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+      </div>
+
+      <!-- Instagram -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-pink-400">
+            <rect x="2" y="2" width="20" height="20" rx="5"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
+          </svg>
+          Instagram
+        </label>
+        <input type="url" [(ngModel)]="editing.instagram" placeholder="https://instagram.com/..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+      </div>
+
+      <!-- Facebook -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-blue-400">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+          </svg>
+          Facebook
+        </label>
+        <input type="url" [(ngModel)]="editing.facebook" placeholder="https://facebook.com/..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+      </div>
+
+      <!-- X -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="text-gray-600">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          X (Twitter)
+        </label>
+        <input type="url" [(ngModel)]="editing.x" placeholder="https://x.com/..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+      </div>
+
+      <!-- YouTube -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" class="text-red-500">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+          YouTube
+        </label>
+        <input type="url" [(ngModel)]="editing.youtube" placeholder="https://youtube.com/..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+      </div>
+
+      <!-- Founded -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">成立日期</label>
+        <input type="date" [(ngModel)]="editing.founded_at"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+      </div>
+
+      <p *ngIf="error" class="text-xs text-red-500">{{ error }}</p>
+    </div>
+
+    <div class="flex justify-end gap-3 mt-6">
+      <button (click)="showModal = false"
+        class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">取消</button>
+      <button (click)="save()" [disabled]="saving"
+        class="px-4 py-2 bg-purple-500 text-white text-sm rounded-md hover:bg-purple-600 disabled:opacity-50 transition-colors">
+        {{ saving ? '儲存中…' : '儲存' }}
+      </button>
+    </div>
+  </div>
+</div>
