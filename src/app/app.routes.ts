@@ -26,6 +26,7 @@ export const routes: Routes = [
     children: [
       { path: 'members', loadComponent: () => import('./pages/admin/admin-members/admin-members.component').then(m => m.AdminMembersComponent) },
       { path: 'groups', loadComponent: () => import('./pages/admin/admin-groups/admin-groups.component').then(m => m.AdminGroupsComponent) },
+      { path: 'companies', loadComponent: () => import('./pages/admin/admin-companies/admin-companies.component').then(m => m.AdminCompaniesComponent) },
       { path: 'history', loadComponent: () => import('./pages/admin/admin-history/admin-history.component').then(m => m.AdminHistoryComponent) },
       {
         path: 'audit-log',
