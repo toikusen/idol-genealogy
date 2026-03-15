@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { GroupService } from '../../../core/group.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
-import { Group, GroupVideo } from '../../../models';
+import { CompanyService } from '../../../core/company.service';
+import { Group, GroupVideo, Company } from '../../../models';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -28,6 +29,8 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   fetchingIg = false;
   igFetchError = '';
 
+  companies: Company[] = [];
+
   // Videos
   videos: GroupVideo[] = [];
   newVideoUrl = '';
@@ -36,7 +39,8 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   constructor(
     private groupService: GroupService,
-    private adminRole: AdminRoleService
+    private adminRole: AdminRoleService,
+    private companyService: CompanyService
   ) {
     this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
   }
@@ -64,6 +68,12 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     }
   }
 
+  private async loadCompanies() {
+    try {
+      this.companies = await this.companyService.getAll();
+    } catch { this.companies = []; }
+  }
+
   openCreate() {
     this.editing = { color: '#e879a0' };
     this.isEdit = false;
@@ -73,6 +83,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     this.newVideoUrl = '';
     this.videoError = '';
     this.showModal = true;
+    this.loadCompanies();
   }
 
   async openEdit(g: Group) {
@@ -84,6 +95,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     this.videoError = '';
     this.showModal = true;
     this.videos = await this.groupService.getVideosByGroup(g.id);
+    this.loadCompanies();
   }
 
   extractIgUsername(igUrl: string): string | null {

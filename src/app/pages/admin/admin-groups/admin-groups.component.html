@@ -158,15 +158,22 @@
         <p *ngIf="editing.photo_url && !igFetchError" class="text-xs text-gray-400 mt-1 truncate">{{ editing.photo_url }}</p>
       </div>
 
-      <!-- company -->
+      <!-- company_id dropdown -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">所屬事務所</label>
-        <input
-          type="text"
-          [(ngModel)]="editing.company"
-          placeholder="例：Toypla、Shining Star Project"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
-        />
+        <label class="block text-xs font-medium text-gray-600 mb-1">所屬事務所（公司頁面）</label>
+        <select [(ngModel)]="editing.company_id"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+          <option [ngValue]="null">— 無 —</option>
+          <option *ngFor="let c of companies" [ngValue]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+
+      <!-- legacy company text (fallback for unlinked groups) -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">自定義事務所名稱（若未建立公司頁）</label>
+        <input type="text" [(ngModel)]="editing.company"
+          placeholder="例：Toypla"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
       </div>
 
       <!-- color: color picker + hex input side by side -->
