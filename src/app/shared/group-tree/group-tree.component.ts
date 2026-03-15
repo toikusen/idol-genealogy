@@ -52,7 +52,7 @@ interface FlatGroup {
             <div class="flex items-center gap-3 mb-4">
               <span class="w-2 h-2 rounded-full flex-shrink-0 bg-gray-300"></span>
               <h3 class="text-sm font-medium text-gray-400 uppercase tracking-widest"
-                  style="font-family:'Cormorant Garamond',serif;letter-spacing:0.15em;">OG</h3>
+                  style="font-family:'Cormorant Garamond',serif;letter-spacing:0.15em;">退役</h3>
               <div class="flex-1 h-px bg-gray-100"></div>
               <span class="text-xs text-gray-400">{{ flatGroup.formerNodes.length }}</span>
             </div>
