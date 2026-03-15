@@ -1,0 +1,298 @@
+<!-- src/app/pages/company-page/company-page.component.html -->
+<div style="min-height: 100vh; position: relative; overflow-x: hidden;">
+
+  <!-- Ambient background -->
+  <div style="
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 55% 45% at 10% 5%, rgba(124,108,242,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 45% 45% at 90% 85%, rgba(232,121,160,0.07) 0%, transparent 60%);
+  "></div>
+
+  <div style="position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 0 32px 96px;">
+
+    <!-- Loading -->
+    @if (loading) {
+      <div style="display:flex;align-items:center;justify-content:center;min-height:60vh;">
+        <div style="
+          width: 36px; height: 36px; border-radius: 50%;
+          border: 2px solid rgba(124,108,242,0.15);
+          border-top-color: rgba(124,108,242,0.6);
+          animation: spin 0.8s linear infinite;
+        "></div>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (!loading && error) {
+      <div style="text-align:center;padding:80px 0;">
+        <p style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:rgba(122,90,122,0.6);">載入失敗</p>
+        <a routerLink="/companies" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 返回事務所列表</a>
+      </div>
+    }
+
+    <!-- Not found -->
+    @if (!loading && !error && company === null) {
+      <div style="text-align:center;padding:80px 0;">
+        <p style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:rgba(122,90,122,0.6);">找不到此事務所</p>
+        <a routerLink="/companies" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 返回事務所列表</a>
+      </div>
+    }
+
+    <!-- Company profile -->
+    @if (!loading && !error && company !== null) {
+
+      <!-- Back link -->
+      <div style="padding-top: 32px; margin-bottom: 0;">
+        <a routerLink="/companies" style="
+          display:inline-flex;align-items:center;gap:6px;
+          font-family:'Shippori Mincho',serif;
+          font-size:0.72rem;letter-spacing:0.2em;
+          color:rgba(122,90,122,0.5);text-decoration:none;
+          transition:color 0.2s;
+        ">← 事務所一覽</a>
+      </div>
+
+      <!-- ══ Banner + Logo ══ -->
+      <div style="margin-top: 24px; position: relative;">
+        <!-- Banner -->
+        <div [style]="getBannerStyle(company)"
+          style="height: 120px; border-radius: 12px; width: 100%;">
+        </div>
+
+        <!-- Logo overlapping banner -->
+        <div style="position:absolute; bottom:-36px; left:24px;">
+          @if (company.photo_url) {
+            <img [src]="company.photo_url" [alt]="company.name"
+              style="
+                width: 80px; height: 80px; border-radius: 50%;
+                object-fit: cover;
+                border: 3px solid white;
+                box-shadow: 0 4px 16px rgba(45,27,46,0.15);
+              "/>
+          } @else {
+            <div [style.background]="company.color || '#7c6cf2'" style="
+              width: 80px; height: 80px; border-radius: 50%;
+              border: 3px solid white;
+              box-shadow: 0 4px 16px rgba(45,27,46,0.15);
+              display:flex;align-items:center;justify-content:center;
+              font-family:'Cormorant Garamond',Georgia,serif;
+              font-size:2rem; font-weight:300; color:white;
+            ">{{ getInitial(company.name) }}</div>
+          }
+        </div>
+      </div>
+
+      <!-- ══ Info section ══ -->
+      <div style="padding-top: 52px; padding-bottom: 36px; border-bottom: 1px solid rgba(124,108,242,0.1);">
+
+        <!-- Label -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="
+            font-family:'Shippori Mincho',serif;
+            font-size:0.6rem;letter-spacing:0.42em;
+            text-transform:uppercase;color:rgba(124,108,242,0.5);
+          ">Agency · 事務所</span>
+        </div>
+
+        <!-- Name -->
+        <h1 style="
+          font-family:'Cormorant Garamond',Georgia,serif;
+          font-size:clamp(1.8rem,5vw,2.6rem);
+          font-weight:400;letter-spacing:0.02em;
+          color:#2d1b2e;margin:0 0 8px;
+        ">{{ company.name }}</h1>
+
+        <!-- Founded -->
+        @if (company.founded_at) {
+          <p style="
+            font-family:'Shippori Mincho',serif;
+            font-size:0.78rem;color:rgba(122,90,122,0.5);
+            letter-spacing:0.08em;margin:0 0 12px;
+          ">{{ company.founded_at | slice:0:4 }}年成立</p>
+        }
+
+        <!-- Description -->
+        @if (company.description) {
+          <p style="
+            font-family:'Shippori Mincho',serif;
+            font-size:0.9rem;line-height:1.85;
+            color:rgba(60,40,60,0.7);
+            max-width:560px;margin:0 0 20px;
+          ">{{ company.description }}</p>
+        }
+
+        <!-- SNS links -->
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px;">
+          @if (company.instagram) {
+            <a [href]="company.instagram" target="_blank" rel="noopener noreferrer"
+              class="sns-link sns-link--ig">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="2" y="2" width="20" height="20" rx="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none"/>
+              </svg>
+              <span>Instagram</span>
+            </a>
+          }
+          @if (company.facebook) {
+            <a [href]="company.facebook" target="_blank" rel="noopener noreferrer"
+              class="sns-link sns-link--fb">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+              </svg>
+              <span>Facebook</span>
+            </a>
+          }
+          @if (company.x) {
+            <a [href]="company.x" target="_blank" rel="noopener noreferrer"
+              class="sns-link sns-link--x">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              <span>X</span>
+            </a>
+          }
+          @if (company.youtube) {
+            <a [href]="company.youtube" target="_blank" rel="noopener noreferrer"
+              class="sns-link sns-link--yt">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              <span>YouTube</span>
+            </a>
+          }
+          @if (company.website) {
+            <a [href]="company.website" target="_blank" rel="noopener noreferrer"
+              class="sns-link sns-link--web">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              <span>官網</span>
+            </a>
+          }
+        </div>
+      </div>
+
+      <!-- ══ Groups section ══ -->
+      <section style="margin-top: 44px;">
+
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+          <div style="height:1px;width:20px;background:rgba(124,108,242,0.45);"></div>
+          <span style="
+            font-family:'Shippori Mincho',serif;
+            font-size:0.65rem;letter-spacing:0.38em;
+            text-transform:uppercase;color:rgba(124,108,242,0.55);
+            white-space:nowrap;
+          ">旗下組合</span>
+          <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(124,108,242,0.2),transparent);"></div>
+        </div>
+
+        <!-- No groups -->
+        @if (activeGroups.length === 0 && disbandedGroups.length === 0) {
+          <p style="font-family:'Shippori Mincho',serif;font-size:0.85rem;color:rgba(122,90,122,0.45);">目前無旗下組合</p>
+        }
+
+        <!-- Active groups -->
+        @if (activeGroups.length > 0) {
+          <div style="margin-bottom:24px;">
+            <p style="
+              font-family:'Shippori Mincho',serif;
+              font-size:0.68rem;letter-spacing:0.2em;
+              color:rgba(122,90,122,0.45);margin:0 0 12px;
+            ">現役</p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              @for (g of activeGroups; track g.id) {
+                <a [routerLink]="['/group', g.id]"
+                  style="
+                    display:inline-flex;align-items:center;gap:6px;
+                    padding:6px 14px;border-radius:20px;
+                    border: 1px solid; text-decoration:none;
+                    font-family:'Shippori Mincho',serif;font-size:0.82rem;
+                    transition:all 0.2s;
+                  "
+                  [style.borderColor]="g.color || '#7c6cf2'"
+                  [style.color]="g.color || '#7c6cf2'"
+                  [style.background]="(g.color || '#7c6cf2') + '12'"
+                >
+                  <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;"
+                    [style.background]="g.color || '#7c6cf2'"></span>
+                  {{ g.name_jp || g.name }}
+                </a>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Disbanded groups -->
+        @if (disbandedGroups.length > 0) {
+          <div>
+            <p style="
+              font-family:'Shippori Mincho',serif;
+              font-size:0.68rem;letter-spacing:0.2em;
+              color:rgba(122,90,122,0.4);margin:0 0 12px;
+            ">解散・活動停止</p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              @for (g of disbandedGroups; track g.id) {
+                <a [routerLink]="['/group', g.id]"
+                  style="
+                    display:inline-flex;align-items:center;gap:6px;
+                    padding:6px 14px;border-radius:20px;
+                    border:1px solid rgba(180,160,180,0.3);
+                    color:rgba(122,90,122,0.5);
+                    background:rgba(180,160,180,0.06);
+                    text-decoration:none;
+                    font-family:'Shippori Mincho',serif;font-size:0.82rem;
+                    transition:all 0.2s;
+                  "
+                >
+                  <span style="width:8px;height:8px;border-radius:50%;background:rgba(160,140,160,0.35);flex-shrink:0;"></span>
+                  {{ g.name_jp || g.name }}
+                </a>
+              }
+            </div>
+          </div>
+        }
+
+      </section>
+
+      <!-- Footer -->
+      <footer style="margin-top:80px;text-align:center;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;">
+          <div style="height:1px;width:40px;background:linear-gradient(to right,transparent,rgba(124,108,242,0.2));"></div>
+          <div style="width:3px;height:3px;border-radius:50%;background:rgba(124,108,242,0.25);"></div>
+          <div style="width:3px;height:3px;border-radius:50%;background:rgba(232,121,160,0.2);"></div>
+          <div style="width:3px;height:3px;border-radius:50%;background:rgba(124,108,242,0.25);"></div>
+          <div style="height:1px;width:40px;background:linear-gradient(to left,transparent,rgba(124,108,242,0.2));"></div>
+        </div>
+        <p style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:0.75rem;color:rgba(184,160,184,0.45);letter-spacing:0.15em;margin-bottom:14px;">偶像成員記録 · Idol Archive</p>
+        <a routerLink="/privacy" style="font-size:0.72rem;color:rgba(122,90,122,0.4);text-decoration:none;letter-spacing:0.04em;">隱私政策</a>
+      </footer>
+
+    }
+  </div>
+</div>
+
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .sns-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 10px; border-radius: 20px; border: 1px solid;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.72rem; letter-spacing: 0.08em;
+    text-decoration: none; transition: all 0.2s ease;
+  }
+  .sns-link--ig { color:#c2507a;border-color:rgba(194,80,122,0.25);background:rgba(194,80,122,0.05); }
+  .sns-link--ig:hover { background:rgba(194,80,122,0.1);border-color:rgba(194,80,122,0.45); }
+  .sns-link--fb { color:#3b6ec2;border-color:rgba(59,110,194,0.25);background:rgba(59,110,194,0.05); }
+  .sns-link--fb:hover { background:rgba(59,110,194,0.1);border-color:rgba(59,110,194,0.45); }
+  .sns-link--x { color:#2a2a2a;border-color:rgba(42,42,42,0.18);background:rgba(42,42,42,0.04); }
+  .sns-link--x:hover { background:rgba(42,42,42,0.08);border-color:rgba(42,42,42,0.35); }
+  .sns-link--yt { color:#dc2626;border-color:rgba(220,38,38,0.25);background:rgba(220,38,38,0.05); }
+  .sns-link--yt:hover { background:rgba(220,38,38,0.1);border-color:rgba(220,38,38,0.45); }
+  .sns-link--web { color:#6b7280;border-color:rgba(107,114,128,0.25);background:rgba(107,114,128,0.05); }
+  .sns-link--web:hover { background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.45); }
+</style>
