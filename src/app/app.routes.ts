@@ -45,6 +45,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/companies/companies.component').then(m => m.CompaniesComponent)
   },
   {
+    path: 'company/:id',
+    loadComponent: () => import('./pages/company-page/company-page.component').then(m => m.CompanyPageComponent)
+  },
+  {
     path: 'privacy',
     loadComponent: () => import('./pages/privacy/privacy.component').then(m => m.PrivacyComponent)
   },
