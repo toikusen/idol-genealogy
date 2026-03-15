@@ -127,7 +127,7 @@ export class HomeComponent implements OnInit {
     try {
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return '—';
-      return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'short' });
+      return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' });
     } catch {
       return '—';
     }
