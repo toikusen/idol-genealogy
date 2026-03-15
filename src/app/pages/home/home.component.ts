@@ -27,6 +27,7 @@ export class HomeComponent implements OnInit {
   searching = false;
 
   allGroups: Group[] = [];
+  allCompanies: Company[] = [];
   activeTab: 'members' | 'groups' | 'companies' = 'members';
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
 
@@ -70,15 +71,18 @@ export class HomeComponent implements OnInit {
     }
 
     try {
-      const [recent, groups] = await Promise.all([
+      const [recent, groups, companies] = await Promise.all([
         this.memberService.getRecent(10),
         this.groupService.getAll(),
+        this.companyService.getAll(),
       ]);
       this.recentMembers = recent;
       this.allGroups = groups;
+      this.allCompanies = companies;
     } catch {
       this.recentMembers = [];
       this.allGroups = [];
+      this.allCompanies = [];
     }
   }
 
@@ -178,6 +182,10 @@ export class HomeComponent implements OnInit {
       activeCount: groups.filter(g => !g.disbanded_at).length,
       disbandedCount: groups.filter(g => !!g.disbanded_at).length,
     }));
+  }
+
+  getCompanyId(name: string): string | null {
+    return this.allCompanies.find(c => c.name === name)?.id ?? null;
   }
 
   getGroupLabel(group: Group): string | null {

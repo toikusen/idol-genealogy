@@ -554,11 +554,20 @@
               <div>
                 <!-- Company header -->
                 <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px;">
-                  <h3 style="
-                    font-family: 'Shippori Mincho', serif;
-                    font-size: 1rem; font-weight: 600;
-                    color: #5a3a10; letter-spacing: 0.08em; margin: 0;
-                  ">{{section.name}}</h3>
+                  @if (getCompanyId(section.name)) {
+                    <a [routerLink]="['/company', getCompanyId(section.name)]" style="
+                      font-family: 'Shippori Mincho', serif;
+                      font-size: 1rem; font-weight: 600;
+                      color: #5a3a10; letter-spacing: 0.08em; margin: 0;
+                      text-decoration: none;
+                    ">{{section.name}} →</a>
+                  } @else {
+                    <h3 style="
+                      font-family: 'Shippori Mincho', serif;
+                      font-size: 1rem; font-weight: 600;
+                      color: #5a3a10; letter-spacing: 0.08em; margin: 0;
+                    ">{{section.name}}</h3>
+                  }
                   <div style="flex: 1; height: 1px; background: rgba(180,130,40,0.15); margin-top: 2px;"></div>
                   <span style="
                     font-family: 'Cormorant Garamond', Georgia, serif;
