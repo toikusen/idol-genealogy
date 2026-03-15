@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { GroupService } from '../../../core/group.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { Group, GroupVideo } from '../../../models';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-admin-groups',
@@ -23,6 +24,9 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   error = '';
   isAdmin = false;
   private _sub: Subscription;
+
+  fetchingIg = false;
+  igFetchError = '';
 
   // Videos
   videos: GroupVideo[] = [];
@@ -64,6 +68,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     this.editing = { color: '#e879a0' };
     this.isEdit = false;
     this.error = '';
+    this.igFetchError = '';
     this.videos = [];
     this.newVideoUrl = '';
     this.videoError = '';
@@ -74,10 +79,41 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     this.editing = { ...g };
     this.isEdit = true;
     this.error = '';
+    this.igFetchError = '';
     this.newVideoUrl = '';
     this.videoError = '';
     this.showModal = true;
     this.videos = await this.groupService.getVideosByGroup(g.id);
+  }
+
+  extractIgUsername(igUrl: string): string | null {
+    const match = igUrl.match(/instagram\.com\/([^/?#\s]+)/);
+    return match?.[1] ?? null;
+  }
+
+  async fetchIgPhoto() {
+    const igUrl = this.editing.instagram;
+    if (!igUrl) return;
+    const username = this.extractIgUsername(igUrl);
+    if (!username) { this.igFetchError = '無法解析 Instagram 帳號'; return; }
+
+    this.fetchingIg = true;
+    this.igFetchError = '';
+    try {
+      const res = await fetch(
+        `${environment.supabaseUrl}/functions/v1/ig-photo?username=${encodeURIComponent(username)}`
+      );
+      const json = await res.json();
+      if (json.photo_url) {
+        this.editing.photo_url = json.photo_url;
+      } else {
+        this.igFetchError = json.hint ?? json.error ?? '抓取失敗';
+      }
+    } catch (e: any) {
+      this.igFetchError = e.message || '網路錯誤';
+    } finally {
+      this.fetchingIg = false;
+    }
   }
 
   extractYouTubeId(url: string): string | null {

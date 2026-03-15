@@ -29,7 +29,7 @@
     <table class="w-full text-sm">
       <thead class="bg-gray-50 border-b border-gray-200">
         <tr>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">色</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">頭像</th>
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名稱</th>
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日文名</th>
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成立</th>
@@ -40,10 +40,26 @@
       <tbody class="divide-y divide-gray-100">
         <tr *ngFor="let g of filteredGroups" class="hover:bg-gray-50 transition-colors">
           <td class="px-4 py-3">
-            <span
-              class="inline-block w-4 h-4 rounded-full"
-              [style.background-color]="g.color"
-            ></span>
+            <div class="relative inline-block">
+              <img
+                *ngIf="g.photo_url"
+                [src]="g.photo_url"
+                [alt]="g.name"
+                class="w-8 h-8 rounded-full object-cover"
+              />
+              <div
+                *ngIf="!g.photo_url"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
+                [style.background]="g.color + '22'"
+                [style.color]="g.color"
+              >
+                {{ g.name.charAt(0) }}
+              </div>
+              <span
+                class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
+                [style.background]="g.color"
+              ></span>
+            </div>
           </td>
           <td class="px-4 py-3 font-medium text-gray-800">{{ g.name }}</td>
           <td class="px-4 py-3 text-gray-500">{{ g.name_jp || '—' }}</td>
@@ -111,6 +127,35 @@
           placeholder="日本語名前"
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
         />
+      </div>
+
+      <!-- photo_url -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">頭像 URL</label>
+        <div class="flex gap-2">
+          <input
+            type="url"
+            [(ngModel)]="editing.photo_url"
+            placeholder="https://..."
+            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+          />
+          <button
+            type="button"
+            (click)="fetchIgPhoto()"
+            [disabled]="!editing.instagram || fetchingIg"
+            title="從 Instagram 抓取大頭貼"
+            class="flex-shrink-0 px-3 py-2 rounded-md border border-gray-200 text-pink-400 hover:bg-pink-50 hover:border-pink-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs flex items-center gap-1.5"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="2" width="20" height="20" rx="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
+            </svg>
+            {{ fetchingIg ? '抓取中…' : '從 IG 抓取' }}
+          </button>
+        </div>
+        <p *ngIf="igFetchError" class="text-xs text-red-400 mt-1">{{ igFetchError }}</p>
+        <p *ngIf="editing.photo_url && !igFetchError" class="text-xs text-gray-400 mt-1 truncate">{{ editing.photo_url }}</p>
       </div>
 
       <!-- company -->

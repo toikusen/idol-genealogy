@@ -19,6 +19,7 @@ export interface Group {
   id: string;
   name: string;
   name_jp: string | null;
+  photo_url: string | null;
   color: string;
   company: string | null;
   founded_at: string | null;
