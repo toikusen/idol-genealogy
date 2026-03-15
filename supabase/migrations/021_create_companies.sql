@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS companies (
 );
 
 -- Auto-update updated_at (moddatetime extension already enabled in migration 001)
-CREATE TRIGGER handle_updated_at
+CREATE OR REPLACE TRIGGER companies_updated_at
   BEFORE UPDATE ON companies
   FOR EACH ROW EXECUTE PROCEDURE extensions.moddatetime(updated_at);
 
@@ -28,5 +28,5 @@ CREATE POLICY "companies_select_public"
 
 CREATE POLICY "companies_write_authenticated"
   ON companies FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (auth.uid() is not null)
+  WITH CHECK (auth.uid() is not null);
