@@ -192,12 +192,19 @@
               margin-bottom: 12px;
             ">Companies · 事務所 ({{companyResults.length}})</div>
             <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-              @for (company of companyResults; track company) {
-                <a routerLink="/companies" class="company-result-chip">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0;opacity:0.7;">
-                    <path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M8 10v2M8 15v2M12 10v2M12 15v2M16 10v2M16 15v2"/>
-                  </svg>
-                  {{company}}
+              @for (company of companyResults; track company.id) {
+                <a [routerLink]="['/company', company.id]" class="company-result-chip">
+                  @if (company.photo_url) {
+                    <img [src]="company.photo_url" [alt]="company.name"
+                      style="width:18px;height:18px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
+                  } @else {
+                    <span style="
+                      width:18px;height:18px;border-radius:50%;flex-shrink:0;
+                      display:inline-flex;align-items:center;justify-content:center;
+                      font-size:0.65rem;font-weight:600;color:white;
+                    " [style.background]="company.color || '#7c6cf2'">{{ company.name.charAt(0) }}</span>
+                  }
+                  {{company.name}}
                 </a>
               }
             </div>

@@ -27,6 +27,14 @@ export class CompanyService {
     return counts;
   }
 
+  async search(query: string): Promise<Company[]> {
+    const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
+    const { data, error } = await this.db
+      .from('companies').select('*').ilike('name', `%${safe}%`).order('name', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
   async getById(id: string): Promise<Company | null> {
     const { data, error } = await this.db
       .from('companies').select('*').eq('id', id).single();

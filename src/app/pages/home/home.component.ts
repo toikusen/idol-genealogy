@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
+import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
-import { Member, Group } from '../../models';
+import { Member, Group, Company } from '../../models';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 
 const SITE_URL = 'https://idol-genealogy.pages.dev';
@@ -22,7 +23,7 @@ export class HomeComponent implements OnInit {
   memberResults: Member[] = [];
   aliasResults: { member: Member; alias: string }[] = [];
   groupResults: Group[] = [];
-  companyResults: string[] = [];
+  companyResults: Company[] = [];
   searching = false;
 
   allGroups: Group[] = [];
@@ -34,6 +35,7 @@ export class HomeComponent implements OnInit {
   constructor(
     private memberService: MemberService,
     private groupService: GroupService,
+    private companyService: CompanyService,
     private seo: SeoService,
     private route: ActivatedRoute
   ) {}
@@ -99,7 +101,7 @@ export class HomeComponent implements OnInit {
         this.memberService.search(this.query),
         this.memberService.searchByAlias(this.query),
         this.groupService.search(this.query),
-        this.groupService.searchCompanies(this.query),
+        this.companyService.search(this.query),
       ]);
       this.memberResults = members;
       // Exclude alias hits whose member already appears in direct results
