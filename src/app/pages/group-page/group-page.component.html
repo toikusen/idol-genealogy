@@ -208,6 +208,29 @@
             }
           </div>
 
+          <!-- Company link -->
+          @if (group.company_id || group.company) {
+            <div style="display: flex; align-items: center; gap: 7px; margin-top: 14px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(122,90,122,0.4)" stroke-width="1.8">
+                <rect x="2" y="7" width="20" height="14" rx="2"/>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+              </svg>
+              @if (group.company_id) {
+                <a [routerLink]="['/company', group.company_id]" style="
+                  font-family: 'Shippori Mincho', serif;
+                  font-size: 0.75rem; letter-spacing: 0.1em;
+                  color: rgba(124,108,242,0.65); text-decoration: none;
+                ">{{ group.company || '所屬事務所' }}</a>
+              } @else {
+                <span style="
+                  font-family: 'Shippori Mincho', serif;
+                  font-size: 0.75rem; letter-spacing: 0.1em;
+                  color: rgba(122,90,122,0.5);
+                ">{{ group.company }}</span>
+              }
+            </div>
+          }
+
           <!-- Style tag + SNS links -->
           @if (group.style || group.instagram || group.facebook || group.x || group.youtube) {
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(184,160,184,0.12);">
