@@ -259,18 +259,10 @@
       <!-- ══ Ad banner ══ -->
       <app-ad-banner adSlot="4061570176"></app-ad-banner>
 
-      <!-- ══ Career graph section ══ -->
-      <section class="mt-8 px-4 sm:px-6">
-        <h2 class="text-xs font-semibold tracking-widest text-pink-400 uppercase mb-4">
-          Career · キャリア
-        </h2>
-        <app-member-career-graph [histories]="histories" />
-      </section>
-
       <!-- ══ Activity history section ══ -->
       <section>
 
-        <!-- Section label -->
+        <!-- Section label + toggle -->
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
           <div style="height: 1px; width: 20px; background: rgba(232,121,160,0.45);"></div>
           <span style="
@@ -280,10 +272,60 @@
             white-space: nowrap;
           ">活動歷程</span>
           <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.22), transparent);"></div>
+          <!-- View toggle -->
+          <div style="display: flex; border: 1px solid rgba(232,121,160,0.25); border-radius: 6px; overflow: hidden; flex-shrink: 0;">
+            <button
+              (click)="historyView = 'timeline'"
+              style="
+                display: flex; align-items: center; gap: 4px;
+                padding: 4px 10px;
+                font-family: 'Shippori Mincho', serif;
+                font-size: 0.65rem; letter-spacing: 0.1em;
+                border: none; cursor: pointer; transition: all 0.2s;
+              "
+              [style.background]="historyView === 'timeline' ? 'rgba(232,121,160,0.12)' : 'transparent'"
+              [style.color]="historyView === 'timeline' ? 'rgba(194,80,122,0.85)' : 'rgba(122,90,122,0.45)'"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              歷程
+            </button>
+            <div style="width: 1px; background: rgba(232,121,160,0.2);"></div>
+            <button
+              (click)="historyView = 'career'"
+              style="
+                display: flex; align-items: center; gap: 4px;
+                padding: 4px 10px;
+                font-family: 'Shippori Mincho', serif;
+                font-size: 0.65rem; letter-spacing: 0.1em;
+                border: none; cursor: pointer; transition: all 0.2s;
+              "
+              [style.background]="historyView === 'career' ? 'rgba(232,121,160,0.12)' : 'transparent'"
+              [style.color]="historyView === 'career' ? 'rgba(194,80,122,0.85)' : 'rgba(122,90,122,0.45)'"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="8" width="5" height="8" rx="1"/>
+                <rect x="16" y="8" width="5" height="8" rx="1"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+                <polyline points="14,9 16,12 14,15"/>
+              </svg>
+              流程
+            </button>
+          </div>
         </div>
 
-        <!-- Timeline component -->
-        <app-member-timeline [histories]="histories"></app-member-timeline>
+        <!-- Content -->
+        @if (historyView === 'timeline') {
+          <app-member-timeline [histories]="histories"></app-member-timeline>
+        } @else {
+          <app-member-career-graph [histories]="histories" />
+        }
 
       </section>
 

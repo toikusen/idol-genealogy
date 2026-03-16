@@ -22,6 +22,7 @@ export class MemberPageComponent implements OnInit {
   histories: History[] = [];
   loading = true;
   error = false;
+  historyView: 'timeline' | 'career' = 'timeline';
 
   constructor(
     private route: ActivatedRoute,
