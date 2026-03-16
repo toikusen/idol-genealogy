@@ -37,6 +37,7 @@ export const routes: Routes = [
         path: 'roles',
         loadComponent: () => import('./pages/admin/admin-roles/admin-roles.component').then(m => m.AdminRolesComponent)
       },
+      { path: 'team', loadComponent: () => import('./pages/admin/admin-team/admin-team.component').then(m => m.AdminTeamComponent) },
       { path: '', redirectTo: 'members', pathMatch: 'full' },
       { path: '**', redirectTo: 'members' }
     ]
@@ -48,6 +49,14 @@ export const routes: Routes = [
   {
     path: 'privacy',
     loadComponent: () => import('./pages/privacy/privacy.component').then(m => m.PrivacyComponent)
+  },
+  {
+    path: 'about',
+    loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent)
+  },
+  {
+    path: 'contact',
+    loadComponent: () => import('./pages/contact/contact.component').then(m => m.ContactComponent)
   },
   { path: '**', redirectTo: '' }
 ];
