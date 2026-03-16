@@ -67,6 +67,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.ganttRows = [];
     this.ganttYears = [];
     this.similarGroups = [];
+    this.allMemberHistories = [];
+    this.activeTab = 'members';
     try {
       const [group, teams, histories, videos] = await Promise.all([
         this.groupService.getById(id),
