@@ -643,7 +643,7 @@
         </div>
 
         @if (activeTab === 'members') {
-          <app-group-tree [histories]="histories" [teams]="teams" />
+          <app-group-tree [group]="group" [histories]="histories" [teams]="teams" (selectMember)="selectMember($event)" />
         }
         @if (activeTab === 'connections') {
           <app-group-connection-graph
