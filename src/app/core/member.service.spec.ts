@@ -3,11 +3,11 @@ import { MemberService } from './member.service';
 import { SupabaseService } from './supabase.service';
 import { Member } from '../models';
 
-const mockMember: Member = {
+const mockMember = {
   id: 'uuid-1', name: '山田花子', name_jp: '山田花子',
   photo_url: null, birthdate: '1995-01-01', notes: null,
   updated_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z'
-};
+} as unknown as Member;
 
 const mockSupabaseService = {
   client: {

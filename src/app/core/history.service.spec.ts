@@ -3,13 +3,13 @@ import { HistoryService } from './history.service';
 import { SupabaseService } from './supabase.service';
 import { History } from '../models';
 
-const mockHistory: History = {
+const mockHistory = {
   id: 'h-1', member_id: 'm-1', group_id: 'g-1', team_id: null,
   role: '正式成員', status: 'graduated',
   joined_at: '2013-04-01', left_at: '2019-03-01',
   notes: null, is_approved: true,
   updated_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z'
-};
+} as unknown as History;
 
 const mockClient = {
   from: jasmine.createSpy('from').and.returnValue({

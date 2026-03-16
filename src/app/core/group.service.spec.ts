@@ -3,11 +3,11 @@ import { GroupService } from './group.service';
 import { SupabaseService } from './supabase.service';
 import { Group } from '../models';
 
-const mockGroup: Group = {
+const mockGroup = {
   id: 'g-1', name: 'AKB48', name_jp: 'AKB48', color: '#e879a0',
   founded_at: '2005-12-08', disbanded_at: null,
   updated_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z'
-};
+} as unknown as Group;
 
 const mockClient = {
   from: jasmine.createSpy('from').and.returnValue({
