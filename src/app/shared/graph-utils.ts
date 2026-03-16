@@ -46,7 +46,7 @@ export function buildCareerGraph(histories: History[]): {
     historyId: h.id,
     groupId: h.group_id,
     groupName: h.group?.name ?? '—',
-    memberName: h.name_at_time ?? '—',
+    memberName: h.name_at_time ?? h.member?.name ?? '—',
     joinedAt: h.joined_at.slice(0, 7).replace('-', '.'),
     leftAt: h.left_at ? h.left_at.slice(0, 7).replace('-', '.') : null,
     isCurrent: !h.left_at,
@@ -68,15 +68,15 @@ export function buildGlobalMap(
 ): { nodes: MapNode[]; edges: MapEdge[] } {
   // Build nodes (one per group)
   const nodeMap = new Map<string, MapNode>();
-  for (const g of groups) {
+  groups.forEach((g, index) => {
     nodeMap.set(g.id, {
       id: g.id,
       name: g.name,
-      x: Math.random() * 800,
-      y: Math.random() * 500,
+      x: (index % 10) * 100 + 50,
+      y: Math.floor(index / 10) * 100 + 50,
       hasConnections: false,
     });
-  }
+  });
 
   // Build edges by grouping histories per member and finding consecutive groups
   const byMember = new Map<string, History[]>();
@@ -104,6 +104,7 @@ export function buildGlobalMap(
       fromNode.hasConnections = true;
       toNode.hasConnections = true;
 
+      // Directed edge: A→B and B→A are treated as distinct (shows transfer direction)
       // Deduplicate edges (same group pair = one edge)
       const key = `${from.group_id}→${to.group_id}`;
       if (!edgeKeys.has(key)) {
@@ -111,7 +112,7 @@ export function buildGlobalMap(
         edges.push({
           source: fromNode,
           target: toNode,
-          memberName: (from as any).member?.name ?? '—',
+          memberName: from.member?.name ?? '—',
         });
       }
     }
