@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuditLogService } from '../../../core/audit-log.service';
+import { AdminRoleService } from '../../../core/admin-role.service';
 import { AuditLog } from '../../../models';
 
 @Component({
@@ -25,9 +26,17 @@ export class AdminAuditLogComponent implements OnInit {
   tableOptions = ['members', 'groups', 'teams', 'history'];
   operationOptions = ['INSERT', 'UPDATE', 'DELETE'];
 
-  constructor(private auditLog: AuditLogService) {}
+  private userNameMap = new Map<string, string>();
 
-  async ngOnInit() { await this.load(); }
+  constructor(private auditLog: AuditLogService, private adminRole: AdminRoleService) {}
+
+  async ngOnInit() {
+    const roles = await this.adminRole.getAll().catch(() => []);
+    for (const r of roles) {
+      if (r.display_name) this.userNameMap.set(r.email, r.display_name);
+    }
+    await this.load();
+  }
 
   async load() {
     this.loading = true;
@@ -88,6 +97,11 @@ export class AdminAuditLogComponent implements OnInit {
     } finally {
       this.reverting[log.id] = false;
     }
+  }
+
+  getOperatorName(log: AuditLog): string {
+    if (!log.user_email) return '—';
+    return this.userNameMap.get(log.user_email) ?? log.user_email;
   }
 
   operationLabel(op: string): string {
