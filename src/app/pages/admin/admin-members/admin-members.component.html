@@ -39,7 +39,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
-        <tr *ngFor="let m of filteredMembers" class="hover:bg-gray-50 transition-colors">
+        <tr *ngFor="let m of paginatedMembers" class="hover:bg-gray-50 transition-colors">
           <td class="px-4 py-3">
             <div class="relative inline-block">
               <img
@@ -117,6 +117,27 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="totalPages > 1" class="flex items-center justify-between mt-4 text-sm text-gray-500">
+    <span>共 {{ filteredMembers.length }} 筆，第 {{ currentPage }} / {{ totalPages }} 頁</span>
+    <div class="flex items-center gap-1">
+      <button (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1"
+        class="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">‹</button>
+      <button *ngIf="pageNumbers[0] > 1" (click)="setPage(1)"
+        class="px-2.5 py-1 rounded hover:bg-gray-100 transition-colors">1</button>
+      <span *ngIf="pageNumbers[0] > 2" class="px-1">…</span>
+      <button *ngFor="let p of pageNumbers" (click)="setPage(p)"
+        [class]="p === currentPage ? 'px-2.5 py-1 rounded bg-pink-500 text-white font-medium' : 'px-2.5 py-1 rounded hover:bg-gray-100 transition-colors'">
+        {{ p }}
+      </button>
+      <span *ngIf="pageNumbers[pageNumbers.length - 1] < totalPages - 1" class="px-1">…</span>
+      <button *ngIf="pageNumbers[pageNumbers.length - 1] < totalPages" (click)="setPage(totalPages)"
+        class="px-2.5 py-1 rounded hover:bg-gray-100 transition-colors">{{ totalPages }}</button>
+      <button (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages"
+        class="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">›</button>
+    </div>
   </div>
 </div>
 

@@ -54,12 +54,11 @@ export class MemberService {
     return data;
   }
 
-  async getRecent(limit = 10): Promise<Member[]> {
+  async getAll(): Promise<Member[]> {
     const { data, error } = await this.db
       .from('members')
       .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(limit);
+      .order('updated_at', { ascending: false });
     if (error) throw error;
     return data ?? [];
   }

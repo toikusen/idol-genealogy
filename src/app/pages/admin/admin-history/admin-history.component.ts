@@ -51,7 +51,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     try {
       const [histories, members, groups] = await Promise.all([
         this.historyService.getAll(),
-        this.memberService.getRecent(500),
+        this.memberService.getAll(),
         this.groupService.getAll()
       ]);
       this.histories = histories;

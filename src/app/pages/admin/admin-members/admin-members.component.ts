@@ -16,7 +16,35 @@ import { environment } from '../../../../environments/environment';
 })
 export class AdminMembersComponent implements OnInit, OnDestroy {
   members: Member[] = [];
-  searchQuery = '';
+  private _searchQuery = '';
+  get searchQuery() { return this._searchQuery; }
+  set searchQuery(v: string) { this._searchQuery = v; this.currentPage = 1; }
+
+  currentPage = 1;
+  readonly pageSize = 50;
+
+  get totalPages() { return Math.ceil(this.filteredMembers.length / this.pageSize); }
+
+  get paginatedMembers(): Member[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredMembers.slice(start, start + this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const cur = this.currentPage;
+    const pages: number[] = [];
+    for (let i = Math.max(1, cur - 2); i <= Math.min(total, cur + 2); i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  setPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
   loading = true;
   showModal = false;
   editing: Partial<Member> = {};
@@ -62,7 +90,7 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
   async load() {
     this.loading = true;
     try {
-      this.members = await this.memberService.getRecent(200);
+      this.members = await this.memberService.getAll();
     } finally {
       this.loading = false;
     }
