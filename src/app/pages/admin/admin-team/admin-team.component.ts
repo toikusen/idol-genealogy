@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TeamMemberService } from '../../../core/team-member.service';
+import { AdminRoleService } from '../../../core/admin-role.service';
+import { SupabaseService } from '../../../core/supabase.service';
 import { TeamMember } from '../../../models';
 
 @Component({
@@ -19,9 +21,21 @@ export class AdminTeamComponent implements OnInit {
   saving = false;
   error = '';
 
-  constructor(private teamService: TeamMemberService) {}
+  currentUserId: string | null = null;
+  isSuperAdmin = false;
 
-  async ngOnInit() { await this.load(); }
+  constructor(
+    private teamService: TeamMemberService,
+    private adminRole: AdminRoleService,
+    private supabase: SupabaseService,
+  ) {}
+
+  async ngOnInit() {
+    const session = await this.supabase.getSessionOnce();
+    this.currentUserId = session?.user?.id ?? null;
+    this.isSuperAdmin = await this.adminRole.isSuperAdmin();
+    await this.load();
+  }
 
   async load() {
     this.loading = true;
@@ -32,8 +46,12 @@ export class AdminTeamComponent implements OnInit {
     }
   }
 
+  canEdit(m: TeamMember): boolean {
+    return this.isSuperAdmin || m.user_id === this.currentUserId;
+  }
+
   openCreate() {
-    this.editing = { sort_order: 0 };
+    this.editing = { sort_order: 0, user_id: this.currentUserId };
     this.isEdit = false;
     this.error = '';
     this.showModal = true;
