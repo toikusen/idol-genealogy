@@ -324,7 +324,7 @@
         @if (historyView === 'timeline') {
           <app-member-timeline [histories]="histories"></app-member-timeline>
         } @else {
-          <app-member-career-graph [histories]="histories" />
+          <app-member-career-graph [histories]="histories" [fallbackName]="member.name_roman || member.name" />
         }
 
       </section>

@@ -75,14 +75,16 @@ import { buildCareerGraph, CareerNode } from '../graph-utils';
 })
 export class MemberCareerGraphComponent implements OnChanges {
   @Input() histories: History[] = [];
+  /** Fallback name used when name_at_time is null and the DB join has no data */
+  @Input() fallbackName = '';
   readonly instanceId = Math.random().toString(36).slice(2, 7);
   nodes: CareerNode[] = [];
 
   constructor(private router: Router) {}
 
   ngOnChanges(changes: SimpleChanges) {
-    if (!changes['histories']) return;
-    const { nodes } = buildCareerGraph(this.histories);
+    if (!changes['histories'] && !changes['fallbackName']) return;
+    const { nodes } = buildCareerGraph(this.histories, this.fallbackName);
     this.nodes = nodes;
   }
 
