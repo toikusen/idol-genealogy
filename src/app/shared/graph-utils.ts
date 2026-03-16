@@ -1,4 +1,5 @@
 // src/app/shared/graph-utils.ts
+import * as d3 from 'd3';
 import { History, Group } from '../models';
 
 export interface CareerNode {
@@ -27,9 +28,7 @@ export interface MapNode {
   fy?: number | null;
 }
 
-export interface MapEdge {
-  source: MapNode;
-  target: MapNode;
+export interface MapEdge extends d3.SimulationLinkDatum<MapNode> {
   memberName: string;
 }
 

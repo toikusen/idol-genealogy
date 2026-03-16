@@ -1,6 +1,6 @@
 // src/app/shared/global-group-map/global-group-map.component.ts
 import {
-  Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, NgZone
+  Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, NgZone, ElementRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -26,15 +26,15 @@ import { buildGlobalMap, MapNode, MapEdge } from '../graph-utils';
       <!-- SVG edges layer -->
       <svg class="absolute inset-0 w-full h-full" style="pointer-events:none;">
         <defs>
-          <marker id="gmap-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <marker [attr.id]="'gmap-arr-' + instanceId" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
             <path d="M0,0 L0,6 L6,3 z" fill="#f9a8d4"/>
           </marker>
         </defs>
         @for (edge of edges; track $index) {
           <line
-            [attr.x1]="edge.source.x" [attr.y1]="edge.source.y"
-            [attr.x2]="edge.target.x" [attr.y2]="edge.target.y"
-            stroke="#f9a8d4" stroke-width="1.5" marker-end="url(#gmap-arrow)"/>
+            [attr.x1]="asNode(edge.source).x" [attr.y1]="asNode(edge.source).y"
+            [attr.x2]="asNode(edge.target).x" [attr.y2]="asNode(edge.target).y"
+            stroke="#f9a8d4" stroke-width="1.5" [attr.marker-end]="'url(#gmap-arr-' + instanceId + ')'"/>
         }
       </svg>
 
@@ -67,8 +67,11 @@ export class GlobalGroupMapComponent implements OnInit, OnDestroy {
   edges: MapEdge[] = [];
   loading = true;
 
+  readonly instanceId = Math.random().toString(36).slice(2, 7);
+
   private simulation: d3.Simulation<MapNode, MapEdge> | null = null;
   private dragging: MapNode | null = null;
+  private didDrag = false;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
   private onMouseMove = this.handleMouseMove.bind(this);
@@ -80,7 +83,13 @@ export class GlobalGroupMapComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private zone: NgZone,
     private router: Router,
+    private el: ElementRef,
   ) {}
+
+  /** Helper to cast SimulationLinkDatum source/target to MapNode at runtime */
+  asNode(n: MapNode | string | number): MapNode {
+    return n as MapNode;
+  }
 
   async ngOnInit() {
     const [groups, histories] = await Promise.all([
@@ -96,11 +105,15 @@ export class GlobalGroupMapComponent implements OnInit, OnDestroy {
 
     // Run D3 outside Angular zone to avoid unnecessary CD cycles
     this.zone.runOutsideAngular(() => {
+      const containerEl = this.el.nativeElement as HTMLElement;
+      const containerWidth = containerEl.offsetWidth || 800;
+      const containerHeight = containerEl.offsetHeight || 600;
+
       this.simulation = d3.forceSimulation<MapNode>(this.nodes)
-        .force('link', d3.forceLink<MapNode, MapEdge>(this.edges as any)
+        .force('link', d3.forceLink<MapNode, MapEdge>(this.edges)
           .id(d => d.id).distance(180))
         .force('charge', d3.forceManyBody().strength(-250))
-        .force('center', d3.forceCenter(400, 300))
+        .force('center', d3.forceCenter(containerWidth / 2, containerHeight / 2))
         .force('collision', d3.forceCollide(60))
         .on('tick', () => {
           this.zone.run(() => this.cdr.detectChanges());
@@ -122,7 +135,7 @@ export class GlobalGroupMapComponent implements OnInit, OnDestroy {
   }
 
   navigate(groupId: string) {
-    if (!this.dragging) {
+    if (!this.didDrag) {
       this.router.navigate(['/group', groupId]);
     }
   }
@@ -130,8 +143,9 @@ export class GlobalGroupMapComponent implements OnInit, OnDestroy {
   onDragStart(event: MouseEvent, node: MapNode) {
     event.preventDefault();
     this.dragging = node;
-    this.dragOffsetX = event.clientX - node.x;
-    this.dragOffsetY = event.clientY - node.y;
+    const rect = (this.el.nativeElement as HTMLElement).getBoundingClientRect();
+    this.dragOffsetX = (event.clientX - rect.left) - node.x!;
+    this.dragOffsetY = (event.clientY - rect.top) - node.y!;
     node.fx = node.x;
     node.fy = node.y;
     this.simulation?.alphaTarget(0.1).restart();
@@ -139,8 +153,10 @@ export class GlobalGroupMapComponent implements OnInit, OnDestroy {
 
   private handleMouseMove(event: MouseEvent) {
     if (!this.dragging) return;
-    this.dragging.fx = event.clientX - this.dragOffsetX;
-    this.dragging.fy = event.clientY - this.dragOffsetY;
+    this.didDrag = true;
+    const rect = (this.el.nativeElement as HTMLElement).getBoundingClientRect();
+    this.dragging.fx = (event.clientX - rect.left) - this.dragOffsetX;
+    this.dragging.fy = (event.clientY - rect.top) - this.dragOffsetY;
   }
 
   private handleMouseUp() {
@@ -150,5 +166,6 @@ export class GlobalGroupMapComponent implements OnInit, OnDestroy {
       this.dragging = null;
       this.simulation?.alphaTarget(0);
     }
+    setTimeout(() => { this.didDrag = false; }, 0);
   }
 }
