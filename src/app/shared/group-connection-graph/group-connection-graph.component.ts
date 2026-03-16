@@ -52,7 +52,7 @@ interface MemberRow {
               }
 
               <!-- Prev chain: [cell → arrow → cell → arrow → ...] -->
-              @for (cell of row.prevChain; track cell.groupId + ri + $index; let ci = $index) {
+              @for (cell of row.prevChain; track cell.groupId + $index; let ci = $index) {
                 <!-- Prev node -->
                 <a [routerLink]="['/group', cell.groupId]"
                   [style.min-width.px]="CELL_W"
@@ -96,7 +96,7 @@ interface MemberRow {
               </div>
 
               <!-- Next chain: [arrow → cell → arrow → cell ...] -->
-              @for (cell of row.nextChain; track cell.groupId + ri + $index) {
+              @for (cell of row.nextChain; track cell.groupId + $index) {
                 <!-- Arrow → -->
                 <div [style.width.px]="ARROW_W" style="flex-shrink:0; display:flex; align-items:center; justify-content:center;">
                   <svg [attr.width]="ARROW_W" height="20" style="display:block;">
