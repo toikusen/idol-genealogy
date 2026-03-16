@@ -47,8 +47,8 @@ export function buildCareerGraph(histories: History[]): {
     groupId: h.group_id,
     groupName: h.group?.name ?? '—',
     memberName: h.name_at_time ?? h.member?.name ?? '—',
-    joinedAt: h.joined_at.slice(0, 7).replace('-', '.'),
-    leftAt: h.left_at ? h.left_at.slice(0, 7).replace('-', '.') : null,
+    joinedAt: h.joined_at.slice(0, 7).replaceAll('-', '.'),
+    leftAt: h.left_at ? h.left_at.slice(0, 7).replaceAll('-', '.') : null,
     isCurrent: !h.left_at,
     routePath: `/group/${h.group_id}`,
   }));

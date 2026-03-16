@@ -1,9 +1,9 @@
 // src/app/shared/member-career-graph/member-career-graph.component.ts
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { History } from '../../models';
-import { buildCareerGraph, CareerNode, CareerEdge } from '../graph-utils';
+import { buildCareerGraph, CareerNode } from '../graph-utils';
 
 @Component({
   selector: 'app-member-career-graph',
@@ -56,14 +56,14 @@ import { buildCareerGraph, CareerNode, CareerEdge } from '../graph-utils';
               <div class="flex-shrink-0 flex items-center px-1">
                 <svg width="32" height="20">
                   <defs>
-                    <marker id="arr-{{ i }}" markerWidth="6" markerHeight="6"
+                    <marker [attr.id]="'arr-' + instanceId + '-' + i" markerWidth="6" markerHeight="6"
                       refX="5" refY="3" orient="auto">
                       <path d="M0,0 L0,6 L6,3 z" fill="#f472b6"/>
                     </marker>
                   </defs>
                   <line x1="0" y1="10" x2="26" y2="10"
                     stroke="#f472b6" stroke-width="1.5"
-                    [attr.marker-end]="'url(#arr-' + i + ')'"/>
+                    [attr.marker-end]="'url(#arr-' + instanceId + '-' + i + ')'"/>
                 </svg>
               </div>
             }
@@ -75,15 +75,15 @@ import { buildCareerGraph, CareerNode, CareerEdge } from '../graph-utils';
 })
 export class MemberCareerGraphComponent implements OnChanges {
   @Input() histories: History[] = [];
+  readonly instanceId = Math.random().toString(36).slice(2, 7);
   nodes: CareerNode[] = [];
-  edges: CareerEdge[] = [];
 
   constructor(private router: Router) {}
 
-  ngOnChanges() {
-    const { nodes, edges } = buildCareerGraph(this.histories);
+  ngOnChanges(changes: SimpleChanges) {
+    if (!changes['histories']) return;
+    const { nodes } = buildCareerGraph(this.histories);
     this.nodes = nodes;
-    this.edges = edges;
   }
 
   navigate(path: string) {
