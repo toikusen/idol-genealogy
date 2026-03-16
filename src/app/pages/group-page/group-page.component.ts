@@ -7,6 +7,7 @@ import { HistoryService } from '../../core/history.service';
 import { SeoService } from '../../core/seo.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
 import { GroupConnectionGraphComponent } from '../../shared/group-connection-graph/group-connection-graph.component';
+import { GlobalGroupMapComponent } from '../../shared/global-group-map/global-group-map.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { Group, GroupVideo, Team, History } from '../../models';
@@ -23,7 +24,7 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe],
+  imports: [CommonModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, GlobalGroupMapComponent, AdBannerComponent, SafeUrlPipe],
   templateUrl: './group-page.component.html',
 })
 export class GroupPageComponent implements OnInit, OnDestroy {
