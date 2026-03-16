@@ -80,7 +80,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
       if (!map.has(key)) {
         map.set(key, {
           memberId: key,
-          memberName: h.member?.name_roman || h.member?.name || h.member_id,
+          memberName: h.member?.name || h.member?.name_roman || h.member_id,
           photo_url: (h.member as any)?.photo_url ?? null,
           records: [],
         });
