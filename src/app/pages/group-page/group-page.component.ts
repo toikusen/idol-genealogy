@@ -105,7 +105,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         if (group.founded_at) jsonLd['foundingDate'] = group.founded_at;
         const members = histories
           .filter(h => h.member)
-          .map(h => ({ '@type': 'Person', name: h.member!.name_roman ?? h.member!.name }));
+          .map(h => ({ '@type': 'Person', name: h.member!.name ?? h.member!.name_roman }));
         if (members.length > 0) jsonLd['member'] = members;
 
         this.seo.setJsonLd(jsonLd);
@@ -137,7 +137,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   }
 
   getInitial(h: History): string {
-    const name = h.member?.name_roman || h.member?.name;
+    const name = h.member?.name || h.member?.name_roman;
     if (name) return name.charAt(0);
     return '?';
   }
