@@ -95,6 +95,7 @@ export interface TeamMember {
   photo_url: string | null;
   instagram: string | null;
   x: string | null;
+  user_id: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
