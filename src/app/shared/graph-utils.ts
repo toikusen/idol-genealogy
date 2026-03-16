@@ -45,7 +45,7 @@ export function buildCareerGraph(histories: History[], fallbackName = ''): {
     historyId: h.id,
     groupId: h.group_id,
     groupName: h.group?.name ?? '—',
-    memberName: h.name_at_time ?? h.member?.name ?? h.member?.name_roman ?? (fallbackName || '—'),
+    memberName: h.name_at_time || h.member?.name || h.member?.name_roman || fallbackName || '—',
     joinedAt: h.joined_at.slice(0, 7).replaceAll('-', '.'),
     leftAt: h.left_at ? h.left_at.slice(0, 7).replaceAll('-', '.') : null,
     isCurrent: !h.left_at,

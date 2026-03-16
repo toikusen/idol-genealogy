@@ -196,9 +196,9 @@ export class GroupConnectionGraphComponent implements OnChanges {
         : [];
 
       const memberName = entry.name_at_time
-        ?? (entry as any).member?.name
-        ?? (entry as any).member?.name_roman
-        ?? '—';
+        || (entry as any).member?.name
+        || (entry as any).member?.name_roman
+        || '—';
 
       return {
         memberId: entry.member_id,
@@ -218,9 +218,9 @@ export class GroupConnectionGraphComponent implements OnChanges {
 
   private toCell(h: History): ChainCell {
     const memberName = h.name_at_time
-      ?? (h as any).member?.name
-      ?? (h as any).member?.name_roman
-      ?? '—';
+      || (h as any).member?.name
+      || (h as any).member?.name_roman
+      || '—';
     return {
       groupId: h.group_id,
       groupName: (h as any).group?.name ?? '—',

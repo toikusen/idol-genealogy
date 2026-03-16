@@ -59,7 +59,7 @@ export class HistoryService {
     if (memberIds.length === 0) return [];
     const { data, error } = await this.db
       .from('history')
-      .select('*, group:groups(id,name,color), member:members(name)')
+      .select('*, group:groups(id,name,color), member:members(name,name_roman)')
       .in('member_id', memberIds)
       .order('joined_at', { ascending: true });
     if (error) throw error;
