@@ -11,7 +11,7 @@ export class HistoryService {
   async getByMember(memberId: string): Promise<History[]> {
     const { data, error } = await this.db
       .from('history')
-      .select('*, group:groups(*), team:teams(*)')
+      .select('*, group:groups(*), team:teams(*), member:members(name, name_roman)')
       .eq('member_id', memberId)
       .order('joined_at', { ascending: true });
     if (error) throw error;
