@@ -88,6 +88,18 @@ export interface Company {
   updated_at: string;
 }
 
+export interface TeamMember {
+  id: string;
+  name: string;
+  bio: string | null;
+  photo_url: string | null;
+  instagram: string | null;
+  x: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SearchResult {
   members: Member[];
   groups: Group[];
