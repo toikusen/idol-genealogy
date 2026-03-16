@@ -16,7 +16,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class AdminCompaniesComponent implements OnInit, OnDestroy {
   companies: Company[] = [];
-  groupCounts: Record<string, number> = {};
+  groupCounts: Record<string, number | undefined> = {};
   loading = true;
   showModal = false;
   editing: Partial<Company> = {};

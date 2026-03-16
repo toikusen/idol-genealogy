@@ -63,6 +63,16 @@ export class MemberService {
     return data ?? [];
   }
 
+  async getRecent(limit = 10): Promise<Member[]> {
+    const { data, error } = await this.db
+      .from('members')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data ?? [];
+  }
+
   async create(member: Partial<Member>): Promise<void> {
     const { error } = await this.db.from('members').insert(member);
     if (error) throw error;
