@@ -613,7 +613,7 @@
         </section>
       }
 
-      <!-- ══ Tabs: members / connections / map ══ -->
+      <!-- ══ Tabs: members / connections ══ -->
       <div class="mt-10 px-4 sm:px-6">
         <div class="flex gap-1 border-b border-gray-100 mb-6">
           <button (click)="activeTab = 'members'"
@@ -632,14 +632,6 @@
             [class.text-gray-400]="activeTab !== 'connections'">
             成員流動
           </button>
-          <button (click)="activeTab = 'map'"
-            class="px-4 py-2 text-sm font-medium transition-colors"
-            [class.text-pink-500]="activeTab === 'map'"
-            [class.border-b-2]="activeTab === 'map'"
-            [class.border-pink-500]="activeTab === 'map'"
-            [class.text-gray-400]="activeTab !== 'map'">
-            全局地圖
-          </button>
         </div>
 
         @if (activeTab === 'members') {
@@ -651,9 +643,6 @@
             [allMemberHistories]="allMemberHistories"
             [groupId]="group!.id"
             [groupName]="group!.name" />
-        }
-        @if (activeTab === 'map') {
-          <app-global-group-map />
         }
       </div>
 

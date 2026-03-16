@@ -1,14 +1,25 @@
-// src/app/shared/group-connection-graph/group-connection-graph.component.ts
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { History } from '../../models';
 
-interface ConnectionEntry {
+interface ChainCell {
   groupId: string;
   groupName: string;
   memberName: string;
-  date: string;
+  joinedAt: string;
+  leftAt: string | null;
+}
+
+interface MemberRow {
+  memberId: string;
+  prevChain: ChainCell[];   // oldest → immediately before current group
+  current: {
+    memberName: string;
+    joinedAt: string;
+    leftAt: string | null;
+  };
+  nextChain: ChainCell[];   // immediately after current group → latest
 }
 
 @Component({
@@ -16,166 +27,210 @@ interface ConnectionEntry {
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="flex items-center justify-center gap-0 overflow-x-auto py-4 px-2">
+    @if (rows.length === 0) {
+      <p class="text-sm text-gray-400 text-center py-6">尚無成員流動記錄</p>
+    } @else {
 
-      <!-- Incoming groups (left) -->
-      <div class="flex flex-col gap-3 items-end min-w-[130px]">
-        @for (entry of incoming; track entry.groupId + entry.memberName) {
-          <a [routerLink]="['/group', entry.groupId]"
-             class="block border-2 border-pink-200 bg-white text-left hover:border-pink-400 hover:shadow-sm transition-all min-w-[120px] max-w-[150px]">
-            <div class="bg-pink-50 border-b border-pink-100 px-2 py-1">
-              <span class="text-[10px] font-bold text-pink-700 block truncate">{{ entry.groupName }}</span>
-            </div>
-            <div class="px-2 py-1.5">
-              <p class="text-[11px] font-medium text-gray-700 truncate">{{ entry.memberName }}</p>
-              <p class="text-[9px] text-gray-400">→ {{ entry.date }}</p>
-            </div>
-          </a>
-        }
-        @if (incoming.length === 0) {
-          <p class="text-xs text-gray-300 pr-2">（無轉入記錄）</p>
-        }
-      </div>
-
-      <!-- Incoming arrows SVG -->
-      <svg [attr.width]="54" [attr.height]="Math.max(incoming.length, 1) * 60"
-           class="flex-shrink-0 overflow-visible">
+      <!-- Shared arrow marker (hidden) -->
+      <svg style="position:absolute;width:0;height:0;overflow:hidden;">
         <defs>
-          <marker [attr.id]="'cin-' + instanceId" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L6,3 z" fill="#f9a8d4"/>
+          <marker [attr.id]="'gcg-' + instanceId" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="#d1d5db"/>
           </marker>
         </defs>
-        @for (entry of incoming; track $index; let i = $index) {
-          <line
-            x1="0" [attr.y1]="(i + 0.5) * 60"
-            x2="48" [attr.y2]="Math.max(incoming.length, 1) * 30"
-            stroke="#f9a8d4" stroke-width="1.5" [attr.marker-end]="'url(#cin-' + instanceId + ')'"/>
-        }
       </svg>
 
-      <!-- Center: current group -->
-      <div class="border-[3px] border-pink-500 bg-white text-center min-w-[120px] flex-shrink-0"
-           style="box-shadow: 0 0 0 4px #fce7f3;">
-        <div class="bg-pink-500 px-3 py-2">
-          <span class="text-xs font-bold text-white block truncate">{{ groupName }}</span>
-        </div>
-        <div class="px-3 py-2">
-          <p class="text-[11px] text-gray-500">{{ currentMemberCount }} 名成員</p>
+      <div style="overflow-x:auto; padding-bottom:16px;">
+        <div style="display:inline-flex; flex-direction:column; gap:0; padding:8px 16px;">
+
+          @for (row of rows; track row.memberId + row.current.joinedAt; let ri = $index) {
+            <div style="display:flex; align-items:stretch; gap:0;">
+
+              <!-- Left padding (empty slots for alignment) -->
+              @for (n of range(maxLeft - row.prevChain.length); track n) {
+                <div [style.width.px]="CELL_W + ARROW_W" style="flex-shrink:0;"></div>
+              }
+
+              <!-- Prev chain: [cell → arrow → cell → arrow → ...] -->
+              @for (cell of row.prevChain; track cell.groupId + ri + $index; let ci = $index) {
+                <!-- Prev node -->
+                <a [routerLink]="['/group', cell.groupId]"
+                  [style.min-width.px]="CELL_W"
+                  [style.max-width.px]="CELL_W"
+                  style="flex-shrink:0; border:1.5px solid #e5e7eb; background:#fff; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
+                  onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
+                  <div style="background:#1f2937; padding:4px 8px;">
+                    <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                  </div>
+                  <div style="padding:5px 8px;">
+                    <p style="font-size:11px; font-weight:600; color:#374151; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                    <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                    <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                  </div>
+                </a>
+                <!-- Arrow → -->
+                <div [style.width.px]="ARROW_W" style="flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                  <svg [attr.width]="ARROW_W" height="20" style="display:block;">
+                    <line x1="2" y1="10" [attr.x2]="ARROW_W - 6" y2="10"
+                      stroke="#d1d5db" stroke-width="1.5"
+                      [attr.marker-end]="'url(#gcg-' + instanceId + ')'"/>
+                  </svg>
+                </div>
+              }
+
+              <!-- Center cell (current group) -->
+              <div
+                [style.min-width.px]="CENTER_W"
+                [style.max-width.px]="CENTER_W"
+                [ngStyle]="centerCellStyle(ri)"
+                style="flex-shrink:0; background:#fff;">
+                @if (ri === 0) {
+                  <div style="background:#ec4899; padding:4px 10px; text-align:center;">
+                    <span style="font-size:11px; color:#fff; font-weight:800; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ groupName }}</span>
+                  </div>
+                }
+                <div style="padding:5px 10px;" [style.border-top]="ri > 0 ? '1px solid #fce7f3' : 'none'">
+                  <p style="font-size:11px; font-weight:600; color:#374151; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ row.current.memberName }}</p>
+                  <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ row.current.joinedAt }}{{ row.current.leftAt ? ' – ' + row.current.leftAt : ' –' }})</p>
+                </div>
+              </div>
+
+              <!-- Next chain: [arrow → cell → arrow → cell ...] -->
+              @for (cell of row.nextChain; track cell.groupId + ri + $index) {
+                <!-- Arrow → -->
+                <div [style.width.px]="ARROW_W" style="flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                  <svg [attr.width]="ARROW_W" height="20" style="display:block;">
+                    <line x1="2" y1="10" [attr.x2]="ARROW_W - 6" y2="10"
+                      stroke="#d1d5db" stroke-width="1.5"
+                      [attr.marker-end]="'url(#gcg-' + instanceId + ')'"/>
+                  </svg>
+                </div>
+                <!-- Next node -->
+                <a [routerLink]="['/group', cell.groupId]"
+                  [style.min-width.px]="CELL_W"
+                  [style.max-width.px]="CELL_W"
+                  style="flex-shrink:0; border:1.5px solid #e5e7eb; background:#fff; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
+                  onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
+                  <div style="background:#1f2937; padding:4px 8px;">
+                    <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                  </div>
+                  <div style="padding:5px 8px;">
+                    <p style="font-size:11px; font-weight:600; color:#374151; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                    <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                    <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                  </div>
+                </a>
+              }
+
+              <!-- Right padding -->
+              @for (n of range(maxRight - row.nextChain.length); track n) {
+                <div [style.width.px]="ARROW_W + CELL_W" style="flex-shrink:0;"></div>
+              }
+
+            </div>
+          }
+
         </div>
       </div>
-
-      <!-- Outgoing arrows SVG -->
-      <svg [attr.width]="54" [attr.height]="Math.max(outgoing.length, 1) * 60"
-           class="flex-shrink-0 overflow-visible">
-        <defs>
-          <marker [attr.id]="'cout-' + instanceId" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L6,3 z" fill="#f9a8d4"/>
-          </marker>
-        </defs>
-        @for (entry of outgoing; track $index; let i = $index) {
-          <line
-            x1="6" [attr.y1]="Math.max(outgoing.length, 1) * 30"
-            x2="54" [attr.y2]="(i + 0.5) * 60"
-            stroke="#f9a8d4" stroke-width="1.5" [attr.marker-end]="'url(#cout-' + instanceId + ')'"/>
-        }
-      </svg>
-
-      <!-- Outgoing groups (right) -->
-      <div class="flex flex-col gap-3 items-start min-w-[130px]">
-        @for (entry of outgoing; track entry.groupId + entry.memberName) {
-          <a [routerLink]="['/group', entry.groupId]"
-             class="block border-2 border-pink-200 bg-white text-left hover:border-pink-400 hover:shadow-sm transition-all min-w-[120px] max-w-[150px]">
-            <div class="bg-pink-50 border-b border-pink-100 px-2 py-1">
-              <span class="text-[10px] font-bold text-pink-700 block truncate">{{ entry.groupName }}</span>
-            </div>
-            <div class="px-2 py-1.5">
-              <p class="text-[11px] font-medium text-gray-700 truncate">{{ entry.memberName }}</p>
-              <p class="text-[9px] text-gray-400">{{ entry.date }} →</p>
-            </div>
-          </a>
-        }
-        @if (outgoing.length === 0) {
-          <p class="text-xs text-gray-300 pl-2">（無轉出記錄）</p>
-        }
-      </div>
-
-    </div>
+    }
   `,
 })
 export class GroupConnectionGraphComponent implements OnChanges {
-  /** Histories for the current group (from getByGroup) */
   @Input() groupHistories: History[] = [];
-  /** All histories for members who were in this group (from getByMembers) */
   @Input() allMemberHistories: History[] = [];
   @Input() groupId = '';
   @Input() groupName = '';
 
-  incoming: ConnectionEntry[] = [];
-  outgoing: ConnectionEntry[] = [];
-  currentMemberCount = 0;
-  Math = Math;
+  rows: MemberRow[] = [];
+  maxLeft = 0;
+  maxRight = 0;
+
   readonly instanceId = Math.random().toString(36).slice(2, 7);
+  readonly CELL_W = 130;
+  readonly CENTER_W = 140;
+  readonly ARROW_W = 36;
 
   ngOnChanges(changes: SimpleChanges) {
     if (!changes['groupHistories'] && !changes['allMemberHistories'] && !changes['groupId']) return;
     this.build();
   }
 
+  range(n: number): number[] {
+    return n > 0 ? Array.from({ length: n }, (_, i) => i) : [];
+  }
+
+  centerCellStyle(ri: number): Record<string, string> {
+    const isFirst = ri === 0;
+    const isLast = ri === this.rows.length - 1;
+    return {
+      'border-left': '2.5px solid #ec4899',
+      'border-right': '2.5px solid #ec4899',
+      'border-top': isFirst ? '2.5px solid #ec4899' : 'none',
+      'border-bottom': isLast ? '2.5px solid #ec4899' : 'none',
+    };
+  }
+
   private build() {
     if (!this.groupId) return;
 
-    // Member IDs who were in this group
-    const memberIds = new Set(this.groupHistories.map(h => h.member_id));
-    this.currentMemberCount = new Set(
-      this.groupHistories.filter(h => !h.left_at).map(h => h.member_id)
-    ).size;
+    // One row per history entry in this group, sorted by joined_at (earliest first)
+    const groupEntries = [...this.groupHistories]
+      .sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
 
-    const incomingMap = new Map<string, ConnectionEntry>();
-    const outgoingMap = new Map<string, ConnectionEntry>();
-
-    for (const memberId of memberIds) {
-      // All history for this member, sorted by joined_at
+    this.rows = groupEntries.map(entry => {
+      // Full history for this member across all groups, sorted chronologically
       const memberHistory = this.allMemberHistories
-        .filter(h => h.member_id === memberId)
+        .filter(h => h.member_id === entry.member_id)
         .sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
 
-      for (let i = 0; i < memberHistory.length; i++) {
-        const h = memberHistory[i];
-        if (h.group_id !== this.groupId) continue;
+      // Find the index of this specific entry (by id, fallback to group_id match)
+      let idx = memberHistory.findIndex(h => h.id === entry.id);
+      if (idx < 0) idx = memberHistory.findIndex(h => h.group_id === this.groupId);
 
-        const memberName = h.member?.name ?? '—';
+      const prevChain: ChainCell[] = idx > 0
+        ? memberHistory.slice(0, idx).map(h => this.toCell(h))
+        : [];
 
-        // Previous group → this group (incoming)
-        if (i > 0) {
-          const prev = memberHistory[i - 1];
-          if (prev.group_id !== this.groupId) {
-            const key = `${prev.group_id}:${memberId}`;
-            incomingMap.set(key, {
-              groupId: prev.group_id,
-              groupName: prev.group?.name ?? '—',
-              memberName,
-              date: h.joined_at.slice(0, 7).replaceAll('-', '.'),
-            });
-          }
-        }
+      const nextChain: ChainCell[] = idx >= 0 && idx < memberHistory.length - 1
+        ? memberHistory.slice(idx + 1).map(h => this.toCell(h))
+        : [];
 
-        // This group → next group (outgoing)
-        if (i < memberHistory.length - 1) {
-          const next = memberHistory[i + 1];
-          if (next.group_id !== this.groupId) {
-            const key = `${next.group_id}:${memberId}`;
-            outgoingMap.set(key, {
-              groupId: next.group_id,
-              groupName: next.group?.name ?? '—',
-              memberName,
-              date: (h.left_at ?? '').slice(0, 7).replaceAll('-', '.'),
-            });
-          }
-        }
-      }
-    }
+      const memberName = entry.name_at_time
+        ?? (entry as any).member?.name
+        ?? (entry as any).member?.name_roman
+        ?? '—';
 
-    this.incoming = Array.from(incomingMap.values());
-    this.outgoing = Array.from(outgoingMap.values());
+      return {
+        memberId: entry.member_id,
+        current: {
+          memberName,
+          joinedAt: this.fmt(entry.joined_at),
+          leftAt: entry.left_at ? this.fmt(entry.left_at) : null,
+        },
+        prevChain,
+        nextChain,
+      };
+    });
+
+    this.maxLeft = this.rows.reduce((m, r) => Math.max(m, r.prevChain.length), 0);
+    this.maxRight = this.rows.reduce((m, r) => Math.max(m, r.nextChain.length), 0);
+  }
+
+  private toCell(h: History): ChainCell {
+    const memberName = h.name_at_time
+      ?? (h as any).member?.name
+      ?? (h as any).member?.name_roman
+      ?? '—';
+    return {
+      groupId: h.group_id,
+      groupName: (h as any).group?.name ?? '—',
+      memberName,
+      joinedAt: this.fmt(h.joined_at),
+      leftAt: h.left_at ? this.fmt(h.left_at) : null,
+    };
+  }
+
+  private fmt(d: string): string {
+    return d.slice(0, 7).replaceAll('-', '.');
   }
 }
