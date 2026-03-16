@@ -53,4 +53,16 @@ export class HistoryService {
     const { error } = await this.db.from('history').delete().eq('id', id);
     if (error) throw error;
   }
+
+  /** Get all history records for a list of member IDs (cross-group lookup) */
+  async getByMembers(memberIds: string[]): Promise<History[]> {
+    if (memberIds.length === 0) return [];
+    const { data, error } = await this.db
+      .from('history')
+      .select('*, group:groups(id,name,color), member:members(name)')
+      .in('member_id', memberIds)
+      .order('joined_at', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
 }

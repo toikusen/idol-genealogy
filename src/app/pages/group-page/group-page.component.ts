@@ -6,6 +6,7 @@ import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
 import { SeoService } from '../../core/seo.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
+import { GroupConnectionGraphComponent } from '../../shared/group-connection-graph/group-connection-graph.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { Group, GroupVideo, Team, History } from '../../models';
@@ -22,19 +23,21 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, GroupTreeComponent, AdBannerComponent, SafeUrlPipe],
+  imports: [CommonModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe],
   templateUrl: './group-page.component.html',
 })
 export class GroupPageComponent implements OnInit, OnDestroy {
   group: Group | null = null;
   teams: Team[] = [];
   histories: History[] = [];
+  allMemberHistories: History[] = [];
   videos: GroupVideo[] = [];
   similarGroups: Group[] = [];
   selectedHistory: History | null = null;
   playingVideoId: string | null = null;
   loading = true;
   error = false;
+  activeTab: 'members' | 'connections' | 'map' = 'members';
 
   ganttRows: GanttRow[] = [];
   ganttYears: { label: string; leftPct: number }[] = [];
@@ -76,6 +79,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       this.histories = histories;
       this.videos = videos;
       this.buildGantt(histories, group);
+      const memberIds = [...new Set(histories.map(h => h.member_id))];
+      this.allMemberHistories = await this.historyService.getByMembers(memberIds);
       if (group?.style) {
         this.similarGroups = await this.groupService.getSimilarByStyle(group.style, id);
       }

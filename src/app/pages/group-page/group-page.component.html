@@ -613,30 +613,49 @@
         </section>
       }
 
-      <!-- ══ Member list section ══ -->
-      <section>
-
-        <!-- Section label -->
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
-          <div style="height: 1px; width: 20px;" [style.background]="group.color + '66'"></div>
-          <span style="
-            font-family: 'Shippori Mincho', serif;
-            font-size: 0.65rem; letter-spacing: 0.38em;
-            text-transform: uppercase; color: rgba(122,90,122,0.45);
-            white-space: nowrap;
-          ">成員列表</span>
-          <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.18), transparent);"></div>
+      <!-- ══ Tabs: members / connections / map ══ -->
+      <div class="mt-10 px-4 sm:px-6">
+        <div class="flex gap-1 border-b border-gray-100 mb-6">
+          <button (click)="activeTab = 'members'"
+            class="px-4 py-2 text-sm font-medium transition-colors"
+            [class.text-pink-500]="activeTab === 'members'"
+            [class.border-b-2]="activeTab === 'members'"
+            [class.border-pink-500]="activeTab === 'members'"
+            [class.text-gray-400]="activeTab !== 'members'">
+            成員一覽
+          </button>
+          <button (click)="activeTab = 'connections'"
+            class="px-4 py-2 text-sm font-medium transition-colors"
+            [class.text-pink-500]="activeTab === 'connections'"
+            [class.border-b-2]="activeTab === 'connections'"
+            [class.border-pink-500]="activeTab === 'connections'"
+            [class.text-gray-400]="activeTab !== 'connections'">
+            成員流動
+          </button>
+          <button (click)="activeTab = 'map'"
+            class="px-4 py-2 text-sm font-medium transition-colors"
+            [class.text-pink-500]="activeTab === 'map'"
+            [class.border-b-2]="activeTab === 'map'"
+            [class.border-pink-500]="activeTab === 'map'"
+            [class.text-gray-400]="activeTab !== 'map'">
+            全局地圖
+          </button>
         </div>
 
-        <!-- Group tree component -->
-        <app-group-tree
-          [group]="group"
-          [histories]="histories"
-          [teams]="teams"
-          (selectMember)="selectMember($event)"
-        ></app-group-tree>
-
-      </section>
+        @if (activeTab === 'members') {
+          <app-group-tree [histories]="histories" [teams]="teams" />
+        }
+        @if (activeTab === 'connections') {
+          <app-group-connection-graph
+            [groupHistories]="histories"
+            [allMemberHistories]="allMemberHistories"
+            [groupId]="group!.id"
+            [groupName]="group!.name" />
+        }
+        @if (activeTab === 'map') {
+          <p class="text-sm text-gray-400 text-center py-8">全局地圖（即將推出）</p>
+        }
+      </div>
 
       <!-- ══ Featured videos ══ -->
       @if (videos.length > 0) {
