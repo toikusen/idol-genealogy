@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProposalService } from '../../../core/proposal.service';
+import { MemberService } from '../../../core/member.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../../core/proposal-fields.config';
 import { Proposal } from '../../../models';
 
@@ -15,6 +16,7 @@ import { Proposal } from '../../../models';
 })
 export class AdminProposalReviewComponent implements OnInit {
   proposal: Proposal | null = null;
+  memberMap = new Map<string, string>();
   loading = true;
   error = '';
   saving = false;
@@ -28,6 +30,7 @@ export class AdminProposalReviewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private proposalService: ProposalService,
+    private memberService: MemberService,
   ) {}
 
   async ngOnInit() {
@@ -36,12 +39,25 @@ export class AdminProposalReviewComponent implements OnInit {
       this.proposal = await this.proposalService.getById(id);
       if (this.proposal) {
         this.editedData = { ...this.proposal.proposed_data };
+        if (this.proposal.table_name === 'history') {
+          const members = await this.memberService.getAll();
+          for (const m of members) {
+            this.memberMap.set(m.id, m.name ?? m.name_roman ?? m.id);
+          }
+        }
       }
     } catch (e: any) {
       this.error = e.message ?? '載入失敗';
     } finally {
       this.loading = false;
     }
+  }
+
+  resolveId(field: string, value: any): string {
+    if (field === 'member_id' && value && this.memberMap.has(value)) {
+      return this.memberMap.get(value)!;
+    }
+    return value ?? '—';
   }
 
   get fields(): string[] {
