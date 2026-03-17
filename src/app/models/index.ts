@@ -125,3 +125,21 @@ export interface AuditLog {
   new_data: Record<string, any> | null;
   created_at: string;
 }
+
+export interface Proposal {
+  id: string;
+  table_name: 'members' | 'groups' | 'history' | 'companies';
+  record_id: string | null;
+  operation: 'INSERT' | 'UPDATE';
+  proposed_data: Record<string, any>;
+  original_data: Record<string, any> | null;
+  reviewed_data: Record<string, any> | null;
+  submitter_id: string | null;
+  submitter_name: string;
+  submitter_email: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewer_note: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+}
