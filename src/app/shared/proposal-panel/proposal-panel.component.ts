@@ -558,6 +558,17 @@ export class ProposalPanelComponent implements OnInit {
       return;
     }
 
+    // For UPDATE: block if no field actually changed
+    if (this.operation === 'UPDATE') {
+      const hasChanges = Object.keys(proposed).some(
+        f => String(proposed[f] ?? '') !== String(this.originalData?.[f] ?? '')
+      );
+      if (!hasChanges) {
+        this.error = '尚未修改任何欄位，請至少更動一個欄位後再送出';
+        return;
+      }
+    }
+
     this.submitting = true;
     try {
       await this.proposalService.submit({
