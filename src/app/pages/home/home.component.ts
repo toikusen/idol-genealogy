@@ -8,16 +8,20 @@ import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
 import { Member, Group, Company } from '../../models';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
+import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 
 const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AdBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AdBannerComponent, ProposalPanelComponent],
   templateUrl: './home.component.html',
 })
 export class HomeComponent implements OnInit {
+  showMemberInsertPanel = false;
+  showGroupInsertPanel = false;
+  showCompanyInsertPanel = false;
   query = '';
   recentMembers: Member[] = [];
   memberResults: Member[] = [];

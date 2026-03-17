@@ -346,6 +346,8 @@ export class ProposalPanelComponent implements OnInit {
   @Input() originalData: Record<string, any> = {};
   /** For history proposals: list of members in this group (current + past) */
   @Input() groupMembers: { id: string; name: string }[] = [];
+  /** Fields that must be non-empty before submission */
+  @Input() requiredFields: string[] = [];
   @Output() closed = new EventEmitter<void>();
 
   formData: Record<string, any> = {};
@@ -421,7 +423,12 @@ export class ProposalPanelComponent implements OnInit {
   }
 
   fieldLabel(field: string): string {
-    return FIELD_LABELS[this.tableName]?.[field] ?? field;
+    const label = FIELD_LABELS[this.tableName]?.[field] ?? field;
+    return this.requiredFields.includes(field) ? label + ' *' : label;
+  }
+
+  isRequired(field: string): boolean {
+    return this.requiredFields.includes(field);
   }
 
   original(field: string): string {
@@ -541,6 +548,13 @@ export class ProposalPanelComponent implements OnInit {
 
     if (Object.keys(proposed).length === 0) {
       this.error = '請至少填寫一個欄位';
+      return;
+    }
+
+    const missingRequired = this.requiredFields.filter(f => !proposed[f]);
+    if (missingRequired.length > 0) {
+      const labels = missingRequired.map(f => FIELD_LABELS[this.tableName]?.[f] ?? f).join('、');
+      this.error = `必填欄位未填寫：${labels}`;
       return;
     }
 
