@@ -10,6 +10,7 @@ import { GroupConnectionGraphComponent } from '../../shared/group-connection-gra
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { Group, GroupVideo, Team, History } from '../../models';
+import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 
 interface GanttRow {
   history: History;
@@ -23,7 +24,7 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe],
+  imports: [CommonModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe, ProposalPanelComponent],
   templateUrl: './group-page.component.html',
 })
 export class GroupPageComponent implements OnInit, OnDestroy {
@@ -38,6 +39,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   loading = true;
   error = false;
   activeTab: 'members' | 'connections' = 'members';
+  showGroupProposalPanel = false;
+  proposalHistoryEntry: History | null = null;
+  showNewHistoryPanel = false;
 
   ganttRows: GanttRow[] = [];
   ganttYears: { label: string; leftPct: number }[] = [];

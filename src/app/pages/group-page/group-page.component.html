@@ -163,6 +163,17 @@
             ">{{ group.name }}</p>
           }
 
+          <!-- Propose edit button -->
+          @if (group) {
+            <button
+              (click)="showGroupProposalPanel = true"
+              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors"
+              style="margin-top: 10px; margin-bottom: 4px;"
+            >
+              ✏️ 提案修改
+            </button>
+          }
+
           <!-- Founded / disbanded dates -->
           <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 12px;">
             @if (group.founded_at) {
@@ -523,6 +534,12 @@
               white-space: nowrap;
             ">在籍期間</span>
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.18), transparent);"></div>
+            <button
+              (click)="showNewHistoryPanel = true"
+              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors"
+            >
+              ＋ 提案新增歷程
+            </button>
           </div>
 
           <!-- Chart container -->
@@ -564,10 +581,16 @@
                     font-size: 0.75rem;
                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                     transition: color 0.15s;
+                    display: flex; align-items: center; justify-content: flex-end;
                   "
                   [style.color]="selectedHistory?.id === row.history.id ? group.color : 'rgba(60,30,60,0.65)'"
                   >
                     {{ row.history.name_at_time || row.history.member?.name || row.history.member?.name_roman || '—' }}
+                    <button
+                      (click)="$event.stopPropagation(); proposalHistoryEntry = row.history"
+                      class="text-gray-300 hover:text-pink-400 text-xs ml-1"
+                      title="提案修改此歷程"
+                    >✏️</button>
                   </div>
 
                   <!-- Bar track -->
@@ -807,6 +830,41 @@
           </div>
 
         </section>
+      }
+
+      <!-- ══ Proposal panels ══ -->
+
+      <!-- Group edit proposal panel -->
+      @if (showGroupProposalPanel && group) {
+        <app-proposal-panel
+          tableName="groups"
+          operation="UPDATE"
+          [recordId]="group.id"
+          [originalData]="group"
+          (closed)="showGroupProposalPanel = false"
+        />
+      }
+
+      <!-- History entry edit proposal panel -->
+      @if (proposalHistoryEntry) {
+        <app-proposal-panel
+          tableName="history"
+          operation="UPDATE"
+          [recordId]="proposalHistoryEntry.id"
+          [originalData]="proposalHistoryEntry"
+          (closed)="proposalHistoryEntry = null"
+        />
+      }
+
+      <!-- New history entry proposal panel -->
+      @if (showNewHistoryPanel && group) {
+        <app-proposal-panel
+          tableName="history"
+          operation="INSERT"
+          [recordId]="null"
+          [originalData]="{ group_id: group.id }"
+          (closed)="showNewHistoryPanel = false"
+        />
       }
 
       <!-- ══ Footer flourish ══ -->
