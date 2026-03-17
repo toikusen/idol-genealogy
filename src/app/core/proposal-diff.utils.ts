@@ -27,10 +27,15 @@ export function getDiffFields(p: Proposal): DiffField[] {
       }));
   }
 
-  // UPDATE
+  // UPDATE — only show fields that actually changed
   const original = (p.original_data ?? {}) as Record<string, any>;
   return allowedKeys
-    .filter(k => k in proposed)
+    .filter(k => {
+      if (!(k in proposed)) return false;
+      const oldVal = (original[k] != null && original[k] !== '') ? String(original[k]) : '';
+      const newVal = (proposed[k] != null && proposed[k] !== '') ? String(proposed[k]) : '';
+      return oldVal !== newVal;
+    })
     .map(k => ({
       key: k,
       label: FIELD_LABELS[p.table_name]?.[k] ?? k,
