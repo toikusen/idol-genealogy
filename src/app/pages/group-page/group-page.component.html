@@ -852,7 +852,7 @@
           [recordId]="proposalHistoryEntry.id"
           [originalData]="proposalHistoryEntry"
           [groupMembers]="groupMembersList"
-          [requiredFields]="['member_id']"
+          [requiredFields]="['member_id', 'status', 'joined_at']"
           (closed)="proposalHistoryEntry = null"
         />
       }
@@ -865,7 +865,7 @@
           [recordId]="null"
           [originalData]="{ group_id: group.id }"
           [groupMembers]="groupMembersList"
-          [requiredFields]="['member_id']"
+          [requiredFields]="['member_id', 'status', 'joined_at']"
           (closed)="showNewHistoryPanel = false"
         />
       }

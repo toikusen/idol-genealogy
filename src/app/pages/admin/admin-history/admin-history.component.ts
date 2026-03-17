@@ -105,6 +105,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   async save() {
     if (!this.editing.member_id) { this.error = '請選擇成員'; return; }
     if (!this.editing.group_id) { this.error = '請選擇組合'; return; }
+    if (!this.editing.status) { this.error = '請選擇狀態'; return; }
     if (!this.editing.joined_at) { this.error = '加入日期為必填'; return; }
     this.saving = true;
     try {
