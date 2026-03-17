@@ -8,19 +8,20 @@ export class GroupService {
   private _allCache: Group[] | null = null;
   private _allPromise: Promise<Group[]> | null = null;
 
+
   constructor(private supabase: SupabaseService) {}
 
   async getAll(): Promise<Group[]> {
     if (this._allCache) return this._allCache;
     if (this._allPromise) return this._allPromise;
-    this._allPromise = this.db
-      .from('groups').select('*').order('name', { ascending: true })
-      .then(({ data, error }) => {
-        this._allPromise = null;
-        if (error) throw error;
-        this._allCache = data ?? [];
-        return this._allCache;
-      });
+    this._allPromise = Promise.resolve(
+      this.db.from('groups').select('*').order('name', { ascending: true })
+    ).then(({ data, error }) => {
+      this._allPromise = null;
+      if (error) throw error;
+      this._allCache = data ?? [];
+      return this._allCache!;
+    });
     return this._allPromise;
   }
 

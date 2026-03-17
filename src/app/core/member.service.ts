@@ -59,16 +59,14 @@ export class MemberService {
   async getAll(): Promise<Member[]> {
     if (this._allCache) return this._allCache;
     if (this._allPromise) return this._allPromise;
-    this._allPromise = this.db
-      .from('members')
-      .select('*')
-      .order('updated_at', { ascending: false })
-      .then(({ data, error }) => {
-        this._allPromise = null;
-        if (error) throw error;
-        this._allCache = data ?? [];
-        return this._allCache;
-      });
+    this._allPromise = Promise.resolve(
+      this.db.from('members').select('*').order('updated_at', { ascending: false })
+    ).then(({ data, error }) => {
+      this._allPromise = null;
+      if (error) throw error;
+      this._allCache = data ?? [];
+      return this._allCache!;
+    });
     return this._allPromise;
   }
 
