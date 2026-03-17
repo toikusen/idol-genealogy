@@ -9,7 +9,7 @@
       radial-gradient(ellipse 45% 45% at 90% 85%, rgba(232,121,160,0.07) 0%, transparent 60%);
   "></div>
 
-  <div style="position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 0 32px 96px;">
+  <div class="company-outer" style="position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 0 32px 96px;">
 
     <!-- Loading -->
     @if (loading) {
@@ -392,4 +392,8 @@
   .sns-link--yt:hover { background:rgba(220,38,38,0.1);border-color:rgba(220,38,38,0.45); }
   .sns-link--web { color:#6b7280;border-color:rgba(107,114,128,0.25);background:rgba(107,114,128,0.05); }
   .sns-link--web:hover { background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.45); }
+
+  @media (max-width: 520px) {
+    .company-outer { padding-left: 16px !important; padding-right: 16px !important; }
+  }
 </style>
