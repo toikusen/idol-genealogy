@@ -27,7 +27,9 @@ export class ProposalService {
     if (status) {
       query = (query as any).eq('status', status);
     }
-    const { data, error } = await (query as any).order('created_at', { ascending: true });
+    const ascending = status === 'pending' || !status;
+    const orderCol = (status === 'approved' || status === 'rejected') ? 'reviewed_at' : 'created_at';
+    const { data, error } = await (query as any).order(orderCol, { ascending });
     if (error) throw error;
     return data ?? [];
   }
