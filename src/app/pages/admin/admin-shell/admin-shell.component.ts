@@ -1,7 +1,8 @@
 import { Component, OnDestroy } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { SupabaseService } from '../../../core/supabase.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { ProposalService } from '../../../core/proposal.service';
@@ -16,6 +17,7 @@ export class AdminShellComponent implements OnDestroy {
   isAdmin = false;
   pendingProposalCount = 0;
   private _sub: Subscription;
+  private _navSub: Subscription;
 
   constructor(
     private supabase: SupabaseService,
@@ -29,10 +31,19 @@ export class AdminShellComponent implements OnDestroy {
         this.pendingProposalCount = await this.proposalService.getPendingCount().catch(() => 0);
       }
     });
+
+    this._navSub = this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+    ).subscribe(() => {
+      if (this.isAdmin) {
+        this.proposalService.getPendingCount().then(n => this.pendingProposalCount = n).catch(() => {});
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this._sub.unsubscribe();
+    this._navSub.unsubscribe();
   }
 
   async signOut() {
