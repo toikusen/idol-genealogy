@@ -5,6 +5,8 @@ import { Member } from '../models';
 @Injectable({ providedIn: 'root' })
 export class MemberService {
   private get db() { return this.supabase.client; }
+  private _allCache: Member[] | null = null;
+  private _allPromise: Promise<Member[]> | null = null;
 
   constructor(private supabase: SupabaseService) {}
 
@@ -55,13 +57,23 @@ export class MemberService {
   }
 
   async getAll(): Promise<Member[]> {
-    const { data, error } = await this.db
+    if (this._allCache) return this._allCache;
+    if (this._allPromise) return this._allPromise;
+    this._allPromise = this.db
       .from('members')
       .select('*')
-      .order('updated_at', { ascending: false });
-    if (error) throw error;
-    return data ?? [];
+      .order('updated_at', { ascending: false })
+      .then(({ data, error }) => {
+        this._allPromise = null;
+        if (error) throw error;
+        this._allCache = data ?? [];
+        return this._allCache;
+      });
+    return this._allPromise;
   }
+
+  /** Call after create/update/delete to force next getAll() to re-fetch */
+  invalidateCache() { this._allCache = null; }
 
   async getRecent(limit = 10): Promise<Member[]> {
     const { data, error } = await this.db
@@ -76,15 +88,18 @@ export class MemberService {
   async create(member: Partial<Member>): Promise<void> {
     const { error } = await this.db.from('members').insert(member);
     if (error) throw error;
+    this.invalidateCache();
   }
 
   async update(id: string, member: Partial<Member>): Promise<void> {
     const { error } = await this.db.from('members').update(member).eq('id', id);
     if (error) throw error;
+    this.invalidateCache();
   }
 
   async delete(id: string): Promise<void> {
     const { error } = await this.db.from('members').delete().eq('id', id);
     if (error) throw error;
+    this.invalidateCache();
   }
 }

@@ -5,15 +5,26 @@ import { Group, GroupVideo, Team } from '../models';
 @Injectable({ providedIn: 'root' })
 export class GroupService {
   private get db() { return this.supabase.client; }
+  private _allCache: Group[] | null = null;
+  private _allPromise: Promise<Group[]> | null = null;
 
   constructor(private supabase: SupabaseService) {}
 
   async getAll(): Promise<Group[]> {
-    const { data, error } = await this.db
-      .from('groups').select('*').order('name', { ascending: true });
-    if (error) throw error;
-    return data ?? [];
+    if (this._allCache) return this._allCache;
+    if (this._allPromise) return this._allPromise;
+    this._allPromise = this.db
+      .from('groups').select('*').order('name', { ascending: true })
+      .then(({ data, error }) => {
+        this._allPromise = null;
+        if (error) throw error;
+        this._allCache = data ?? [];
+        return this._allCache;
+      });
+    return this._allPromise;
   }
+
+  invalidateCache() { this._allCache = null; }
 
   async search(query: string): Promise<Group[]> {
     const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
@@ -55,16 +66,19 @@ export class GroupService {
   async create(group: Partial<Group>): Promise<void> {
     const { error } = await this.db.from('groups').insert(group);
     if (error) throw error;
+    this.invalidateCache();
   }
 
   async update(id: string, group: Partial<Group>): Promise<void> {
     const { error } = await this.db.from('groups').update(group).eq('id', id);
     if (error) throw error;
+    this.invalidateCache();
   }
 
   async delete(id: string): Promise<void> {
     const { error } = await this.db.from('groups').delete().eq('id', id);
     if (error) throw error;
+    this.invalidateCache();
   }
 
   async getSimilarByStyle(style: string, excludeId: string): Promise<Group[]> {
