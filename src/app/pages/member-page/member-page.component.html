@@ -154,6 +154,19 @@
                 class="proposal-edit-btn"
                 style="margin-top: 8px;"
               >✏️ 提案修改</button>
+              @if (!isLoggedIn) {
+                <a routerLink="/login" style="
+                  display:inline-flex;align-items:center;gap:5px;
+                  margin-top:8px;flex-shrink:0;
+                  padding:4px 10px;border-radius:999px;
+                  font-family:'Shippori Mincho',serif;font-size:0.68rem;
+                  color:rgba(124,108,242,0.75);
+                  border:1px solid rgba(124,108,242,0.25);
+                  background:rgba(124,108,242,0.05);
+                  text-decoration:none;letter-spacing:0.05em;
+                  white-space:nowrap;
+                ">🏆 登入以取得貢獻者排名</a>
+              }
             </div>
 
             <!-- Roman / phonetic name -->
