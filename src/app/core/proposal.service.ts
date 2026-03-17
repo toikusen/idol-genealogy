@@ -27,12 +27,23 @@ export class ProposalService {
 
   /** Count of pending proposals. Admin only. */
   async getPendingCount(): Promise<number> {
-    const { data, error } = await this.db
+    const { count, error } = await this.db
       .from('proposals')
-      .select('id')
+      .select('*', { count: 'exact', head: true })
       .eq('status', 'pending');
     if (error) throw error;
-    return (data ?? []).length;
+    return count ?? 0;
+  }
+
+  /** Get a single proposal by ID. Admin only. */
+  async getById(id: string): Promise<Proposal | null> {
+    const { data, error } = await this.db
+      .from('proposals')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ?? null;
   }
 
   /** Approve a proposal: apply data to target table, update status. Admin only. */

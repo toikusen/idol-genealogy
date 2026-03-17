@@ -33,8 +33,7 @@ export class AdminProposalReviewComponent implements OnInit {
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
     try {
-      const all = await this.proposalService.getAll();
-      this.proposal = all.find(p => p.id === id) ?? null;
+      this.proposal = await this.proposalService.getById(id);
       if (this.proposal) {
         this.editedData = { ...this.proposal.proposed_data };
       }
