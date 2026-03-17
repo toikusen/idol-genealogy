@@ -132,9 +132,9 @@ export class MemberPageComponent implements OnInit {
   nicknameChipStyle(color: string | null): Record<string, string> {
     const rgb = this.hexToRgb(color || '#e879a0');
     return {
-      'color': `rgba(${rgb}, 0.75)`,
-      'background': `rgba(${rgb}, 0.07)`,
-      'border': `1px solid rgba(${rgb}, 0.22)`,
+      'color': '#2d1b2e',
+      'background': `rgba(${rgb}, 0.1)`,
+      'border': `1px solid rgba(${rgb}, 0.3)`,
     };
   }
 }
