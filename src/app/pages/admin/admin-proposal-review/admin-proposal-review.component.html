@@ -17,6 +17,12 @@
         <p class="text-xs text-gray-400">類型</p>
         <p class="text-sm font-medium text-gray-700">{{ tableLabel(proposal.table_name) }} · {{ proposal.operation === 'INSERT' ? '新增' : '修改' }}</p>
       </div>
+      @if (proposal.table_name === 'history') {
+        <div>
+          <p class="text-xs text-gray-400">歷程對象</p>
+          <p class="text-sm font-medium text-gray-700">{{ historySubject }}</p>
+        </div>
+      }
       <div>
         <p class="text-xs text-gray-400">提案者</p>
         <div class="flex items-center gap-2 mt-0.5">

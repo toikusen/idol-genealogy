@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProposalService } from '../../../core/proposal.service';
 import { MemberService } from '../../../core/member.service';
+import { GroupService } from '../../../core/group.service';
 import { Proposal } from '../../../models';
 
 @Component({
@@ -15,6 +16,7 @@ import { Proposal } from '../../../models';
 export class AdminProposalsComponent implements OnInit {
   proposals: Proposal[] = [];
   memberMap = new Map<string, string>();
+  groupMap = new Map<string, string>();
   loading = true;
   error = '';
   activeStatus: 'pending' | 'approved' | 'rejected' = 'pending';
@@ -24,7 +26,7 @@ export class AdminProposalsComponent implements OnInit {
     { key: 'rejected', label: '已拒絕' },
   ];
 
-  constructor(private proposalService: ProposalService, private memberService: MemberService) {}
+  constructor(private proposalService: ProposalService, private memberService: MemberService, private groupService: GroupService) {}
 
   async ngOnInit() {
     await this.load();
@@ -37,9 +39,15 @@ export class AdminProposalsComponent implements OnInit {
       this.proposals = await this.proposalService.getAll(this.activeStatus);
       const hasHistory = this.proposals.some(p => p.table_name === 'history');
       if (hasHistory && this.memberMap.size === 0) {
-        const members = await this.memberService.getAll();
+        const [members, groups] = await Promise.all([
+          this.memberService.getAll(),
+          this.groupService.getAll(),
+        ]);
         for (const m of members) {
           this.memberMap.set(m.id, m.name ?? m.name_roman ?? m.id);
+        }
+        for (const g of groups) {
+          this.groupMap.set(g.id, g.name_jp ?? g.name ?? g.id);
         }
       }
     } catch (e: any) {
@@ -79,10 +87,13 @@ export class AdminProposalsComponent implements OnInit {
         return src['name'] ?? '—';
       case 'history': {
         const memberId = src['member_id'];
+        const groupId = src['group_id'];
         const memberName = memberId ? (this.memberMap.get(memberId) ?? null) : null;
+        const groupName = groupId ? (this.groupMap.get(groupId) ?? null) : null;
         const atTime = src['name_at_time'];
-        if (memberName && atTime && memberName !== atTime) return `${memberName}（${atTime}）`;
-        return memberName ?? atTime ?? '—';
+        const displayMember = (memberName && atTime && memberName !== atTime)
+          ? `${memberName}（${atTime}）` : (memberName ?? atTime ?? '—');
+        return groupName ? `${groupName} · ${displayMember}` : displayMember;
       }
       default:
         return '—';

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProposalService } from '../../../core/proposal.service';
 import { MemberService } from '../../../core/member.service';
+import { GroupService } from '../../../core/group.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../../core/proposal-fields.config';
 import { Proposal } from '../../../models';
 
@@ -17,6 +18,7 @@ import { Proposal } from '../../../models';
 export class AdminProposalReviewComponent implements OnInit {
   proposal: Proposal | null = null;
   memberMap = new Map<string, string>();
+  groupMap = new Map<string, string>();
   loading = true;
   error = '';
   saving = false;
@@ -31,6 +33,7 @@ export class AdminProposalReviewComponent implements OnInit {
     private router: Router,
     private proposalService: ProposalService,
     private memberService: MemberService,
+    private groupService: GroupService,
   ) {}
 
   async ngOnInit() {
@@ -40,9 +43,15 @@ export class AdminProposalReviewComponent implements OnInit {
       if (this.proposal) {
         this.editedData = { ...this.proposal.proposed_data };
         if (this.proposal.table_name === 'history') {
-          const members = await this.memberService.getAll();
+          const [members, groups] = await Promise.all([
+            this.memberService.getAll(),
+            this.groupService.getAll(),
+          ]);
           for (const m of members) {
             this.memberMap.set(m.id, m.name ?? m.name_roman ?? m.id);
+          }
+          for (const g of groups) {
+            this.groupMap.set(g.id, g.name_jp ?? g.name ?? g.id);
           }
         }
       }
@@ -57,7 +66,18 @@ export class AdminProposalReviewComponent implements OnInit {
     if (field === 'member_id' && value && this.memberMap.has(value)) {
       return this.memberMap.get(value)!;
     }
+    if (field === 'group_id' && value && this.groupMap.has(value)) {
+      return this.groupMap.get(value)!;
+    }
     return value ?? '—';
+  }
+
+  get historySubject(): string {
+    const src = this.proposal?.proposed_data ?? this.proposal?.original_data ?? {};
+    const group = src['group_id'] ? (this.groupMap.get(src['group_id']) ?? src['group_id']) : null;
+    const member = src['member_id'] ? (this.memberMap.get(src['member_id']) ?? src['member_id']) : null;
+    if (group && member) return `${group} · ${member}`;
+    return group ?? member ?? '—';
   }
 
   get fields(): string[] {
