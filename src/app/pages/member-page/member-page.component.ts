@@ -107,14 +107,12 @@ export class MemberPageComponent implements OnInit {
     };
   }
 
-  nicknameStyle(color: string | null): Record<string, string> {
+  nicknameChipStyle(color: string | null): Record<string, string> {
     const rgb = this.hexToRgb(color || '#e879a0');
     return {
-      'font-family': "'Shippori Mincho', serif",
-      'font-size': '0.76rem',
-      'letter-spacing': '0.2em',
-      'color': `rgba(${rgb}, 0.7)`,
-      'margin': '0 0 14px'
+      'color': `rgba(${rgb}, 0.75)`,
+      'background': `rgba(${rgb}, 0.07)`,
+      'border': `1px solid rgba(${rgb}, 0.22)`,
     };
   }
 }
