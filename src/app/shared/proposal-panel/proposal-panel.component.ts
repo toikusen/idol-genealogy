@@ -2,6 +2,7 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/supabase.service';
 import { ProposalService } from '../../core/proposal.service';
 import { CompanyService } from '../../core/company.service';
@@ -299,6 +300,12 @@ import { Company } from '../../models';
               <p class="text-sm text-gray-600">以 <span class="font-medium text-pink-600">{{ loggedInName }}</span> 身份提案</p>
             } @else {
               <div class="space-y-3">
+                <button
+                  type="button"
+                  (click)="router.navigate(['/login'])"
+                  class="w-full flex items-center justify-center gap-2 py-2 rounded-full text-sm font-medium border transition-colors"
+                  style="color:rgba(124,108,242,0.85);border-color:rgba(124,108,242,0.3);background:rgba(124,108,242,0.05);"
+                >🏆 登入以取得貢獻者排名</button>
                 <div>
                   <label class="block text-xs font-medium text-gray-600 mb-1">暱稱 <span class="text-red-400">*</span></label>
                   <input
@@ -440,6 +447,7 @@ export class ProposalPanelComponent implements OnInit {
     private supabase: SupabaseService,
     private proposalService: ProposalService,
     private companyService: CompanyService,
+    public router: Router,
   ) {}
 
   async ngOnInit() {

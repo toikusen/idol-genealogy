@@ -10,7 +10,6 @@ import { MemberCareerGraphComponent } from '../../shared/member-career-graph/mem
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { Member, History, Proposal } from '../../models';
 import { ProposalService } from '../../core/proposal.service';
-import { SupabaseService } from '../../core/supabase.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
@@ -32,7 +31,6 @@ export class MemberPageComponent implements OnInit {
   showProposalPanel = false;
   lastProposal: Proposal | null = null;
   showEditHistory = false;
-  isLoggedIn = false;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -48,11 +46,9 @@ export class MemberPageComponent implements OnInit {
     private historyService: HistoryService,
     private seo: SeoService,
     private proposalService: ProposalService,
-    private supabase: SupabaseService,
   ) {}
 
   async ngOnInit() {
-    this.supabase.getSessionOnce().then(s => { this.isLoggedIn = !!s; });
     const id = this.route.snapshot.paramMap.get('id')!;
     try {
       const [member, histories] = await Promise.all([
