@@ -38,6 +38,11 @@
             {{ tableLabel(p.table_name) }}：<span class="font-medium">{{ recordName(p) }}</span>
           </span>
           <span class="text-xs text-gray-500 flex-shrink-0">提案者：{{ p.submitter_name }}</span>
+          @if (p.submitter_id) {
+            <span class="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0" style="background:rgba(124,108,242,0.1);color:rgba(124,108,242,0.8);">登入</span>
+          } @else {
+            <span class="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0" style="background:rgba(122,90,122,0.07);color:rgba(122,90,122,0.45);">訪客</span>
+          }
           <span class="text-xs text-gray-400 flex-shrink-0">{{ relativeTime(p.created_at) }}</span>
           <span class="text-gray-300 flex-shrink-0">›</span>
         </a>
