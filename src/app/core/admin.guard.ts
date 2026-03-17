@@ -8,5 +8,5 @@ export const adminGuard: CanActivateFn = async (_route, _state) => {
   // isAdmin() already returns true for superadmin
   const isAdmin = await adminRoleService.isAdmin();
   if (isAdmin) return true;
-  return router.createUrlTree(['/admin']);
+  return router.createUrlTree(['/']);
 };
