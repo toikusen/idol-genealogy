@@ -208,6 +208,19 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     }
   }
 
+  get groupMembersList(): { id: string; name: string }[] {
+    const seen = new Set<string>();
+    const result: { id: string; name: string }[] = [];
+    for (const h of this.histories) {
+      if (!seen.has(h.member_id)) {
+        seen.add(h.member_id);
+        const m = (h as any).member;
+        result.push({ id: h.member_id, name: m?.name ?? m?.name_roman ?? h.member_id });
+      }
+    }
+    return result.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+  }
+
   hexToRgb(hex: string): string {
     const clean = hex.replace('#', '');
     const r = parseInt(clean.substring(0, 2), 16) || 232;

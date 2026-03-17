@@ -852,6 +852,7 @@
           operation="UPDATE"
           [recordId]="proposalHistoryEntry.id"
           [originalData]="proposalHistoryEntry"
+          [groupMembers]="groupMembersList"
           (closed)="proposalHistoryEntry = null"
         />
       }
@@ -863,6 +864,7 @@
           operation="INSERT"
           [recordId]="null"
           [originalData]="{ group_id: group.id }"
+          [groupMembers]="groupMembersList"
           (closed)="showNewHistoryPanel = false"
         />
       }

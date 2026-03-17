@@ -181,6 +181,100 @@ import { Company } from '../../models';
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ currentCompanyName }}</p>
                 }
 
+              <!-- Member dropdown (history: member_id) -->
+              } @else if (tableName === 'history' && field === 'member_id') {
+                <select
+                  [(ngModel)]="formData['member_id']"
+                  name="member_id"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                >
+                  <option [value]="''">— 請選擇成員 —</option>
+                  @for (m of groupMembers; track m.id) {
+                    <option [value]="m.id">{{ m.name }}</option>
+                  }
+                </select>
+                @if (operation === 'UPDATE' && currentMemberName) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ currentMemberName }}</p>
+                }
+
+              <!-- Status dropdown (history) -->
+              } @else if (tableName === 'history' && field === 'status') {
+                <select
+                  [(ngModel)]="formData['status']"
+                  name="status"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                >
+                  <option [value]="''">— 請選擇狀態 —</option>
+                  @for (s of historyStatusOptions; track s.value) {
+                    <option [value]="s.value">{{ s.label }}</option>
+                  }
+                </select>
+                @if (operation === 'UPDATE' && original('status')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ statusLabel(original('status')) }}</p>
+                }
+
+              <!-- Joined date dropdowns (history: YYYY-MM-DD) -->
+              } @else if (tableName === 'history' && field === 'joined_at') {
+                <div class="flex items-center gap-2">
+                  <select [(ngModel)]="joinedYear" name="joinedYear"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                    <option [value]="0">— 年 —</option>
+                    @for (y of years; track y) {
+                      <option [value]="y">{{ y }}</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="joinedMonth" name="joinedMonth"
+                    [disabled]="!joinedYear"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                    <option [value]="0">— 月 —</option>
+                    @for (m of months; track m) {
+                      <option [value]="m">{{ m }} 月</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="joinedDay" name="joinedDay"
+                    [disabled]="!joinedMonth"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                    <option [value]="0">— 日 —</option>
+                    @for (d of daysForMonth(joinedMonth); track d) {
+                      <option [value]="d">{{ d }} 日</option>
+                    }
+                  </select>
+                </div>
+                @if (operation === 'UPDATE' && original('joined_at')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('joined_at') }}</p>
+                }
+
+              <!-- Left date dropdowns (history: YYYY-MM-DD) -->
+              } @else if (tableName === 'history' && field === 'left_at') {
+                <div class="flex items-center gap-2">
+                  <select [(ngModel)]="leftYear" name="leftYear"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                    <option [value]="0">— 年 —</option>
+                    @for (y of years; track y) {
+                      <option [value]="y">{{ y }}</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="leftMonth" name="leftMonth"
+                    [disabled]="!leftYear"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                    <option [value]="0">— 月 —</option>
+                    @for (m of months; track m) {
+                      <option [value]="m">{{ m }} 月</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="leftDay" name="leftDay"
+                    [disabled]="!leftMonth"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                    <option [value]="0">— 日 —</option>
+                    @for (d of daysForMonth(leftMonth); track d) {
+                      <option [value]="d">{{ d }} 日</option>
+                    }
+                  </select>
+                </div>
+                @if (operation === 'UPDATE' && original('left_at')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('left_at') }}</p>
+                }
+
               <!-- Default: text input -->
               } @else {
                 <input
@@ -250,6 +344,8 @@ export class ProposalPanelComponent implements OnInit {
   @Input() recordId: string | null = null;
   @Input() operation: 'INSERT' | 'UPDATE' = 'UPDATE';
   @Input() originalData: Record<string, any> = {};
+  /** For history proposals: list of members in this group (current + past) */
+  @Input() groupMembers: { id: string; name: string }[] = [];
   @Output() closed = new EventEmitter<void>();
 
   formData: Record<string, any> = {};
@@ -268,6 +364,12 @@ export class ProposalPanelComponent implements OnInit {
     return this.companies.find(c => c.id === id)?.name ?? id ?? '';
   }
 
+  // Member name for history UPDATE display
+  get currentMemberName(): string {
+    const id = this.originalData?.['member_id'];
+    return this.groupMembers.find(m => m.id === id)?.name ?? id ?? '';
+  }
+
   // Birthdate selectors (members: MM-DD)
   birthdateMonth = 0;
   birthdateDay = 0;
@@ -280,15 +382,34 @@ export class ProposalPanelComponent implements OnInit {
   disbandedMonth = 0;
   disbandedDay = 0;
 
+  // Joined / left date selectors (history: YYYY-MM-DD)
+  joinedYear = 0;
+  joinedMonth = 0;
+  joinedDay = 0;
+  leftYear = 0;
+  leftMonth = 0;
+  leftDay = 0;
+
   readonly months = Array.from({ length: 12 }, (_, i) => i + 1);
   readonly years = Array.from(
     { length: new Date().getFullYear() - 1999 },
     (_, i) => 2000 + i
   );
 
+  readonly historyStatusOptions = [
+    { value: 'active', label: '正常在籍' },
+    { value: 'concurrent', label: '兼任' },
+    { value: 'transferred', label: '移籍' },
+    { value: 'graduated', label: '畢業' },
+  ];
+
   daysForMonth(month: number): number[] {
     const max = month === 2 ? 29 : [4, 6, 9, 11].includes(month) ? 30 : 31;
     return Array.from({ length: max }, (_, i) => i + 1);
+  }
+
+  statusLabel(value: string): string {
+    return this.historyStatusOptions.find(s => s.value === value)?.label ?? value;
   }
 
   get allowedFields(): string[] {
@@ -330,8 +451,13 @@ export class ProposalPanelComponent implements OnInit {
       this.parseYMD(this.originalData?.['founded_at'], 'founded');
       this.parseYMD(this.originalData?.['disbanded_at'], 'disbanded');
       this.companies = await this.companyService.getAll().catch(() => []);
-      // Pre-select current company_id
       this.formData['company_id'] = this.originalData?.['company_id'] ?? '';
+    }
+
+    // History: parse joined_at / left_at into year/month/day selectors
+    if (this.tableName === 'history') {
+      this.parseYMD(this.originalData?.['joined_at'], 'joined');
+      this.parseYMD(this.originalData?.['left_at'], 'left');
     }
 
     const session = await this.supabase.getSessionOnce();
@@ -352,14 +478,14 @@ export class ProposalPanelComponent implements OnInit {
     this.birthdateMonth = 0; this.birthdateDay = 0;
   }
 
-  private parseYMD(value: string | null | undefined, prefix: 'founded' | 'disbanded') {
+  private parseYMD(value: string | null | undefined, prefix: 'founded' | 'disbanded' | 'joined' | 'left') {
     const ymd = value?.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (ymd) {
-      if (prefix === 'founded') {
-        this.foundedYear = +ymd[1]; this.foundedMonth = +ymd[2]; this.foundedDay = +ymd[3];
-      } else {
-        this.disbandedYear = +ymd[1]; this.disbandedMonth = +ymd[2]; this.disbandedDay = +ymd[3];
-      }
+      const y = +ymd[1], m = +ymd[2], d = +ymd[3];
+      if (prefix === 'founded') { this.foundedYear = y; this.foundedMonth = m; this.foundedDay = d; }
+      else if (prefix === 'disbanded') { this.disbandedYear = y; this.disbandedMonth = m; this.disbandedDay = d; }
+      else if (prefix === 'joined') { this.joinedYear = y; this.joinedMonth = m; this.joinedDay = d; }
+      else { this.leftYear = y; this.leftMonth = m; this.leftDay = d; }
     }
   }
 
@@ -393,13 +519,24 @@ export class ProposalPanelComponent implements OnInit {
       this.formData['disbanded_at'] = this.buildYMD(this.disbandedYear, this.disbandedMonth, this.disbandedDay);
     }
 
-    // Build proposed_data: only include non-empty fields
+    // Combine joined_at/left_at selectors → YYYY-MM-DD
+    if (this.tableName === 'history') {
+      this.formData['joined_at'] = this.buildYMD(this.joinedYear, this.joinedMonth, this.joinedDay);
+      this.formData['left_at'] = this.buildYMD(this.leftYear, this.leftMonth, this.leftDay);
+    }
+
+    // Build proposed_data: only include non-empty allowed fields
     const proposed: Record<string, any> = {};
     for (const field of this.allowedFields) {
       const val = this.formData[field];
       if (val !== '' && val != null) {
         proposed[field] = val;
       }
+    }
+
+    // For history proposals, always carry group_id from context
+    if (this.tableName === 'history' && this.originalData?.['group_id']) {
+      proposed['group_id'] = this.originalData['group_id'];
     }
 
     if (Object.keys(proposed).length === 0) {
