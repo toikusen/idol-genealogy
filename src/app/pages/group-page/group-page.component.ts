@@ -9,8 +9,12 @@ import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component
 import { GroupConnectionGraphComponent } from '../../shared/group-connection-graph/group-connection-graph.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
-import { Group, GroupVideo, Team, History } from '../../models';
+import { Group, GroupVideo, Team, History, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
+import { ProposalService } from '../../core/proposal.service';
+import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
+import { formatRelativeTime } from '../../core/time.utils';
+import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 
 interface GanttRow {
   history: History;
@@ -24,7 +28,7 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe, ProposalPanelComponent],
+  imports: [CommonModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent],
   templateUrl: './group-page.component.html',
 })
 export class GroupPageComponent implements OnInit, OnDestroy {
@@ -42,6 +46,16 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   showGroupProposalPanel = false;
   proposalHistoryEntry: History | null = null;
   showNewHistoryPanel = false;
+  lastProposal: Proposal | null = null;
+  showEditHistory = false;
+
+  get lastProposalDiffFields(): DiffField[] {
+    return this.lastProposal ? getDiffFields(this.lastProposal) : [];
+  }
+
+  formatRelativeTime(date: string | null): string {
+    return formatRelativeTime(date);
+  }
 
   ganttRows: GanttRow[] = [];
   ganttYears: { label: string; leftPct: number }[] = [];
@@ -51,7 +65,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private groupService: GroupService,
     private historyService: HistoryService,
-    private seo: SeoService
+    private seo: SeoService,
+    private proposalService: ProposalService,
   ) {}
 
   ngOnInit() {
@@ -85,6 +100,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       this.histories = histories;
       this.videos = videos;
       this.buildGantt(histories, group);
+      if (group) {
+        this.proposalService.getApprovedByRecord('groups', id)
+          .then(proposals => { this.lastProposal = proposals[0] ?? null; })
+          .catch(() => {});
+      }
       const memberIds = [...new Set(histories.map(h => h.member_id))];
       this.allMemberHistories = await this.historyService.getByMembers(memberIds);
       if (group?.style) {

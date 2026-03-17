@@ -865,6 +865,82 @@
         />
       }
 
+      <!-- Attribution widget -->
+      @if (lastProposal) {
+        <div style="
+          display:flex;gap:10px;align-items:flex-start;
+          background:rgba(255,255,255,0.6);
+          border:1px solid rgba(232,121,160,0.12);
+          border-radius:6px;padding:10px 14px;
+          font-family:'Shippori Mincho',serif;
+          font-size:0.73rem;color:rgba(122,90,122,0.6);
+          margin:32px 0 24px;
+        ">
+          <div style="width:5px;height:5px;border-radius:50%;background:rgba(232,121,160,0.45);flex-shrink:0;margin-top:6px;"></div>
+          <div>
+            <div>
+              最後由
+              <span style="color:#c05080;font-weight:500;">{{ lastProposal.submitter_name }}</span>
+              {{ lastProposal.operation === 'INSERT' ? '新增記錄' : '補充' }}
+              <span style="color:rgba(122,90,122,0.4);">· {{ formatRelativeTime(lastProposal.reviewed_at) }}</span>
+            </div>
+            @if (lastProposal.operation === 'UPDATE' && lastProposalDiffFields.length > 0) {
+              <div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="
+                  display:inline-block;
+                  font-family:'Cormorant Garamond',Georgia,serif;
+                  font-size:0.7rem;font-style:italic;
+                  color:rgba(122,90,122,0.55);
+                  background:rgba(232,121,160,0.05);
+                  border:1px solid rgba(232,121,160,0.12);
+                  border-radius:3px;padding:1px 7px;white-space:nowrap;
+                ">
+                  「{{ lastProposalDiffFields[0].label }}」{{ lastProposalDiffFields[0].oldValue }} → {{ lastProposalDiffFields[0].newValue }}
+                </span>
+                @if (lastProposalDiffFields.length > 1) {
+                  <span style="
+                    display:inline-block;font-size:0.65rem;color:rgba(122,90,122,0.5);
+                    background:rgba(122,90,122,0.07);border:1px solid rgba(122,90,122,0.15);
+                    border-radius:999px;padding:1px 7px;white-space:nowrap;
+                  ">+{{ lastProposalDiffFields.length - 1 }} 個欄位</span>
+                }
+                <span
+                  (click)="showEditHistory = true"
+                  style="
+                    display:inline-flex;align-items:center;gap:3px;
+                    font-size:0.65rem;color:rgba(124,108,242,0.65);
+                    border-bottom:1px solid rgba(124,108,242,0.25);
+                    letter-spacing:0.06em;cursor:pointer;white-space:nowrap;
+                  "
+                >查看全部 →</span>
+              </div>
+            } @else {
+              <div style="margin-top:4px;">
+                <span
+                  (click)="showEditHistory = true"
+                  style="
+                    display:inline-flex;align-items:center;gap:3px;
+                    font-size:0.65rem;color:rgba(124,108,242,0.65);
+                    border-bottom:1px solid rgba(124,108,242,0.25);
+                    letter-spacing:0.06em;cursor:pointer;white-space:nowrap;
+                  "
+                >查看全部 →</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Edit History Panel -->
+      @if (showEditHistory && group) {
+        <app-record-edit-history
+          [tableName]="'groups'"
+          [recordId]="group.id"
+          [recordLabel]="group.name"
+          (closed)="showEditHistory = false"
+        />
+      }
+
       <!-- ══ Footer flourish ══ -->
       <footer style="margin-top: 80px; text-align: center;">
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px;">
@@ -884,6 +960,12 @@
           font-size: 0.72rem; color: rgba(122,90,122,0.45);
           text-decoration: none; letter-spacing: 0.04em;
         ">隱私政策</a>
+        <div style="text-align:center;margin-top:16px;">
+          <a routerLink="/contributors" style="
+            font-size:0.72rem;color:rgba(122,90,122,0.45);
+            text-decoration:none;letter-spacing:0.06em;
+          ">貢獻者排行榜 →</a>
+        </div>
       </footer>
 
     }
