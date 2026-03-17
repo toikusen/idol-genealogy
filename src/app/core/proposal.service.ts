@@ -2,6 +2,13 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Proposal } from '../models';
 
+export interface ContributorEntry {
+  submitter_id: string;
+  submitter_name: string;
+  total: number;
+  by_table: Record<string, number>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProposalService {
   private get db() { return this.supabase.client; }
@@ -90,5 +97,20 @@ export class ProposalService {
       })
       .eq('id', id);
     if (error) throw error;
+  }
+
+  async getApprovedByRecord(tableName: string, recordId: string): Promise<Proposal[]> {
+    const { data, error } = await this.db.rpc('get_approved_by_record', {
+      p_table_name: tableName,
+      p_record_id: recordId,
+    });
+    if (error) throw error;
+    return (data ?? []) as Proposal[];
+  }
+
+  async getLeaderboard(): Promise<ContributorEntry[]> {
+    const { data, error } = await this.db.rpc('get_leaderboard');
+    if (error) throw error;
+    return (data ?? []) as ContributorEntry[];
   }
 }
