@@ -93,22 +93,20 @@
           ">Agency · 事務所</span>
         </div>
 
-        <!-- Name -->
-        <h1 style="
-          font-family:'Cormorant Garamond',Georgia,serif;
-          font-size:clamp(1.8rem,5vw,2.6rem);
-          font-weight:400;letter-spacing:0.02em;
-          color:#2d1b2e;margin:0 0 8px;
-        ">{{ company.name }}</h1>
-
-        @if (company) {
+        <!-- Name + proposal button inline -->
+        <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+          <h1 style="
+            font-family:'Cormorant Garamond',Georgia,serif;
+            font-size:clamp(1.8rem,5vw,2.6rem);
+            font-weight:400;letter-spacing:0.02em;
+            color:#2d1b2e;margin:0;
+          ">{{ company.name }}</h1>
           <button
             (click)="showProposalPanel = true"
-            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs border border-white/30 text-white rounded-full hover:bg-white/10 transition-colors"
-          >
-            ✏️ 提案修改
-          </button>
-        }
+            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors"
+            style="margin-top:8px; flex-shrink:0;"
+          >✏️ 提案修改</button>
+        </div>
 
         <!-- Founded -->
         @if (company.founded_at) {
