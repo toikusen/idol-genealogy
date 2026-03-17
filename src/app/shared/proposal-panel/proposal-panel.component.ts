@@ -113,6 +113,7 @@ import { Company } from '../../models';
                 @if (operation === 'UPDATE' && original('birthdate')) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('birthdate') }}</p>
                 }
+                <p class="text-xs text-gray-300 mt-0.5">只填確定的部分，不確定請留空</p>
 
               <!-- Founded date dropdowns (groups: YYYY-MM-DD) -->
               } @else if (tableName === 'groups' && field === 'founded_at') {
@@ -144,6 +145,7 @@ import { Company } from '../../models';
                 @if (operation === 'UPDATE' && original('founded_at')) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('founded_at') }}</p>
                 }
+                <p class="text-xs text-gray-300 mt-0.5">例：2019 年 4 月成立 → 選 2019 / 04，日期不確定可留空</p>
 
               <!-- Disbanded date dropdowns (groups: YYYY-MM-DD) -->
               } @else if (tableName === 'groups' && field === 'disbanded_at') {
@@ -175,6 +177,7 @@ import { Company } from '../../models';
                 @if (operation === 'UPDATE' && original('disbanded_at')) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('disbanded_at') }}</p>
                 }
+                <p class="text-xs text-gray-300 mt-0.5">仍在活動中請留空</p>
 
               <!-- Company dropdown (groups: company_id) -->
               } @else if (tableName === 'groups' && field === 'company_id') {
@@ -254,6 +257,7 @@ import { Company } from '../../models';
                 @if (operation === 'UPDATE' && original('joined_at')) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('joined_at') }}</p>
                 }
+                <p class="text-xs text-gray-300 mt-0.5">加入年月，不確定日期可只選年月</p>
 
               <!-- Left date dropdowns (history: YYYY-MM-DD) -->
               } @else if (tableName === 'history' && field === 'left_at') {
@@ -285,6 +289,7 @@ import { Company } from '../../models';
                 @if (operation === 'UPDATE' && original('left_at')) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('left_at') }}</p>
                 }
+                <p class="text-xs text-gray-300 mt-0.5">仍在籍請留空</p>
 
               <!-- Default: text input -->
               } @else {
@@ -293,7 +298,7 @@ import { Company } from '../../models';
                   [(ngModel)]="formData[field]"
                   [name]="field"
                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                  [placeholder]="original(field)"
+                  [placeholder]="fieldPlaceholder(field)"
                 />
                 @if (operation === 'UPDATE' && original(field)) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original(field) }}</p>
@@ -436,6 +441,15 @@ export class ProposalPanelComponent implements OnInit {
   fieldLabel(field: string): string {
     const label = FIELD_LABELS[this.tableName]?.[field] ?? field;
     return this.requiredFields.includes(field) ? label + ' *' : label;
+  }
+
+  fieldPlaceholder(field: string): string {
+    const hints: Record<string, string> = {
+      'members:name': '例：あいみ（日文名）',
+      'members:name_roman': '例：Aimi（英文/羅馬字）',
+      'groups:name': '例：KissBee',
+    };
+    return hints[`${this.tableName}:${field}`] ?? this.original(field);
   }
 
   isRequired(field: string): boolean {
