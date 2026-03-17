@@ -209,12 +209,11 @@ import { Company } from '../../models';
                   name="member_id"
                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
                 >
-                  <option [value]="''">— 不綁定成員（選填）—</option>
+                  <option [value]="''">— 請選擇成員 —</option>
                   @for (m of filteredMembers; track m.id) {
                     <option [value]="m.id">{{ m.name }}</option>
                   }
                 </select>
-                <p class="text-xs text-gray-400 mt-0.5">若成員尚未建立頁面，可留空，日後再補上</p>
                 @if (operation === 'UPDATE' && currentMemberName) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ currentMemberName }}</p>
                 }

@@ -103,6 +103,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   openEdit(h: History) { this.editing = { ...h }; this.isEdit = true; this.error = ''; this.showModal = true; void this.onGroupChange(); }
 
   async save() {
+    if (!this.editing.member_id) { this.error = '請選擇成員'; return; }
     if (!this.editing.group_id) { this.error = '請選擇組合'; return; }
     if (!this.editing.joined_at) { this.error = '加入日期為必填'; return; }
     this.saving = true;
