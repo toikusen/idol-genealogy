@@ -59,6 +59,22 @@ export class AdminProposalsComponent implements OnInit {
       : 'bg-blue-100 text-blue-700';
   }
 
+  recordName(p: Proposal): string {
+    const src = p.original_data ?? p.proposed_data ?? {};
+    switch (p.table_name) {
+      case 'members':
+        return src['name'] ?? src['name_roman'] ?? '—';
+      case 'groups':
+        return src['name'] ?? src['name_jp'] ?? '—';
+      case 'companies':
+        return src['name'] ?? '—';
+      case 'history':
+        return src['name_at_time'] ?? '—';
+      default:
+        return '—';
+    }
+  }
+
   relativeTime(dateStr: string): string {
     const diff = Date.now() - new Date(dateStr).getTime();
     const m = Math.floor(diff / 60000);
