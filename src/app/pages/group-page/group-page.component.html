@@ -517,6 +517,15 @@
       }
 
       <!-- ══ Member timeline chart ══ -->
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+        <button
+          (click)="showNewHistoryPanel = true"
+          class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors"
+        >
+          ＋ 提案新增歷程
+        </button>
+      </div>
+
       @if (ganttRows.length > 0) {
         <section style="margin-bottom: 48px;">
 
@@ -530,13 +539,6 @@
               white-space: nowrap;
             ">在籍期間</span>
             <div style="flex: 1; min-width: 20px; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.18), transparent);"></div>
-            <button
-              (click)="showNewHistoryPanel = true"
-              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors"
-              style="flex-shrink: 0;"
-            >
-              ＋ 提案新增歷程
-            </button>
           </div>
 
           <!-- Chart container -->
