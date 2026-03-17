@@ -7,14 +7,14 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
   ],
   groups: [
     'name', 'name_jp', 'color', 'founded_at', 'disbanded_at',
-    'instagram', 'facebook', 'x', 'youtube', 'company_id',
+    'instagram', 'facebook', 'x', 'youtube', 'company_id', 'photo_url',
   ],
   history: [
     'member_id', 'name_at_time',
     'status', 'joined_at', 'left_at',
   ],
   companies: [
-    'name', 'description', 'website', 'instagram', 'facebook',
+    'name', 'description', 'website', 'instagram', 'facebook', 'photo_url',
   ],
 };
 
@@ -29,7 +29,7 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
     name: '組合名稱', name_jp: '日文名稱', color: '代表色(HEX)',
     founded_at: '成立日期', disbanded_at: '解散日期',
     instagram: 'Instagram', facebook: 'Facebook', x: 'X', youtube: 'YouTube',
-    company_id: '所屬公司',
+    company_id: '所屬公司', photo_url: '頭像圖片 URL',
   },
   history: {
     member_id: '成員', name_at_time: '當時藝名', status: '狀態',
@@ -37,6 +37,6 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
   },
   companies: {
     name: '公司名稱', description: '簡介', website: '官網',
-    instagram: 'Instagram', facebook: 'Facebook',
+    instagram: 'Instagram', facebook: 'Facebook', photo_url: '頭像圖片 URL',
   },
 };
