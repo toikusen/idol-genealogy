@@ -108,7 +108,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
           .then(proposals => { this.lastProposal = proposals[0] ?? null; })
           .catch(() => {});
       }
-      const memberIds = [...new Set(histories.map(h => h.member_id))];
+      const memberIds = [...new Set(histories.map(h => h.member_id).filter((id): id is string => !!id))];
       this.allMemberHistories = await this.historyService.getByMembers(memberIds);
       this.memberService.getAll().then(members => {
         this.allMembers = members
