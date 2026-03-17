@@ -50,15 +50,69 @@ import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../core/proposal-field
               <label class="block text-xs font-medium text-gray-600 mb-1">
                 {{ fieldLabel(field) }}
               </label>
-              <input
-                type="text"
-                [(ngModel)]="formData[field]"
-                [name]="field"
-                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                [placeholder]="original(field)"
-              />
-              @if (operation === 'UPDATE' && original(field)) {
-                <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original(field) }}</p>
+
+              <!-- Color picker (members only) -->
+              @if (tableName === 'members' && field === 'color') {
+                <div class="flex items-center gap-3">
+                  <input
+                    type="color"
+                    [(ngModel)]="formData['color']"
+                    name="color_picker"
+                    class="w-10 h-10 rounded border border-gray-200 cursor-pointer p-0.5 flex-shrink-0"
+                  />
+                  <input
+                    type="text"
+                    [(ngModel)]="formData['color']"
+                    name="color"
+                    placeholder="#e879a0"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                  />
+                </div>
+                @if (operation === 'UPDATE' && original('color')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('color') }}</p>
+                }
+
+              <!-- Birthdate dropdowns (members only) -->
+              } @else if (tableName === 'members' && field === 'birthdate') {
+                <div class="flex items-center gap-2">
+                  <select
+                    [(ngModel)]="birthdateMonth"
+                    name="birthdateMonth"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                  >
+                    <option [value]="0">— 月 —</option>
+                    @for (m of months; track m) {
+                      <option [value]="m">{{ m }} 月</option>
+                    }
+                  </select>
+                  <select
+                    [(ngModel)]="birthdateDay"
+                    name="birthdateDay"
+                    [disabled]="!birthdateMonth"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50"
+                  >
+                    <option [value]="0">— 日 —</option>
+                    @for (d of days; track d) {
+                      <option [value]="d">{{ d }} 日</option>
+                    }
+                  </select>
+                </div>
+                @if (operation === 'UPDATE' && original('birthdate')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('birthdate') }}</p>
+                }
+
+              <!-- Default: text input -->
+              } @else {
+                <input
+                  type="text"
+                  [(ngModel)]="formData[field]"
+                  [name]="field"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                  [placeholder]="original(field)"
+                />
+                @if (operation === 'UPDATE' && original(field)) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original(field) }}</p>
+                }
               }
             </div>
           }
@@ -127,6 +181,16 @@ export class ProposalPanelComponent implements OnInit {
   submitted = false;
   error = '';
 
+  // Birthdate selectors (members only)
+  birthdateMonth = 0;
+  birthdateDay = 0;
+  readonly months = Array.from({ length: 12 }, (_, i) => i + 1);
+  get days(): number[] {
+    const m = this.birthdateMonth;
+    const max = m === 2 ? 29 : [4, 6, 9, 11].includes(m) ? 30 : 31;
+    return Array.from({ length: max }, (_, i) => i + 1);
+  }
+
   get allowedFields(): string[] {
     return PROPOSAL_ALLOWED_FIELDS[this.tableName] ?? [];
   }
@@ -155,6 +219,11 @@ export class ProposalPanelComponent implements OnInit {
       this.formData[field] = this.originalData?.[field] ?? '';
     }
 
+    // Parse birthdate into selectors for members
+    if (this.tableName === 'members') {
+      this.parseBirthdate(this.originalData?.['birthdate']);
+    }
+
     const session = await this.supabase.getSessionOnce();
     if (session?.user) {
       this.loggedInName = session.user.user_metadata?.['full_name']
@@ -162,6 +231,17 @@ export class ProposalPanelComponent implements OnInit {
         ?? null;
       this.loggedInId = session.user.id;
     }
+  }
+
+  private parseBirthdate(value: string | null | undefined) {
+    if (!value) { this.birthdateMonth = 0; this.birthdateDay = 0; return; }
+    // MM-DD
+    const mmdd = value.match(/^(\d{1,2})-(\d{1,2})$/);
+    if (mmdd) { this.birthdateMonth = +mmdd[1]; this.birthdateDay = +mmdd[2]; return; }
+    // YYYY-MM-DD (old data)
+    const full = value.match(/^\d{4}-(\d{1,2})-(\d{1,2})$/);
+    if (full) { this.birthdateMonth = +full[1]; this.birthdateDay = +full[2]; return; }
+    this.birthdateMonth = 0; this.birthdateDay = 0;
   }
 
   close() {
@@ -174,6 +254,17 @@ export class ProposalPanelComponent implements OnInit {
     if (!this.loggedInName && !this.submitterName.trim()) {
       this.error = '請輸入暱稱';
       return;
+    }
+
+    // Combine birthdate month/day back into MM-DD format before building payload
+    if (this.tableName === 'members') {
+      if (this.birthdateMonth && this.birthdateDay) {
+        this.formData['birthdate'] =
+          String(this.birthdateMonth).padStart(2, '0') + '-' +
+          String(this.birthdateDay).padStart(2, '0');
+      } else {
+        this.formData['birthdate'] = '';
+      }
     }
 
     // Build proposed_data: only include non-empty fields
