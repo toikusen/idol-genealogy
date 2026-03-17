@@ -149,6 +149,15 @@
               margin: 0 0 4px;
             ">{{ member.name_roman || member.name }}</h1>
 
+            @if (member) {
+              <button
+                (click)="showProposalPanel = true"
+                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors"
+              >
+                ✏️ 提案修改
+              </button>
+            }
+
             <!-- Japanese name -->
             @if (member.name_roman) {
               <p style="
@@ -355,6 +364,16 @@
   </div>
 
 </div>
+
+@if (showProposalPanel && member) {
+  <app-proposal-panel
+    tableName="members"
+    operation="UPDATE"
+    [recordId]="member.id"
+    [originalData]="member"
+    (closed)="showProposalPanel = false"
+  />
+}
 
 <style>
   @keyframes spin {

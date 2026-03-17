@@ -7,6 +7,7 @@ import { SeoService } from '../../core/seo.service';
 import { MemberTimelineComponent } from '../../shared/member-timeline/member-timeline.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { MemberCareerGraphComponent } from '../../shared/member-career-graph/member-career-graph.component';
+import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { Member, History } from '../../models';
 
 const SITE_URL = 'https://idol-genealogy.pages.dev';
@@ -14,7 +15,7 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
 @Component({
   selector: 'app-member-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent],
+  imports: [CommonModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent],
   templateUrl: './member-page.component.html',
 })
 export class MemberPageComponent implements OnInit {
@@ -23,6 +24,7 @@ export class MemberPageComponent implements OnInit {
   loading = true;
   error = false;
   historyView: 'timeline' | 'career' = 'timeline';
+  showProposalPanel = false;
 
   constructor(
     private route: ActivatedRoute,
