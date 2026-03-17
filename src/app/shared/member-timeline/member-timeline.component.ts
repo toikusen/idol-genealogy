@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { History } from '../../models';
 
 interface TimelineSegment {
@@ -11,7 +12,7 @@ interface TimelineSegment {
 @Component({
   selector: 'app-member-timeline',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="relative">
       @for (seg of segments; track seg.history.id) {
@@ -30,14 +31,16 @@ interface TimelineSegment {
             <div class="flex items-start justify-between gap-3">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-1">
-                  <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full"
-                        [style.background]="(seg.history.group?.color || '#e879a0') + '18'"
-                        [style.color]="seg.history.group?.color || '#e879a0'">
+                  <a class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                     [routerLink]="['/group', seg.history.group_id]"
+                     [style.background]="(seg.history.group?.color || '#e879a0') + '18'"
+                     [style.color]="seg.history.group?.color || '#e879a0'"
+                     style="text-decoration:none;">
                     {{ seg.history.group?.name || '—' }}
                     @if (seg.history.team) {
                       <span class="opacity-60">/ {{ seg.history.team.name }}</span>
                     }
-                  </span>
+                  </a>
                   @if (seg.concurrent) {
                     <span class="text-xs text-idol-purple font-medium">兼任</span>
                   }
