@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
+import { MemberService } from '../../core/member.service';
 import { SeoService } from '../../core/seo.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
 import { GroupConnectionGraphComponent } from '../../shared/group-connection-graph/group-connection-graph.component';
@@ -48,6 +49,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   showNewHistoryPanel = false;
   lastProposal: Proposal | null = null;
   showEditHistory = false;
+  allMembers: { id: string; name: string }[] = [];
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -65,6 +67,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private groupService: GroupService,
     private historyService: HistoryService,
+    private memberService: MemberService,
     private seo: SeoService,
     private proposalService: ProposalService,
   ) {}
@@ -107,6 +110,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       }
       const memberIds = [...new Set(histories.map(h => h.member_id))];
       this.allMemberHistories = await this.historyService.getByMembers(memberIds);
+      this.memberService.getAll().then(members => {
+        this.allMembers = members
+          .map(m => ({ id: m.id, name: m.name ?? m.name_roman ?? m.id }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+      }).catch(() => {});
       if (group?.style) {
         this.similarGroups = await this.groupService.getSimilarByStyle(group.style, id);
       }
@@ -229,16 +237,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   }
 
   get groupMembersList(): { id: string; name: string }[] {
-    const seen = new Set<string>();
-    const result: { id: string; name: string }[] = [];
-    for (const h of this.histories) {
-      if (!seen.has(h.member_id)) {
-        seen.add(h.member_id);
-        const m = (h as any).member;
-        result.push({ id: h.member_id, name: m?.name ?? m?.name_roman ?? h.member_id });
-      }
-    }
-    return result.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+    return this.allMembers;
   }
 
   hexToRgb(hex: string): string {

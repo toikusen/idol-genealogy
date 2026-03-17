@@ -195,15 +195,22 @@ import { Company } from '../../models';
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ currentCompanyName }}</p>
                 }
 
-              <!-- Member dropdown (history: member_id) -->
+              <!-- Member dropdown with search (history: member_id) -->
               } @else if (tableName === 'history' && field === 'member_id') {
+                <input
+                  type="text"
+                  [(ngModel)]="memberSearch"
+                  name="memberSearch"
+                  placeholder="輸入名字搜尋成員…"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 mb-1"
+                />
                 <select
                   [(ngModel)]="formData['member_id']"
                   name="member_id"
                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
                 >
                   <option [value]="''">— 請選擇成員 —</option>
-                  @for (m of groupMembers; track m.id) {
+                  @for (m of filteredMembers; track m.id) {
                     <option [value]="m.id">{{ m.name }}</option>
                   }
                 </select>
@@ -360,8 +367,9 @@ export class ProposalPanelComponent implements OnInit {
   @Input() recordId: string | null = null;
   @Input() operation: 'INSERT' | 'UPDATE' = 'UPDATE';
   @Input() originalData: Record<string, any> = {};
-  /** For history proposals: list of members in this group (current + past) */
+  /** For history proposals: full member list to pick from */
   @Input() groupMembers: { id: string; name: string }[] = [];
+  memberSearch = '';
   /** Fields that must be non-empty before submission */
   @Input() requiredFields: string[] = [];
   @Output() closed = new EventEmitter<void>();
@@ -383,6 +391,12 @@ export class ProposalPanelComponent implements OnInit {
   }
 
   // Member name for history UPDATE display
+  get filteredMembers(): { id: string; name: string }[] {
+    const q = this.memberSearch.trim().toLowerCase();
+    if (!q) return this.groupMembers;
+    return this.groupMembers.filter(m => m.name.toLowerCase().includes(q));
+  }
+
   get currentMemberName(): string {
     const id = this.originalData?.['member_id'];
     return this.groupMembers.find(m => m.id === id)?.name ?? id ?? '';
