@@ -101,6 +101,15 @@
           color:#2d1b2e;margin:0 0 8px;
         ">{{ company.name }}</h1>
 
+        @if (company) {
+          <button
+            (click)="showProposalPanel = true"
+            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs border border-white/30 text-white rounded-full hover:bg-white/10 transition-colors"
+          >
+            ✏️ 提案修改
+          </button>
+        }
+
         <!-- Founded -->
         @if (company.founded_at) {
           <p style="
@@ -272,6 +281,16 @@
     }
   </div>
 </div>
+
+@if (showProposalPanel && company) {
+  <app-proposal-panel
+    tableName="companies"
+    operation="UPDATE"
+    [recordId]="company.id"
+    [originalData]="company"
+    (closed)="showProposalPanel = false"
+  />
+}
 
 <style>
   @keyframes spin { to { transform: rotate(360deg); } }

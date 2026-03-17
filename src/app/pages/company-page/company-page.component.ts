@@ -5,17 +5,19 @@ import { CommonModule } from '@angular/common';
 import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
 import { Company, Group } from '../../models';
+import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 
 const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
   selector: 'app-company-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ProposalPanelComponent],
   templateUrl: './company-page.component.html',
 })
 export class CompanyPageComponent implements OnInit, OnDestroy {
   company: Company | null = null;
+  showProposalPanel = false;
   activeGroups: Group[] = [];
   disbandedGroups: Group[] = [];
   loading = true;
