@@ -4,15 +4,19 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
-import { Company, Group } from '../../models';
+import { Company, Group, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
+import { ProposalService } from '../../core/proposal.service';
+import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
+import { formatRelativeTime } from '../../core/time.utils';
+import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 
 const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
   selector: 'app-company-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProposalPanelComponent],
+  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent],
   templateUrl: './company-page.component.html',
 })
 export class CompanyPageComponent implements OnInit, OnDestroy {
@@ -22,11 +26,22 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   disbandedGroups: Group[] = [];
   loading = true;
   error = false;
+  lastProposal: Proposal | null = null;
+  showEditHistory = false;
+
+  get lastProposalDiffFields(): DiffField[] {
+    return this.lastProposal ? getDiffFields(this.lastProposal) : [];
+  }
+
+  formatRelativeTime(date: string | null): string {
+    return formatRelativeTime(date);
+  }
 
   constructor(
     private route: ActivatedRoute,
     private companyService: CompanyService,
-    private seo: SeoService
+    private seo: SeoService,
+    private proposalService: ProposalService,
   ) {}
 
   ngOnDestroy() {
@@ -43,6 +58,12 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
       this.company = company;
       this.activeGroups = groups.filter(g => !g.disbanded_at);
       this.disbandedGroups = groups.filter(g => !!g.disbanded_at);
+
+      if (company) {
+        this.proposalService.getApprovedByRecord('companies', id)
+          .then(proposals => { this.lastProposal = proposals[0] ?? null; })
+          .catch(() => {});
+      }
 
       if (company) {
         this.seo.setPage(
