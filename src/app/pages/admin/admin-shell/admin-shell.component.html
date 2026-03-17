@@ -55,6 +55,18 @@
             變更記錄
           </a>
           <a
+            routerLink="/admin/proposals"
+            routerLinkActive="bg-purple-100 text-purple-700 font-medium"
+            class="flex items-center justify-between px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+          >
+            <span>提案審核</span>
+            @if (pendingProposalCount > 0) {
+              <span class="ml-2 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                {{ pendingProposalCount > 99 ? '99+' : pendingProposalCount }}
+              </span>
+            }
+          </a>
+          <a
             routerLink="/admin/roles"
             routerLinkActive="bg-purple-100 text-purple-700 font-medium"
             class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"

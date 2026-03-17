@@ -34,6 +34,16 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/admin-audit-log/admin-audit-log.component').then(m => m.AdminAuditLogComponent)
       },
       {
+        path: 'proposals',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./pages/admin/admin-proposals/admin-proposals.component').then(m => m.AdminProposalsComponent)
+      },
+      {
+        path: 'proposals/:id',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./pages/admin/admin-proposal-review/admin-proposal-review.component').then(m => m.AdminProposalReviewComponent)
+      },
+      {
         path: 'roles',
         loadComponent: () => import('./pages/admin/admin-roles/admin-roles.component').then(m => m.AdminRolesComponent)
       },
