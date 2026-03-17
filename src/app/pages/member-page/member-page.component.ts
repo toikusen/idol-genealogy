@@ -8,14 +8,18 @@ import { MemberTimelineComponent } from '../../shared/member-timeline/member-tim
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { MemberCareerGraphComponent } from '../../shared/member-career-graph/member-career-graph.component';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
-import { Member, History } from '../../models';
+import { Member, History, Proposal } from '../../models';
+import { ProposalService } from '../../core/proposal.service';
+import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
+import { formatRelativeTime } from '../../core/time.utils';
+import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 
 const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
   selector: 'app-member-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent],
+  imports: [CommonModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent],
   templateUrl: './member-page.component.html',
 })
 export class MemberPageComponent implements OnInit {
@@ -25,12 +29,23 @@ export class MemberPageComponent implements OnInit {
   error = false;
   historyView: 'timeline' | 'career' = 'timeline';
   showProposalPanel = false;
+  lastProposal: Proposal | null = null;
+  showEditHistory = false;
+
+  get lastProposalDiffFields(): DiffField[] {
+    return this.lastProposal ? getDiffFields(this.lastProposal) : [];
+  }
+
+  formatRelativeTime(date: string | null): string {
+    return formatRelativeTime(date);
+  }
 
   constructor(
     private route: ActivatedRoute,
     private memberService: MemberService,
     private historyService: HistoryService,
-    private seo: SeoService
+    private seo: SeoService,
+    private proposalService: ProposalService,
   ) {}
 
   async ngOnInit() {
@@ -67,6 +82,13 @@ export class MemberPageComponent implements OnInit {
         if (groups.length > 0) jsonLd['memberOf'] = groups;
 
         this.seo.setJsonLd(jsonLd);
+      }
+
+      // Load last approved proposal (non-blocking — don't let failure affect page load)
+      if (member) {
+        this.proposalService.getApprovedByRecord('members', id)
+          .then(proposals => { this.lastProposal = proposals[0] ?? null; })
+          .catch(() => {}); // silently ignore — attribution is non-critical
       }
     } catch {
       this.error = true;
