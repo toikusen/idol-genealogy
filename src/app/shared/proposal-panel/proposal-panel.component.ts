@@ -4,7 +4,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../core/supabase.service';
 import { ProposalService } from '../../core/proposal.service';
+import { CompanyService } from '../../core/company.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../core/proposal-fields.config';
+import { Company } from '../../models';
 
 @Component({
   selector: 'app-proposal-panel',
@@ -51,8 +53,8 @@ import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../core/proposal-field
                 {{ fieldLabel(field) }}
               </label>
 
-              <!-- Color picker (members only) -->
-              @if (tableName === 'members' && field === 'color') {
+              <!-- Color picker (members + groups) -->
+              @if (field === 'color') {
                 <div class="flex items-center gap-3">
                   <input
                     type="color"
@@ -72,7 +74,7 @@ import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../core/proposal-field
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('color') }}</p>
                 }
 
-              <!-- Birthdate dropdowns (members only) -->
+              <!-- Birthdate dropdowns (members: MM-DD) -->
               } @else if (tableName === 'members' && field === 'birthdate') {
                 <div class="flex items-center gap-2">
                   <select
@@ -92,13 +94,91 @@ import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../core/proposal-field
                     class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50"
                   >
                     <option [value]="0">— 日 —</option>
-                    @for (d of days; track d) {
+                    @for (d of daysForMonth(birthdateMonth); track d) {
                       <option [value]="d">{{ d }} 日</option>
                     }
                   </select>
                 </div>
                 @if (operation === 'UPDATE' && original('birthdate')) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('birthdate') }}</p>
+                }
+
+              <!-- Founded date dropdowns (groups: YYYY-MM-DD) -->
+              } @else if (tableName === 'groups' && field === 'founded_at') {
+                <div class="flex items-center gap-2">
+                  <select [(ngModel)]="foundedYear" name="foundedYear"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                    <option [value]="0">— 年 —</option>
+                    @for (y of years; track y) {
+                      <option [value]="y">{{ y }}</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="foundedMonth" name="foundedMonth"
+                    [disabled]="!foundedYear"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                    <option [value]="0">— 月 —</option>
+                    @for (m of months; track m) {
+                      <option [value]="m">{{ m }} 月</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="foundedDay" name="foundedDay"
+                    [disabled]="!foundedMonth"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                    <option [value]="0">— 日 —</option>
+                    @for (d of daysForMonth(foundedMonth); track d) {
+                      <option [value]="d">{{ d }} 日</option>
+                    }
+                  </select>
+                </div>
+                @if (operation === 'UPDATE' && original('founded_at')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('founded_at') }}</p>
+                }
+
+              <!-- Disbanded date dropdowns (groups: YYYY-MM-DD) -->
+              } @else if (tableName === 'groups' && field === 'disbanded_at') {
+                <div class="flex items-center gap-2">
+                  <select [(ngModel)]="disbandedYear" name="disbandedYear"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                    <option [value]="0">— 年 —</option>
+                    @for (y of years; track y) {
+                      <option [value]="y">{{ y }}</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="disbandedMonth" name="disbandedMonth"
+                    [disabled]="!disbandedYear"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                    <option [value]="0">— 月 —</option>
+                    @for (m of months; track m) {
+                      <option [value]="m">{{ m }} 月</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="disbandedDay" name="disbandedDay"
+                    [disabled]="!disbandedMonth"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                    <option [value]="0">— 日 —</option>
+                    @for (d of daysForMonth(disbandedMonth); track d) {
+                      <option [value]="d">{{ d }} 日</option>
+                    }
+                  </select>
+                </div>
+                @if (operation === 'UPDATE' && original('disbanded_at')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('disbanded_at') }}</p>
+                }
+
+              <!-- Company dropdown (groups: company_id) -->
+              } @else if (tableName === 'groups' && field === 'company_id') {
+                <select
+                  [(ngModel)]="formData['company_id']"
+                  name="company_id"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                >
+                  <option [value]="''">— 無 —</option>
+                  @for (c of companies; track c.id) {
+                    <option [value]="c.id">{{ c.name }}</option>
+                  }
+                </select>
+                @if (operation === 'UPDATE' && currentCompanyName) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ currentCompanyName }}</p>
                 }
 
               <!-- Default: text input -->
@@ -181,13 +261,33 @@ export class ProposalPanelComponent implements OnInit {
   submitted = false;
   error = '';
 
-  // Birthdate selectors (members only)
+  // Companies list for groups dropdown
+  companies: Company[] = [];
+  get currentCompanyName(): string {
+    const id = this.originalData?.['company_id'];
+    return this.companies.find(c => c.id === id)?.name ?? id ?? '';
+  }
+
+  // Birthdate selectors (members: MM-DD)
   birthdateMonth = 0;
   birthdateDay = 0;
+
+  // Founded / disbanded date selectors (groups: YYYY-MM-DD)
+  foundedYear = 0;
+  foundedMonth = 0;
+  foundedDay = 0;
+  disbandedYear = 0;
+  disbandedMonth = 0;
+  disbandedDay = 0;
+
   readonly months = Array.from({ length: 12 }, (_, i) => i + 1);
-  get days(): number[] {
-    const m = this.birthdateMonth;
-    const max = m === 2 ? 29 : [4, 6, 9, 11].includes(m) ? 30 : 31;
+  readonly years = Array.from(
+    { length: new Date().getFullYear() - 1999 },
+    (_, i) => 2000 + i
+  );
+
+  daysForMonth(month: number): number[] {
+    const max = month === 2 ? 29 : [4, 6, 9, 11].includes(month) ? 30 : 31;
     return Array.from({ length: max }, (_, i) => i + 1);
   }
 
@@ -211,6 +311,7 @@ export class ProposalPanelComponent implements OnInit {
   constructor(
     private supabase: SupabaseService,
     private proposalService: ProposalService,
+    private companyService: CompanyService,
   ) {}
 
   async ngOnInit() {
@@ -219,9 +320,18 @@ export class ProposalPanelComponent implements OnInit {
       this.formData[field] = this.originalData?.[field] ?? '';
     }
 
-    // Parse birthdate into selectors for members
+    // Members: parse birthdate into month/day selectors
     if (this.tableName === 'members') {
       this.parseBirthdate(this.originalData?.['birthdate']);
+    }
+
+    // Groups: parse dates into year/month/day selectors, load companies
+    if (this.tableName === 'groups') {
+      this.parseYMD(this.originalData?.['founded_at'], 'founded');
+      this.parseYMD(this.originalData?.['disbanded_at'], 'disbanded');
+      this.companies = await this.companyService.getAll().catch(() => []);
+      // Pre-select current company_id
+      this.formData['company_id'] = this.originalData?.['company_id'] ?? '';
     }
 
     const session = await this.supabase.getSessionOnce();
@@ -235,13 +345,27 @@ export class ProposalPanelComponent implements OnInit {
 
   private parseBirthdate(value: string | null | undefined) {
     if (!value) { this.birthdateMonth = 0; this.birthdateDay = 0; return; }
-    // MM-DD
     const mmdd = value.match(/^(\d{1,2})-(\d{1,2})$/);
     if (mmdd) { this.birthdateMonth = +mmdd[1]; this.birthdateDay = +mmdd[2]; return; }
-    // YYYY-MM-DD (old data)
     const full = value.match(/^\d{4}-(\d{1,2})-(\d{1,2})$/);
     if (full) { this.birthdateMonth = +full[1]; this.birthdateDay = +full[2]; return; }
     this.birthdateMonth = 0; this.birthdateDay = 0;
+  }
+
+  private parseYMD(value: string | null | undefined, prefix: 'founded' | 'disbanded') {
+    const ymd = value?.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (ymd) {
+      if (prefix === 'founded') {
+        this.foundedYear = +ymd[1]; this.foundedMonth = +ymd[2]; this.foundedDay = +ymd[3];
+      } else {
+        this.disbandedYear = +ymd[1]; this.disbandedMonth = +ymd[2]; this.disbandedDay = +ymd[3];
+      }
+    }
+  }
+
+  private buildYMD(year: number, month: number, day: number): string {
+    if (!year || !month || !day) return '';
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
   close() {
@@ -256,15 +380,17 @@ export class ProposalPanelComponent implements OnInit {
       return;
     }
 
-    // Combine birthdate month/day back into MM-DD format before building payload
+    // Combine birthdate selectors → MM-DD
     if (this.tableName === 'members') {
-      if (this.birthdateMonth && this.birthdateDay) {
-        this.formData['birthdate'] =
-          String(this.birthdateMonth).padStart(2, '0') + '-' +
-          String(this.birthdateDay).padStart(2, '0');
-      } else {
-        this.formData['birthdate'] = '';
-      }
+      this.formData['birthdate'] = (this.birthdateMonth && this.birthdateDay)
+        ? String(this.birthdateMonth).padStart(2, '0') + '-' + String(this.birthdateDay).padStart(2, '0')
+        : '';
+    }
+
+    // Combine founded/disbanded selectors → YYYY-MM-DD
+    if (this.tableName === 'groups') {
+      this.formData['founded_at'] = this.buildYMD(this.foundedYear, this.foundedMonth, this.foundedDay);
+      this.formData['disbanded_at'] = this.buildYMD(this.disbandedYear, this.disbandedMonth, this.disbandedDay);
     }
 
     // Build proposed_data: only include non-empty fields
