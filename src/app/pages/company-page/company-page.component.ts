@@ -22,6 +22,7 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
 export class CompanyPageComponent implements OnInit, OnDestroy {
   company: Company | null = null;
   showProposalPanel = false;
+  showDeletePanel = false;
   activeGroups: Group[] = [];
   disbandedGroups: Group[] = [];
   loading = true;

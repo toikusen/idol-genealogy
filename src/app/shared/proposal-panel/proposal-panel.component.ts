@@ -59,7 +59,13 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
           }
           <!-- Summary of record being reported -->
           <div class="rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-gray-700 space-y-1">
-            <p class="text-xs font-medium text-red-500 mb-2">回報以下歷程記錄有問題：</p>
+            <p class="text-xs font-medium text-red-500 mb-2">回報以下{{ tableLabel }}資料有問題：</p>
+            @if (originalData['name']) {
+              <p><span class="text-gray-400 text-xs">名稱：</span>{{ originalData['name'] }}</p>
+            }
+            @if (originalData['name_roman']) {
+              <p><span class="text-gray-400 text-xs">英文名：</span>{{ originalData['name_roman'] }}</p>
+            }
             @if (originalData['group']?.name || originalData['external_group_name']) {
               <p><span class="text-gray-400 text-xs">組合：</span>{{ originalData['group']?.name || originalData['external_group_name'] }}</p>
             }

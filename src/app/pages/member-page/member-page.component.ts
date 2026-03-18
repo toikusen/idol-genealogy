@@ -30,6 +30,7 @@ export class MemberPageComponent implements OnInit {
   error = false;
   historyView: 'timeline' | 'career' = 'timeline';
   showProposalPanel = false;
+  showDeletePanel = false;
   showOverseasPanel = false;
   historyToDelete: History | null = null;
   allGroupsList: { id: string; name: string }[] = [];

@@ -101,11 +101,16 @@
             font-weight:400;letter-spacing:0.02em;
             color:#2d1b2e;margin:0;
           ">{{ company.name }}</h1>
-          <button
-            (click)="showProposalPanel = true"
-            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors"
-            style="margin-top:8px; flex-shrink:0;"
-          >✏️ 提案修改</button>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button
+              (click)="showProposalPanel = true"
+              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors"
+            >✏️ 提案修改</button>
+            <button
+              (click)="showDeletePanel = true"
+              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 border border-gray-200 rounded-full hover:border-red-300 hover:text-red-400 transition-colors"
+            >⚑ 回報問題</button>
+          </div>
         </div>
 
         <!-- Founded -->
@@ -375,6 +380,16 @@
     [recordId]="company.id"
     [originalData]="company"
     (closed)="showProposalPanel = false"
+  />
+}
+
+@if (showDeletePanel && company) {
+  <app-proposal-panel
+    tableName="companies"
+    operation="DELETE"
+    [recordId]="company.id"
+    [originalData]="company"
+    (closed)="showDeletePanel = false"
   />
 }
 

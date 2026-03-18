@@ -45,6 +45,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   error = false;
   activeTab: 'members' | 'connections' = 'members';
   showGroupProposalPanel = false;
+  showDeletePanel = false;
   proposalHistoryEntry: History | null = null;
   showNewHistoryPanel = false;
   lastProposal: Proposal | null = null;

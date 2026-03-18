@@ -149,11 +149,16 @@
                 letter-spacing: 0.03em; color: #2d1b2e;
                 margin: 0;
               ">{{ member.name }}</h1>
-              <button
-                (click)="showProposalPanel = true"
-                class="proposal-edit-btn"
-                style="margin-top: 8px;"
-              >✏️ 提案修改</button>
+              <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                <button
+                  (click)="showProposalPanel = true"
+                  class="proposal-edit-btn"
+                >✏️ 提案修改</button>
+                <button
+                  (click)="showDeletePanel = true"
+                  class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 border border-gray-200 rounded-full hover:border-red-300 hover:text-red-400 transition-colors"
+                >⚑ 回報問題</button>
+              </div>
             </div>
 
             <!-- Roman / phonetic name -->
@@ -470,6 +475,16 @@
     [recordId]="member.id"
     [originalData]="member"
     (closed)="showProposalPanel = false"
+  />
+}
+
+@if (showDeletePanel && member) {
+  <app-proposal-panel
+    tableName="members"
+    operation="DELETE"
+    [recordId]="member.id"
+    [originalData]="member"
+    (closed)="showDeletePanel = false"
   />
 }
 

@@ -57,7 +57,7 @@
     @if (proposal.operation === 'DELETE') {
       <div class="bg-white rounded-xl border border-red-100 overflow-hidden mb-6">
         <div class="bg-red-50 px-4 py-2 border-b border-red-100">
-          <p class="text-xs font-medium text-red-600">使用者回報以下歷程記錄有問題，請確認後決定是否刪除</p>
+          <p class="text-xs font-medium text-red-600">使用者回報此{{ tableLabel(proposal.table_name) }}資料有問題，請確認後決定是否刪除</p>
         </div>
         <div class="px-4 py-3 space-y-2 text-sm">
           @for (entry of deleteOriginalEntries; track entry.key) {
