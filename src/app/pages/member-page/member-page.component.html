@@ -280,6 +280,17 @@
             white-space: nowrap;
           ">活動歷程</span>
           <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.22), transparent);"></div>
+          <!-- Add overseas button -->
+          <button
+            (click)="showOverseasPanel = true"
+            style="
+              display:inline-flex;align-items:center;gap:4px;
+              font-family:'Shippori Mincho',serif;font-size:0.65rem;letter-spacing:0.08em;
+              padding:4px 10px;border-radius:5px;border:1px solid rgba(122,90,122,0.2);
+              background:transparent;color:rgba(122,90,122,0.5);cursor:pointer;
+              transition:all 0.2s;white-space:nowrap;flex-shrink:0;
+            "
+          >+ 新增經歷</button>
           <!-- View toggle -->
           <div style="display: flex; border: 1px solid rgba(232,121,160,0.25); border-radius: 6px; overflow: hidden; flex-shrink: 0;">
             <button
@@ -459,6 +470,18 @@
     [recordId]="member.id"
     [originalData]="member"
     (closed)="showProposalPanel = false"
+  />
+}
+
+@if (showOverseasPanel && member) {
+  <app-proposal-panel
+    tableName="history"
+    operation="INSERT"
+    [originalData]="{ member_id: member.id }"
+    [groupMembers]="[{ id: member.id, name: member.name_roman || member.name }]"
+    [requiredFields]="['joined_at']"
+    [groups]="allGroupsList"
+    (closed)="showOverseasPanel = false"
   />
 }
 

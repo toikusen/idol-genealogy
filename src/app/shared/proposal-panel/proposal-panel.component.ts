@@ -196,7 +196,63 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ currentCompanyName }}</p>
                 }
 
-              <!-- Member dropdown with search (history: member_id) -->
+              <!-- history INSERT: member_id field -->
+              } @else if (tableName === 'history' && operation === 'INSERT' && field === 'member_id') {
+                <!-- toggle (only if member is NOT pre-filled from context) -->
+                @if (!originalData['member_id']) {
+                  <div class="flex rounded-lg overflow-hidden border border-gray-600 text-xs mb-3">
+                    <button type="button"
+                      (click)="isExternalRecord = false"
+                      class="flex-1 py-1.5 transition-colors"
+                      [class.bg-pink-500]="!isExternalRecord" [class.text-white]="!isExternalRecord"
+                      [class.bg-transparent]="isExternalRecord" [class.text-gray-400]="isExternalRecord">
+                      台灣團體
+                    </button>
+                    <button type="button"
+                      (click)="isExternalRecord = true"
+                      class="flex-1 py-1.5 transition-colors"
+                      [class.bg-pink-500]="isExternalRecord" [class.text-white]="isExternalRecord"
+                      [class.bg-transparent]="!isExternalRecord" [class.text-gray-400]="!isExternalRecord">
+                      海外團體
+                    </button>
+                  </div>
+                }
+                @if (originalData['member_id']) {
+                  <!-- toggle when member is pre-filled -->
+                  <div class="flex rounded-lg overflow-hidden border border-gray-600 text-xs mb-3">
+                    <button type="button"
+                      (click)="isExternalRecord = false"
+                      class="flex-1 py-1.5 transition-colors"
+                      [class.bg-pink-500]="!isExternalRecord" [class.text-white]="!isExternalRecord"
+                      [class.bg-transparent]="isExternalRecord" [class.text-gray-400]="isExternalRecord">
+                      台灣團體
+                    </button>
+                    <button type="button"
+                      (click)="isExternalRecord = true"
+                      class="flex-1 py-1.5 transition-colors"
+                      [class.bg-pink-500]="isExternalRecord" [class.text-white]="isExternalRecord"
+                      [class.bg-transparent]="!isExternalRecord" [class.text-gray-400]="!isExternalRecord">
+                      海外團體
+                    </button>
+                  </div>
+                  <!-- member pre-filled: show as disabled -->
+                  <input type="text" [value]="currentMemberName" disabled
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-400 bg-gray-50 cursor-not-allowed"/>
+                } @else {
+                  <!-- member dropdown -->
+                  <input type="text" [(ngModel)]="memberSearch" name="memberSearch"
+                    placeholder="輸入名字搜尋成員…"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 mb-1"/>
+                  <select [(ngModel)]="formData['member_id']" name="member_id"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                    <option [value]="''">— 請選擇成員 —</option>
+                    @for (m of filteredMembers; track m.id) {
+                      <option [value]="m.id">{{ m.name }}</option>
+                    }
+                  </select>
+                }
+
+              <!-- Member dropdown with search (history UPDATE: member_id) -->
               } @else if (tableName === 'history' && field === 'member_id') {
                 <input
                   type="text"
@@ -217,6 +273,26 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                 </select>
                 @if (operation === 'UPDATE' && currentMemberName) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ currentMemberName }}</p>
+                }
+
+              <!-- Group selector (history INSERT, internal only) -->
+              } @else if (tableName === 'history' && field === 'group_id') {
+                @if (originalData['group_id']) {
+                  <!-- group pre-filled from group page: show as disabled -->
+                  <input type="text" [value]="currentGroupName" disabled
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-400 bg-gray-50 cursor-not-allowed"/>
+                } @else {
+                  <!-- group dropdown for member page context -->
+                  <input type="text" [(ngModel)]="groupSearch" name="groupSearch"
+                    placeholder="輸入組合名搜尋…"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 mb-1"/>
+                  <select [(ngModel)]="formData['group_id']" name="group_id"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                    <option [value]="''">— 請選擇組合 —</option>
+                    @for (g of filteredGroups; track g.id) {
+                      <option [value]="g.id">{{ g.name }}</option>
+                    }
+                  </select>
                 }
 
               <!-- Status dropdown (history) -->
@@ -382,8 +458,13 @@ export class ProposalPanelComponent implements OnInit {
   /** For history proposals: full member list to pick from */
   @Input() groupMembers: { id: string; name: string }[] = [];
   memberSearch = '';
+  /** For history proposals from member page: groups list for dropdown */
+  @Input() groups: { id: string; name: string }[] = [];
+  groupSearch = '';
   /** Fields that must be non-empty before submission */
   @Input() requiredFields: string[] = [];
+  /** Force external mode (e.g. opened from member page) */
+  @Input() forceExternal = false;
   @Output() closed = new EventEmitter<void>();
 
   formData: Record<string, any> = {};
@@ -394,6 +475,7 @@ export class ProposalPanelComponent implements OnInit {
   submitting = false;
   submitted = false;
   error = '';
+  isExternalRecord = false;
 
   // Companies list for groups dropdown
   companies: Company[] = [];
@@ -407,6 +489,17 @@ export class ProposalPanelComponent implements OnInit {
     const q = this.memberSearch.trim().toLowerCase();
     if (!q) return this.groupMembers;
     return this.groupMembers.filter(m => m.name.toLowerCase().includes(q));
+  }
+
+  get filteredGroups(): { id: string; name: string }[] {
+    const q = this.groupSearch.trim().toLowerCase();
+    if (!q) return this.groups;
+    return this.groups.filter(g => g.name.toLowerCase().includes(q));
+  }
+
+  get currentGroupName(): string {
+    const id = this.originalData?.['group_id'] || this.formData['group_id'];
+    return this.groups.find(g => g.id === id)?.name ?? id ?? '';
   }
 
   get currentMemberName(): string {
@@ -457,7 +550,17 @@ export class ProposalPanelComponent implements OnInit {
   }
 
   get allowedFields(): string[] {
-    return PROPOSAL_ALLOWED_FIELDS[this.tableName] ?? [];
+    const fields = PROPOSAL_ALLOWED_FIELDS[this.tableName] ?? [];
+    if (this.tableName === 'history') {
+      if (this.isExternalRecord) {
+        // Hide group_id for external records (uses external_group_name instead)
+        return fields.filter(f => f !== 'group_id');
+      } else {
+        // Hide external fields for internal records
+        return fields.filter(f => f !== 'external_group_name' && f !== 'external_country');
+      }
+    }
+    return fields;
   }
 
   get photoUploadFolder(): 'members' | 'groups' | 'companies' {
@@ -515,6 +618,8 @@ export class ProposalPanelComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    if (this.forceExternal) this.isExternalRecord = true;
+
     // Pre-fill form with allowed fields from originalData
     for (const field of this.allowedFields) {
       this.formData[field] = this.originalData?.[field] ?? '';
@@ -613,9 +718,14 @@ export class ProposalPanelComponent implements OnInit {
       }
     }
 
-    // For history proposals, always carry group_id from context
-    if (this.tableName === 'history' && this.originalData?.['group_id']) {
-      proposed['group_id'] = this.originalData['group_id'];
+    // For history proposals, resolve group_id (formData selection > originalData context)
+    if (this.tableName === 'history' && !this.isExternalRecord) {
+      const groupId = this.formData['group_id'] || this.originalData?.['group_id'];
+      if (groupId) proposed['group_id'] = groupId;
+    }
+    // For external records, ensure group_id is absent
+    if (this.isExternalRecord) {
+      delete proposed['group_id'];
     }
 
     if (Object.keys(proposed).length === 0) {

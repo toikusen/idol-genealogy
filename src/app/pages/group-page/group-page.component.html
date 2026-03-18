@@ -865,6 +865,7 @@
           [recordId]="null"
           [originalData]="{ group_id: group.id }"
           [groupMembers]="groupMembersList"
+          [groups]="[{ id: group.id, name: group.name }]"
           [requiredFields]="['member_id', 'status', 'joined_at']"
           (closed)="showNewHistoryPanel = false"
         />

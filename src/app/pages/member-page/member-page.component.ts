@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MemberService } from '../../core/member.service';
 import { HistoryService } from '../../core/history.service';
+import { GroupService } from '../../core/group.service';
 import { SeoService } from '../../core/seo.service';
 import { MemberTimelineComponent } from '../../shared/member-timeline/member-timeline.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
@@ -29,6 +30,8 @@ export class MemberPageComponent implements OnInit {
   error = false;
   historyView: 'timeline' | 'career' = 'timeline';
   showProposalPanel = false;
+  showOverseasPanel = false;
+  allGroupsList: { id: string; name: string }[] = [];
   lastProposal: Proposal | null = null;
   showEditHistory = false;
 
@@ -44,6 +47,7 @@ export class MemberPageComponent implements OnInit {
     private route: ActivatedRoute,
     private memberService: MemberService,
     private historyService: HistoryService,
+    private groupService: GroupService,
     private seo: SeoService,
     private proposalService: ProposalService,
   ) {}
@@ -57,6 +61,11 @@ export class MemberPageComponent implements OnInit {
       ]);
       this.member = member;
       this.histories = histories;
+
+      this.groupService.getAll().then(groups => {
+        this.allGroupsList = groups.map(g => ({ id: g.id, name: g.name }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+      }).catch(() => {});
 
       if (member) {
         const displayName = member.name_roman ?? member.name;

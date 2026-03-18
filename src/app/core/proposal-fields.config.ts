@@ -10,7 +10,7 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
     'instagram', 'facebook', 'x', 'youtube', 'company_id', 'photo_url',
   ],
   history: [
-    'member_id', 'name_at_time',
+    'member_id', 'group_id', 'name_at_time',
     'status', 'joined_at', 'left_at',
     'external_group_name', 'external_country',
   ],
@@ -34,7 +34,7 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
     company_id: '所屬公司', photo_url: '頭像圖片',
   },
   history: {
-    member_id: '成員', name_at_time: '當時藝名', status: '狀態',
+    member_id: '成員', group_id: '組合', name_at_time: '當時藝名', status: '狀態',
     joined_at: '加入日期', left_at: '離開日期',
     external_group_name: '外部組合名稱', external_country: '國家／地區',
   },
