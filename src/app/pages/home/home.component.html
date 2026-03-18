@@ -44,7 +44,7 @@
         font-family: 'Shippori Mincho', serif;
         font-size: 0.78rem; letter-spacing: 0.22em;
         color: rgba(122,90,122,0.4); margin: 0 0 44px;
-      ">アイドル　グループ　メンバー</p>
+      ">偶像　組合　成員</p>
 
       <!-- Decorative rule -->
       <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -237,7 +237,7 @@
                 font-size: 0.85rem; font-weight: 600; letter-spacing: 0.2em;
                 text-transform: uppercase; color: rgba(232,121,160,0.7);
                 margin-bottom: 12px;
-              ">Members · メンバー ({{memberResults.length + aliasResults.length}})</div>
+              ">Members · 成員 ({{memberResults.length + aliasResults.length}})</div>
 
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 @for (member of memberResults; track member.id) {
@@ -321,7 +321,7 @@
                 font-size: 0.85rem; font-weight: 600; letter-spacing: 0.2em;
                 text-transform: uppercase; color: rgba(124,108,242,0.6);
                 margin-bottom: 12px;
-              ">Groups · グループ ({{groupResults.length}})</div>
+              ">Groups · 組合 ({{groupResults.length}})</div>
 
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 @for (group of groupResults; track group.id) {
@@ -377,7 +377,7 @@
           font-family: 'Shippori Mincho', serif;
           font-size: 3rem; color: rgba(232,121,160,0.15); line-height: 1;
           margin-bottom: 20px;
-        ">見つかりません</div>
+        ">找不到</div>
         <p style="
           font-family: 'Cormorant Garamond', Georgia, serif;
           font-style: italic; font-size: 1.1rem;
@@ -387,7 +387,7 @@
           font-family: 'Shippori Mincho', serif;
           font-size: 0.78rem; color: rgba(184,160,184,0.6);
           letter-spacing: 0.12em; margin: 12px 0 0;
-        ">検索結果がありません</p>
+        ">查無結果</p>
       </div>
     }
 
@@ -495,7 +495,7 @@
               font-size: 0.68rem; letter-spacing: 0.35em;
               text-transform: uppercase; color: #5040a8;
               white-space: nowrap;
-            ">GROUPS · グループ一覧</span>
+            ">GROUPS · 組合列表</span>
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(98,72,192,0.3), transparent);"></div>
             <button
               (click)="showGroupInsertPanel = true"
@@ -637,7 +637,7 @@
                       transition: background 0.2s, border-color 0.2s;
                     ">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-                      事務所ページ
+                      事務所頁面
                     </a>
                   }
                   <div style="flex: 1; height: 1px; background: rgba(180,130,40,0.15);"></div>
