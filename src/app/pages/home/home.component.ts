@@ -33,7 +33,7 @@ export class HomeComponent implements OnInit {
 
   allGroups: Group[] = [];
   allCompanies: Company[] = [];
-  activeTab: 'members' | 'groups' | 'companies' = 'members';
+  activeTab: 'members' | 'groups' | 'companies' | 'events' = 'members';
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;

@@ -163,6 +163,22 @@
             <span class="nav-tab-count">{{companySections.length}}</span>
           </button>
 
+          <!-- 活動 -->
+          <button
+            (click)="activeTab = 'events'"
+            class="nav-tab tab-events"
+            [class.tab-active]="activeTab === 'events'"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="tab-icon">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span class="nav-tab-tw">活動</span>
+            <span class="nav-tab-en">Events</span>
+          </button>
+
         </div>
       </nav>
     }
@@ -373,58 +389,6 @@
           letter-spacing: 0.12em; margin: 12px 0 0;
         ">検索結果がありません</p>
       </div>
-    }
-
-    <!-- ══ CALENDAR ══ -->
-    @if (!hasResults && !noResults) {
-      <section style="margin: 0 0 56px;">
-
-        <!-- Section header -->
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
-          <span style="
-            font-family: 'Shippori Mincho', serif;
-            font-size: 0.68rem; letter-spacing: 0.35em;
-            text-transform: uppercase; color: rgba(122,90,122,0.45);
-            white-space: nowrap;
-          ">SCHEDULE · 活動日程</span>
-          <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.2), transparent);"></div>
-          <span style="
-            font-family: 'Shippori Mincho', serif;
-            font-size: 0.6rem; letter-spacing: 0.15em;
-            color: rgba(184,160,184,0.5);
-            white-space: nowrap;
-          ">由社群整理</span>
-        </div>
-
-        <!-- Calendar container -->
-        <div style="
-          position: relative;
-          border-radius: 16px;
-          overflow: hidden;
-          border: 1px solid rgba(232,121,160,0.15);
-          box-shadow: 0 4px 24px rgba(122,90,122,0.07), 0 1px 4px rgba(122,90,122,0.04);
-          background: rgba(253,248,255,0.8);
-        ">
-          <!-- Decorative top bar -->
-          <div style="
-            height: 3px;
-            background: linear-gradient(to right, rgba(232,121,160,0.4), rgba(180,140,200,0.3), rgba(232,121,160,0.1));
-          "></div>
-
-          <iframe
-            [src]="calendarUrl | safeUrl"
-            style="
-              display: block;
-              width: 100%;
-              height: 520px;
-              border: none;
-            "
-            scrolling="no"
-            frameborder="0"
-          ></iframe>
-        </div>
-
-      </section>
     }
 
     <!-- ══ BROWSE CONTENT (tab-driven) ══ -->
@@ -717,6 +681,56 @@
               </div>
             }
           </div>
+        </section>
+      }
+
+      <!-- ── 活動 tab ── -->
+      @if (activeTab === 'events') {
+        <section class="tab-content">
+
+          <!-- Section header -->
+          <div style="display: flex; align-items: center; gap: 16px; margin: 40px 0 24px;">
+            <span style="
+              font-family: 'Shippori Mincho', serif;
+              font-size: 0.68rem; letter-spacing: 0.35em;
+              text-transform: uppercase; color: rgba(122,90,122,0.45);
+              white-space: nowrap;
+            ">SCHEDULE · 活動日程</span>
+            <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.2), transparent);"></div>
+            <span style="
+              font-family: 'Shippori Mincho', serif;
+              font-size: 0.6rem; letter-spacing: 0.15em;
+              color: rgba(184,160,184,0.5);
+              white-space: nowrap;
+            ">由社群整理</span>
+          </div>
+
+          <!-- Calendar container -->
+          <div style="
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(232,121,160,0.15);
+            box-shadow: 0 4px 24px rgba(122,90,122,0.07), 0 1px 4px rgba(122,90,122,0.04);
+            background: rgba(253,248,255,0.8);
+          ">
+            <div style="
+              height: 3px;
+              background: linear-gradient(to right, rgba(232,121,160,0.4), rgba(180,140,200,0.3), rgba(232,121,160,0.1));
+            "></div>
+            <iframe
+              [src]="calendarUrl | safeUrl"
+              style="
+                display: block;
+                width: 100%;
+                height: 600px;
+                border: none;
+                filter: hue-rotate(290deg) saturate(0.55) brightness(1.02);
+              "
+              scrolling="no"
+              frameborder="0"
+            ></iframe>
+          </div>
+
         </section>
       }
 
