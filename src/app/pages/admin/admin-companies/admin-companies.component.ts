@@ -7,11 +7,12 @@ import { CompanyService } from '../../../core/company.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { Company } from '../../../models';
 import { environment } from '../../../../environments/environment';
+import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 
 @Component({
   selector: 'app-admin-companies',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PhotoUploadComponent],
   templateUrl: './admin-companies.component.html',
 })
 export class AdminCompaniesComponent implements OnInit, OnDestroy {

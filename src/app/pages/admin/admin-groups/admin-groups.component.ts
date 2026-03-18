@@ -7,11 +7,12 @@ import { AdminRoleService } from '../../../core/admin-role.service';
 import { CompanyService } from '../../../core/company.service';
 import { Group, GroupVideo, Company } from '../../../models';
 import { environment } from '../../../../environments/environment';
+import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 
 @Component({
   selector: 'app-admin-groups',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PhotoUploadComponent],
   templateUrl: './admin-groups.component.html',
 })
 export class AdminGroupsComponent implements OnInit, OnDestroy {

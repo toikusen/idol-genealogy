@@ -72,15 +72,14 @@
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
       </div>
 
-      <!-- photo_url + IG fetch -->
+      <!-- photo_url -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">頭像 URL</label>
-        <div class="flex gap-2">
-          <input type="url" [(ngModel)]="editing.photo_url" placeholder="https://..."
-            class="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+        <label class="block text-xs font-medium text-gray-600 mb-1">頭像</label>
+        <app-photo-upload [(ngModel)]="editing.photo_url" folder="companies"/>
+        <div class="flex justify-end mt-1">
           <button type="button" (click)="fetchIgPhoto()"
             [disabled]="!editing.instagram || fetchingIg"
-            class="flex-shrink-0 px-3 py-2 rounded-md border border-gray-200 text-pink-400 hover:bg-pink-50 hover:border-pink-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs flex items-center gap-1.5">
+            class="flex-shrink-0 px-3 py-1.5 rounded-md border border-gray-200 text-pink-400 hover:bg-pink-50 hover:border-pink-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs flex items-center gap-1.5">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <rect x="2" y="2" width="20" height="20" rx="5"/>
               <circle cx="12" cy="12" r="4"/>

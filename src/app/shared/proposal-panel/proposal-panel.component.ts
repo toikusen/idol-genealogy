@@ -8,11 +8,12 @@ import { ProposalService } from '../../core/proposal.service';
 import { CompanyService } from '../../core/company.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../core/proposal-fields.config';
 import { Company } from '../../models';
+import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
 
 @Component({
   selector: 'app-proposal-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PhotoUploadComponent],
   template: `
     <!-- Overlay -->
     <div class="fixed inset-0 bg-black/40 z-40" (click)="close()"></div>
@@ -298,6 +299,17 @@ import { Company } from '../../models';
                 }
                 <p class="text-xs text-gray-300 mt-0.5">仍在籍請留空</p>
 
+              <!-- Photo upload -->
+              } @else if (field === 'photo_url') {
+                <app-photo-upload
+                  [(ngModel)]="formData['photo_url']"
+                  name="photo_url"
+                  [folder]="photoUploadFolder"
+                />
+                @if (operation === 'UPDATE' && original('photo_url')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('photo_url') }}</p>
+                }
+
               <!-- Default: text input -->
               } @else {
                 <input
@@ -446,6 +458,12 @@ export class ProposalPanelComponent implements OnInit {
 
   get allowedFields(): string[] {
     return PROPOSAL_ALLOWED_FIELDS[this.tableName] ?? [];
+  }
+
+  get photoUploadFolder(): 'members' | 'groups' | 'companies' {
+    if (this.tableName === 'groups') return 'groups';
+    if (this.tableName === 'companies') return 'companies';
+    return 'members';
   }
 
   get tableLabel(): string {

@@ -7,11 +7,12 @@ import { AdminRoleService } from '../../../core/admin-role.service';
 import { SupabaseService } from '../../../core/supabase.service';
 import { Member } from '../../../models';
 import { environment } from '../../../../environments/environment';
+import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 
 @Component({
   selector: 'app-admin-members',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PhotoUploadComponent],
   templateUrl: './admin-members.component.html',
 })
 export class AdminMembersComponent implements OnInit, OnDestroy {
