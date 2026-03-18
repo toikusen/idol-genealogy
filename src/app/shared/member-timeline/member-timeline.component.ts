@@ -49,7 +49,11 @@ interface TimelineSegment {
                         <span class="opacity-60">· {{ seg.history.external_country }}</span>
                       }
                     </span>
-                    <span class="text-xs text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">海外</span>
+                    @if (seg.history.external_country) {
+                      <span class="text-xs text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">海外</span>
+                    } @else {
+                      <span class="text-xs text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">solo</span>
+                    }
                   }
                   @if (seg.concurrent) {
                     <span class="text-xs text-idol-purple font-medium">兼任</span>

@@ -262,7 +262,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
               } @else if (tableName === 'history' && operation === 'INSERT' && field === 'member_id') {
                 <!-- toggle (only if member is NOT pre-filled from context) -->
                 @if (!originalData['member_id']) {
-                  <div class="flex rounded-lg overflow-hidden border border-gray-600 text-xs mb-3">
+                  <div class="flex rounded-lg overflow-hidden border border-gray-600 text-xs mb-1">
                     <button type="button"
                       (click)="isExternalRecord = false"
                       class="flex-1 py-1.5 transition-colors"
@@ -278,10 +278,15 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                       海外團體/solo
                     </button>
                   </div>
+                  @if (isExternalRecord) {
+                    <p class="text-xs text-gray-400 mb-3">海外團體請填國家欄位；solo 個人活動請留空國家欄位，系統將顯示為「solo」</p>
+                  } @else {
+                    <div class="mb-3"></div>
+                  }
                 }
                 @if (originalData['member_id']) {
                   <!-- toggle when member is pre-filled -->
-                  <div class="flex rounded-lg overflow-hidden border border-gray-600 text-xs mb-3">
+                  <div class="flex rounded-lg overflow-hidden border border-gray-600 text-xs mb-1">
                     <button type="button"
                       (click)="isExternalRecord = false"
                       class="flex-1 py-1.5 transition-colors"
@@ -297,6 +302,11 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                       海外團體/solo
                     </button>
                   </div>
+                  @if (isExternalRecord) {
+                    <p class="text-xs text-gray-400 mb-3">海外團體請填國家欄位；solo 個人活動請留空國家欄位，系統將顯示為「solo」</p>
+                  } @else {
+                    <div class="mb-3"></div>
+                  }
                   <!-- member pre-filled: show as disabled -->
                   <input type="text" [value]="currentMemberName" disabled
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-400 bg-gray-50 cursor-not-allowed"/>
@@ -644,6 +654,8 @@ export class ProposalPanelComponent implements OnInit {
 
   fieldPlaceholder(field: string): string {
     const hints: Record<string, string> = {
+      'history:external_group_name': '例：花丸、AKB48；solo 活動可填藝名',
+      'history:external_country': '例：日本、香港（solo 個人活動請留空）',
       'members:name': '例：あいみ（日文名）',
       'members:name_roman': '例：Aimi（英文/羅馬字）',
       'groups:name': '例：KissBee',

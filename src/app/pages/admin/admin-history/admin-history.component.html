@@ -58,7 +58,8 @@
             <td class="py-2.5 pr-4 text-gray-700">
               {{ h.group?.name || h.external_group_name || h.group_id }}
               <span *ngIf="h.external_country" class="ml-1 text-xs text-gray-400">（{{ h.external_country }}）</span>
-              <span *ngIf="!h.group_id" class="ml-1 text-xs text-gray-400 border border-gray-200 rounded px-1">海外</span>
+              <span *ngIf="!h.group_id && h.external_country" class="ml-1 text-xs text-gray-400 border border-gray-200 rounded px-1">海外</span>
+              <span *ngIf="!h.group_id && !h.external_country" class="ml-1 text-xs text-gray-400 border border-gray-200 rounded px-1">solo</span>
               <span *ngIf="h.name_at_time" class="ml-1 text-xs text-pink-400">({{ h.name_at_time }})</span>
             </td>
             <td class="py-2.5 pr-4 text-gray-400 text-xs whitespace-nowrap">
@@ -177,6 +178,7 @@
           <label class="block text-xs font-medium text-gray-600 mb-1">國家／地區（非必填）</label>
           <input type="text" [(ngModel)]="editing.external_country" placeholder="例：日本、香港、韓國…"
             class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
+          <p class="text-xs text-gray-400 mt-1">填寫國家將顯示「海外」標籤；solo 個人活動請留空，將顯示「solo」標籤</p>
         </div>
       }
 
