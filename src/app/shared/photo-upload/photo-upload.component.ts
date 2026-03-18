@@ -33,7 +33,7 @@ import { StorageService } from '../../core/storage.service';
       <!-- Upload + URL row -->
       <div class="flex gap-2">
         <!-- Hidden file input -->
-        <input #fileInput type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+        <input #fileInput type="file" accept="image/jpeg,image/png"
           class="hidden" (change)="onFileSelect($event)"/>
 
         <!-- Upload button -->
@@ -60,7 +60,7 @@ import { StorageService } from '../../core/storage.service';
       </div>
 
       <!-- Hint -->
-      <p class="text-xs text-gray-400">最大 5MB，支援 JPG / PNG / WebP / GIF</p>
+      <p class="text-xs text-gray-400">最大 5MB，支援 JPG / PNG</p>
 
       <!-- Error -->
       @if (error) {

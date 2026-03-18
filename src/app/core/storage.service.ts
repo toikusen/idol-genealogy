@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const ALLOWED = new Set(['image/jpeg', 'image/png']);
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
@@ -13,7 +13,7 @@ export class StorageService {
     folder: 'members' | 'groups' | 'companies'
   ): Promise<string> {
     if (file.size > MAX_SIZE) throw new Error('檔案大小不能超過 5MB');
-    if (!ALLOWED.has(file.type)) throw new Error('僅支援 JPG、PNG、WebP、GIF 格式');
+    if (!ALLOWED.has(file.type)) throw new Error('僅支援 JPG、PNG 格式');
 
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
     const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
