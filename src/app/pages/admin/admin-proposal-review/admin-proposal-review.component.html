@@ -67,8 +67,68 @@
           [class.bg-yellow-50]="isChanged(field)"
         >
           <span class="text-gray-500 text-xs font-medium pt-1">{{ fieldLabel(field) }}</span>
-          <span class="text-gray-600 text-xs pt-1 break-words">{{ resolveId(field, original(field)) || '—' }}</span>
-          @if (proposal.status === 'pending') {
+
+          <!-- Original value -->
+          @if (field === 'photo_url') {
+            <div>
+              @if (original(field)) {
+                <img [src]="original(field)" alt="原圖"
+                  class="w-16 h-16 rounded-lg object-cover border border-gray-200 bg-gray-50"/>
+              } @else {
+                <span class="text-gray-400 text-xs">—</span>
+              }
+            </div>
+          } @else {
+            <span class="text-gray-600 text-xs pt-1 break-words">{{ resolveId(field, original(field)) || '—' }}</span>
+          }
+
+          <!-- Proposed value -->
+          @if (field === 'photo_url') {
+            @if (proposal.status === 'pending') {
+              <!-- Side-by-side picker: original vs proposed -->
+              <div class="flex gap-3">
+                @if (proposed(field)) {
+                  <button type="button" (click)="editedData['photo_url'] = proposed(field)"
+                    class="flex flex-col items-center gap-1 group"
+                    [class.opacity-40]="editedData['photo_url'] !== proposed(field)">
+                    <img [src]="proposed(field)" alt="新圖"
+                      class="w-16 h-16 rounded-lg object-cover border-2 transition-colors"
+                      [class.border-green-400]="editedData['photo_url'] === proposed(field)"
+                      [class.border-gray-200]="editedData['photo_url'] !== proposed(field)"/>
+                    <span class="text-xs" [class.text-green-600]="editedData['photo_url'] === proposed(field)"
+                      [class.text-gray-400]="editedData['photo_url'] !== proposed(field)">
+                      {{ editedData['photo_url'] === proposed(field) ? '✓ 新圖' : '新圖' }}
+                    </span>
+                  </button>
+                }
+                @if (original(field)) {
+                  <button type="button" (click)="editedData['photo_url'] = original(field)"
+                    class="flex flex-col items-center gap-1"
+                    [class.opacity-40]="editedData['photo_url'] !== original(field)">
+                    <img [src]="original(field)" alt="原圖"
+                      class="w-16 h-16 rounded-lg object-cover border-2 transition-colors"
+                      [class.border-green-400]="editedData['photo_url'] === original(field)"
+                      [class.border-gray-200]="editedData['photo_url'] !== original(field)"/>
+                    <span class="text-xs" [class.text-green-600]="editedData['photo_url'] === original(field)"
+                      [class.text-gray-400]="editedData['photo_url'] !== original(field)">
+                      {{ editedData['photo_url'] === original(field) ? '✓ 原圖' : '原圖' }}
+                    </span>
+                  </button>
+                }
+                @if (!proposed(field) && !original(field)) {
+                  <span class="text-gray-400 text-xs pt-1">—</span>
+                }
+              </div>
+            } @else {
+              <!-- Read-only: just show thumbnail -->
+              @if (proposed(field)) {
+                <img [src]="proposed(field)" alt="頭像"
+                  class="w-16 h-16 rounded-lg object-cover border border-gray-200 bg-gray-50"/>
+              } @else {
+                <span class="text-gray-400 text-xs pt-1">—</span>
+              }
+            }
+          } @else if (proposal.status === 'pending') {
             @if (field === 'member_id') {
               <div class="text-xs pt-1">
                 <span class="font-medium text-gray-700">{{ resolveId(field, editedData[field]) || '—' }}</span>
