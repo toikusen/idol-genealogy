@@ -693,14 +693,14 @@
             <span style="
               font-family: 'Shippori Mincho', serif;
               font-size: 0.68rem; letter-spacing: 0.35em;
-              text-transform: uppercase; color: rgba(144,112,200,0.6);
+              text-transform: uppercase; color: rgba(200,112,106,0.6);
               white-space: nowrap;
             ">SCHEDULE · 活動日程</span>
-            <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(144,112,200,0.2), transparent);"></div>
+            <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(200,112,106,0.2), transparent);"></div>
             <span style="
               font-family: 'Shippori Mincho', serif;
               font-size: 0.6rem; letter-spacing: 0.15em;
-              color: rgba(144,112,200,0.45);
+              color: rgba(200,112,106,0.45);
               white-space: nowrap;
             ">由OTAKU EVENT整理</span>
           </div>
@@ -709,13 +709,13 @@
           <div style="
             border-radius: 16px;
             overflow: hidden;
-            border: 1px solid rgba(232,121,160,0.15);
-            box-shadow: 0 4px 24px rgba(122,90,122,0.07), 0 1px 4px rgba(122,90,122,0.04);
-            background: rgba(253,248,255,0.8);
+            border: 1px solid rgba(200,112,106,0.15);
+            box-shadow: 0 4px 24px rgba(160,80,72,0.07), 0 1px 4px rgba(160,80,72,0.04);
+            background: rgba(255,250,248,0.8);
           ">
             <div style="
               height: 3px;
-              background: linear-gradient(to right, rgba(232,121,160,0.4), rgba(180,140,200,0.3), rgba(232,121,160,0.1));
+              background: linear-gradient(to right, rgba(200,112,106,0.5), rgba(220,150,100,0.3), rgba(200,112,106,0.1));
             "></div>
             <iframe
               [src]="calendarUrl | safeUrl"
@@ -724,7 +724,7 @@
                 width: 100%;
                 height: 600px;
                 border: none;
-                filter: hue-rotate(290deg) saturate(0.55) brightness(1.02);
+                filter: hue-rotate(150deg) saturate(0.5) brightness(1.03);
               "
               scrolling="no"
               frameborder="0"
@@ -948,15 +948,15 @@
   .tab-companies.tab-active .nav-tab-en  { color: rgba(138,94,24,0.55); }
   .tab-companies.tab-active .nav-tab-count { color: rgba(138,94,24,0.45); }
 
-  /* Events — lavender */
-  .tab-events:hover { background: rgba(144,112,200,0.04); }
+  /* Events — coral */
+  .tab-events:hover { background: rgba(200,112,106,0.04); }
   .tab-events.tab-active {
-    border-bottom-color: #9070c8;
-    background: rgba(144,112,200,0.05);
+    border-bottom-color: #c8706a;
+    background: rgba(200,112,106,0.05);
   }
-  .tab-events.tab-active .tab-icon    { color: #7858b0; opacity: 1; }
-  .tab-events.tab-active .nav-tab-tw  { color: #6848a0; }
-  .tab-events.tab-active .nav-tab-en  { color: rgba(104,72,160,0.55); }
+  .tab-events.tab-active .tab-icon    { color: #b05e58; opacity: 1; }
+  .tab-events.tab-active .nav-tab-tw  { color: #a04e48; }
+  .tab-events.tab-active .nav-tab-en  { color: rgba(160,78,72,0.55); }
 
   /* Tab content fade-in */
   .tab-content {
