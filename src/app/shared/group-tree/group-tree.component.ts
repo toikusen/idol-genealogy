@@ -156,14 +156,20 @@ export class GroupTreeComponent implements OnChanges {
     this.buildTree();
   }
 
+  /** left_at 有值且日期已過才算離開；未來日期仍視為現役 */
+  private hasLeft(h: History): boolean {
+    if (!h.left_at) return false;
+    return new Date(h.left_at).getTime() <= Date.now();
+  }
+
   private buildTree() {
     if (this.teams.length === 0) {
       const active = this.histories
-        .filter(h => !h.left_at)
+        .filter(h => !this.hasLeft(h))
         .sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
 
       const former = this.histories
-        .filter(h => !!h.left_at)
+        .filter(h => this.hasLeft(h))
         .sort((a, b) => new Date(b.left_at!).getTime() - new Date(a.left_at!).getTime());
 
       this.flatGroup = {

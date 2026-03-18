@@ -220,7 +220,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         history: h,
         leftPct: (start - minMs) / totalMs * 100,
         widthPct: Math.max((end - start) / totalMs * 100, 0.5),
-        isActive: !h.left_at,
+        isActive: !h.left_at || new Date(h.left_at).getTime() > Date.now(),
       };
     });
 

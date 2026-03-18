@@ -48,7 +48,7 @@ export function buildCareerGraph(histories: History[], fallbackName = ''): {
     memberName: h.name_at_time || h.member?.name || h.member?.name_roman || fallbackName || '—',
     joinedAt: h.joined_at.slice(0, 7).replaceAll('-', '.'),
     leftAt: h.left_at ? h.left_at.slice(0, 7).replaceAll('-', '.') : null,
-    isCurrent: !h.left_at,
+    isCurrent: !h.left_at || new Date(h.left_at).getTime() > Date.now(),
     routePath: `/group/${h.group_id}`,
   }));
 
