@@ -9,13 +9,14 @@ import { SeoService } from '../../core/seo.service';
 import { Member, Group, Company } from '../../models';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
+import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 
 const SITE_URL = 'https://idol-genealogy.pages.dev';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AdBannerComponent, ProposalPanelComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AdBannerComponent, ProposalPanelComponent, SafeUrlPipe],
   templateUrl: './home.component.html',
 })
 export class HomeComponent implements OnInit {
@@ -195,6 +196,8 @@ export class HomeComponent implements OnInit {
   getGroupLabel(group: Group): string | null {
     return group.company ?? null;
   }
+
+  readonly calendarUrl = 'https://calendar.google.com/calendar/u/0/embed?src=mr7kibfjcm3gu52v6t64lreras@group.calendar.google.com&ctz=Asia/Taipei&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0&bgcolor=%23FDF8FF';
 
   get hasResults(): boolean {
     return this.memberResults.length > 0 || this.aliasResults.length > 0 || this.groupResults.length > 0 || this.companyResults.length > 0;
