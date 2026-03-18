@@ -457,11 +457,25 @@ export class ProposalPanelComponent implements OnInit {
     return this.requiredFields.includes(field) ? label + ' *' : label;
   }
 
+  private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'youtube', 'website', 'photo_url']);
+
   fieldPlaceholder(field: string): string {
     const hints: Record<string, string> = {
       'members:name': '例：あいみ（日文名）',
       'members:name_roman': '例：Aimi（英文/羅馬字）',
       'groups:name': '例：KissBee',
+      'members:instagram': 'https://www.instagram.com/username/',
+      'members:facebook': 'https://www.facebook.com/username',
+      'members:x': 'https://x.com/username',
+      'groups:instagram': 'https://www.instagram.com/username/',
+      'groups:facebook': 'https://www.facebook.com/username',
+      'groups:x': 'https://x.com/username',
+      'groups:youtube': 'https://www.youtube.com/@channel',
+      'groups:photo_url': 'https://...',
+      'companies:instagram': 'https://www.instagram.com/username/',
+      'companies:facebook': 'https://www.facebook.com/username',
+      'companies:website': 'https://example.com',
+      'companies:photo_url': 'https://...',
     };
     return hints[`${this.tableName}:${field}`] ?? this.original(field);
   }
@@ -588,6 +602,16 @@ export class ProposalPanelComponent implements OnInit {
 
     if (Object.keys(proposed).length === 0) {
       this.error = '請至少填寫一個欄位';
+      return;
+    }
+
+    // Validate URL fields must start with https://
+    const invalidUrlFields = Object.keys(proposed).filter(
+      f => this.URL_FIELDS.has(f) && !String(proposed[f]).startsWith('https://')
+    );
+    if (invalidUrlFields.length > 0) {
+      const labels = invalidUrlFields.map(f => FIELD_LABELS[this.tableName]?.[f] ?? f).join('、');
+      this.error = `${labels} 必須是以 https:// 開頭的網址`;
       return;
     }
 
