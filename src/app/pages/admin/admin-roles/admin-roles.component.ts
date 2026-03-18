@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminRoleService, SUPERADMIN_EMAIL } from '../../../core/admin-role.service';
+import { AdminRoleService } from '../../../core/admin-role.service';
 import { SupabaseService } from '../../../core/supabase.service';
 import { UserRole } from '../../../models';
 
@@ -44,7 +44,7 @@ export class AdminRolesComponent implements OnInit {
   async ngOnInit() {
     const session = await this.supabase.getSessionOnce();
     this.currentEmail = session?.user?.email ?? '';
-    this.isSuperAdmin = this.currentEmail === SUPERADMIN_EMAIL;
+    this.isSuperAdmin = await this.adminRole.isSuperAdmin();
     const adminCheck = await this.adminRole.isAdmin();
     this.isAdmin = adminCheck && !this.isSuperAdmin;
     this.isEditor = !adminCheck;

@@ -3,8 +3,6 @@ import { BehaviorSubject, Subscription } from 'rxjs';
 import { SupabaseService } from './supabase.service';
 import { UserRole } from '../models';
 
-export const SUPERADMIN_EMAIL = 'tuyucheng0407@gmail.com';
-
 @Injectable({ providedIn: 'root' })
 export class AdminRoleService implements OnDestroy {
   private _isAdmin = new BehaviorSubject<boolean>(false);
@@ -25,17 +23,24 @@ export class AdminRoleService implements OnDestroy {
     this._sub.unsubscribe();
   }
 
-  /** 系統管理員（寫死 email） */
+  /** 系統管理員（role = 'superadmin'） */
   async isSuperAdmin(): Promise<boolean> {
     const session = await this.supabase.getSessionOnce();
-    return session?.user?.email === SUPERADMIN_EMAIL;
+    if (!session?.user?.email) return false;
+    const { data, error } = await this.supabase.client
+      .from('user_roles')
+      .select('id')
+      .eq('email', session.user.email)
+      .eq('role', 'superadmin')
+      .limit(1);
+    if (error || !data) return false;
+    return data.length > 0;
   }
 
   /** admin 或 superadmin 皆視為有管理權限 */
   async isAdmin(): Promise<boolean> {
     const session = await this.supabase.getSessionOnce();
     if (!session?.user?.email) return false;
-    if (session.user.email === SUPERADMIN_EMAIL) return true;
     const { data, error } = await this.supabase.client
       .from('user_roles')
       .select('id')
