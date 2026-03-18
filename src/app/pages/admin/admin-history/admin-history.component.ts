@@ -142,7 +142,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   async save() {
     if (!this.editing.member_id) { this.error = '請選擇成員'; return; }
     if (this.isExternalRecord) {
-      if (!this.editing.external_group_name?.trim()) { this.error = '請填寫海外團體名稱'; return; }
+      if (!this.editing.external_group_name?.trim()) { this.error = '請填寫海外團體/solo名稱'; return; }
       this.editing.group_id = null;
     } else {
       if (!this.editing.group_id) { this.error = '請選擇組合'; return; }

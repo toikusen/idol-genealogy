@@ -275,7 +275,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                       class="flex-1 py-1.5 transition-colors"
                       [class.bg-pink-500]="isExternalRecord" [class.text-white]="isExternalRecord"
                       [class.bg-transparent]="!isExternalRecord" [class.text-gray-400]="!isExternalRecord">
-                      海外團體
+                      海外團體/solo
                     </button>
                   </div>
                 }
@@ -294,7 +294,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                       class="flex-1 py-1.5 transition-colors"
                       [class.bg-pink-500]="isExternalRecord" [class.text-white]="isExternalRecord"
                       [class.bg-transparent]="!isExternalRecord" [class.text-gray-400]="!isExternalRecord">
-                      海外團體
+                      海外團體/solo
                     </button>
                   </div>
                   <!-- member pre-filled: show as disabled -->

@@ -127,7 +127,7 @@
           class="flex-1 py-2 transition-colors"
           [class.bg-pink-500]="isExternalRecord" [class.text-white]="isExternalRecord"
           [class.bg-white]="!isExternalRecord" [class.text-gray-500]="!isExternalRecord">
-          海外團體
+          海外團體/solo
         </button>
       </div>
 
@@ -169,7 +169,7 @@
       <!-- external_group_name + external_country (external only) -->
       @if (isExternalRecord) {
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">海外團體名稱 <span class="text-red-400">*</span></label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">海外團體名稱/solo <span class="text-red-400">*</span></label>
           <input type="text" [(ngModel)]="editing.external_group_name" placeholder="例：花丸、AKB48…"
             class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
         </div>
