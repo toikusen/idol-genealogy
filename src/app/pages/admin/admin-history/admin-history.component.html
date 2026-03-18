@@ -169,12 +169,12 @@
       <!-- external_group_name + external_country (external only) -->
       @if (isExternalRecord) {
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">海外團體名稱/solo <span class="text-red-400">*</span></label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">海外團體/solo名稱 <span class="text-red-400">*</span></label>
           <input type="text" [(ngModel)]="editing.external_group_name" placeholder="例：花丸、AKB48…"
             class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">國家／地區</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">國家／地區（非必填）</label>
           <input type="text" [(ngModel)]="editing.external_country" placeholder="例：日本、香港、韓國…"
             class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
         </div>
