@@ -46,7 +46,7 @@ export interface Team {
 export interface History {
   id: string;
   member_id: string;
-  group_id: string;
+  group_id: string | null;
   team_id: string | null;
   name_at_time: string | null;
   role: string | null;
@@ -54,6 +54,8 @@ export interface History {
   joined_at: string;
   left_at: string | null;
   notes: string | null;
+  external_group_name: string | null;
+  external_country: string | null;
   is_approved: boolean;
   updated_at: string;
   created_at: string;

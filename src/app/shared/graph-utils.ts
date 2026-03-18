@@ -4,13 +4,15 @@ import { History, Group } from '../models';
 
 export interface CareerNode {
   historyId: string;
-  groupId: string;
+  groupId: string | null;
   groupName: string;
   memberName: string;   // name_at_time ?? member.name
   joinedAt: string;     // formatted "YYYY.MM"
   leftAt: string | null;
   isCurrent: boolean;
-  routePath: string;    // "/group/:id"
+  routePath: string;    // "/group/:id" or '' for external
+  isExternal: boolean;
+  externalCountry: string | null;
 }
 
 export interface CareerEdge {
@@ -41,16 +43,21 @@ export function buildCareerGraph(histories: History[], fallbackName = ''): {
     (a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime()
   );
 
-  const nodes: CareerNode[] = sorted.map(h => ({
-    historyId: h.id,
-    groupId: h.group_id,
-    groupName: h.group?.name ?? '—',
-    memberName: h.name_at_time || h.member?.name || h.member?.name_roman || fallbackName || '—',
-    joinedAt: h.joined_at.slice(0, 7).replaceAll('-', '.'),
-    leftAt: h.left_at ? h.left_at.slice(0, 7).replaceAll('-', '.') : null,
-    isCurrent: !h.left_at || new Date(h.left_at).getTime() > Date.now(),
-    routePath: `/group/${h.group_id}`,
-  }));
+  const nodes: CareerNode[] = sorted.map(h => {
+    const isExternal = !h.group_id && !!h.external_group_name;
+    return {
+      historyId: h.id,
+      groupId: h.group_id,
+      groupName: isExternal ? (h.external_group_name ?? '—') : (h.group?.name ?? '—'),
+      memberName: h.name_at_time || h.member?.name || h.member?.name_roman || fallbackName || '—',
+      joinedAt: h.joined_at.slice(0, 7).replaceAll('-', '.'),
+      leftAt: h.left_at ? h.left_at.slice(0, 7).replaceAll('-', '.') : null,
+      isCurrent: !h.left_at || new Date(h.left_at).getTime() > Date.now(),
+      routePath: isExternal ? '' : `/group/${h.group_id}`,
+      isExternal,
+      externalCountry: h.external_country ?? null,
+    };
+  });
 
   const edges: CareerEdge[] = nodes.slice(0, -1).map((_, i) => ({
     fromIndex: i,
@@ -95,6 +102,7 @@ export function buildGlobalMap(
     for (let i = 0; i < sorted.length - 1; i++) {
       const from = sorted[i];
       const to = sorted[i + 1];
+      if (!from.group_id || !to.group_id) continue;
       const fromNode = nodeMap.get(from.group_id);
       const toNode = nodeMap.get(to.group_id);
       if (!fromNode || !toNode || from.group_id === to.group_id) continue;

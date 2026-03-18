@@ -16,40 +16,66 @@ import { buildCareerGraph, CareerNode } from '../graph-utils';
       <div class="overflow-x-auto pb-2">
         <div class="flex items-center gap-0 min-w-max px-2">
           @for (node of nodes; track node.historyId; let i = $index) {
-            <!-- Node -->
-            <button
-              (click)="navigate(node.routePath)"
-              class="border-2 text-left transition-all hover:shadow-md hover:-translate-y-0.5 min-w-[110px] max-w-[140px] focus:outline-none"
-              [class.border-pink-400]="!node.isCurrent"
-              [class.border-pink-500]="node.isCurrent"
-              [class.shadow-md]="node.isCurrent"
-              [style.outline]="node.isCurrent ? '3px solid #fce7f3' : 'none'"
-              [style.outlineOffset]="'2px'"
-            >
-              <!-- Group name header -->
-              <div
-                class="px-2 py-1 text-center border-b"
-                [class.bg-pink-100]="!node.isCurrent"
-                [class.border-pink-200]="!node.isCurrent"
-                [class.bg-pink-500]="node.isCurrent"
+            <!-- Node: external (overseas) -->
+            @if (node.isExternal) {
+              <div class="border-2 border-dashed border-gray-300 text-left min-w-[110px] max-w-[140px] opacity-75">
+                <!-- Header -->
+                <div class="px-2 py-1 text-center border-b border-gray-200 bg-gray-100">
+                  <span class="text-[10px] font-bold leading-tight block truncate text-gray-500">
+                    {{ node.groupName }}
+                  </span>
+                </div>
+                <!-- Info -->
+                <div class="px-2 py-2 bg-white text-center">
+                  @if (node.externalCountry) {
+                    <p class="text-[9px] text-gray-400 leading-tight truncate mb-0.5">{{ node.externalCountry }}</p>
+                  }
+                  <p class="text-[13px] font-semibold text-gray-600 leading-snug truncate">{{ node.memberName }}</p>
+                  <p class="text-[9px] text-gray-400 mt-1 whitespace-nowrap">
+                    {{ node.joinedAt }}
+                    @if (node.isCurrent) { <span class="text-gray-400">〜</span> }
+                    @else { 〜 {{ node.leftAt }} }
+                  </p>
+                </div>
+              </div>
+            }
+
+            <!-- Node: internal (local group) -->
+            @if (!node.isExternal) {
+              <button
+                (click)="navigate(node.routePath)"
+                class="border-2 text-left transition-all hover:shadow-md hover:-translate-y-0.5 min-w-[110px] max-w-[140px] focus:outline-none"
+                [class.border-pink-400]="!node.isCurrent"
                 [class.border-pink-500]="node.isCurrent"
+                [class.shadow-md]="node.isCurrent"
+                [style.outline]="node.isCurrent ? '3px solid #fce7f3' : 'none'"
+                [style.outlineOffset]="'2px'"
               >
-                <span
-                  class="text-[10px] font-bold leading-tight block truncate"
-                  [class.text-pink-800]="!node.isCurrent"
-                  [class.text-white]="node.isCurrent"
-                >{{ node.groupName }}</span>
-              </div>
-              <!-- Member info -->
-              <div class="px-2 py-2 bg-white text-center">
-                <p class="text-[13px] font-semibold text-gray-800 leading-snug truncate">{{ node.memberName }}</p>
-                <p class="text-[9px] text-gray-400 mt-1 whitespace-nowrap">
-                  {{ node.joinedAt }}
-                  @if (node.isCurrent) { <span class="text-pink-400">〜</span> }
-                  @else { 〜 {{ node.leftAt }} }
-                </p>
-              </div>
-            </button>
+                <!-- Group name header -->
+                <div
+                  class="px-2 py-1 text-center border-b"
+                  [class.bg-pink-100]="!node.isCurrent"
+                  [class.border-pink-200]="!node.isCurrent"
+                  [class.bg-pink-500]="node.isCurrent"
+                  [class.border-pink-500]="node.isCurrent"
+                >
+                  <span
+                    class="text-[10px] font-bold leading-tight block truncate"
+                    [class.text-pink-800]="!node.isCurrent"
+                    [class.text-white]="node.isCurrent"
+                  >{{ node.groupName }}</span>
+                </div>
+                <!-- Member info -->
+                <div class="px-2 py-2 bg-white text-center">
+                  <p class="text-[13px] font-semibold text-gray-800 leading-snug truncate">{{ node.memberName }}</p>
+                  <p class="text-[9px] text-gray-400 mt-1 whitespace-nowrap">
+                    {{ node.joinedAt }}
+                    @if (node.isCurrent) { <span class="text-pink-400">〜</span> }
+                    @else { 〜 {{ node.leftAt }} }
+                  </p>
+                </div>
+              </button>
+            }
 
             <!-- Arrow between nodes -->
             @if (i < nodes.length - 1) {

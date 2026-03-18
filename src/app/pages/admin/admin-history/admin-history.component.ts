@@ -24,6 +24,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   filterGroupId = '';
   memberSearch = '';
   groupSearch = '';
+  isExternalRecord = false;
   loading = true;
   showModal = false;
   editing: Partial<History> = {};
@@ -125,13 +126,29 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     return this.groups.filter(g => g.name.toLowerCase().includes(q));
   }
 
-  openCreate() { this.editing = {}; this.teams = []; this.isEdit = false; this.error = ''; this.memberSearch = ''; this.groupSearch = ''; this.showModal = true; }
-  openEdit(h: History) { this.editing = { ...h }; this.isEdit = true; this.error = ''; this.memberSearch = ''; this.groupSearch = ''; this.showModal = true; void this.onGroupChange(); }
+  openCreate() {
+    this.editing = {}; this.teams = []; this.isEdit = false; this.error = '';
+    this.memberSearch = ''; this.groupSearch = ''; this.isExternalRecord = false;
+    this.showModal = true;
+  }
+  openEdit(h: History) {
+    this.editing = { ...h }; this.isEdit = true; this.error = '';
+    this.memberSearch = ''; this.groupSearch = '';
+    this.isExternalRecord = !h.group_id && !!h.external_group_name;
+    this.showModal = true;
+    if (!this.isExternalRecord) void this.onGroupChange();
+  }
 
   async save() {
     if (!this.editing.member_id) { this.error = '請選擇成員'; return; }
-    if (!this.editing.group_id) { this.error = '請選擇組合'; return; }
-    if (!this.editing.status) { this.error = '請選擇狀態'; return; }
+    if (this.isExternalRecord) {
+      if (!this.editing.external_group_name?.trim()) { this.error = '請填寫外部組合名稱'; return; }
+      this.editing.group_id = null;
+    } else {
+      if (!this.editing.group_id) { this.error = '請選擇組合'; return; }
+      this.editing.external_group_name = null;
+      this.editing.external_country = null;
+    }
     if (!this.editing.joined_at) { this.error = '加入日期為必填'; return; }
     this.saving = true;
     try {

@@ -42,7 +42,7 @@
       <div class="flex items-center gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
         <div class="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center text-pink-400 text-xs font-medium flex-shrink-0 overflow-hidden">
           <img *ngIf="group.photo_url" [src]="group.photo_url" [alt]="group.memberName" class="w-full h-full object-cover"/>
-          <span *ngIf="!group.photo_url">{{ group.memberName?.charAt(0) ?? '?' }}</span>
+          <span *ngIf="!group.photo_url">{{ group.memberName.charAt(0) ?? '?' }}</span>
         </div>
         <span class="text-sm font-semibold text-gray-700">{{ group.memberName }}</span>
         <span class="text-xs text-gray-400 ml-auto">{{ group.records.length }} 筆記錄</span>
@@ -111,6 +111,24 @@
     </div>
 
     <div class="space-y-4">
+      <!-- Internal / External toggle -->
+      <div class="flex rounded-lg overflow-hidden border border-gray-200 text-sm">
+        <button type="button"
+          (click)="isExternalRecord = false"
+          class="flex-1 py-2 transition-colors"
+          [class.bg-pink-500]="!isExternalRecord" [class.text-white]="!isExternalRecord"
+          [class.bg-white]="isExternalRecord" [class.text-gray-500]="isExternalRecord">
+          台灣內部組合
+        </button>
+        <button type="button"
+          (click)="isExternalRecord = true"
+          class="flex-1 py-2 transition-colors"
+          [class.bg-pink-500]="isExternalRecord" [class.text-white]="isExternalRecord"
+          [class.bg-white]="!isExternalRecord" [class.text-gray-500]="!isExternalRecord">
+          海外外部組合
+        </button>
+      </div>
+
       <!-- member_id -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">成員 <span class="text-red-400">*</span></label>
@@ -128,24 +146,40 @@
         </select>
       </div>
 
-      <!-- group_id -->
-      <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">組合 <span class="text-red-400">*</span></label>
-        <input type="text" [(ngModel)]="groupSearch" placeholder="輸入組合名篩選…"
-          class="w-full border border-gray-200 rounded-t-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent border-b-0"/>
-        <select
-          [(ngModel)]="editing.group_id"
-          (ngModelChange)="onGroupChange()"
-          size="5"
-          class="w-full border border-gray-200 rounded-b-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white"
-        >
-          <option value="">— 選擇組合 —</option>
-          <option *ngFor="let g of filteredGroups" [value]="g.id">{{ g.name }}</option>
-        </select>
-      </div>
+      <!-- group_id (internal only) -->
+      @if (!isExternalRecord) {
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">組合 <span class="text-red-400">*</span></label>
+          <input type="text" [(ngModel)]="groupSearch" placeholder="輸入組合名篩選…"
+            class="w-full border border-gray-200 rounded-t-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent border-b-0"/>
+          <select
+            [(ngModel)]="editing.group_id"
+            (ngModelChange)="onGroupChange()"
+            size="5"
+            class="w-full border border-gray-200 rounded-b-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white"
+          >
+            <option value="">— 選擇組合 —</option>
+            <option *ngFor="let g of filteredGroups" [value]="g.id">{{ g.name }}</option>
+          </select>
+        </div>
+      }
 
-      <!-- team_id -->
-      <div *ngIf="teams.length > 0">
+      <!-- external_group_name + external_country (external only) -->
+      @if (isExternalRecord) {
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">外部組合名稱 <span class="text-red-400">*</span></label>
+          <input type="text" [(ngModel)]="editing.external_group_name" placeholder="例：花丸、AKB48…"
+            class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">國家／地區</label>
+          <input type="text" [(ngModel)]="editing.external_country" placeholder="例：日本、香港、韓國…"
+            class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
+        </div>
+      }
+
+      <!-- team_id (internal only) -->
+      <div *ngIf="!isExternalRecord && teams.length > 0">
         <label class="block text-xs font-medium text-gray-600 mb-1">隊伍（可選）</label>
         <select
           [(ngModel)]="editing.team_id"

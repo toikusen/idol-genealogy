@@ -222,7 +222,7 @@ export class GroupConnectionGraphComponent implements OnChanges {
       || (h as any).member?.name_roman
       || '—';
     return {
-      groupId: h.group_id,
+      groupId: h.group_id ?? '',
       groupName: (h as any).group?.name ?? '—',
       memberName,
       joinedAt: this.fmt(h.joined_at),
