@@ -890,7 +890,7 @@
               <span style="color:rgba(122,90,122,0.4);">· {{ formatRelativeTime(lastProposal.reviewed_at) }}</span>
             </div>
             @if (lastProposal.operation === 'UPDATE' && lastProposalDiffFields.length > 0) {
-              <div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;overflow:hidden;">
                 <span style="
                   display:inline-block;
                   font-family:'Cormorant Garamond',Georgia,serif;
@@ -898,7 +898,8 @@
                   color:rgba(122,90,122,0.55);
                   background:rgba(232,121,160,0.05);
                   border:1px solid rgba(232,121,160,0.12);
-                  border-radius:3px;padding:1px 7px;white-space:nowrap;
+                  border-radius:3px;padding:1px 7px;
+                  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
                 ">
                   「{{ lastProposalDiffFields[0].label }}」{{ lastProposalDiffFields[0].oldValue }} → {{ lastProposalDiffFields[0].newValue }}
                 </span>

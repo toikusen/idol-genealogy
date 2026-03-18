@@ -20,6 +20,10 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   groups: Group[] = [];
   teams: Team[] = [];
   searchQuery = '';
+  filterMemberId = '';
+  filterGroupId = '';
+  memberSearch = '';
+  groupSearch = '';
   loading = true;
   showModal = false;
   editing: Partial<History> = {};
@@ -66,13 +70,20 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
 
   get groupedHistories(): { memberId: string; memberName: string; photo_url: string | null; records: History[] }[] {
     const q = this.searchQuery.trim().toLowerCase();
-    const filtered = q
-      ? this.histories.filter(h =>
-          (h.member?.name ?? '').toLowerCase().includes(q) ||
-          (h.member?.name_roman ?? '').toLowerCase().includes(q) ||
-          (h.group?.name ?? '').toLowerCase().includes(q)
-        )
-      : this.histories;
+    let filtered = this.histories;
+    if (q) {
+      filtered = filtered.filter(h =>
+        (h.member?.name ?? '').toLowerCase().includes(q) ||
+        (h.member?.name_roman ?? '').toLowerCase().includes(q) ||
+        (h.group?.name ?? '').toLowerCase().includes(q)
+      );
+    }
+    if (this.filterMemberId) {
+      filtered = filtered.filter(h => h.member_id === this.filterMemberId);
+    }
+    if (this.filterGroupId) {
+      filtered = filtered.filter(h => h.group_id === this.filterGroupId);
+    }
 
     const map = new Map<string, { memberId: string; memberName: string; photo_url: string | null; records: History[] }>();
     for (const h of filtered) {
@@ -99,8 +110,23 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     this.editing.team_id = undefined;
   }
 
-  openCreate() { this.editing = {}; this.teams = []; this.isEdit = false; this.error = ''; this.showModal = true; }
-  openEdit(h: History) { this.editing = { ...h }; this.isEdit = true; this.error = ''; this.showModal = true; void this.onGroupChange(); }
+  get filteredMembers(): Member[] {
+    const q = this.memberSearch.trim().toLowerCase();
+    if (!q) return this.members;
+    return this.members.filter(m =>
+      (m.name ?? '').toLowerCase().includes(q) ||
+      (m.name_roman ?? '').toLowerCase().includes(q)
+    );
+  }
+
+  get filteredGroups(): Group[] {
+    const q = this.groupSearch.trim().toLowerCase();
+    if (!q) return this.groups;
+    return this.groups.filter(g => g.name.toLowerCase().includes(q));
+  }
+
+  openCreate() { this.editing = {}; this.teams = []; this.isEdit = false; this.error = ''; this.memberSearch = ''; this.groupSearch = ''; this.showModal = true; }
+  openEdit(h: History) { this.editing = { ...h }; this.isEdit = true; this.error = ''; this.memberSearch = ''; this.groupSearch = ''; this.showModal = true; void this.onGroupChange(); }
 
   async save() {
     if (!this.editing.member_id) { this.error = '請選擇成員'; return; }

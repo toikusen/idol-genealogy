@@ -10,10 +10,20 @@
     </button>
   </div>
 
-  <!-- Search -->
-  <div *ngIf="!loading" class="mb-4">
+  <!-- Search + Filters -->
+  <div *ngIf="!loading" class="mb-4 flex flex-wrap gap-2">
     <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋成員名稱或組合…"
-      class="w-full max-w-sm border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+      class="flex-1 min-w-[180px] max-w-sm border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+    <select [(ngModel)]="filterMemberId"
+      class="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white text-gray-700">
+      <option value="">全部成員</option>
+      <option *ngFor="let m of members" [value]="m.id">{{ m.name || m.name_roman }}</option>
+    </select>
+    <select [(ngModel)]="filterGroupId"
+      class="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white text-gray-700">
+      <option value="">全部組合</option>
+      <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
+    </select>
   </div>
 
   <!-- Loading state -->
@@ -104,12 +114,15 @@
       <!-- member_id -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">成員 <span class="text-red-400">*</span></label>
+        <input type="text" [(ngModel)]="memberSearch" placeholder="輸入名字篩選…"
+          class="w-full border border-gray-200 rounded-t-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent border-b-0"/>
         <select
           [(ngModel)]="editing.member_id"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white"
+          size="5"
+          class="w-full border border-gray-200 rounded-b-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white"
         >
           <option value="">— 選擇成員 —</option>
-          <option *ngFor="let m of members" [value]="m.id">
+          <option *ngFor="let m of filteredMembers" [value]="m.id">
             {{ m.name }}{{ m.name_roman ? '（' + m.name_roman + '）' : '' }}
           </option>
         </select>
@@ -118,13 +131,16 @@
       <!-- group_id -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">組合 <span class="text-red-400">*</span></label>
+        <input type="text" [(ngModel)]="groupSearch" placeholder="輸入組合名篩選…"
+          class="w-full border border-gray-200 rounded-t-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent border-b-0"/>
         <select
           [(ngModel)]="editing.group_id"
           (ngModelChange)="onGroupChange()"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white"
+          size="5"
+          class="w-full border border-gray-200 rounded-b-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent bg-white"
         >
           <option value="">— 選擇組合 —</option>
-          <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
+          <option *ngFor="let g of filteredGroups" [value]="g.id">{{ g.name }}</option>
         </select>
       </div>
 
