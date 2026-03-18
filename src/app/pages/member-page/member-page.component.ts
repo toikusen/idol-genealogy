@@ -31,6 +31,7 @@ export class MemberPageComponent implements OnInit {
   historyView: 'timeline' | 'career' = 'timeline';
   showProposalPanel = false;
   showOverseasPanel = false;
+  historyToDelete: History | null = null;
   allGroupsList: { id: string; name: string }[] = [];
   lastProposal: Proposal | null = null;
   showEditHistory = false;

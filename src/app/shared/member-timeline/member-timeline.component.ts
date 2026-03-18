@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { History } from '../../models';
@@ -81,12 +81,20 @@ interface TimelineSegment {
                   <p class="text-xs text-gray-400 mt-1 italic leading-relaxed">{{ seg.history.notes }}</p>
                 }
               </div>
-              <div class="text-right flex-shrink-0">
+              <div class="text-right flex-shrink-0 flex flex-col items-end gap-1.5">
                 <p class="text-xs text-gray-400 whitespace-nowrap font-light">
                   {{ seg.history.joined_at.slice(0,10).replaceAll('-','.') }}
                   @if (!seg.history.left_at) { <span class="text-idol-pink">〜</span> }
                   @else { 〜 {{ seg.history.left_at.slice(0,10).replaceAll('-','.') }} }
                 </p>
+                <button
+                  type="button"
+                  (click)="reportHistory.emit(seg.history)"
+                  title="回報此記錄有問題"
+                  class="text-gray-300 hover:text-red-400 transition-colors"
+                  style="font-size:0.65rem;line-height:1;padding:2px 4px;border-radius:4px;border:1px solid currentColor;">
+                  ⚑ 回報
+                </button>
               </div>
             </div>
           </div>
@@ -104,6 +112,7 @@ interface TimelineSegment {
 })
 export class MemberTimelineComponent implements OnChanges {
   @Input() histories: History[] = [];
+  @Output() reportHistory = new EventEmitter<History>();
   segments: TimelineSegment[] = [];
 
   ngOnChanges() {

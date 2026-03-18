@@ -24,7 +24,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-pink-50">
         <div>
           <h2 class="text-base font-semibold text-gray-800">
-            {{ operation === 'INSERT' ? '提案新增' : '提案修改' }}
+            {{ operation === 'INSERT' ? '提案新增' : operation === 'DELETE' ? '回報問題' : '提案修改' }}
           </h2>
           <p class="text-xs text-gray-400 mt-0.5">{{ tableLabel }}</p>
         </div>
@@ -45,10 +45,66 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
       @if (submitted) {
         <div class="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
           <div class="text-4xl">🎉</div>
-          <p class="text-gray-700 font-medium">感謝您的提案！</p>
-          <p class="text-sm text-gray-400">管理員審核後，內容將會更新上線。</p>
+          <p class="text-gray-700 font-medium">感謝您的回報！</p>
+          <p class="text-sm text-gray-400">管理員審核後將會處理。</p>
           <button (click)="close()" class="mt-2 px-5 py-2 bg-pink-500 text-white rounded-full text-sm hover:bg-pink-600">
             關閉
+          </button>
+        </div>
+      } @else if (operation === 'DELETE') {
+        <!-- DELETE: report duplicate/error form -->
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          @if (error) {
+            <p class="text-sm text-red-500 bg-red-50 rounded px-3 py-2">{{ error }}</p>
+          }
+          <!-- Summary of record being reported -->
+          <div class="rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-gray-700 space-y-1">
+            <p class="text-xs font-medium text-red-500 mb-2">回報以下歷程記錄有問題：</p>
+            @if (originalData['group']?.name || originalData['external_group_name']) {
+              <p><span class="text-gray-400 text-xs">組合：</span>{{ originalData['group']?.name || originalData['external_group_name'] }}</p>
+            }
+            @if (originalData['joined_at']) {
+              <p><span class="text-gray-400 text-xs">加入：</span>{{ originalData['joined_at']?.slice(0,10) }}</p>
+            }
+            @if (originalData['left_at']) {
+              <p><span class="text-gray-400 text-xs">離開：</span>{{ originalData['left_at']?.slice(0,10) }}</p>
+            }
+            @if (originalData['status']) {
+              <p><span class="text-gray-400 text-xs">狀態：</span>{{ statusLabel(originalData['status']) }}</p>
+            }
+          </div>
+          <!-- Reason -->
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">回報原因（選填）</label>
+            <textarea
+              [(ngModel)]="formData['reason']"
+              name="reason"
+              rows="3"
+              placeholder="例：此筆記錄與 xxx 重複，或資料有誤…"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 resize-none"
+            ></textarea>
+          </div>
+          <!-- Submitter info -->
+          <div class="border-t border-gray-100 pt-4">
+            <p class="text-xs font-medium text-gray-500 mb-3">回報者資訊</p>
+            @if (loggedInName) {
+              <p class="text-sm text-gray-600">以 <span class="font-medium text-pink-600">{{ loggedInName }}</span> 身份回報</p>
+            } @else {
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">暱稱 <span class="text-red-400">*</span></label>
+                  <input type="text" [(ngModel)]="submitterName" name="submitterName"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    placeholder="請輸入顯示名稱"/>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <button (click)="submitProposal()" [disabled]="submitting"
+            class="w-full py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-full text-sm font-medium transition-colors">
+            {{ submitting ? '送出中...' : '送出回報' }}
           </button>
         </div>
       } @else {
@@ -453,7 +509,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
 export class ProposalPanelComponent implements OnInit {
   @Input() tableName: 'members' | 'groups' | 'history' | 'companies' = 'members';
   @Input() recordId: string | null = null;
-  @Input() operation: 'INSERT' | 'UPDATE' = 'UPDATE';
+  @Input() operation: 'INSERT' | 'UPDATE' | 'DELETE' = 'UPDATE';
   @Input() originalData: Record<string, any> = {};
   /** For history proposals: full member list to pick from */
   @Input() groupMembers: { id: string; name: string }[] = [];
@@ -687,6 +743,30 @@ export class ProposalPanelComponent implements OnInit {
 
     if (!this.loggedInName && !this.submitterName.trim()) {
       this.error = '請輸入暱稱';
+      return;
+    }
+
+    // DELETE proposals: snapshot original_data, store optional reason
+    if (this.operation === 'DELETE') {
+      this.submitting = true;
+      try {
+        const session = await this.supabase.getSessionOnce();
+        await this.proposalService.submit({
+          table_name: this.tableName,
+          record_id: this.recordId,
+          operation: 'DELETE',
+          proposed_data: { reason: this.formData['reason'] || '' },
+          original_data: this.originalData,
+          submitter_id: session?.user?.id ?? null,
+          submitter_name: this.loggedInName ?? this.submitterName.trim(),
+          submitter_email: this.submitterEmail || null,
+        });
+        this.submitted = true;
+      } catch (e: any) {
+        this.error = e.message ?? '送出失敗，請稍後再試';
+      } finally {
+        this.submitting = false;
+      }
       return;
     }
 

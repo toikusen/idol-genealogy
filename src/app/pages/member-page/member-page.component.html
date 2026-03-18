@@ -341,7 +341,7 @@
 
         <!-- Content -->
         @if (historyView === 'timeline') {
-          <app-member-timeline [histories]="histories"></app-member-timeline>
+          <app-member-timeline [histories]="histories" (reportHistory)="historyToDelete = $event"></app-member-timeline>
         } @else {
           <app-member-career-graph [histories]="histories" [fallbackName]="member.name_roman || member.name" />
         }
@@ -470,6 +470,16 @@
     [recordId]="member.id"
     [originalData]="member"
     (closed)="showProposalPanel = false"
+  />
+}
+
+@if (historyToDelete) {
+  <app-proposal-panel
+    tableName="history"
+    operation="DELETE"
+    [recordId]="historyToDelete.id"
+    [originalData]="historyToDelete"
+    (closed)="historyToDelete = null"
   />
 }
 

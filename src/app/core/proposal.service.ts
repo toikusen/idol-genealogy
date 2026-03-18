@@ -63,6 +63,12 @@ export class ProposalService {
     if (proposal.operation === 'INSERT') {
       const { error } = await this.db.from(proposal.table_name).insert(dataToApply);
       applyError = error;
+    } else if (proposal.operation === 'DELETE') {
+      const { error } = await this.db
+        .from(proposal.table_name)
+        .delete()
+        .eq('id', proposal.record_id!);
+      applyError = error;
     } else {
       const { error } = await this.db
         .from(proposal.table_name)

@@ -132,7 +132,7 @@ export interface Proposal {
   id: string;
   table_name: 'members' | 'groups' | 'history' | 'companies';
   record_id: string | null;
-  operation: 'INSERT' | 'UPDATE';
+  operation: 'INSERT' | 'UPDATE' | 'DELETE';
   proposed_data: Record<string, any>;
   original_data: Record<string, any> | null;
   reviewed_data: Record<string, any> | null;

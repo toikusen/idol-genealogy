@@ -73,8 +73,12 @@ export class AdminProposalReviewComponent implements OnInit {
   }
 
   get historySubject(): string {
-    const src = this.proposal?.proposed_data ?? this.proposal?.original_data ?? {};
-    const group = src['group_id'] ? (this.groupMap.get(src['group_id']) ?? src['group_id']) : null;
+    // For DELETE proposals, use original_data; otherwise prefer proposed_data
+    const src = (this.proposal?.operation === 'DELETE')
+      ? (this.proposal?.original_data ?? {})
+      : (this.proposal?.proposed_data ?? this.proposal?.original_data ?? {});
+    const group = src['group_id'] ? (this.groupMap.get(src['group_id']) ?? src['group_id'])
+      : (src['external_group_name'] ?? null);
     const member = src['member_id'] ? (this.memberMap.get(src['member_id']) ?? src['member_id']) : null;
     if (group && member) return `${group} · ${member}`;
     return group ?? member ?? '—';
@@ -83,6 +87,14 @@ export class AdminProposalReviewComponent implements OnInit {
   get fields(): string[] {
     if (!this.proposal) return [];
     return PROPOSAL_ALLOWED_FIELDS[this.proposal.table_name] ?? [];
+  }
+
+  /** Key-value pairs from original_data for DELETE proposal display */
+  get deleteOriginalEntries(): { key: string; value: any }[] {
+    const src = this.proposal?.original_data ?? {};
+    return this.fields
+      .filter(f => src[f] != null && src[f] !== '')
+      .map(f => ({ key: f, value: src[f] }));
   }
 
   fieldLabel(field: string): string {
@@ -111,11 +123,13 @@ export class AdminProposalReviewComponent implements OnInit {
     this.saving = true;
     this.error = '';
     try {
-      const hasEdits = JSON.stringify(this.editedData) !== JSON.stringify(this.proposal.proposed_data);
-      await this.proposalService.approve(
-        this.proposal,
-        hasEdits ? this.editedData : undefined,
-      );
+      // DELETE proposals: never pass editedData (proposed_data is just { reason } metadata)
+      let reviewedData: Record<string, any> | undefined;
+      if (this.proposal.operation !== 'DELETE') {
+        const hasEdits = JSON.stringify(this.editedData) !== JSON.stringify(this.proposal.proposed_data);
+        reviewedData = hasEdits ? this.editedData : undefined;
+      }
+      await this.proposalService.approve(this.proposal, reviewedData);
       this.router.navigate(['/admin/proposals']);
     } catch (e: any) {
       this.error = e.message ?? '操作失敗';
