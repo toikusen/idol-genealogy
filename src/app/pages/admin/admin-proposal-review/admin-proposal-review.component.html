@@ -169,7 +169,7 @@
               }
             }
           } @else if (proposal.status === 'pending') {
-            @if (field === 'member_id') {
+            @if (field === 'member_id' || field === 'group_id') {
               <div class="text-xs pt-1">
                 <span class="font-medium text-gray-700">{{ resolveId(field, editedData[field]) || '—' }}</span>
                 <span class="text-gray-400 ml-1">({{ editedData[field] }})</span>
