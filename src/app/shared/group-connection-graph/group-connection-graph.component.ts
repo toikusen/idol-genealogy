@@ -9,6 +9,7 @@ interface ChainCell {
   memberName: string;
   joinedAt: string;
   leftAt: string | null;
+  status: string | null;
 }
 
 interface MemberRow {
@@ -18,6 +19,7 @@ interface MemberRow {
     memberName: string;
     joinedAt: string;
     leftAt: string | null;
+    status: string | null;
   };
   nextChain: ChainCell[];   // immediately after current group → latest
 }
@@ -57,7 +59,9 @@ interface MemberRow {
                 <a [routerLink]="['/group', cell.groupId]"
                   [style.min-width.px]="CELL_W"
                   [style.max-width.px]="CELL_W"
-                  style="flex-shrink:0; border:1.5px solid #e5e7eb; background:#fff; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
+                  [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                  [style.opacity]="cell.leftAt ? '0.75' : '1'"
+                  style="flex-shrink:0; border:1.5px solid #e5e7eb; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
                   onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
                   <div style="background:#1f2937; padding:4px 8px;">
                     <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
@@ -83,7 +87,8 @@ interface MemberRow {
                 [style.min-width.px]="CENTER_W"
                 [style.max-width.px]="CENTER_W"
                 [ngStyle]="centerCellStyle(ri)"
-                style="flex-shrink:0; background:#fff;">
+                [style.background]="row.current.leftAt ? '#f3f4f6' : '#fff'"
+                style="flex-shrink:0;">
                 @if (ri === 0) {
                   <div style="background:#ec4899; padding:4px 10px; text-align:center;">
                     <span style="font-size:11px; color:#fff; font-weight:800; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ groupName }}</span>
@@ -109,7 +114,9 @@ interface MemberRow {
                 <a [routerLink]="['/group', cell.groupId]"
                   [style.min-width.px]="CELL_W"
                   [style.max-width.px]="CELL_W"
-                  style="flex-shrink:0; border:1.5px solid #e5e7eb; background:#fff; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
+                  [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                  [style.opacity]="cell.leftAt ? '0.75' : '1'"
+                  style="flex-shrink:0; border:1.5px solid #e5e7eb; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
                   onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
                   <div style="background:#1f2937; padding:4px 8px;">
                     <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
@@ -206,6 +213,7 @@ export class GroupConnectionGraphComponent implements OnChanges {
           memberName,
           joinedAt: this.fmt(entry.joined_at),
           leftAt: entry.left_at ? this.fmt(entry.left_at) : null,
+          status: entry.status ?? null,
         },
         prevChain,
         nextChain,
@@ -227,6 +235,7 @@ export class GroupConnectionGraphComponent implements OnChanges {
       memberName,
       joinedAt: this.fmt(h.joined_at),
       leftAt: h.left_at ? this.fmt(h.left_at) : null,
+      status: h.status ?? null,
     };
   }
 
