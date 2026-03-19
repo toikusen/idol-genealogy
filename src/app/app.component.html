@@ -2,15 +2,14 @@
 
 @if ((session$ | async); as session) {
   @if (!isAdminRoute) {
-    <a routerLink="/my-contributions" style="
+    <div style="
       position: fixed;
       bottom: 16px;
       left: 16px;
       z-index: 1000;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px 6px 10px;
+      gap: 4px;
       background: rgba(255,255,255,0.82);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -19,15 +18,35 @@
       box-shadow: 0 2px 10px rgba(45,27,46,0.08);
       font-size: 0.7rem;
       font-family: 'Shippori Mincho', serif;
-      letter-spacing: 0.05em;
-      color: rgba(122,90,122,0.75);
-      text-decoration: none;
-      cursor: pointer;
-      transition: background 0.15s;
+      overflow: hidden;
     ">
-      <span style="width:6px;height:6px;border-radius:50%;background:#86efac;flex-shrink:0;"></span>
-      {{ session.user.user_metadata?.['display_name'] || session.user.email }}
-    </a>
+      <a routerLink="/my-contributions" style="
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px 6px 10px;
+        color: rgba(122,90,122,0.75);
+        text-decoration: none;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+      ">
+        <span style="width:6px;height:6px;border-radius:50%;background:#86efac;flex-shrink:0;"></span>
+        {{ session.user.user_metadata?.['display_name'] || '我的貢獻' }}
+      </a>
+      <button (click)="signOut()" style="
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px 6px 6px;
+        border: none;
+        border-left: 1px solid rgba(232,121,160,0.15);
+        background: transparent;
+        font-size: 0.65rem;
+        font-family: 'Shippori Mincho', serif;
+        color: rgba(122,90,122,0.45);
+        cursor: pointer;
+        letter-spacing: 0.04em;
+      ">登出</button>
+    </div>
   }
 }
 

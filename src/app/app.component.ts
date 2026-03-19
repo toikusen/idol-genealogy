@@ -21,4 +21,8 @@ export class AppComponent {
   get isAdminRoute(): boolean {
     return this.router.url.startsWith('/admin');
   }
+
+  signOut() {
+    this.supabase.signOut();
+  }
 }
