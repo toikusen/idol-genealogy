@@ -18,6 +18,9 @@ export class MyContributionsComponent implements OnInit {
   displayName = '';
   proposals: Proposal[] = [];
 
+  readonly PAGE_SIZE = 50;
+  page = 1;
+
   readonly BADGES = BADGES;
   readonly TABLE_LABELS = TABLE_LABELS;
 
@@ -74,6 +77,19 @@ export class MyContributionsComponent implements OnInit {
 
   getOperationLabel(op: string): string {
     return op === 'INSERT' ? '新增' : op === 'UPDATE' ? '修改' : '刪除';
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.proposals.length / this.PAGE_SIZE);
+  }
+
+  get pagedProposals(): Proposal[] {
+    const start = (this.page - 1) * this.PAGE_SIZE;
+    return this.proposals.slice(start, start + this.PAGE_SIZE);
+  }
+
+  goToPage(p: number) {
+    this.page = Math.max(1, Math.min(p, this.totalPages));
   }
 
   formatDate(iso: string): string {
