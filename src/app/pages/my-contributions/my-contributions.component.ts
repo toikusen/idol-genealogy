@@ -30,8 +30,7 @@ export class MyContributionsComponent implements OnInit {
   async ngOnInit() {
     const session = await this.supabase.getSessionOnce();
     if (!session) { this.router.navigate(['/']); return; }
-    this.displayName =
-      session.user.user_metadata?.['display_name'] || session.user.email || '';
+    this.displayName = session.user.user_metadata?.['display_name'] || '';
     try {
       this.proposals = await this.proposalService.getMyProposals(session.user.id);
     } catch {

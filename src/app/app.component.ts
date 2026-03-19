@@ -23,6 +23,6 @@ export class AppComponent {
   }
 
   signOut() {
-    this.supabase.signOut();
+    this.supabase.signOut().then(() => this.router.navigate(['/']));
   }
 }

@@ -34,7 +34,7 @@ interface FlatGroup {
               <span class="w-2 h-2 rounded-full flex-shrink-0"
                     [style.background]="group?.color || '#e879a0'"></span>
               <h3 class="text-sm font-medium text-gray-500 uppercase tracking-widest"
-                  style="font-family:'Cormorant Garamond',serif;letter-spacing:0.15em;">現役</h3>
+                  style="font-family:'JF Openhuninn',sans-serif;letter-spacing:0.15em;">現役</h3>
               <div class="flex-1 h-px bg-gray-100"></div>
               <span class="text-xs text-gray-400">{{ flatGroup.activeNodes.length }}</span>
             </div>
@@ -52,7 +52,7 @@ interface FlatGroup {
             <div class="flex items-center gap-3 mb-4">
               <span class="w-2 h-2 rounded-full flex-shrink-0 bg-gray-300"></span>
               <h3 class="text-sm font-medium text-gray-400 uppercase tracking-widest"
-                  style="font-family:'Cormorant Garamond',serif;letter-spacing:0.15em;">退役</h3>
+                  style="font-family:'JF Openhuninn',sans-serif;letter-spacing:0.15em;">退役</h3>
               <div class="flex-1 h-px bg-gray-100"></div>
               <span class="text-xs text-gray-400">{{ flatGroup.formerNodes.length }}</span>
             </div>
@@ -100,7 +100,7 @@ interface FlatGroup {
               <span class="w-2 h-2 rounded-full flex-shrink-0"
                     [style.background]="node.color || group?.color || '#e879a0'"></span>
               <h3 class="text-sm font-medium tracking-widest uppercase text-gray-500"
-                  style="font-family:'Cormorant Garamond',serif;letter-spacing:0.15em;">
+                  style="font-family:'JF Openhuninn',sans-serif;letter-spacing:0.15em;">
                 {{ node.label }}
               </h3>
               <div class="flex-1 h-px bg-gray-100"></div>
@@ -136,7 +136,7 @@ interface FlatGroup {
 
     @if (teamNodes.length === 0 && flatGroup.activeNodes.length === 0 && flatGroup.formerNodes.length === 0) {
       <div class="py-12 text-center">
-        <p class="text-4xl text-gray-200 mb-3" style="font-family:'Cormorant Garamond',serif;">空</p>
+        <p class="text-4xl text-gray-200 mb-3" style="font-family:'JF Openhuninn',sans-serif;">空</p>
         <p class="text-sm text-gray-400">此組合尚無成員資料</p>
         <p class="text-xs text-gray-300 mt-1">歡迎登入後補充資料</p>
       </div>

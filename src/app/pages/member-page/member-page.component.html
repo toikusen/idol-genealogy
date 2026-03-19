@@ -26,7 +26,7 @@
           animation: spin 0.8s linear infinite;
         "></div>
         <p style="
-          font-family: 'Shippori Mincho', serif;
+          font-family: 'JF Openhuninn', sans-serif;
           font-size: 0.75rem; letter-spacing: 0.3em;
           color: rgba(184,160,184,0.6);
         ">載入中…</p>
@@ -41,12 +41,12 @@
         min-height: 60vh; gap: 16px; text-align: center;
       ">
         <div style="
-          font-family: 'Shippori Mincho', serif;
+          font-family: 'JF Openhuninn', sans-serif;
           font-size: 3rem; color: rgba(232,121,160,0.18); line-height: 1;
           margin-bottom: 8px;
         ">錯誤</div>
         <p style="
-          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-family: 'JF Openhuninn', sans-serif;
           font-style: italic; font-size: 1.1rem;
           color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
         ">Could not load member data</p>
@@ -66,17 +66,17 @@
         min-height: 60vh; gap: 16px; text-align: center;
       ">
         <div style="
-          font-family: 'Shippori Mincho', serif;
+          font-family: 'JF Openhuninn', sans-serif;
           font-size: 3rem; color: rgba(232,121,160,0.18); line-height: 1;
           margin-bottom: 8px;
         ">找不到此成員</div>
         <p style="
-          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-family: 'JF Openhuninn', sans-serif;
           font-style: italic; font-size: 1.1rem;
           color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
         ">This member could not be found in the archive</p>
         <a routerLink="/" style="
-          font-family: 'Shippori Mincho', serif;
+          font-family: 'JF Openhuninn', sans-serif;
           font-size: 0.78rem; letter-spacing: 0.18em;
           color: rgba(232,121,160,0.65);
           text-decoration: none; margin-top: 8px;
@@ -109,7 +109,7 @@
         ">
           <div style="height: 1px; width: 24px; background: rgba(232,121,160,0.35);"></div>
           <span style="
-            font-family: 'Shippori Mincho', serif;
+            font-family: 'JF Openhuninn', sans-serif;
             font-size: 0.6rem; letter-spacing: 0.42em;
             text-transform: uppercase; color: rgba(122,90,122,0.38);
           ">Member · 成員</span>
@@ -143,7 +143,7 @@
             <!-- Primary name + proposal button inline -->
             <div style="display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 2px;">
               <h1 style="
-                font-family: 'Cormorant Garamond', Georgia, serif;
+                font-family: 'JF Openhuninn', sans-serif;
                 font-size: clamp(1.8rem, 5vw, 2.8rem);
                 font-weight: 300; line-height: 1.05;
                 letter-spacing: 0.03em; color: #2d1b2e;
@@ -164,7 +164,7 @@
             <!-- Roman / phonetic name -->
             @if (member.name_roman) {
               <p style="
-                font-family: 'Cormorant Garamond', Georgia, serif;
+                font-family: 'JF Openhuninn', sans-serif;
                 font-size: 1rem; font-style: italic;
                 color: rgba(122,90,122,0.5);
                 letter-spacing: 0.08em; margin: 0 0 10px;
@@ -188,7 +188,7 @@
                   flex-shrink: 0;
                 " [style.background]="member.color"></div>
                 <span style="
-                  font-family: 'Shippori Mincho', serif;
+                  font-family: 'JF Openhuninn', sans-serif;
                   font-size: 0.78rem; color: rgba(122,90,122,0.55);
                   letter-spacing: 0.08em;
                 ">{{ member.color_name || member.color }}</span>
@@ -208,7 +208,7 @@
                   <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
                 <span style="
-                  font-family: 'Shippori Mincho', serif;
+                  font-family: 'JF Openhuninn', sans-serif;
                   font-size: 0.78rem; color: rgba(122,90,122,0.55);
                   letter-spacing: 0.1em;
                 ">{{ formatDate(member.birthdate) }}</span>
@@ -253,7 +253,7 @@
             <!-- Notes -->
             @if (member.notes) {
               <p style="
-                font-family: 'Shippori Mincho', serif;
+                font-family: 'JF Openhuninn', sans-serif;
                 font-size: 0.82rem; line-height: 1.85;
                 color: rgba(122,90,122,0.58);
                 margin-top: 16px; font-style: italic;
@@ -279,7 +279,7 @@
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
           <div style="height: 1px; width: 20px; background: rgba(232,121,160,0.45);"></div>
           <span style="
-            font-family: 'Shippori Mincho', serif;
+            font-family: 'JF Openhuninn', sans-serif;
             font-size: 0.65rem; letter-spacing: 0.38em;
             text-transform: uppercase; color: rgba(122,90,122,0.45);
             white-space: nowrap;
@@ -290,7 +290,7 @@
             (click)="showOverseasPanel = true"
             style="
               display:inline-flex;align-items:center;gap:4px;
-              font-family:'Shippori Mincho',serif;font-size:0.65rem;letter-spacing:0.08em;
+              font-family:'JF Openhuninn',sans-serif;font-size:0.65rem;letter-spacing:0.08em;
               padding:4px 10px;border-radius:5px;border:1px solid rgba(122,90,122,0.2);
               background:transparent;color:rgba(122,90,122,0.5);cursor:pointer;
               transition:all 0.2s;white-space:nowrap;flex-shrink:0;
@@ -303,7 +303,7 @@
               style="
                 display: flex; align-items: center; gap: 4px;
                 padding: 4px 10px;
-                font-family: 'Shippori Mincho', serif;
+                font-family: 'JF Openhuninn', sans-serif;
                 font-size: 0.65rem; letter-spacing: 0.1em;
                 border: none; cursor: pointer; transition: all 0.2s;
               "
@@ -326,7 +326,7 @@
               style="
                 display: flex; align-items: center; gap: 4px;
                 padding: 4px 10px;
-                font-family: 'Shippori Mincho', serif;
+                font-family: 'JF Openhuninn', sans-serif;
                 font-size: 0.65rem; letter-spacing: 0.1em;
                 border: none; cursor: pointer; transition: all 0.2s;
               "
@@ -360,7 +360,7 @@
           background:rgba(255,255,255,0.6);
           border:1px solid rgba(232,121,160,0.12);
           border-radius:6px;padding:10px 14px;
-          font-family:'Shippori Mincho',serif;
+          font-family:'JF Openhuninn',sans-serif;
           font-size:0.73rem;color:rgba(122,90,122,0.6);
           margin:32px 0 24px;
         ">
@@ -376,7 +376,7 @@
               <div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;overflow:hidden;">
                 <span style="
                   display:inline-block;
-                  font-family:'Cormorant Garamond',Georgia,serif;
+                  font-family:'JF Openhuninn',sans-serif;
                   font-size:0.7rem;font-style:italic;
                   color:rgba(122,90,122,0.55);
                   background:rgba(232,121,160,0.05);
@@ -440,7 +440,7 @@
           <div style="height: 1px; width: 40px; background: linear-gradient(to left, transparent, rgba(232,121,160,0.22));"></div>
         </div>
         <p style="
-          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-family: 'JF Openhuninn', sans-serif;
           font-style: italic; font-size: 0.75rem;
           color: rgba(184,160,184,0.45); letter-spacing: 0.15em;
           margin-bottom: 14px;
@@ -519,7 +519,7 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    font-family: 'Shippori Mincho', serif;
+    font-family: 'JF Openhuninn', sans-serif;
     font-size: 0.72rem;
     letter-spacing: 0.2em;
     color: rgba(122,90,122,0.5);
@@ -539,7 +539,7 @@
     padding: 5px 10px;
     border-radius: 20px;
     border: 1px solid;
-    font-family: 'Shippori Mincho', serif;
+    font-family: 'JF Openhuninn', sans-serif;
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     text-decoration: none;
@@ -607,7 +607,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-family: 'JF Openhuninn', sans-serif;
     font-size: 3.2rem;
     font-weight: 300;
   }
@@ -626,7 +626,7 @@
     border-radius: 999px;
     border: 1px solid rgba(232,121,160,0.3);
     background: rgba(252,228,239,0.45);
-    font-family: 'Shippori Mincho', serif;
+    font-family: 'JF Openhuninn', sans-serif;
     font-size: 0.72rem;
     letter-spacing: 0.06em;
     color: rgba(194,80,122,0.85);
@@ -642,7 +642,7 @@
 
   .nickname-chip {
     display: inline-block;
-    font-family: 'Shippori Mincho', serif;
+    font-family: 'JF Openhuninn', sans-serif;
     font-size: 0.72rem;
     letter-spacing: 0.15em;
     border-radius: 3px;

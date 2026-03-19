@@ -106,7 +106,7 @@ interface TimelineSegment {
       }
       @if (segments.length === 0) {
         <div class="py-12 text-center">
-          <p class="text-4xl text-gray-200 mb-3" style="font-family:'Cormorant Garamond',serif;">空</p>
+          <p class="text-4xl text-gray-200 mb-3" style="font-family:'JF Openhuninn',sans-serif;">空</p>
           <p class="text-sm text-gray-400">此成員尚無歷史記錄</p>
           <p class="text-xs text-gray-300 mt-1">歡迎登入後補充資料</p>
         </div>
