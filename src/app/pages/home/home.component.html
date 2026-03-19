@@ -262,13 +262,13 @@
                         font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.92rem; color: #2d1b2e; font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                      ">{{member.name_roman || member.name}}</div>
+                      ">{{member.name}}</div>
                       @if (member.name_roman) {
                         <div style="
                           font-family: 'JF Openhuninn', sans-serif;
                           font-size: 0.78rem; color: rgba(122,90,122,0.5);
                           letter-spacing: 0.04em;
-                        ">{{member.name}}</div>
+                        ">{{member.name_roman}}</div>
                       }
                     </div>
                   </a>
@@ -296,7 +296,7 @@
                         font-size: 0.92rem; color: #2d1b2e; font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                       ">
-                        {{r.member.name_roman || r.member.name}}
+                        {{r.member.name}}
                         <span style="color: rgba(232,121,160,0.7); font-size: 0.82rem;">({{r.alias}})</span>
                       </div>
                       @if (r.member.name_roman) {
@@ -304,7 +304,7 @@
                           font-family: 'JF Openhuninn', sans-serif;
                           font-size: 0.78rem; color: rgba(122,90,122,0.5);
                           letter-spacing: 0.04em;
-                        ">{{r.member.name}}</div>
+                        ">{{r.member.name_roman}}</div>
                       }
                     </div>
                   </a>
