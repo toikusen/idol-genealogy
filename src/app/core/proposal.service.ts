@@ -133,4 +133,16 @@ export class ProposalService {
     if (error) throw error;
     return (data ?? []) as ContributorEntry[];
   }
+
+  /** Get the calling user's own proposals (pending + approved), newest first. */
+  async getMyProposals(userId: string): Promise<Proposal[]> {
+    const { data, error } = await this.db
+      .from('proposals')
+      .select('*')
+      .eq('submitter_id', userId)
+      .in('status', ['pending', 'approved'])
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as Proposal[];
+  }
 }
