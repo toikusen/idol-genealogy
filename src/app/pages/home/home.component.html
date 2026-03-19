@@ -331,8 +331,13 @@
                       display: flex; align-items: center; justify-content: center;
                       border: 1px solid rgba(124,108,242,0.15);
                       background: linear-gradient(135deg, rgba(124,108,242,0.12), rgba(232,121,160,0.08));
+                      overflow: hidden;
                     ">
-                      <div style="width: 12px; height: 12px; border-radius: 50%;" [style.background]="group.color || '#7c6cf2'"></div>
+                      @if (group.photo_url) {
+                        <img [src]="group.photo_url" [alt]="group.name" style="width:100%;height:100%;object-fit:cover;">
+                      } @else {
+                        <div style="width: 12px; height: 12px; border-radius: 50%;" [style.background]="group.color || '#7c6cf2'"></div>
+                      }
                     </div>
                     <div style="min-width: 0;">
                       <div style="
@@ -531,7 +536,19 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 24px;">
             @for (group of displayedGroups; track group.id) {
               <a [routerLink]="['/group', group.id]" class="browse-group-card">
-                <div style="width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:2px;" [style.background]="group.color || '#7c6cf2'"></div>
+                <div style="
+                  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+                  display: flex; align-items: center; justify-content: center;
+                  border: 1px solid rgba(124,108,242,0.15);
+                  background: linear-gradient(135deg, rgba(124,108,242,0.12), rgba(232,121,160,0.08));
+                  overflow: hidden;
+                ">
+                  @if (group.photo_url) {
+                    <img [src]="group.photo_url" [alt]="group.name" style="width:100%;height:100%;object-fit:cover;">
+                  } @else {
+                    <div style="width:12px;height:12px;border-radius:50%;" [style.background]="group.color || '#7c6cf2'"></div>
+                  }
+                </div>
                 <div style="min-width: 0; flex: 1;">
                   <div style="
                     font-family: 'JF Openhuninn', sans-serif;
