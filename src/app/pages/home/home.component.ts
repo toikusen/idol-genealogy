@@ -18,6 +18,11 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, AdBannerComponent, ProposalPanelComponent, SafeUrlPipe],
   templateUrl: './home.component.html',
+  styles: [`
+    @media (max-width: 500px) {
+      .title-break::after { content: '\\A'; white-space: pre; }
+    }
+  `],
 })
 export class HomeComponent implements OnInit {
   showMemberInsertPanel = false;
