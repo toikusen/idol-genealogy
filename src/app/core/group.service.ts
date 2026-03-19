@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Group, GroupVideo, Team } from '../models';
+import { kanaVariants } from './japanese.utils';
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
@@ -29,9 +30,12 @@ export class GroupService {
 
   async search(query: string): Promise<Group[]> {
     const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
+    const variants = kanaVariants(safe);
+    const nameFilters = variants.map(v => `name.ilike.%${v}%`).join(',');
+    const nameJpFilters = variants.map(v => `name_jp.ilike.%${v}%`).join(',');
     const { data, error } = await this.db
       .from('groups').select('*')
-      .or(`name.ilike.%${safe}%,name_jp.ilike.%${safe}%`);
+      .or(`${nameFilters},${nameJpFilters}`);
     if (error) throw error;
     return data ?? [];
   }

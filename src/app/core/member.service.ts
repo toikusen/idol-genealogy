@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Member } from '../models';
+import { kanaVariants } from './japanese.utils';
 
 @Injectable({ providedIn: 'root' })
 export class MemberService {
@@ -11,22 +12,26 @@ export class MemberService {
   constructor(private supabase: SupabaseService) {}
 
   async search(query: string): Promise<Member[]> {
-    // Escape % and _ which are SQL LIKE wildcards
     const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
+    const variants = kanaVariants(safe);
+    // Search name with all kana variants; name_roman only needs the original query (it's romaji)
+    const nameFilters = variants.map(v => `name.ilike.%${v}%`).join(',');
     const { data, error } = await this.db
       .from('members')
       .select('*')
-      .or(`name.ilike.%${safe}%,name_roman.ilike.%${safe}%`);
+      .or(`${nameFilters},name_roman.ilike.%${safe}%`);
     if (error) throw error;
     return data ?? [];
   }
 
   async searchByAlias(query: string): Promise<{ member: Member; alias: string }[]> {
     const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
+    const variants = kanaVariants(safe);
+    const aliasFilters = variants.map(v => `name_at_time.ilike.%${v}%`).join(',');
     const { data, error } = await this.db
       .from('history')
       .select('name_at_time, member:members(*)')
-      .ilike('name_at_time', `%${safe}%`)
+      .or(aliasFilters)
       .not('name_at_time', 'is', null);
     if (error) throw error;
 
