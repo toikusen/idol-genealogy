@@ -67,7 +67,7 @@ interface MemberRow {
                     <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                   </div>
                   <div style="padding:5px 8px;">
-                    <p style="font-size:11px; font-weight:600; color:#374151; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                    <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
                     <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
                     <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
                   </div>
@@ -95,7 +95,7 @@ interface MemberRow {
                   </div>
                 }
                 <div style="padding:5px 10px;" [style.border-top]="ri > 0 ? '1px solid #fce7f3' : 'none'">
-                  <p style="font-size:11px; font-weight:600; color:#374151; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ row.current.memberName }}</p>
+                  <p [style.color]="row.current.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ row.current.memberName }}</p>
                   <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ row.current.joinedAt }}{{ row.current.leftAt ? ' – ' + row.current.leftAt : ' –' }})</p>
                 </div>
               </div>
@@ -122,7 +122,7 @@ interface MemberRow {
                     <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                   </div>
                   <div style="padding:5px 8px;">
-                    <p style="font-size:11px; font-weight:600; color:#374151; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                    <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
                     <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
                     <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
                   </div>
