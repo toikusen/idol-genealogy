@@ -650,7 +650,7 @@ export class ProposalPanelComponent implements OnInit {
     return this.requiredFields.includes(field) ? label + ' *' : label;
   }
 
-  private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'youtube', 'website', 'photo_url']);
+  private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'maid_url', 'youtube', 'website', 'photo_url']);
 
   fieldPlaceholder(field: string): string {
     const hints: Record<string, string> = {
@@ -662,6 +662,7 @@ export class ProposalPanelComponent implements OnInit {
       'members:instagram': 'https://www.instagram.com/username/',
       'members:facebook': 'https://www.facebook.com/username',
       'members:x': 'https://x.com/username',
+      'members:maid_url': 'https://...',
       'groups:instagram': 'https://www.instagram.com/username/',
       'groups:facebook': 'https://www.facebook.com/username',
       'groups:x': 'https://x.com/username',

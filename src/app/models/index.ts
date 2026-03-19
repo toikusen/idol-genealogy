@@ -10,6 +10,7 @@ export interface Member {
   instagram: string | null;
   facebook: string | null;
   x: string | null;
+  maid_url: string | null;
   notes: string | null;
   updated_at: string;
   created_at: string;

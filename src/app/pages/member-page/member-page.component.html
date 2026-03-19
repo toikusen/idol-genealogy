@@ -216,7 +216,7 @@
             }
 
             <!-- SNS links -->
-            @if (member.instagram || member.facebook || member.x) {
+            @if (member.instagram || member.facebook || member.x || member.maid_url) {
               <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 16px;">
                 @if (member.instagram) {
                   <a [href]="member.instagram" target="_blank" rel="noopener noreferrer"
@@ -245,6 +245,16 @@
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
                     <span>X</span>
+                  </a>
+                }
+                @if (member.maid_url) {
+                  <a [href]="member.maid_url" target="_blank" rel="noopener noreferrer"
+                    class="sns-link sns-link--maid" title="女僕帳號">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M12 2C8 2 5 5 5 8c0 2 1 3.5 2.5 4.5L7 22h10l-.5-9.5C18 11.5 19 10 19 8c0-3-3-6-7-6z"/>
+                      <path d="M9 22v-2a3 3 0 0 1 6 0v2"/>
+                    </svg>
+                    <span>女僕帳號</span>
                   </a>
                 }
               </div>
@@ -574,6 +584,16 @@
   .sns-link--x:hover {
     background: rgba(42,42,42,0.08);
     border-color: rgba(42,42,42,0.35);
+  }
+
+  .sns-link--maid {
+    color: #b05090;
+    border-color: rgba(176,80,144,0.25);
+    background: rgba(176,80,144,0.05);
+  }
+  .sns-link--maid:hover {
+    background: rgba(176,80,144,0.1);
+    border-color: rgba(176,80,144,0.45);
   }
 
   /* ── Member header layout ── */
