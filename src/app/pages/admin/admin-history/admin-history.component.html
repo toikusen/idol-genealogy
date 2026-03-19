@@ -42,7 +42,7 @@
       <div class="flex items-center gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
         <div class="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center text-pink-400 text-xs font-medium flex-shrink-0 overflow-hidden">
           <img *ngIf="group.photo_url" [src]="group.photo_url" [alt]="group.memberName" class="w-full h-full object-cover"/>
-          <span *ngIf="!group.photo_url">{{ group.memberName.charAt(0) ?? '?' }}</span>
+          <span *ngIf="!group.photo_url">{{ group.memberName.charAt(0) || '?' }}</span>
         </div>
         <span class="text-sm font-semibold text-gray-700">{{ group.memberName }}</span>
         <span class="text-xs text-gray-400 ml-auto">{{ group.records.length }} 筆記錄</span>

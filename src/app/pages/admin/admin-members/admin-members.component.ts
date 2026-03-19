@@ -54,6 +54,10 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
   fetchingIg = false;
   igFetchError = '';
   error = '';
+
+  batchFetching = false;
+  batchProgress = '';
+  batchResult = '';
   isAdmin = false;
   private _sub: Subscription;
 
@@ -186,6 +190,44 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     } finally {
       this.fetchingIg = false;
     }
+  }
+
+  async batchFetchIgPhotos() {
+    const targets = this.members.filter(m => !m.photo_url && m.instagram);
+    if (targets.length === 0) { this.batchResult = '所有有 IG 帳號的成員都已有圖片。'; return; }
+    if (!confirm(`找到 ${targets.length} 位成員沒有大頭貼，開始批量抓取？`)) return;
+
+    this.batchFetching = true;
+    this.batchResult = '';
+    let ok = 0, fail = 0;
+
+    for (let i = 0; i < targets.length; i++) {
+      const m = targets[i];
+      this.batchProgress = `(${i + 1}/${targets.length})`;
+      const username = this.extractIgUsername(m.instagram!);
+      if (!username) { fail++; continue; }
+      try {
+        const res = await fetch(
+          `${environment.supabaseUrl}/functions/v1/ig-photo?username=${encodeURIComponent(username)}`
+        );
+        const json = await res.json();
+        if (json.photo_url) {
+          await this.memberService.update(m.id, { photo_url: json.photo_url });
+          ok++;
+        } else {
+          fail++;
+        }
+      } catch {
+        fail++;
+      }
+      // 避免太快被 IG 擋，每次間隔 1.5 秒
+      if (i < targets.length - 1) await new Promise(r => setTimeout(r, 1500));
+    }
+
+    this.batchFetching = false;
+    this.batchProgress = '';
+    this.batchResult = `完成：成功 ${ok} 位，失敗 ${fail} 位。`;
+    await this.load();
   }
 
   async delete(m: Member) {

@@ -2,13 +2,24 @@
   <!-- Page header -->
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-semibold text-gray-800">成員管理</h1>
-    <button
-      (click)="openCreate()"
-      class="px-4 py-2 bg-pink-500 text-white text-sm rounded-md hover:bg-pink-600 transition-colors"
-    >
-      + 新增成員
-    </button>
+    <div class="flex gap-2">
+      <button
+        (click)="batchFetchIgPhotos()"
+        [disabled]="batchFetching"
+        class="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        [title]="'批量抓取沒有大頭貼但有 IG 帳號的成員照片'"
+      >
+        {{ batchFetching ? '抓取中… ' + batchProgress : '📷 批量補圖' }}
+      </button>
+      <button
+        (click)="openCreate()"
+        class="px-4 py-2 bg-pink-500 text-white text-sm rounded-md hover:bg-pink-600 transition-colors"
+      >
+        + 新增成員
+      </button>
+    </div>
   </div>
+  <p *ngIf="batchResult" class="mb-3 text-xs text-gray-500">{{ batchResult }}</p>
 
   <!-- Search -->
   <div *ngIf="!loading" class="mb-4">
