@@ -77,5 +77,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/guide/guide.component').then(m => m.GuideComponent),
   },
+  {
+    path: 'my-contributions',
+    loadComponent: () =>
+      import('./pages/my-contributions/my-contributions.component').then(m => m.MyContributionsComponent),
+  },
   { path: '**', redirectTo: '' }
 ];
