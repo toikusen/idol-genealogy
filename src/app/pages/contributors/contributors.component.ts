@@ -1,28 +1,30 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProposalService, ContributorEntry } from '../../core/proposal.service';
-
-const TABLE_LABELS: Record<string, string> = {
-  members: '成員',
-  groups: '組合',
-  companies: '公司',
-  history: '歷程',
-};
+import { SupabaseService } from '../../core/supabase.service';
+import { getBadge, TABLE_LABELS, Badge } from '../../core/badge.utils';
 
 @Component({
   selector: 'app-contributors',
   standalone: true,
-  imports: [RouterLink], // No CommonModule needed — template uses Angular 19 @if/@for control flow
+  imports: [RouterLink],
   templateUrl: './contributors.component.html',
 })
 export class ContributorsComponent implements OnInit {
   leaderboard: ContributorEntry[] = [];
   loading = true;
   error = false;
+  currentUserId: string | null = null;
 
-  constructor(private proposalService: ProposalService) {}
+  constructor(
+    private proposalService: ProposalService,
+    private supabase: SupabaseService,
+  ) {}
 
   async ngOnInit() {
+    const session = await this.supabase.getSessionOnce();
+    this.currentUserId = session?.user?.id ?? null;
+
     try {
       this.leaderboard = await this.proposalService.getLeaderboard();
     } catch {
@@ -32,26 +34,20 @@ export class ContributorsComponent implements OnInit {
     }
   }
 
-  get top3(): ContributorEntry[] {
-    return this.leaderboard.slice(0, 3);
-  }
+  get top3(): ContributorEntry[] { return this.leaderboard.slice(0, 3); }
+  get rest(): ContributorEntry[]  { return this.leaderboard.slice(3); }
+  get maxTotal(): number           { return this.leaderboard[0]?.total ?? 1; }
 
-  get rest(): ContributorEntry[] {
-    return this.leaderboard.slice(3);
-  }
-
-  get maxTotal(): number {
-    return this.leaderboard[0]?.total ?? 1;
-  }
-
-  getInitial(name: string): string {
-    return name.charAt(0);
-  }
+  getInitial(name: string): string { return name.charAt(0); }
 
   getByTableLabel(byTable: Record<string, number>): string {
     return Object.entries(byTable)
       .filter(([, n]) => n > 0)
       .map(([k, n]) => `${TABLE_LABELS[k] ?? k} ${n}`)
       .join('・');
+  }
+
+  getBadgeForEntry(entry: ContributorEntry): Badge | null {
+    return getBadge(entry.total);
   }
 }

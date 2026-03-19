@@ -35,7 +35,16 @@
               display:flex;align-items:center;justify-content:center;
               font-family:'Cormorant Garamond',Georgia,serif;font-size:1.3rem;font-weight:300;color:white;
             ">{{ getInitial(top3[1].submitter_name) }}</div>
-            <div style="font-size:0.75rem;color:#2d1b2e;text-align:center;font-weight:500;">{{ top3[1].submitter_name }}</div>
+            <div style="font-size:0.75rem;color:#2d1b2e;text-align:center;font-weight:500;">
+              @if (top3[1].submitter_id === currentUserId) {
+                <a routerLink="/my-contributions" style="color:inherit;text-decoration:none;">{{ top3[1].submitter_name }}</a>
+              } @else {
+                {{ top3[1].submitter_name }}
+              }
+              @if (getBadgeForEntry(top3[1]); as b) {
+                <span style="margin-left:4px;">{{ b.icon }}</span>
+              }
+            </div>
             <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:0.72rem;color:rgba(122,90,122,0.55);">{{ top3[1].total }} 筆</div>
             <div style="
               width:100%;height:44px;border-radius:4px 4px 0 0;
@@ -55,7 +64,16 @@
             display:flex;align-items:center;justify-content:center;
             font-family:'Cormorant Garamond',Georgia,serif;font-size:1.6rem;font-weight:300;color:white;
           ">{{ getInitial(top3[0].submitter_name) }}</div>
-          <div style="font-size:0.8rem;color:#2d1b2e;text-align:center;font-weight:500;">{{ top3[0].submitter_name }}</div>
+          <div style="font-size:0.8rem;color:#2d1b2e;text-align:center;font-weight:500;">
+            @if (top3[0].submitter_id === currentUserId) {
+              <a routerLink="/my-contributions" style="color:inherit;text-decoration:none;">{{ top3[0].submitter_name }}</a>
+            } @else {
+              {{ top3[0].submitter_name }}
+            }
+            @if (getBadgeForEntry(top3[0]); as b) {
+              <span style="margin-left:4px;">{{ b.icon }}</span>
+            }
+          </div>
           <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:0.75rem;color:rgba(122,90,122,0.55);">{{ top3[0].total }} 筆</div>
           <div style="
             width:100%;height:64px;border-radius:4px 4px 0 0;
@@ -74,7 +92,16 @@
               display:flex;align-items:center;justify-content:center;
               font-family:'Cormorant Garamond',Georgia,serif;font-size:1.2rem;font-weight:300;color:white;
             ">{{ getInitial(top3[2].submitter_name) }}</div>
-            <div style="font-size:0.72rem;color:#2d1b2e;text-align:center;font-weight:500;">{{ top3[2].submitter_name }}</div>
+            <div style="font-size:0.72rem;color:#2d1b2e;text-align:center;font-weight:500;">
+              @if (top3[2].submitter_id === currentUserId) {
+                <a routerLink="/my-contributions" style="color:inherit;text-decoration:none;">{{ top3[2].submitter_name }}</a>
+              } @else {
+                {{ top3[2].submitter_name }}
+              }
+              @if (getBadgeForEntry(top3[2]); as b) {
+                <span style="margin-left:4px;">{{ b.icon }}</span>
+              }
+            </div>
             <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:0.7rem;color:rgba(122,90,122,0.55);">{{ top3[2].total }} 筆</div>
             <div style="
               width:100%;height:30px;border-radius:4px 4px 0 0;
@@ -112,7 +139,16 @@
             ">{{ getInitial(entry.submitter_name) }}</div>
             <!-- Name + breakdown -->
             <div style="flex:1;min-width:0;">
-              <div style="font-size:0.82rem;color:#2d1b2e;">{{ entry.submitter_name }}</div>
+              <div style="font-size:0.82rem;color:#2d1b2e;">
+                @if (entry.submitter_id === currentUserId) {
+                  <a routerLink="/my-contributions" style="color:inherit;text-decoration:none;">{{ entry.submitter_name }}</a>
+                } @else {
+                  {{ entry.submitter_name }}
+                }
+                @if (getBadgeForEntry(entry); as b) {
+                  <span style="margin-left:4px;">{{ b.icon }}</span>
+                }
+              </div>
               <div style="font-size:0.68rem;color:rgba(122,90,122,0.45);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;margin-top:2px;">
                 {{ getByTableLabel(entry.by_table) }}
               </div>
