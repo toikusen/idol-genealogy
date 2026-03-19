@@ -1,15 +1,16 @@
 export interface Badge {
   icon: string;
+  image: string;
   name: string;
   threshold: number;
 }
 
 export const BADGES: Badge[] = [
-  { icon: '🌱', name: '新芽',       threshold: 1   },
-  { icon: '⭐', name: '初心者',     threshold: 10  },
-  { icon: '💫', name: '貢獻者',     threshold: 30  },
-  { icon: '✨', name: '資深貢獻者',  threshold: 100 },
-  { icon: '👑', name: '傳說級',     threshold: 300 },
+  { icon: '🌱', image: 'assets/badges/badge-1-sprout.png',      name: '新芽',       threshold: 1   },
+  { icon: '⭐', image: 'assets/badges/badge-2-beginner.png',    name: '初心者',     threshold: 10  },
+  { icon: '💫', image: 'assets/badges/badge-3-contributor.png', name: '貢獻者',     threshold: 30  },
+  { icon: '✨', image: 'assets/badges/badge-4-veteran.png',     name: '資深貢獻者',  threshold: 100 },
+  { icon: '👑', image: 'assets/badges/badge-5-legend.png',      name: '傳說級',     threshold: 300 },
 ];
 
 export const TABLE_LABELS: Record<string, string> = {
