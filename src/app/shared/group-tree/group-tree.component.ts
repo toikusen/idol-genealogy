@@ -83,7 +83,8 @@ interface FlatGroup {
               {{ node.label[0] }}
             </div>
           }
-          <p class="text-xs font-medium text-gray-800 leading-tight line-clamp-2">{{ node.label }}</p>
+          <p class="text-xs font-medium leading-tight line-clamp-2"
+             [class.text-gray-800]="!dim" [class.text-gray-400]="dim">{{ node.label }}</p>
           @if (node.sublabel) {
             <p class="text-xs text-gray-400 mt-0.5 leading-tight">{{ node.sublabel }}</p>
           }
@@ -121,7 +122,8 @@ interface FlatGroup {
                         {{ child.label[0] }}
                       </div>
                     }
-                    <p class="text-xs font-medium text-gray-800 leading-tight line-clamp-2">{{ child.label }}</p>
+                    <p class="text-xs font-medium leading-tight line-clamp-2"
+                       [class.text-gray-800]="!child.history?.left_at" [class.text-gray-400]="!!child.history?.left_at">{{ child.label }}</p>
                     @if (child.sublabel) {
                       <p class="text-xs text-gray-400 mt-0.5 leading-tight">{{ child.sublabel }}</p>
                     }
