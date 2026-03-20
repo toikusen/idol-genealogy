@@ -572,10 +572,11 @@
 
           <!-- Chart container -->
           <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-            <div style="min-width: 480px;">
+            <div style="display: grid; grid-template-columns: max-content 1fr; row-gap: 4px; min-width: 480px;">
 
               <!-- Year axis -->
-              <div style="display: flex; margin-left: 130px; position: relative; height: 20px; margin-bottom: 4px;">
+              <div></div>
+              <div style="position: relative; height: 20px;">
                 @for (yr of ganttYears; track yr.label) {
                   <span style="
                     position: absolute;
@@ -591,39 +592,40 @@
 
               <!-- Rows -->
               @for (row of ganttRows; track row.history.id) {
+                <!-- Name cell -->
                 <div
                   (click)="selectMember(row.history)"
                   style="
-                    display: flex; align-items: center;
-                    height: 30px; margin-bottom: 4px;
-                    cursor: pointer; border-radius: 4px;
+                    white-space: nowrap;
+                    padding: 0 12px 0 4px; text-align: right;
+                    font-family: 'JF Openhuninn', sans-serif;
+                    font-size: 0.75rem;
+                    display: flex; align-items: center; justify-content: flex-end; gap: 2px;
+                    cursor: pointer; border-radius: 4px 0 0 4px;
+                    transition: color 0.15s, background 0.15s;
+                  "
+                  [style.color]="selectedHistory?.id === row.history.id ? group.color : 'rgba(60,30,60,0.65)'"
+                  [style.background]="selectedHistory?.id === row.history.id ? 'rgba(' + hexToRgb(group.color) + ',0.06)' : 'transparent'"
+                >
+                  {{ row.history.name_at_time || row.history.member?.name || row.history.member?.name_roman || '—' }}
+                  <button
+                    (click)="$event.stopPropagation(); proposalHistoryEntry = row.history"
+                    class="text-gray-300 hover:text-pink-400 text-xs"
+                    title="提案修改此歷程"
+                  >✏️</button>
+                </div>
+
+                <!-- Bar cell -->
+                <div
+                  (click)="selectMember(row.history)"
+                  style="
+                    position: relative; display: flex; align-items: center;
+                    cursor: pointer; border-radius: 0 4px 4px 0;
                     transition: background 0.15s;
                   "
                   [style.background]="selectedHistory?.id === row.history.id ? 'rgba(' + hexToRgb(group.color) + ',0.06)' : 'transparent'"
                 >
-                  <!-- Member name -->
-                  <div style="
-                    width: 130px; flex-shrink: 0;
-                    padding-right: 12px; text-align: right;
-                    font-family: 'JF Openhuninn', sans-serif;
-                    font-size: 0.75rem;
-                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                    transition: color 0.15s;
-                    display: flex; align-items: center; justify-content: flex-end;
-                  "
-                  [style.color]="selectedHistory?.id === row.history.id ? group.color : 'rgba(60,30,60,0.65)'"
-                  >
-                    {{ row.history.name_at_time || row.history.member?.name || row.history.member?.name_roman || '—' }}
-                    <button
-                      (click)="$event.stopPropagation(); proposalHistoryEntry = row.history"
-                      class="text-gray-300 hover:text-pink-400 text-xs ml-1"
-                      title="提案修改此歷程"
-                    >✏️</button>
-                  </div>
-
-                  <!-- Bar track -->
                   <div style="flex: 1; position: relative; height: 10px;">
-
                     <!-- Year grid lines -->
                     @for (yr of ganttYears; track yr.label) {
                       <div style="
@@ -632,7 +634,6 @@
                         background: rgba(180,160,180,0.12);
                       " [style.left]="yr.leftPct + '%'"></div>
                     }
-
                     <!-- Bar -->
                     <div style="
                       position: absolute; top: 0; height: 100%;
@@ -646,17 +647,15 @@
                       : 'rgba(' + hexToRgb(group.color) + ',0.45)'"
                     [style.opacity]="selectedHistory && selectedHistory.id !== row.history.id ? '0.5' : '1'"
                     ></div>
-
                   </div>
                 </div>
               }
 
               <!-- Bottom axis line -->
+              <div></div>
               <div style="
-                margin-left: 130px;
-                height: 1px;
+                height: 1px; margin-top: 4px;
                 background: linear-gradient(to right, rgba(180,160,180,0.2), transparent);
-                margin-top: 4px;
               "></div>
 
             </div>
