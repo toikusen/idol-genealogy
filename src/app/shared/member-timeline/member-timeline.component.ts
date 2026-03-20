@@ -32,23 +32,44 @@ interface TimelineSegment {
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-1">
                   @if (seg.history.group_id) {
-                    <a class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full"
-                       [routerLink]="['/group', seg.history.group_id]"
-                       [style.background]="(seg.history.group?.color || '#e879a0') + '18'"
-                       [style.color]="seg.history.group?.color || '#e879a0'"
-                       style="text-decoration:none;">
-                      {{ seg.history.group?.name || '—' }}
-                      @if (seg.history.team) {
-                        <span class="opacity-60">/ {{ seg.history.team.name }}</span>
-                      }
-                    </a>
+                    @if (!hasLeft(seg.history)) {
+                      <a class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                         [routerLink]="['/group', seg.history.group_id]"
+                         [style.background]="(seg.history.group?.color || '#e879a0') + '18'"
+                         [style.color]="seg.history.group?.color || '#e879a0'"
+                         style="text-decoration:none;">
+                        {{ seg.history.group?.name || '—' }}
+                        @if (seg.history.team) {
+                          <span class="opacity-60">/ {{ seg.history.team.name }}</span>
+                        }
+                      </a>
+                    } @else {
+                      <a class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500"
+                         [routerLink]="['/group', seg.history.group_id]"
+                         style="text-decoration:none;">
+                        {{ seg.history.group?.name || '—' }}
+                        @if (seg.history.team) {
+                          <span class="opacity-60">/ {{ seg.history.team.name }}</span>
+                        }
+                      </a>
+                    }
                   } @else {
-                    <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                      {{ seg.history.external_group_name || '—' }}
-                      @if (seg.history.external_country) {
-                        <span class="opacity-60">· {{ seg.history.external_country }}</span>
-                      }
-                    </span>
+                    @if (!seg.history.left_at) {
+                      <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                            style="background:rgba(232,121,160,0.12);color:rgba(194,80,122,0.85);">
+                        {{ seg.history.external_group_name || '—' }}
+                        @if (seg.history.external_country) {
+                          <span class="opacity-60">· {{ seg.history.external_country }}</span>
+                        }
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                        {{ seg.history.external_group_name || '—' }}
+                        @if (seg.history.external_country) {
+                          <span class="opacity-60">· {{ seg.history.external_country }}</span>
+                        }
+                      </span>
+                    }
                     @if (seg.history.external_country) {
                       <span class="text-xs text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">海外</span>
                     } @else {
@@ -118,6 +139,11 @@ export class MemberTimelineComponent implements OnChanges {
   @Input() histories: History[] = [];
   @Output() reportHistory = new EventEmitter<History>();
   segments: TimelineSegment[] = [];
+
+  hasLeft(h: History): boolean {
+    if (!h.left_at) return false;
+    return new Date(h.left_at).getTime() <= Date.now();
+  }
 
   ngOnChanges() {
     this.buildSegments();

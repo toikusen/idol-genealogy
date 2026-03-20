@@ -5,11 +5,14 @@ import { History } from '../../models';
 
 interface ChainCell {
   groupId: string;
+  memberId: string;
   groupName: string;
   memberName: string;
   joinedAt: string;
   leftAt: string | null;
   status: string | null;
+  isExternal: boolean;
+  externalCountry: string | null;
 }
 
 interface MemberRow {
@@ -56,22 +59,60 @@ interface MemberRow {
               <!-- Prev chain: [cell → arrow → cell → arrow → ...] -->
               @for (cell of row.prevChain; track cell.groupId + $index; let ci = $index) {
                 <!-- Prev node -->
-                <a [routerLink]="['/group', cell.groupId]"
-                  [style.min-width.px]="CELL_W"
-                  [style.max-width.px]="CELL_W"
-                  [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
-                  [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                  style="flex-shrink:0; border:1.5px solid #e5e7eb; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
-                  onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
-                  <div style="background:#1f2937; padding:4px 8px;">
-                    <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                @if (!cell.isExternal) {
+                  <!-- Internal group: link to group page -->
+                  <a [routerLink]="['/group', cell.groupId]"
+                    [style.min-width.px]="CELL_W"
+                    [style.max-width.px]="CELL_W"
+                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.opacity]="cell.leftAt ? '0.75' : '1'"
+                    style="flex-shrink:0; border:1.5px solid #e5e7eb; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
+                    onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
+                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                      <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                    </div>
+                    <div style="padding:5px 8px;">
+                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                    </div>
+                  </a>
+                } @else if (!cell.externalCountry) {
+                  <!-- Solo experience: link to member page -->
+                  <a [routerLink]="['/member', cell.memberId]"
+                    [style.min-width.px]="CELL_W"
+                    [style.max-width.px]="CELL_W"
+                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.opacity]="cell.leftAt ? '0.75' : '1'"
+                    style="flex-shrink:0; border:1.5px dashed #d1d5db; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
+                    onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#d1d5db'">
+                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                      <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                    </div>
+                    <div style="padding:5px 8px;">
+                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                    </div>
+                  </a>
+                } @else {
+                  <!-- Overseas group: not clickable -->
+                  <div
+                    [style.min-width.px]="CELL_W"
+                    [style.max-width.px]="CELL_W"
+                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.opacity]="cell.leftAt ? '0.75' : '1'"
+                    style="flex-shrink:0; border:1.5px dashed #d1d5db; display:flex; flex-direction:column; align-self:center; cursor:default;">
+                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                      <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                    </div>
+                    <div style="padding:5px 8px;">
+                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                    </div>
                   </div>
-                  <div style="padding:5px 8px;">
-                    <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
-                    <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
-                    <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
-                  </div>
-                </a>
+                }
                 <!-- Arrow → -->
                 <div [style.width.px]="ARROW_W" style="flex-shrink:0; display:flex; align-items:center; justify-content:center;">
                   <svg [attr.width]="ARROW_W" height="20" style="display:block;">
@@ -111,22 +152,60 @@ interface MemberRow {
                   </svg>
                 </div>
                 <!-- Next node -->
-                <a [routerLink]="['/group', cell.groupId]"
-                  [style.min-width.px]="CELL_W"
-                  [style.max-width.px]="CELL_W"
-                  [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
-                  [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                  style="flex-shrink:0; border:1.5px solid #e5e7eb; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
-                  onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
-                  <div style="background:#1f2937; padding:4px 8px;">
-                    <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                @if (!cell.isExternal) {
+                  <!-- Internal group: link to group page -->
+                  <a [routerLink]="['/group', cell.groupId]"
+                    [style.min-width.px]="CELL_W"
+                    [style.max-width.px]="CELL_W"
+                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.opacity]="cell.leftAt ? '0.75' : '1'"
+                    style="flex-shrink:0; border:1.5px solid #e5e7eb; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
+                    onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
+                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                      <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                    </div>
+                    <div style="padding:5px 8px;">
+                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                    </div>
+                  </a>
+                } @else if (!cell.externalCountry) {
+                  <!-- Solo experience: link to member page -->
+                  <a [routerLink]="['/member', cell.memberId]"
+                    [style.min-width.px]="CELL_W"
+                    [style.max-width.px]="CELL_W"
+                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.opacity]="cell.leftAt ? '0.75' : '1'"
+                    style="flex-shrink:0; border:1.5px dashed #d1d5db; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
+                    onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#d1d5db'">
+                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                      <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                    </div>
+                    <div style="padding:5px 8px;">
+                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                    </div>
+                  </a>
+                } @else {
+                  <!-- Overseas group: not clickable -->
+                  <div
+                    [style.min-width.px]="CELL_W"
+                    [style.max-width.px]="CELL_W"
+                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.opacity]="cell.leftAt ? '0.75' : '1'"
+                    style="flex-shrink:0; border:1.5px dashed #d1d5db; display:flex; flex-direction:column; align-self:center; cursor:default;">
+                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                      <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
+                    </div>
+                    <div style="padding:5px 8px;">
+                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                    </div>
                   </div>
-                  <div style="padding:5px 8px;">
-                    <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
-                    <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
-                    <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
-                  </div>
-                </a>
+                }
               }
 
               <!-- Right padding -->
@@ -229,13 +308,17 @@ export class GroupConnectionGraphComponent implements OnChanges {
       || (h as any).member?.name
       || (h as any).member?.name_roman
       || '—';
+    const isExternal = !h.group_id && !!h.external_group_name;
     return {
       groupId: h.group_id ?? '',
-      groupName: (h as any).group?.name ?? h.external_group_name ?? '—',
+      memberId: h.member_id,
+      groupName: isExternal ? (h.external_group_name ?? '—') : ((h as any).group?.name ?? '—'),
       memberName,
       joinedAt: this.fmt(h.joined_at),
       leftAt: h.left_at ? this.fmt(h.left_at) : null,
       status: h.status ?? null,
+      isExternal,
+      externalCountry: h.external_country ?? null,
     };
   }
 

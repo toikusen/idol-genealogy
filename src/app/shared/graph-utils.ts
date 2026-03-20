@@ -5,6 +5,7 @@ import { History, Group } from '../models';
 export interface CareerNode {
   historyId: string;
   groupId: string | null;
+  memberId: string;
   groupName: string;
   memberName: string;   // name_at_time ?? member.name
   joinedAt: string;     // formatted "YYYY.MM"
@@ -48,6 +49,7 @@ export function buildCareerGraph(histories: History[], fallbackName = ''): {
     return {
       historyId: h.id,
       groupId: h.group_id,
+      memberId: h.member_id,
       groupName: isExternal ? (h.external_group_name ?? '—') : (h.group?.name ?? '—'),
       memberName: h.name_at_time || h.member?.name || h.member?.name_roman || fallbackName || '—',
       joinedAt: h.joined_at.slice(0, 7).replaceAll('-', '.'),
