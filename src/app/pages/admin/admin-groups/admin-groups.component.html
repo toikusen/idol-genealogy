@@ -285,6 +285,17 @@
         />
       </div>
 
+      <!-- notes -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">備注</label>
+        <textarea
+          [(ngModel)]="editing.notes"
+          rows="3"
+          placeholder="內部備注，會顯示於團體頁面"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent resize-none"
+        ></textarea>
+      </div>
+
       <!-- videos (edit only) -->
       <div *ngIf="isEdit">
         <label class="block text-xs font-medium text-gray-600 mb-2 flex items-center gap-1.5">
