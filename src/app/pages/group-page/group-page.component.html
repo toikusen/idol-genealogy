@@ -892,6 +892,7 @@
           [recordId]="proposalHistoryEntry.id"
           [originalData]="proposalHistoryEntry"
           [groupMembers]="groupMembersList"
+          [groups]="[{ id: group.id, name: group.name }]"
           [requiredFields]="['member_id', 'status', 'joined_at']"
           (closed)="proposalHistoryEntry = null"
         />
