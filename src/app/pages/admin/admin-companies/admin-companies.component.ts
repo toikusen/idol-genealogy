@@ -85,7 +85,7 @@ export class AdminCompaniesComponent implements OnInit, OnDestroy {
   }
 
   async delete(c: Company) {
-    if (!confirm(`確定刪除「${c.name}」？刪除後旗下組合的公司關聯將清除。`)) return;
+    if (!confirm(`確定刪除「${c.name}」？刪除後旗下團體的公司關聯將清除。`)) return;
     try {
       await this.companyService.delete(c.id);
       await this.load();

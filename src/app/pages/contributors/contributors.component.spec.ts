@@ -63,7 +63,7 @@ describe('ContributorsComponent', () => {
 
   it('getByTableLabel omits zero-count tables', () => {
     const label = component.getByTableLabel({ members: 5, groups: 0 });
-    expect(label).not.toContain('組合');
+    expect(label).not.toContain('團體');
     expect(label).toContain('成員 5');
   });
 

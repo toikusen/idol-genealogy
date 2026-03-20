@@ -28,13 +28,13 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
     maid_url: '女僕帳號', photo_url: '頭像圖片',
   },
   groups: {
-    name: '組合名稱', name_jp: '日文名稱', color: '代表色(HEX)',
+    name: '團體名稱', name_jp: '日文名稱', color: '代表色(HEX)',
     founded_at: '成立日期', disbanded_at: '解散日期',
     instagram: 'Instagram', facebook: 'Facebook', x: 'X', youtube: 'YouTube',
     company_id: '所屬公司', photo_url: '頭像圖片',
   },
   history: {
-    member_id: '成員', group_id: '組合', name_at_time: '當時藝名', status: '狀態',
+    member_id: '成員', group_id: '團體', name_at_time: '當時藝名', status: '狀態',
     joined_at: '加入日期', left_at: '離開日期',
     external_group_name: '海外團體/solo名稱', external_country: '國家／地區（非必填）',
   },

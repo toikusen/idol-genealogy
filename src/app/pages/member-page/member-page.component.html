@@ -514,7 +514,7 @@
     operation="INSERT"
     [originalData]="{ member_id: member.id }"
     [groupMembers]="[{ id: member.id, name: member.name_roman || member.name }]"
-    [requiredFields]="['joined_at']"
+    [requiredFields]="['group_id', 'joined_at']"
     [groups]="allGroupsList"
     (closed)="showOverseasPanel = false"
   />

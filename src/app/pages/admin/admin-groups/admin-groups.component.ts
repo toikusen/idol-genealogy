@@ -183,7 +183,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   }
 
   async save() {
-    if (!this.editing.name?.trim()) { this.error = '組合名稱為必填'; return; }
+    if (!this.editing.name?.trim()) { this.error = '團體名稱為必填'; return; }
     this.saving = true;
     try {
       if (this.isEdit && this.editing.id) {

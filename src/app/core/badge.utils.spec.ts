@@ -34,7 +34,7 @@ describe('getNextBadge', () => {
 describe('TABLE_LABELS', () => {
   it('maps all four table names', () => {
     expect(TABLE_LABELS['members']).toBe('成員');
-    expect(TABLE_LABELS['groups']).toBe('組合');
+    expect(TABLE_LABELS['groups']).toBe('團體');
     expect(TABLE_LABELS['companies']).toBe('公司');
     expect(TABLE_LABELS['history']).toBe('歷程');
   });

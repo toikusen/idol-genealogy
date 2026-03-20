@@ -63,7 +63,7 @@ export class AdminProposalsComponent implements OnInit {
   }
 
   tableLabel(t: string): string {
-    return { members: '成員', groups: '組合', history: '歷程', companies: '公司' }[t] ?? t;
+    return { members: '成員', groups: '團體', history: '歷程', companies: '公司' }[t] ?? t;
   }
 
   operationLabel(op: string): string {

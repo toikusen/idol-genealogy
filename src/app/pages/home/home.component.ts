@@ -54,8 +54,8 @@ export class HomeComponent implements OnInit {
   async ngOnInit() {
     // Set page-level SEO
     this.seo.setPage(
-      '台灣地下偶像族譜 | 成員・組合完整記錄',
-      '台灣地下偶像成員與組合的完整族譜記錄。查詢偶像成員經歷、所屬組合歷史、活動記錄。',
+      '台灣地下偶像族譜 | 成員・團體完整記錄',
+      '台灣地下偶像成員與團體的完整族譜記錄。查詢偶像成員經歷、所屬團體歷史、活動記錄。',
       `${SITE_URL}/`
     );
     this.seo.setJsonLd({

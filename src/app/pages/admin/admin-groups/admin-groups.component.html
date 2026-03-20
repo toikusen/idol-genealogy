@@ -1,18 +1,18 @@
 <div class="p-8">
   <!-- Page header -->
   <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-semibold text-gray-800">組合管理</h1>
+    <h1 class="text-2xl font-semibold text-gray-800">團體管理</h1>
     <button
       (click)="openCreate()"
       class="px-4 py-2 bg-purple-500 text-white text-sm rounded-md hover:bg-purple-600 transition-colors"
     >
-      + 新增組合
+      + 新增團體
     </button>
   </div>
 
   <!-- Search -->
   <div *ngIf="!loading" class="mb-4">
-    <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋組合名稱或事務所…"
+    <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋團體名稱或事務所…"
       class="w-full max-w-sm border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
   </div>
 
@@ -21,7 +21,7 @@
 
   <!-- Empty state -->
   <div *ngIf="!loading && filteredGroups.length === 0" class="text-center py-16 text-gray-400">
-    {{ searchQuery ? '查無結果' : '尚無組合資料' }}
+    {{ searchQuery ? '查無結果' : '尚無團體資料' }}
   </div>
 
   <!-- Table -->
@@ -97,7 +97,7 @@
   >
     <div class="flex items-center justify-between mb-5">
       <h2 class="text-lg font-semibold text-gray-800">
-        {{ isEdit ? '編輯組合' : '新增組合' }}
+        {{ isEdit ? '編輯團體' : '新增團體' }}
       </h2>
       <button (click)="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -109,11 +109,11 @@
     <div class="space-y-4">
       <!-- name (required) -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">組合名稱 <span class="text-red-400">*</span></label>
+        <label class="block text-xs font-medium text-gray-600 mb-1">團體名稱 <span class="text-red-400">*</span></label>
         <input
           type="text"
           [(ngModel)]="editing.name"
-          placeholder="組合名稱"
+          placeholder="團體名稱"
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
         />
       </div>
@@ -331,7 +331,7 @@
           </button>
         </div>
         <p *ngIf="videoError" class="text-xs text-red-400 mt-1">{{ videoError }}</p>
-        <p *ngIf="!isEdit" class="text-xs text-gray-400 mt-1">請先儲存組合後再新增影片</p>
+        <p *ngIf="!isEdit" class="text-xs text-gray-400 mt-1">請先儲存團體後再新增影片</p>
       </div>
 
       <!-- Error -->

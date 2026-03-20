@@ -15,7 +15,7 @@ export const BADGES: Badge[] = [
 
 export const TABLE_LABELS: Record<string, string> = {
   members: '成員',
-  groups:  '組合',
+  groups:  '團體',
   companies: '公司',
   history: '歷程',
 };

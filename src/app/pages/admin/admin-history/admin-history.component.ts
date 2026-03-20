@@ -145,7 +145,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
       if (!this.editing.external_group_name?.trim()) { this.error = '請填寫海外團體/solo名稱'; return; }
       this.editing.group_id = null;
     } else {
-      if (!this.editing.group_id) { this.error = '請選擇組合'; return; }
+      if (!this.editing.group_id) { this.error = '請選擇團體'; return; }
       this.editing.external_group_name = null;
       this.editing.external_country = null;
     }

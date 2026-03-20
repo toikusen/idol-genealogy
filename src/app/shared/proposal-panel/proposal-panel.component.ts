@@ -1,5 +1,5 @@
 // src/app/shared/proposal-panel/proposal-panel.component.ts
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -67,7 +67,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
               <p><span class="text-gray-400 text-xs">英文名：</span>{{ originalData['name_roman'] }}</p>
             }
             @if (originalData['group']?.name || originalData['external_group_name']) {
-              <p><span class="text-gray-400 text-xs">組合：</span>{{ originalData['group']?.name || originalData['external_group_name'] }}</p>
+              <p><span class="text-gray-400 text-xs">團體：</span>{{ originalData['group']?.name || originalData['external_group_name'] }}</p>
             }
             @if (originalData['joined_at']) {
               <p><span class="text-gray-400 text-xs">加入：</span>{{ originalData['joined_at']?.slice(0,10) }}</p>
@@ -122,7 +122,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
 
           <!-- Field inputs -->
           @for (field of allowedFields; track field) {
-            <div>
+            <div [attr.data-field]="field">
               <label class="block text-xs font-medium text-gray-600 mb-1">
                 {{ fieldLabel(field) }}
               </label>
@@ -356,11 +356,11 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                 } @else {
                   <!-- group dropdown for member page context -->
                   <input type="text" [(ngModel)]="groupSearch" name="groupSearch"
-                    placeholder="輸入組合名搜尋…"
+                    placeholder="輸入團體名搜尋…"
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 mb-1"/>
                   <select [(ngModel)]="formData['group_id']" name="group_id"
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
-                    <option [value]="''">— 請選擇組合 —</option>
+                    <option [value]="''">— 請選擇團體 —</option>
                     @for (g of filteredGroups; track g.id) {
                       <option [value]="g.id">{{ g.name }}</option>
                     }
@@ -471,6 +471,10 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original(field) }}</p>
                 }
               }
+
+              @if (fieldErrors[field]) {
+                <p class="text-xs text-red-500 mt-1">{{ fieldErrors[field] }}</p>
+              }
             </div>
           }
 
@@ -482,7 +486,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
               <p class="text-sm text-gray-600">以 <span class="font-medium text-pink-600">{{ loggedInName }}</span> 身份提案</p>
             } @else {
               <div class="space-y-3">
-                <div>
+                <div data-field="submitterName">
                   <label class="block text-xs font-medium text-gray-600 mb-1">暱稱 <span class="text-red-400">*</span></label>
                   <input
                     type="text"
@@ -491,6 +495,9 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
                     placeholder="請輸入顯示名稱"
                   />
+                  @if (fieldErrors['submitterName']) {
+                    <p class="text-xs text-red-500 mt-1">{{ fieldErrors['submitterName'] }}</p>
+                  }
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-600 mb-1">Email（選填）</label>
@@ -547,6 +554,7 @@ export class ProposalPanelComponent implements OnInit {
   submitting = false;
   submitted = false;
   error = '';
+  fieldErrors: Record<string, string> = {};
   isExternalRecord = false;
 
   // Companies list for groups dropdown
@@ -642,12 +650,14 @@ export class ProposalPanelComponent implements OnInit {
   }
 
   get tableLabel(): string {
-    return { members: '成員', groups: '組合', history: '活動歷程', companies: '公司' }[this.tableName] ?? '';
+    return { members: '成員', groups: '團體', history: '活動歷程', companies: '公司' }[this.tableName] ?? '';
   }
 
   fieldLabel(field: string): string {
     const label = FIELD_LABELS[this.tableName]?.[field] ?? field;
-    return this.requiredFields.includes(field) ? label + ' *' : label;
+    const isRequired = this.requiredFields.includes(field)
+      && !(this.isExternalRecord && field === 'group_id');
+    return isRequired ? label + ' *' : label;
   }
 
   private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'maid_url', 'youtube', 'website', 'photo_url']);
@@ -680,6 +690,11 @@ export class ProposalPanelComponent implements OnInit {
     return this.requiredFields.includes(field);
   }
 
+  private scrollToField(field: string) {
+    const el = this.el.nativeElement.querySelector(`[data-field="${field}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   original(field: string): string {
     const val = this.originalData?.[field];
     return val != null ? String(val) : '';
@@ -690,6 +705,7 @@ export class ProposalPanelComponent implements OnInit {
     private proposalService: ProposalService,
     private companyService: CompanyService,
     public router: Router,
+    private el: ElementRef,
   ) {}
 
   async ngOnInit() {
@@ -759,14 +775,15 @@ export class ProposalPanelComponent implements OnInit {
 
   async submitProposal() {
     this.error = '';
-
-    if (!this.loggedInName && !this.submitterName.trim()) {
-      this.error = '請輸入暱稱';
-      return;
-    }
+    this.fieldErrors = {};
 
     // DELETE proposals: snapshot original_data, store optional reason
     if (this.operation === 'DELETE') {
+      if (!this.loggedInName && !this.submitterName.trim()) {
+        this.fieldErrors['submitterName'] = '此欄位為必填';
+        this.scrollToField('submitterName');
+        return;
+      }
       this.submitting = true;
       try {
         const session = await this.supabase.getSessionOnce();
@@ -837,15 +854,30 @@ export class ProposalPanelComponent implements OnInit {
       f => this.URL_FIELDS.has(f) && !String(proposed[f]).startsWith('https://')
     );
     if (invalidUrlFields.length > 0) {
-      const labels = invalidUrlFields.map(f => FIELD_LABELS[this.tableName]?.[f] ?? f).join('、');
-      this.error = `${labels} 必須是以 https:// 開頭的網址`;
+      for (const f of invalidUrlFields) {
+        this.fieldErrors[f] = '必須是以 https:// 開頭的網址';
+      }
+      this.scrollToField(invalidUrlFields[0]);
       return;
     }
 
-    const missingRequired = this.requiredFields.filter(f => !proposed[f]);
+    // When in external mode (海外/solo), group_id is not applicable — skip its required check
+    const effectiveRequired = this.isExternalRecord
+      ? this.requiredFields.filter(f => f !== 'group_id')
+      : this.requiredFields;
+    const missingRequired = effectiveRequired.filter(f => !proposed[f]);
     if (missingRequired.length > 0) {
-      const labels = missingRequired.map(f => FIELD_LABELS[this.tableName]?.[f] ?? f).join('、');
-      this.error = `必填欄位未填寫：${labels}`;
+      for (const f of missingRequired) {
+        this.fieldErrors[f] = '此欄位為必填';
+      }
+      this.scrollToField(missingRequired[0]);
+      return;
+    }
+
+    // Check submitter name after field validation
+    if (!this.loggedInName && !this.submitterName.trim()) {
+      this.fieldErrors['submitterName'] = '此欄位為必填';
+      this.scrollToField('submitterName');
       return;
     }
 

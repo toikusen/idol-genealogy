@@ -73,7 +73,7 @@ export class MemberPageComponent implements OnInit {
         const displayName = member.name_roman ?? member.name;
         this.seo.setPage(
           `${displayName} - 台灣地下偶像族譜`,
-          `${displayName}的完整活動記錄，包含所屬組合與歷史經歷。`,
+          `${displayName}的完整活動記錄，包含所屬團體與歷史經歷。`,
           `${SITE_URL}/member/${id}`,
           member.photo_url ?? undefined
         );
