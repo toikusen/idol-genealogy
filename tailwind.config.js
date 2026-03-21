@@ -19,5 +19,6 @@ module.exports = {
       },
     },
   },
+  safelist: ['-translate-x-full'],
   plugins: [],
 };
