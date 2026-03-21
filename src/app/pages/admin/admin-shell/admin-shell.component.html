@@ -15,19 +15,17 @@
     </button>
   </header>
 
-  <!-- Mobile drawer backdrop -->
+  <!-- Mobile drawer backdrop + panel — only rendered when open -->
   @if (drawerOpen) {
     <div
-      class="md:hidden fixed inset-0 z-40 bg-black/40"
+      class="md:hidden fixed inset-0 z-40 cursor-pointer"
+      style="background-color: rgba(0,0,0,0.4)"
       (click)="closeDrawer()"
     ></div>
-  }
 
-  <!-- Mobile drawer panel -->
-  <div
-    class="md:hidden fixed top-0 left-0 h-full z-50 w-64 bg-white shadow-xl flex flex-col transition-transform translate-x-0"
-    [class.-translate-x-full]="!drawerOpen"
-  >
+    <div
+      class="md:hidden fixed top-0 left-0 h-full z-50 w-64 bg-white shadow-xl flex flex-col"
+    >
     <!-- App name + close button -->
     <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
       <span class="font-['Cormorant_Garamond'] text-xl font-semibold text-gray-800 tracking-wide">族譜管理</span>
@@ -97,6 +95,7 @@
       </button>
     </div>
   </div>
+  }
 
   <!-- Left Sidebar -->
   <aside class="hidden md:flex w-52 bg-white shadow-md flex-col flex-shrink-0">
