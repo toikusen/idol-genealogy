@@ -2,7 +2,7 @@
 -- Apply manually in Supabase Dashboard SQL Editor
 
 -- Track per-session cooldowns (one row per session+entity, upserted on each real view)
-create table view_session_log (
+create table if not exists view_session_log (
   session_token uuid        not null,
   entity_type   text        not null,
   entity_id     uuid        not null,
