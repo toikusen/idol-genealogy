@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Group, GroupVideo, Team } from '../models';
+import { Group, GroupVideo, Team, GroupLeaderboardEntry } from '../models';
 import { kanaVariants } from './japanese.utils';
 
 @Injectable({ providedIn: 'root' })
@@ -132,5 +132,13 @@ export class GroupService {
   async deleteTeam(id: string): Promise<void> {
     const { error } = await this.db.from('teams').delete().eq('id', id);
     if (error) throw error;
+  }
+
+  async getTopByViews(limit: number): Promise<GroupLeaderboardEntry[]> {
+    const { data, error } = await this.supabase.client.rpc(
+      'get_top_groups_by_views', { p_limit: limit }
+    );
+    if (error) throw error;
+    return (data ?? []) as GroupLeaderboardEntry[];
   }
 }

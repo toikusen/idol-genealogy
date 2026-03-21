@@ -31,7 +31,13 @@ const mockClient = {
     delete: jasmine.createSpy('delete').and.returnValue({
       eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
     }),
-  })
+  }),
+  rpc: jasmine.createSpy('rpc').and.returnValue(
+    Promise.resolve({
+      data: [{ id: 'uuid-g1', name: 'XYZ Team', photo_url: null, color: '#e879a0', view_count: 10 }],
+      error: null
+    })
+  )
 };
 
 describe('GroupService', () => {
@@ -45,6 +51,7 @@ describe('GroupService', () => {
       ]
     });
     service = TestBed.inject(GroupService);
+    mockClient.rpc.calls.reset();
   });
 
   it('should be created', () => expect(service).toBeTruthy());
@@ -59,5 +66,12 @@ describe('GroupService', () => {
   it('search() should use or()', async () => {
     const groups = await service.search('AKB');
     expect(Array.isArray(groups)).toBeTrue();
+  });
+  it('getTopByViews() should return leaderboard entries', async () => {
+    const results = await service.getTopByViews(5);
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      'get_top_groups_by_views', { p_limit: 5 }
+    );
+    expect(results[0].name).toBe('XYZ Team');
   });
 });
