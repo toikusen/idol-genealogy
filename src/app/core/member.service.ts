@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Member } from '../models';
+import { Member, MemberLeaderboardEntry } from '../models';
 import { kanaVariants } from './japanese.utils';
 
 @Injectable({ providedIn: 'root' })
@@ -104,5 +104,13 @@ export class MemberService {
     const { error } = await this.db.from('members').delete().eq('id', id);
     if (error) throw error;
     this.invalidateCache();
+  }
+
+  async getTopByViews(limit: number): Promise<MemberLeaderboardEntry[]> {
+    const { data, error } = await this.supabase.client.rpc(
+      'get_top_members_by_views', { p_limit: limit }
+    );
+    if (error) throw error;
+    return (data ?? []) as MemberLeaderboardEntry[];
   }
 }

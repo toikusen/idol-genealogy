@@ -40,7 +40,13 @@ const mockSupabaseService = {
           Promise.resolve({ error: null })
         )
       }),
-    })
+    }),
+    rpc: jasmine.createSpy('rpc').and.returnValue(
+      Promise.resolve({
+        data: [{ id: 'uuid-1', name: '小花', name_roman: null, photo_url: null, color: null, view_count: 42 }],
+        error: null
+      })
+    )
   }
 };
 
@@ -55,6 +61,7 @@ describe('MemberService', () => {
       ]
     });
     service = TestBed.inject(MemberService);
+    mockSupabaseService.client.rpc.calls.reset();
   });
 
   it('should be created', () => expect(service).toBeTruthy());
@@ -73,5 +80,14 @@ describe('MemberService', () => {
   it('getRecent() should return list of members', async () => {
     const members = await service.getRecent(10);
     expect(Array.isArray(members)).toBeTrue();
+  });
+
+  it('getTopByViews() should return leaderboard entries sorted by view_count', async () => {
+    const results = await service.getTopByViews(5);
+    expect(mockSupabaseService.client.rpc).toHaveBeenCalledWith(
+      'get_top_members_by_views', { p_limit: 5 }
+    );
+    expect(results.length).toBe(1);
+    expect(results[0].view_count).toBe(42);
   });
 });
