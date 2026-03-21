@@ -31,19 +31,39 @@
           [routerLink]="['/admin/proposals', p.id]"
           class="flex items-center gap-3 px-4 py-3 bg-white rounded-lg border border-gray-100 hover:border-pink-200 hover:shadow-sm transition-all"
         >
+          <!-- Operation badge — always visible -->
           <span [class]="'text-xs px-2 py-0.5 rounded font-medium flex-shrink-0 ' + operationClass(p.operation)">
             {{ operationLabel(p.operation) }}
           </span>
-          <span class="text-sm text-gray-800 flex-1 min-w-0 truncate">
-            {{ tableLabel(p.table_name) }}：<span class="font-medium">{{ recordName(p) }}</span>
+
+          <!-- Left block: name row + meta row -->
+          <span class="flex-1 min-w-0 flex flex-col gap-0.5">
+            <!-- Record name — always visible -->
+            <span class="text-sm text-gray-800 truncate">
+              {{ tableLabel(p.table_name) }}：<span class="font-medium">{{ recordName(p) }}</span>
+            </span>
+            <!-- Meta row: visible on mobile only -->
+            <span class="flex items-center gap-1.5 md:hidden">
+              <span class="text-xs text-gray-500">{{ p.submitter_name }}</span>
+              @if (p.submitter_id) {
+                <span class="text-xs px-1.5 py-0.5 rounded-full" style="background:rgba(124,108,242,0.1);color:rgba(124,108,242,0.8);">登入</span>
+              } @else {
+                <span class="text-xs px-1.5 py-0.5 rounded-full" style="background:rgba(122,90,122,0.07);color:rgba(122,90,122,0.45);">訪客</span>
+              }
+              <span class="text-xs text-gray-400">{{ relativeTime(p.created_at) }}</span>
+            </span>
           </span>
-          <span class="text-xs text-gray-500 flex-shrink-0">提案者：{{ p.submitter_name }}</span>
+
+          <!-- Desktop-only inline meta — hidden on mobile -->
+          <span class="text-xs text-gray-500 flex-shrink-0 hidden md:inline">提案者：{{ p.submitter_name }}</span>
           @if (p.submitter_id) {
-            <span class="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0" style="background:rgba(124,108,242,0.1);color:rgba(124,108,242,0.8);">登入</span>
+            <span class="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 hidden md:inline-flex" style="background:rgba(124,108,242,0.1);color:rgba(124,108,242,0.8);">登入</span>
           } @else {
-            <span class="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0" style="background:rgba(122,90,122,0.07);color:rgba(122,90,122,0.45);">訪客</span>
+            <span class="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 hidden md:inline-flex" style="background:rgba(122,90,122,0.07);color:rgba(122,90,122,0.45);">訪客</span>
           }
-          <span class="text-xs text-gray-400 flex-shrink-0">{{ relativeTime(p.created_at) }}</span>
+          <span class="text-xs text-gray-400 flex-shrink-0 hidden md:inline">{{ relativeTime(p.created_at) }}</span>
+
+          <!-- Chevron — always pinned right -->
           <span class="text-gray-300 flex-shrink-0">›</span>
         </a>
       }
