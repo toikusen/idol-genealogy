@@ -6,6 +6,8 @@ import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
 import { MemberService } from '../../core/member.service';
 import { SeoService } from '../../core/seo.service';
+import { AnalyticsService } from '../../core/analytics.service';
+import { ViewCountService } from '../../core/view-count.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
 import { GroupConnectionGraphComponent } from '../../shared/group-connection-graph/group-connection-graph.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
@@ -71,6 +73,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private memberService: MemberService,
     private seo: SeoService,
     private proposalService: ProposalService,
+    private analytics: AnalyticsService,
+    private viewCount: ViewCountService,
   ) {}
 
   ngOnInit() {
@@ -142,6 +146,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         if (members.length > 0) jsonLd['member'] = members;
 
         this.seo.setJsonLd(jsonLd);
+        this.analytics.trackEvent('view_group', {
+          group_id: id,
+          group_name: displayName,
+        });
+        this.viewCount.increment('group', id).catch(() => {});
       }
     } catch {
       this.error = true;
