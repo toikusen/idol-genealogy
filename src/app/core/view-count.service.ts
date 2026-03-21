@@ -16,6 +16,7 @@ export class ViewCountService {
 
   constructor(private supabase: SupabaseService) {}
 
+  // Browser-only: called only after isBrowser guard in increment()
   private getSessionToken(): string {
     if (this.sessionToken) return this.sessionToken;
     let token = localStorage.getItem(SESSION_TOKEN_KEY);
@@ -27,12 +28,14 @@ export class ViewCountService {
     return token;
   }
 
+  // Browser-only: called only after isBrowser guard in increment()
   private isOnCooldown(type: 'member' | 'group', id: string): boolean {
     const raw = localStorage.getItem(viewedKey(type, id));
     if (!raw) return false;
     return Date.now() - parseInt(raw, 10) < COOLDOWN_MS;
   }
 
+  // Browser-only: called only after isBrowser guard in increment()
   private markViewed(type: 'member' | 'group', id: string): void {
     localStorage.setItem(viewedKey(type, id), String(Date.now()));
   }
@@ -48,6 +51,8 @@ export class ViewCountService {
     });
     // Write timestamp unconditionally — whether the DB skipped or incremented,
     // we want the frontend to avoid redundant calls during the cooldown window.
+    // If the RPC rejects (network error), the rejection propagates to the caller
+    // and markViewed is not called, so the next load will retry the RPC.
     this.markViewed(type, id);
   }
 }
