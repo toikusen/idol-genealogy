@@ -1,5 +1,5 @@
 <!-- src/app/pages/admin/admin-proposal-review/admin-proposal-review.component.html -->
-<div class="p-6 max-w-4xl mx-auto">
+<div class="p-6 pb-24 md:pb-6 max-w-4xl mx-auto">
   <div class="flex items-center gap-3 mb-6">
     <a routerLink="/admin/proposals" class="text-sm text-gray-400 hover:text-pink-500">← 返回列表</a>
   </div>
@@ -79,7 +79,7 @@
     <!-- Diff table (INSERT / UPDATE only) -->
     @if (proposal.operation !== 'DELETE') {
     <div class="bg-white rounded-xl border border-gray-100 overflow-hidden mb-6">
-      <div class="grid grid-cols-3 bg-gray-50 text-xs font-medium text-gray-500 px-4 py-2 border-b border-gray-100">
+      <div class="hidden md:grid grid-cols-3 bg-gray-50 text-xs font-medium text-gray-500 px-4 py-2 border-b border-gray-100">
         <span>欄位</span>
         <span>原始值</span>
         <span>提案內容（可編輯）</span>
@@ -87,7 +87,7 @@
 
       @for (field of fields; track field) {
         <div
-          class="grid grid-cols-3 px-4 py-3 border-b border-gray-50 last:border-0 text-sm"
+          class="grid grid-cols-1 md:grid-cols-3 px-4 py-3 border-b border-gray-50 last:border-0 text-sm gap-1 md:gap-0"
           [class.bg-yellow-50]="isChanged(field)"
         >
           <span class="text-gray-500 text-xs font-medium pt-1">{{ fieldLabel(field) }}</span>
@@ -103,7 +103,10 @@
               }
             </div>
           } @else {
-            <span class="text-gray-600 text-xs pt-1 break-words">{{ resolveId(field, original(field)) || '—' }}</span>
+            <div class="flex gap-2 items-baseline">
+              <span class="text-gray-400 text-xs md:hidden flex-shrink-0">原始：</span>
+              <span class="text-gray-600 text-xs break-words">{{ resolveId(field, original(field)) || '—' }}</span>
+            </div>
           }
 
           <!-- Proposed value -->
@@ -175,6 +178,7 @@
                 <span class="text-gray-400 ml-1">({{ editedData[field] }})</span>
               </div>
             } @else {
+              <span class="text-gray-400 text-xs md:hidden">提案（可編輯）：</span>
               <input
                 type="text"
                 [(ngModel)]="editedData[field]"
@@ -185,7 +189,10 @@
               />
             }
           } @else {
-            <span class="text-gray-700 text-xs pt-1 break-words">{{ resolveId(field, proposed(field)) || '—' }}</span>
+            <div class="flex gap-2 items-baseline">
+              <span class="text-gray-400 text-xs md:hidden flex-shrink-0">提案：</span>
+              <span class="text-gray-700 text-xs break-words">{{ resolveId(field, proposed(field)) || '—' }}</span>
+            </div>
           }
         </div>
       }
@@ -202,7 +209,7 @@
 
     <!-- Actions (only for pending) -->
     @if (proposal.status === 'pending') {
-      <div class="flex gap-3 flex-wrap">
+      <div class="hidden md:flex gap-3 flex-wrap">
         <button
           (click)="approve()"
           [disabled]="saving"
@@ -247,6 +254,58 @@
       @if (error) {
         <p class="text-sm text-red-500 mt-3">{{ error }}</p>
       }
+    }
+
+    <!-- Mobile reject note textarea -->
+    @if (proposal.status === 'pending' && showRejectForm) {
+      <div class="md:hidden mt-4 mb-2">
+        <textarea
+          [(ngModel)]="rejectNote"
+          name="rejectNoteMobile"
+          rows="3"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-red-300"
+          placeholder="拒絕理由（選填）"
+        ></textarea>
+      </div>
+    }
+
+    <!-- Sticky action bar — mobile only -->
+    @if (proposal.status === 'pending') {
+      <div class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-100 px-4 py-3">
+        @if (!showRejectForm) {
+          <div class="flex gap-3">
+            <button
+              (click)="approve()"
+              [disabled]="saving"
+              class="flex-1 py-2.5 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-full text-sm font-medium transition-colors"
+            >
+              {{ proposal.operation === 'DELETE' ? '🗑️ 確認刪除' : '✅ 核准' }}
+            </button>
+            <button
+              (click)="showRejectForm = true"
+              class="flex-1 py-2.5 border border-red-300 text-red-500 hover:bg-red-50 rounded-full text-sm font-medium transition-colors"
+            >
+              ❌ 拒絕
+            </button>
+          </div>
+        } @else {
+          <div class="flex gap-2">
+            <button
+              (click)="reject()"
+              [disabled]="saving"
+              class="flex-1 py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-full text-sm transition-colors"
+            >
+              確認拒絕
+            </button>
+            <button
+              (click)="showRejectForm = false"
+              class="flex-1 py-2.5 text-gray-500 border border-gray-200 hover:text-gray-700 rounded-full text-sm transition-colors"
+            >
+              取消
+            </button>
+          </div>
+        }
+      </div>
     }
   }
 </div>
