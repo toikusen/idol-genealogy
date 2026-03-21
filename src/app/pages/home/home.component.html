@@ -399,6 +399,56 @@
     <!-- ══ BROWSE CONTENT (tab-driven) ══ -->
     @if (!hasResults && !noResults) {
 
+      <!-- 熱門排行 -->
+      @if (topMembers.length > 0 || topGroups.length > 0) {
+        <section style="margin-bottom: 2rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <!-- 熱門成員 -->
+            @if (topMembers.length > 0) {
+              <div>
+                <h3 style="font-size: 0.85rem; font-weight: 600; color: rgba(122,90,122,0.7); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門成員</h3>
+                <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem;">
+                  @for (entry of topMembers; track entry.id; let i = $index) {
+                    <li>
+                      <a [routerLink]="['/member', entry.id]"
+                         style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: #2d1b2e; font-size: 0.875rem;">
+                        <span style="color: rgba(122,90,122,0.45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
+                        @if (entry.photo_url) {
+                          <img [src]="entry.photo_url" [alt]="entry.name"
+                               style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
+                        }
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ entry.name_roman ?? entry.name }}</span>
+                      </a>
+                    </li>
+                  }
+                </ol>
+              </div>
+            }
+            <!-- 熱門團體 -->
+            @if (topGroups.length > 0) {
+              <div>
+                <h3 style="font-size: 0.85rem; font-weight: 600; color: rgba(122,90,122,0.7); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門團體</h3>
+                <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem;">
+                  @for (entry of topGroups; track entry.id; let i = $index) {
+                    <li>
+                      <a [routerLink]="['/group', entry.id]"
+                         style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: #2d1b2e; font-size: 0.875rem;">
+                        <span style="color: rgba(122,90,122,0.45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
+                        @if (entry.photo_url) {
+                          <img [src]="entry.photo_url" [alt]="entry.name"
+                               style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
+                        }
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ entry.name }}</span>
+                      </a>
+                    </li>
+                  }
+                </ol>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
       <!-- ── 成員 tab ── -->
       @if (activeTab === 'members') {
         <section class="tab-content">

@@ -6,7 +6,7 @@ import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
-import { Member, Group, Company } from '../../models';
+import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry } from '../../models';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
@@ -38,6 +38,8 @@ export class HomeComponent implements OnInit {
 
   allGroups: Group[] = [];
   allCompanies: Company[] = [];
+  topMembers: MemberLeaderboardEntry[] = [];
+  topGroups: GroupLeaderboardEntry[] = [];
   activeTab: 'members' | 'groups' | 'companies' | 'events' = 'members';
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
 
@@ -81,18 +83,24 @@ export class HomeComponent implements OnInit {
     }
 
     try {
-      const [recent, groups, companies] = await Promise.all([
+      const [recent, groups, companies, topMembers, topGroups] = await Promise.all([
         this.memberService.getRecent(10),
         this.groupService.getAll(),
         this.companyService.getAll(),
+        this.memberService.getTopByViews(5).catch((): MemberLeaderboardEntry[] => []),
+        this.groupService.getTopByViews(5).catch((): GroupLeaderboardEntry[] => []),
       ]);
       this.recentMembers = recent;
       this.allGroups = groups;
       this.allCompanies = companies;
+      this.topMembers = topMembers;
+      this.topGroups = topGroups;
     } catch {
       this.recentMembers = [];
       this.allGroups = [];
       this.allCompanies = [];
+      this.topMembers = [];
+      this.topGroups = [];
     }
   }
 
