@@ -146,3 +146,20 @@ export interface Proposal {
   reviewed_at: string | null;
   reviewed_by: string | null;
 }
+
+export interface MemberLeaderboardEntry {
+  id: string;
+  name: string;
+  name_roman: string | null;
+  photo_url: string | null;
+  color: string | null;
+  view_count: number;
+}
+
+export interface GroupLeaderboardEntry {
+  id: string;
+  name: string;
+  photo_url: string | null;
+  color: string | null;
+  view_count: number;
+}
