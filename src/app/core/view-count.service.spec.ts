@@ -15,7 +15,8 @@ describe('ViewCountService', () => {
 
   beforeEach(() => {
     mockRpc.calls.reset();
-    localStorage.clear();
+    mockRpc.and.returnValue(Promise.resolve({ error: null })); // reset implementation (calls.reset() only resets history)
+    localStorage.clear(); // also resets the service's in-memory sessionToken cache (fresh inject below)
 
     TestBed.configureTestingModule({
       providers: [
@@ -23,6 +24,7 @@ describe('ViewCountService', () => {
         { provide: SupabaseService, useValue: mockSupabaseService }
       ]
     });
+    // TestBed.inject gives a fresh service instance each beforeEach (sessionToken starts as null)
     service = TestBed.inject(ViewCountService);
   });
 
@@ -38,8 +40,8 @@ describe('ViewCountService', () => {
   });
 
   it('increment() should reuse the same session token across calls', async () => {
+    // Use two different entities — no cooldown conflict, no manual localStorage manipulation needed
     await service.increment('member', 'uuid-1');
-    localStorage.removeItem('viewed_member_uuid-1'); // clear cooldown so second call goes through
     await service.increment('group', 'uuid-2');
 
     const calls = mockRpc.calls.all();
