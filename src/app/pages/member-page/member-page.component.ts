@@ -5,6 +5,8 @@ import { MemberService } from '../../core/member.service';
 import { HistoryService } from '../../core/history.service';
 import { GroupService } from '../../core/group.service';
 import { SeoService } from '../../core/seo.service';
+import { AnalyticsService } from '../../core/analytics.service';
+import { ViewCountService } from '../../core/view-count.service';
 import { MemberTimelineComponent } from '../../shared/member-timeline/member-timeline.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { MemberCareerGraphComponent } from '../../shared/member-career-graph/member-career-graph.component';
@@ -52,6 +54,8 @@ export class MemberPageComponent implements OnInit {
     private groupService: GroupService,
     private seo: SeoService,
     private proposalService: ProposalService,
+    private analytics: AnalyticsService,
+    private viewCount: ViewCountService,
   ) {}
 
   async ngOnInit() {
@@ -93,6 +97,12 @@ export class MemberPageComponent implements OnInit {
         if (groups.length > 0) jsonLd['memberOf'] = groups;
 
         this.seo.setJsonLd(jsonLd);
+
+        this.analytics.trackEvent('view_member', {
+          member_id: id,
+          member_name: displayName,
+        });
+        this.viewCount.increment('member', id).catch(() => {});
       }
 
       // Load last approved proposal (non-blocking — don't let failure affect page load)
