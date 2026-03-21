@@ -16,6 +16,7 @@ import { ProposalService } from '../../../core/proposal.service';
 export class AdminShellComponent implements OnDestroy {
   isAdmin = false;
   pendingProposalCount = 0;
+  drawerOpen = false;
   private _sub: Subscription;
   private _navSub: Subscription;
 
@@ -35,6 +36,7 @@ export class AdminShellComponent implements OnDestroy {
     this._navSub = this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
     ).subscribe(() => {
+      this.closeDrawer();
       if (this.isAdmin) {
         this.proposalService.getPendingCount().then(n => this.pendingProposalCount = n).catch(() => {});
       }
@@ -42,8 +44,23 @@ export class AdminShellComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.closeDrawer();
     this._sub.unsubscribe();
     this._navSub.unsubscribe();
+  }
+
+  toggleDrawer(): void {
+    this.drawerOpen = !this.drawerOpen;
+    if (this.drawerOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+  }
+
+  closeDrawer(): void {
+    this.drawerOpen = false;
+    document.body.classList.remove('overflow-hidden');
   }
 
   async signOut() {
