@@ -173,20 +173,25 @@
             }
           } @else if (proposal.status === 'pending') {
             @if (field === 'member_id' || field === 'group_id') {
-              <div class="text-xs pt-1">
-                <span class="font-medium text-gray-700">{{ resolveId(field, editedData[field]) || '—' }}</span>
-                <span class="text-gray-400 ml-1">({{ editedData[field] }})</span>
+              <div class="flex gap-2 items-baseline">
+                <span class="text-gray-400 text-xs md:hidden flex-shrink-0">提案：</span>
+                <div class="text-xs">
+                  <span class="font-medium text-gray-700">{{ resolveId(field, editedData[field]) || '—' }}</span>
+                  <span class="text-gray-400 ml-1">({{ editedData[field] }})</span>
+                </div>
               </div>
             } @else {
-              <span class="text-gray-400 text-xs md:hidden">提案（可編輯）：</span>
-              <input
-                type="text"
-                [(ngModel)]="editedData[field]"
-                [name]="field"
-                class="border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-pink-300"
-                [class.border-yellow-300]="isChanged(field)"
-                [class.bg-yellow-50]="isChanged(field)"
-              />
+              <div class="flex flex-col gap-1">
+                <span class="text-gray-400 text-xs md:hidden">提案（可編輯）：</span>
+                <input
+                  type="text"
+                  [(ngModel)]="editedData[field]"
+                  [name]="field"
+                  class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-pink-300"
+                  [class.border-yellow-300]="isChanged(field)"
+                  [class.bg-yellow-50]="isChanged(field)"
+                />
+              </div>
             }
           } @else {
             <div class="flex gap-2 items-baseline">
