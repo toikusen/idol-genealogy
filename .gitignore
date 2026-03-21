@@ -40,3 +40,22 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Superpowers local cache
+.superpowers/
+
+# Supabase local files
+supabase/.temp/
+supabase/member.html
+supabase/seeds/
+supabase/migrations/
+
+# Local scripts
+scripts/parse-member-html.mjs
+scripts/sync-from-wikiversity.mjs
+
+# Unpublished plans/specs
+docs/superpowers/plans/2026-03-16-team-member-ownership.md
+docs/superpowers/plans/2026-03-17-contributor-guide.md
+docs/superpowers/plans/2026-03-19-my-contributions-badges.md
+docs/superpowers/specs/2026-03-19-my-contributions-badges-design.md
