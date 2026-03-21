@@ -42,9 +42,11 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-MHSKDZ2NZF');
+  gtag('config', 'G-MHSKDZ2NZF', { send_page_view: false });
 </script>
 ```
+
+> `send_page_view: false`：防止初始頁面載入時 gtag 自動送出一次 `page_view`，避免與 Angular Router 觸發的 `trackPageView` 重複計算。
 
 ### AnalyticsService
 
@@ -57,7 +59,18 @@
 
 ### app.component.ts
 
-在 `ngOnInit` 監聽 `Router` 的 `NavigationEnd` 事件，呼叫 `analytics.trackPageView(url)`。
+在 `constructor` 注入 `Router`，使用 Angular 17+ 的 `takeUntilDestroyed()` 訂閱 `NavigationEnd` 事件，呼叫 `analytics.trackPageView(url)`。`takeUntilDestroyed()` 在 constructor 中呼叫時會自動從注入 context 取得 `DestroyRef`，不需要手動實作 `OnDestroy`。
+
+```typescript
+constructor(private router: Router, private analytics: AnalyticsService) {
+  router.events.pipe(
+    filter(e => e instanceof NavigationEnd),
+    takeUntilDestroyed()
+  ).subscribe(e => {
+    analytics.trackPageView((e as NavigationEnd).urlAfterRedirects);
+  });
+}
+```
 
 ### 成員/團體頁
 
@@ -106,6 +119,9 @@ as $$
   on conflict (entity_type, entity_id)
   do update set view_count = page_views.view_count + 1;
 $$;
+
+-- 必須明確授權 anon role 才能從瀏覽器端呼叫
+grant execute on function increment_view(text, uuid) to anon;
 ```
 
 ### ViewCountService
@@ -113,7 +129,7 @@ $$;
 位置：`src/app/core/view-count.service.ts`
 
 - `increment(type: 'member' | 'group', id: string): Promise<void>`
-  - `isBrowser` guard（SSR 不計數）
+  - **`isBrowser` guard 放在 `ViewCountService.increment` 內部**（不放在 component），確保 component 呼叫端保持簡潔，SSR 渲染時 `ngOnInit` 呼叫 `increment` 不會觸發 Supabase RPC
   - 呼叫 `supabase.rpc('increment_view', { p_type: type, p_id: id })`
   - 呼叫方 catch 吸掉錯誤，不影響頁面載入
 
@@ -123,18 +139,70 @@ $$;
 
 ### 資料查詢
 
-在 `MemberService` 加入：
+PostgREST 不支援 polymorphic JOIN（`page_views.entity_id` 沒有外鍵指向 members），改用兩個 Supabase RPC：
 
-```typescript
-getTopByViews(limit: number): Promise<Member[]>
-// SELECT members.*, pv.view_count
-// FROM members
-// JOIN page_views pv ON pv.entity_id = members.id AND pv.entity_type = 'member'
-// ORDER BY pv.view_count DESC
-// LIMIT limit
+在 Migration 032 同時新增：
+
+```sql
+create or replace function get_top_members_by_views(p_limit int)
+returns table (id uuid, name text, name_roman text, photo_url text, color text, view_count bigint)
+language sql stable security invoker as $$
+  select m.id, m.name, m.name_roman, m.photo_url, m.color, coalesce(pv.view_count, 0)
+  from members m
+  join page_views pv on pv.entity_id = m.id and pv.entity_type = 'member'
+  order by pv.view_count desc
+  limit p_limit;
+$$;
+
+create or replace function get_top_groups_by_views(p_limit int)
+returns table (id uuid, name text, photo_url text, color text, view_count bigint)
+language sql stable security invoker as $$
+  select g.id, g.name, g.photo_url, g.color, coalesce(pv.view_count, 0)
+  from groups g
+  join page_views pv on pv.entity_id = g.id and pv.entity_type = 'group'
+  order by pv.view_count desc
+  limit p_limit;
+$$;
+
+grant execute on function get_top_members_by_views(int) to anon;
+grant execute on function get_top_groups_by_views(int) to anon;
 ```
 
-在 `GroupService` 加入同樣的 `getTopByViews(limit: number): Promise<Group[]>`。
+兩個 RPC 的回傳欄位不等同於完整的 `Member` / `Group` interface，因此定義專屬的 leaderboard 型別，避免 TypeScript 編譯錯誤：
+
+```typescript
+// src/app/models/index.ts 或獨立檔案
+export interface MemberLeaderboardEntry {
+  id: string;
+  name: string;
+  name_roman: string | null;
+  photo_url: string | null;
+  color: string | null;
+  view_count: number;
+}
+
+export interface GroupLeaderboardEntry {
+  id: string;
+  name: string;
+  photo_url: string | null;
+  color: string | null;
+  view_count: number;
+}
+```
+
+在 `MemberService` 加入：
+```typescript
+getTopByViews(limit: number): Promise<MemberLeaderboardEntry[]>
+// 呼叫 supabase.rpc('get_top_members_by_views', { p_limit: limit })
+```
+
+在 `GroupService` 加入：
+```typescript
+getTopByViews(limit: number): Promise<GroupLeaderboardEntry[]>
+// 呼叫 supabase.rpc('get_top_groups_by_views', { p_limit: limit })
+```
+
+首頁 UI 只需要 `id`、`name`、`name_roman`、`photo_url`、`color` 欄位；`view_count` 僅用於排序，不在 UI 顯示。
 
 ### 首頁 UI
 
