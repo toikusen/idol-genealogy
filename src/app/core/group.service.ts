@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Group, GroupVideo, Team, GroupLeaderboardEntry } from '../models';
 import { kanaVariants } from './japanese.utils';
+import { isNotFoundError } from './supabase.utils';
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
@@ -55,7 +56,7 @@ export class GroupService {
     const { data, error } = await this.db
       .from('groups').select('*').eq('id', id).single();
     if (error) {
-      if ((error as any).code === 'PGRST116') return null;
+      if (isNotFoundError(error)) return null;
       throw error;
     }
     return data;

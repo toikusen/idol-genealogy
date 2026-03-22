@@ -5,8 +5,8 @@ import { Subscription } from 'rxjs';
 import { GroupService } from '../../../core/group.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { CompanyService } from '../../../core/company.service';
+import { IgPhotoService } from '../../../core/ig-photo.service';
 import { Group, GroupVideo, Company } from '../../../models';
-import { environment } from '../../../../environments/environment';
 import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 
 @Component({
@@ -41,7 +41,8 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   constructor(
     private groupService: GroupService,
     private adminRole: AdminRoleService,
-    private companyService: CompanyService
+    private companyService: CompanyService,
+    private igPhoto: IgPhotoService
   ) {
     this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
   }
@@ -99,31 +100,18 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     this.loadCompanies();
   }
 
-  extractIgUsername(igUrl: string): string | null {
-    const match = igUrl.match(/instagram\.com\/([^/?#\s]+)/);
-    return match?.[1] ?? null;
-  }
-
   async fetchIgPhoto() {
     const igUrl = this.editing.instagram;
     if (!igUrl) return;
-    const username = this.extractIgUsername(igUrl);
-    if (!username) { this.igFetchError = '無法解析 Instagram 帳號'; return; }
-
     this.fetchingIg = true;
     this.igFetchError = '';
     try {
-      const res = await fetch(
-        `${environment.supabaseUrl}/functions/v1/ig-photo?username=${encodeURIComponent(username)}`
-      );
-      const json = await res.json();
-      if (json.photo_url) {
-        this.editing.photo_url = json.photo_url;
+      const result = await this.igPhoto.fetchPhotoUrl(igUrl);
+      if (result.photo_url) {
+        this.editing.photo_url = result.photo_url;
       } else {
-        this.igFetchError = json.hint ?? json.error ?? '抓取失敗';
+        this.igFetchError = result.error ?? '抓取失敗';
       }
-    } catch (e: any) {
-      this.igFetchError = e.message || '網路錯誤';
     } finally {
       this.fetchingIg = false;
     }

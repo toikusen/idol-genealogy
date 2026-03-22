@@ -6,6 +6,7 @@ import { ProposalService } from '../../../core/proposal.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { Proposal } from '../../../models';
+import { formatRelativeTime } from '../../../core/time.utils';
 
 @Component({
   selector: 'app-admin-proposals',
@@ -100,12 +101,5 @@ export class AdminProposalsComponent implements OnInit {
     }
   }
 
-  relativeTime(dateStr: string): string {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const m = Math.floor(diff / 60000);
-    if (m < 60) return `${m} 分鐘前`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h} 小時前`;
-    return `${Math.floor(h / 24)} 天前`;
-  }
+  readonly formatRelativeTime = formatRelativeTime;
 }

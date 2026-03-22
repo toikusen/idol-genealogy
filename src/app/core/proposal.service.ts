@@ -35,13 +35,11 @@ export class ProposalService {
 
   /** Get all proposals, optionally filtered by status. Admin only. */
   async getAll(status?: 'pending' | 'approved' | 'rejected'): Promise<Proposal[]> {
-    let query = this.db.from('proposals').select('*');
-    if (status) {
-      query = (query as any).eq('status', status);
-    }
     const ascending = status === 'pending' || !status;
     const orderCol = (status === 'approved' || status === 'rejected') ? 'reviewed_at' : 'created_at';
-    const { data, error } = await (query as any).order(orderCol, { ascending });
+    let query = this.db.from('proposals').select('*').order(orderCol, { ascending });
+    if (status) query = query.eq('status', status);
+    const { data, error } = await query;
     if (error) throw error;
     return data ?? [];
   }

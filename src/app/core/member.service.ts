@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Member, MemberLeaderboardEntry } from '../models';
 import { kanaVariants } from './japanese.utils';
+import { isNotFoundError } from './supabase.utils';
 
 @Injectable({ providedIn: 'root' })
 export class MemberService {
@@ -55,7 +56,7 @@ export class MemberService {
       .eq('id', id)
       .single();
     if (error) {
-      if ((error as any).code === 'PGRST116') return null;
+      if (isNotFoundError(error)) return null;
       throw error;
     }
     return data;
