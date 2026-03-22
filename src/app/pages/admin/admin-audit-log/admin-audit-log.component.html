@@ -2,7 +2,7 @@
   <h1 class="font-['Cormorant_Garamond'] text-2xl font-semibold text-gray-800 mb-6">變更記錄</h1>
 
   <!-- Filters -->
-  <div class="flex gap-4 mb-4">
+  <div class="flex flex-wrap gap-4 mb-4">
     <select [(ngModel)]="filterTable" (change)="load()"
       class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300">
       <option value="">全部資料表</option>
@@ -31,6 +31,7 @@
     <div class="text-sm text-gray-400 py-8 text-center">尚無變更記錄</div>
   } @else {
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
@@ -127,6 +128,7 @@
           }
         </tbody>
       </table>
+      </div>
     </div>
   }
 </div>

@@ -12,6 +12,7 @@
   <div *ngIf="!loading && companies.length === 0" class="text-center py-16 text-gray-400">尚無公司資料</div>
 
   <div *ngIf="!loading && companies.length > 0" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
     <table class="w-full text-sm">
       <thead class="bg-gray-50 border-b border-gray-200">
         <tr>
@@ -49,6 +50,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 
