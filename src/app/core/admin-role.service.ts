@@ -10,6 +10,7 @@ export class AdminRoleService implements OnDestroy {
   private _sub: Subscription;
   private _cachedUserId: string | null = null;
   private _cachedIsAdmin: boolean | null = null;
+  private _inflightIsAdmin: Promise<boolean> | null = null;
 
   constructor(private supabase: SupabaseService) {
     this._sub = this.supabase.authState$.subscribe(session => {
@@ -23,6 +24,7 @@ export class AdminRoleService implements OnDestroy {
       } else {
         this._cachedUserId = null;
         this._cachedIsAdmin = null;
+        this._inflightIsAdmin = null;
         this._isAdmin.next(false);
       }
     });
@@ -47,23 +49,27 @@ export class AdminRoleService implements OnDestroy {
   }
 
   /** admin 或 superadmin 皆視為有管理權限 */
-  async isAdmin(): Promise<boolean> {
-    const session = await this.supabase.getSessionOnce();
-    if (!session?.user?.email) return false;
-    if (this._cachedUserId === session.user.id && this._cachedIsAdmin !== null) {
-      return this._cachedIsAdmin;
+  isAdmin(): Promise<boolean> {
+    if (this._inflightIsAdmin) return this._inflightIsAdmin;
+    if (this._cachedUserId !== null && this._cachedIsAdmin !== null) {
+      return Promise.resolve(this._cachedIsAdmin);
     }
-    const { data, error } = await this.supabase.client
-      .from('user_roles')
-      .select('id')
-      .eq('email', session.user.email)
-      .in('role', ['admin', 'superadmin'])
-      .limit(1);
-    if (error || !data) return false;
-    const result = data.length > 0;
-    this._cachedUserId = session.user.id;
-    this._cachedIsAdmin = result;
-    return result;
+    this._inflightIsAdmin = this.supabase.getSessionOnce().then(async session => {
+      if (!session?.user?.email) return false;
+      const { data, error } = await this.supabase.client
+        .from('user_roles')
+        .select('id')
+        .eq('email', session.user.email)
+        .in('role', ['admin', 'superadmin'])
+        .limit(1);
+      if (error || !data) return false;
+      const result = data.length > 0;
+      this._cachedUserId = session.user.id;
+      this._cachedIsAdmin = result;
+      this._inflightIsAdmin = null;
+      return result;
+    });
+    return this._inflightIsAdmin;
   }
 
   async getAll(): Promise<UserRole[]> {
