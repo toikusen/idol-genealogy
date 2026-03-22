@@ -182,9 +182,10 @@ export class HomeComponent implements OnInit {
   }
 
   get companySections(): { name: string; groups: Group[]; activeCount: number; disbandedCount: number }[] {
+    const companyNameById = new Map(this.allCompanies.map(c => [c.id, c.name]));
     const map = new Map<string, Group[]>();
     for (const g of this.allGroups) {
-      const key = g.company || '獨立・其他';
+      const key = (g.company_id ? companyNameById.get(g.company_id) : null) ?? g.company ?? '獨立・其他';
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(g);
     }

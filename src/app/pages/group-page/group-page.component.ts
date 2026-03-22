@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
 import { MemberService } from '../../core/member.service';
+import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ViewCountService } from '../../core/view-count.service';
@@ -36,6 +37,7 @@ const SITE_URL = 'https://idol-genealogy.pages.dev';
 })
 export class GroupPageComponent implements OnInit, OnDestroy {
   group: Group | null = null;
+  companyName: string | null = null;
   teams: Team[] = [];
   histories: History[] = [];
   allMemberHistories: History[] = [];
@@ -71,6 +73,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private groupService: GroupService,
     private historyService: HistoryService,
     private memberService: MemberService,
+    private companyService: CompanyService,
     private seo: SeoService,
     private proposalService: ProposalService,
     private analytics: AnalyticsService,
@@ -89,6 +92,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = false;
     this.group = null;
+    this.companyName = null;
     this.selectedHistory = null;
     this.playingVideoId = null;
     this.ganttRows = [];
@@ -104,6 +108,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         this.groupService.getVideosByGroup(id),
       ]);
       this.group = group;
+      if (group?.company_id) {
+        this.companyService.getById(group.company_id)
+          .then(c => { this.companyName = c?.name ?? null; })
+          .catch(() => {});
+      }
       this.teams = teams;
       this.histories = histories;
       this.videos = videos;
