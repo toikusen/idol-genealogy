@@ -59,3 +59,6 @@ docs/superpowers/plans/2026-03-16-team-member-ownership.md
 docs/superpowers/plans/2026-03-17-contributor-guide.md
 docs/superpowers/plans/2026-03-19-my-contributions-badges.md
 docs/superpowers/specs/2026-03-19-my-contributions-badges-design.md
+
+# playwright test cach
+.playwright-mcp/
