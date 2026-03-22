@@ -8,12 +8,21 @@ export class AdminRoleService implements OnDestroy {
   private _isAdmin = new BehaviorSubject<boolean>(false);
   readonly isAdmin$ = this._isAdmin.asObservable();
   private _sub: Subscription;
+  private _cachedUserId: string | null = null;
+  private _cachedIsAdmin: boolean | null = null;
 
   constructor(private supabase: SupabaseService) {
     this._sub = this.supabase.authState$.subscribe(session => {
       if (session) {
+        const userId = session.user.id;
+        if (this._cachedUserId === userId && this._cachedIsAdmin !== null) {
+          this._isAdmin.next(this._cachedIsAdmin);
+          return;
+        }
         this.isAdmin().then(val => this._isAdmin.next(val));
       } else {
+        this._cachedUserId = null;
+        this._cachedIsAdmin = null;
         this._isAdmin.next(false);
       }
     });
@@ -41,6 +50,9 @@ export class AdminRoleService implements OnDestroy {
   async isAdmin(): Promise<boolean> {
     const session = await this.supabase.getSessionOnce();
     if (!session?.user?.email) return false;
+    if (this._cachedUserId === session.user.id && this._cachedIsAdmin !== null) {
+      return this._cachedIsAdmin;
+    }
     const { data, error } = await this.supabase.client
       .from('user_roles')
       .select('id')
@@ -48,7 +60,10 @@ export class AdminRoleService implements OnDestroy {
       .in('role', ['admin', 'superadmin'])
       .limit(1);
     if (error || !data) return false;
-    return data.length > 0;
+    const result = data.length > 0;
+    this._cachedUserId = session.user.id;
+    this._cachedIsAdmin = result;
+    return result;
   }
 
   async getAll(): Promise<UserRole[]> {
