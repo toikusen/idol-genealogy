@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@angular/core';
 import { Title, Meta } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
 
-const SITE_URL = 'https://idol-genealogy.pages.dev';
+const SITE_URL = 'https://idolmaps.com';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.png`;
 
 @Injectable({ providedIn: 'root' })
@@ -14,12 +14,17 @@ export class SeoService {
   ) {}
 
   setPage(pageTitle: string, description: string, url: string, image?: string): void {
+    const ogImage = image ?? DEFAULT_OG_IMAGE;
     this.title.setTitle(pageTitle);
     this.meta.updateTag({ name: 'description', content: description });
     this.meta.updateTag({ property: 'og:title', content: pageTitle });
     this.meta.updateTag({ property: 'og:description', content: description });
     this.meta.updateTag({ property: 'og:url', content: url });
-    this.meta.updateTag({ property: 'og:image', content: image ?? DEFAULT_OG_IMAGE });
+    this.meta.updateTag({ property: 'og:image', content: ogImage });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:title', content: pageTitle });
+    this.meta.updateTag({ name: 'twitter:description', content: description });
+    this.meta.updateTag({ name: 'twitter:image', content: ogImage });
   }
 
   setJsonLd(data: object): void {

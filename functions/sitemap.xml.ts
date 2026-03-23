@@ -1,4 +1,4 @@
-const SITE = 'https://idol-genealogy.pages.dev';
+const SITE = 'https://idolmaps.com';
 const SUPABASE_URL = 'https://ziiagdrrytyrmzoeegjk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_PtKb4LIJeJN3cECUJllW7w_UFRVTbTv';
 

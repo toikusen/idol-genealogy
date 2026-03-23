@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../core/seo.service';
 
-const SITE_URL = 'https://idol-genealogy.pages.dev';
+const SITE_URL = 'https://idolmaps.com';
 
 @Component({
   selector: 'app-guide',

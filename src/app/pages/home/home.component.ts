@@ -11,7 +11,7 @@ import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 
-const SITE_URL = 'https://idol-genealogy.pages.dev';
+const SITE_URL = 'https://idolmaps.com';
 
 @Component({
   selector: 'app-home',

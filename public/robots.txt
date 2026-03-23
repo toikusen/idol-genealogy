@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 
-Sitemap: https://idol-genealogy.pages.dev/sitemap.xml
+Sitemap: https://idolmaps.com/sitemap.xml

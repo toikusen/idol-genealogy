@@ -65,7 +65,7 @@ describe('SeoService', () => {
     service.setPage('T', 'D', 'https://example.com/');
     expect(metaSpy.updateTag).toHaveBeenCalledWith({
       property: 'og:image',
-      content: 'https://idol-genealogy.pages.dev/og-default.png'
+      content: 'https://idolmaps.com/og-default.png'
     });
   });
 

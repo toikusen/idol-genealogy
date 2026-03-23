@@ -5,7 +5,7 @@ import { TeamMemberService } from '../../core/team-member.service';
 import { SeoService } from '../../core/seo.service';
 import { TeamMember } from '../../models';
 
-const SITE_URL = 'https://idol-genealogy.pages.dev';
+const SITE_URL = 'https://idolmaps.com';
 
 @Component({
   selector: 'app-about',

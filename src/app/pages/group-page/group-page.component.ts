@@ -27,7 +27,7 @@ interface GanttRow {
   isActive: boolean;
 }
 
-const SITE_URL = 'https://idol-genealogy.pages.dev';
+const SITE_URL = 'https://idolmaps.com';
 
 @Component({
   selector: 'app-group-page',
