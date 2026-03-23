@@ -25,7 +25,7 @@ describe('GuideComponent', () => {
     const fixture = TestBed.createComponent(GuideComponent);
     fixture.detectChanges();
     expect(seo.setPage).toHaveBeenCalledWith(
-      '貢獻者手冊 | 台灣地下偶像族譜',
+      '貢獻者手冊 | IdolMaps',
       jasmine.any(String),
       jasmine.any(String),
     );

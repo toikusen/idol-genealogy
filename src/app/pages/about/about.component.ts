@@ -23,8 +23,8 @@ export class AboutComponent implements OnInit {
 
   async ngOnInit() {
     this.seo.setPage(
-      '關於我們 | 台灣地下偶像族譜',
-      '了解台灣地下偶像族譜的成立緣起與編輯團隊。',
+      '關於我們 | IdolMaps',
+      '了解 IdolMaps 的成立緣起與編輯團隊。',
       `${SITE_URL}/about`
     );
     try {

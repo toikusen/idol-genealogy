@@ -15,7 +15,7 @@ export class ContactComponent implements OnInit {
 
   ngOnInit() {
     this.seo.setPage(
-      '聯絡我們 | 台灣地下偶像族譜',
+      '聯絡我們 | IdolMaps',
       '有任何資料錯誤或補充建議，歡迎與我們聯絡。',
       `${SITE_URL}/contact`
     );

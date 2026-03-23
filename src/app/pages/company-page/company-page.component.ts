@@ -68,7 +68,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
 
       if (company) {
         this.seo.setPage(
-          `${company.name} | 台灣地下偶像族譜`,
+          `${company.name} | IdolMaps`,
           company.description ?? `${company.name}旗下團體與成員記錄。`,
           `${SITE_URL}/company/${id}`,
           company.photo_url ?? undefined

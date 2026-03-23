@@ -18,11 +18,7 @@ const SITE_URL = 'https://idolmaps.com';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, AdBannerComponent, ProposalPanelComponent, SafeUrlPipe],
   templateUrl: './home.component.html',
-  styles: [`
-    @media (max-width: 500px) {
-      .title-break::after { content: '\\A'; white-space: pre; }
-    }
-  `],
+  styles: [],
 })
 export class HomeComponent implements OnInit {
   showMemberInsertPanel = false;
@@ -56,14 +52,14 @@ export class HomeComponent implements OnInit {
   async ngOnInit() {
     // Set page-level SEO
     this.seo.setPage(
-      '台灣地下偶像族譜 | 成員・團體完整記錄',
-      '台灣地下偶像成員與團體的完整族譜記錄。查詢偶像成員經歷、所屬團體歷史、活動記錄。',
+      'IdolMaps | 台灣地下偶像資料庫',
+      '台灣地下偶像成員與團體的完整資料庫。查詢偶像成員經歷、所屬團體歷史、活動記錄。',
       `${SITE_URL}/`
     );
     this.seo.setJsonLd({
       '@context': 'https://schema.org',
       '@type': 'WebSite',
-      name: '台灣地下偶像族譜',
+      name: 'IdolMaps',
       url: `${SITE_URL}/`,
       potentialAction: {
         '@type': 'SearchAction',

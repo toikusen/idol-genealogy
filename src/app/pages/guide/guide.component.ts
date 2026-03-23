@@ -16,7 +16,7 @@ export class GuideComponent implements OnInit {
 
   ngOnInit(): void {
     this.seo.setPage(
-      '貢獻者手冊 | 台灣地下偶像族譜',
+      '貢獻者手冊 | IdolMaps',
       '了解如何透過提案機制補充台灣地下偶像的資料，包含完整流程說明與資料來源建議。',
       `${SITE_URL}/guide`,
     );
