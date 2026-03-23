@@ -12,7 +12,7 @@
 
   <!-- Search -->
   <div *ngIf="!loading" class="mb-4">
-    <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋團體名稱或事務所…"
+    <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋團體名稱或公司…"
       class="w-full max-w-sm border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
   </div>
 
@@ -156,7 +156,7 @@
 
       <!-- company_id dropdown -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">所屬事務所（公司頁面）</label>
+        <label class="block text-xs font-medium text-gray-600 mb-1">所屬公司（公司頁面）</label>
         <select [(ngModel)]="editing.company_id"
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
           <option [ngValue]="null">— 無 —</option>
@@ -166,7 +166,7 @@
 
       <!-- legacy company text (fallback for unlinked groups) -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">自定義事務所名稱（若未建立公司頁）</label>
+        <label class="block text-xs font-medium text-gray-600 mb-1">自定義公司名稱（若未建立公司頁）</label>
         <input type="text" [(ngModel)]="editing.company"
           placeholder="例：Toypla"
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>

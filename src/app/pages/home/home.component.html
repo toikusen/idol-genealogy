@@ -59,7 +59,7 @@
           <div style="font-family: 'JF Openhuninn', sans-serif; font-size: 1.6rem; font-weight: 300; color: #2d1b2e; letter-spacing: 0.04em; line-height: 1;">
             {{ allCompanies.length || '—' }}
           </div>
-          <div style="font-family: 'JF Openhuninn', sans-serif; font-size: 0.68rem; letter-spacing: 0.2em; color: rgba(122,90,122,0.5); margin-top: 4px;">事務所</div>
+          <div style="font-family: 'JF Openhuninn', sans-serif; font-size: 0.68rem; letter-spacing: 0.2em; color: rgba(122,90,122,0.5); margin-top: 4px;">公司</div>
         </div>
       </div>
 
@@ -224,7 +224,7 @@
               font-size: 0.85rem; font-weight: 600; letter-spacing: 0.2em;
               text-transform: uppercase; color: rgba(180,140,60,0.75);
               margin-bottom: 12px;
-            ">Companies · 事務所 ({{companyResults.length}})</div>
+            ">Companies · 公司 ({{companyResults.length}})</div>
             <div style="display: flex; flex-wrap: wrap; gap: 8px;">
               @for (company of companyResults; track company.id) {
                 <a [routerLink]="['/company', company.id]" class="company-result-chip">
@@ -729,7 +729,7 @@
                 font-family: 'JF Openhuninn', sans-serif;
                 font-size: 0.78rem; color: rgba(140,100,40,0.5);
                 font-style: italic;
-              ">{{companySections.length}} 事務所</span>
+              ">{{companySections.length}} 公司</span>
               <button
                 (click)="showCompanyInsertPanel = true"
                 style="
