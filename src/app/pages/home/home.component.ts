@@ -36,6 +36,7 @@ export class HomeComponent implements OnInit {
   upcomingBirthdays: { member: Member; daysUntil: number }[] = [];
   allGroups: Group[] = [];
   allCompanies: Company[] = [];
+  allSoloMembers: Member[] = [];
   topMembers: MemberLeaderboardEntry[] = [];
   topGroups: GroupLeaderboardEntry[] = [];
   activeTab: 'members' | 'groups' | 'companies' | 'events' = 'members';
@@ -81,7 +82,7 @@ export class HomeComponent implements OnInit {
     }
 
     try {
-      const [recent, memberCount, groups, companies, topMembers, topGroups, birthdays] = await Promise.all([
+      const [recent, memberCount, groups, companies, topMembers, topGroups, birthdays, soloMembers] = await Promise.all([
         this.memberService.getRecent(10),
         this.memberService.getCount().catch(() => 0),
         this.groupService.getAll(),
@@ -89,6 +90,7 @@ export class HomeComponent implements OnInit {
         this.memberService.getTopByViews(5).catch((): MemberLeaderboardEntry[] => []),
         this.groupService.getTopByViews(5).catch((): GroupLeaderboardEntry[] => []),
         this.memberService.getUpcomingBirthdays(7).catch(() => []),
+        this.memberService.getSoloMembers().catch(() => []),
       ]);
       this.recentMembers = recent;
       this.memberCount = memberCount;
@@ -97,6 +99,7 @@ export class HomeComponent implements OnInit {
       this.topMembers = topMembers;
       this.topGroups = topGroups;
       this.upcomingBirthdays = birthdays;
+      this.allSoloMembers = soloMembers;
     } catch {
       this.recentMembers = [];
       this.allGroups = [];
@@ -183,13 +186,20 @@ export class HomeComponent implements OnInit {
     return this.activeGroups;
   }
 
-  get companySections(): { name: string; groups: Group[]; activeCount: number; disbandedCount: number }[] {
+  get companySections(): { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] {
     const companyNameById = new Map(this.allCompanies.map(c => [c.id, c.name]));
+    const companyIdByName = new Map(this.allCompanies.map(c => [c.name, c.id]));
     const map = new Map<string, Group[]>();
     for (const g of this.allGroups) {
       const key = (g.company_id ? companyNameById.get(g.company_id) : null) ?? g.company ?? '獨立・其他';
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(g);
+    }
+    // Ensure companies with only solo members also appear
+    for (const m of this.allSoloMembers) {
+      if (!m.company_id) continue;
+      const name = companyNameById.get(m.company_id);
+      if (name && !map.has(name)) map.set(name, []);
     }
     const entries = [...map.entries()];
     entries.sort(([a, ga], [b, gb]) => {
@@ -197,12 +207,20 @@ export class HomeComponent implements OnInit {
       if (b === '獨立・其他') return -1;
       return gb.length - ga.length || a.localeCompare(b);
     });
-    return entries.map(([name, groups]) => ({
-      name,
-      groups: groups.sort((a, b) => (!a.disbanded_at ? -1 : !b.disbanded_at ? 1 : 0)),
-      activeCount: groups.filter(g => !g.disbanded_at).length,
-      disbandedCount: groups.filter(g => !!g.disbanded_at).length,
-    }));
+    return entries.map(([name, groups]) => {
+      const companyId = companyIdByName.get(name) ?? null;
+      const soloMembers = companyId
+        ? this.allSoloMembers.filter(m => m.company_id === companyId)
+        : [];
+      return {
+        name,
+        companyId,
+        groups: groups.sort((a, b) => (!a.disbanded_at ? -1 : !b.disbanded_at ? 1 : 0)),
+        soloMembers,
+        activeCount: groups.filter(g => !g.disbanded_at).length,
+        disbandedCount: groups.filter(g => !!g.disbanded_at).length,
+      };
+    });
   }
 
   getCompanyId(name: string): string | null {

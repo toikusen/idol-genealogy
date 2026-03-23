@@ -117,6 +117,13 @@ export class MemberService {
     return count ?? 0;
   }
 
+  async getSoloMembers(): Promise<Member[]> {
+    const { data, error } = await this.db
+      .from('members').select('*').not('company_id', 'is', null).order('name', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
   async getRecent(limit = 10): Promise<Member[]> {
     const { data, error } = await this.db
       .from('members')

@@ -761,8 +761,8 @@
                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
                   ">{{section.name}}</h3>
                   <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                    @if (getCompanyId(section.name)) {
-                      <a [routerLink]="['/company', getCompanyId(section.name)]" style="
+                    @if (section.companyId) {
+                      <a [routerLink]="['/company', section.companyId]" style="
                         display: inline-flex; align-items: center; gap: 4px;
                         font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.65rem; letter-spacing: 0.1em;
@@ -791,32 +791,62 @@
                 </div>
 
                 <!-- Groups grid -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
-                  @for (group of section.groups; track group.id) {
-                    <a [routerLink]="['/group', group.id]" class="company-group-card" [class.company-group-disbanded]="!!group.disbanded_at">
-                      <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px;" [style.background]="group.disbanded_at ? '#c0a8c0' : (group.color || '#b07d2a')"></div>
-                      <div style="min-width:0;">
-                        <div style="
-                          font-family:'JF Openhuninn',sans-serif;
-                          font-size:0.83rem;font-weight:500;
-                          color: #2d1b2e; line-height:1.35;
-                          overflow:hidden;display:-webkit-box;
-                          -webkit-line-clamp:2;-webkit-box-orient:vertical;
-                        ">{{group.name}}</div>
-                        @if (group.founded_at) {
+                @if (section.groups.length > 0) {
+                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
+                    @for (group of section.groups; track group.id) {
+                      <a [routerLink]="['/group', group.id]" class="company-group-card" [class.company-group-disbanded]="!!group.disbanded_at">
+                        <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px;" [style.background]="group.disbanded_at ? '#c0a8c0' : (group.color || '#b07d2a')"></div>
+                        <div style="min-width:0;">
                           <div style="
                             font-family:'JF Openhuninn',sans-serif;
-                            font-size:0.7rem;color:rgba(140,100,40,0.55);
-                            letter-spacing:0.04em;margin-top:3px;
-                          ">
-                            {{group.founded_at | slice:0:4}}
-                            @if (group.disbanded_at) { → {{group.disbanded_at | slice:0:4}} }
-                          </div>
+                            font-size:0.83rem;font-weight:500;
+                            color: #2d1b2e; line-height:1.35;
+                            overflow:hidden;display:-webkit-box;
+                            -webkit-line-clamp:2;-webkit-box-orient:vertical;
+                          ">{{group.name}}</div>
+                          @if (group.founded_at) {
+                            <div style="
+                              font-family:'JF Openhuninn',sans-serif;
+                              font-size:0.7rem;color:rgba(140,100,40,0.55);
+                              letter-spacing:0.04em;margin-top:3px;
+                            ">
+                              {{group.founded_at | slice:0:4}}
+                              @if (group.disbanded_at) { → {{group.disbanded_at | slice:0:4}} }
+                            </div>
+                          }
+                        </div>
+                      </a>
+                    }
+                  </div>
+                }
+
+                <!-- Solo members -->
+                @if (section.soloMembers.length > 0) {
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top: {{section.groups.length > 0 ? '10px' : '0'}};">
+                    @for (m of section.soloMembers; track m.id) {
+                      <a [routerLink]="['/member', m.id]" style="
+                        display:inline-flex;align-items:center;gap:6px;
+                        padding:4px 12px 4px 6px;border-radius:20px;
+                        border:1px solid rgba(232,121,160,0.25);
+                        background:rgba(232,121,160,0.05);
+                        text-decoration:none;
+                        font-family:'JF Openhuninn',sans-serif;font-size:0.8rem;
+                        color:#2d1b2e;transition:all 0.2s;
+                      ">
+                        @if (m.photo_url) {
+                          <img [src]="m.photo_url" [alt]="m.name"
+                            style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
+                        } @else {
+                          <div style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;flex-shrink:0;"
+                            [style.background]="(m.color || '#e879a0') + '33'"
+                            style="color:#2d1b2e;"
+                          >{{ m.name.charAt(0) }}</div>
                         }
-                      </div>
-                    </a>
-                  }
-                </div>
+                        {{ m.name }}
+                      </a>
+                    }
+                  </div>
+                }
               </div>
             }
           </div>
