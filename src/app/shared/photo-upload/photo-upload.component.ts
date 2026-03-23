@@ -151,7 +151,7 @@ const OUTPUT = 400;     // 輸出圖片尺寸 px
   `,
 })
 export class PhotoUploadComponent implements ControlValueAccessor, AfterViewChecked {
-  @Input() folder: 'members' | 'groups' | 'companies' = 'members';
+  @Input() folder: 'members' | 'groups' | 'companies' | 'team' = 'members';
   @ViewChild('cropArea') cropAreaRef?: ElementRef<HTMLDivElement>;
 
   readonly CIRCLE_R = CIRCLE_R;

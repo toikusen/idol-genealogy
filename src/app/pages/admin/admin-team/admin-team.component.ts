@@ -5,11 +5,12 @@ import { TeamMemberService } from '../../../core/team-member.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { SupabaseService } from '../../../core/supabase.service';
 import { TeamMember } from '../../../models';
+import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 
 @Component({
   selector: 'app-admin-team',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PhotoUploadComponent],
   templateUrl: './admin-team.component.html',
 })
 export class AdminTeamComponent implements OnInit {

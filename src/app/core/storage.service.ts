@@ -11,7 +11,7 @@ export class StorageService {
   /** 上傳已裁切的 blob（跳過格式/大小驗證，由 component 負責） */
   async uploadCropped(
     blob: Blob,
-    folder: 'members' | 'groups' | 'companies'
+    folder: 'members' | 'groups' | 'companies' | 'team'
   ): Promise<string> {
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
     const path = `${folder}/${filename}`;
@@ -28,7 +28,7 @@ export class StorageService {
 
   async uploadPhoto(
     file: File,
-    folder: 'members' | 'groups' | 'companies'
+    folder: 'members' | 'groups' | 'companies' | 'team'
   ): Promise<string> {
     if (file.size > MAX_SIZE) throw new Error('檔案大小不能超過 5MB');
     if (!ALLOWED.has(file.type)) throw new Error('僅支援 JPG、PNG 格式');
