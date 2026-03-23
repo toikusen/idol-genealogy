@@ -68,8 +68,21 @@ export class MyContributionsComponent implements OnInit {
   }
 
   getSubject(p: Proposal): string {
+    if (p.table_name === 'history') {
+      const memberName = p.original_data?.['member']?.['name']
+        ?? p.original_data?.['member']?.['name_roman'];
+      const groupName = p.original_data?.['group']?.['name']
+        ?? p.original_data?.['external_group_name']
+        ?? p.proposed_data?.['external_group_name'];
+      const nameAtTime = p.original_data?.['name_at_time']
+        ?? p.proposed_data?.['name_at_time'];
+      const displayName = nameAtTime ?? memberName;
+      if (displayName && groupName) return `${displayName}（${groupName}）`;
+      if (displayName) return displayName;
+      if (groupName) return groupName;
+      return '歷程記錄';
+    }
     return p.proposed_data?.['name']
-      ?? p.proposed_data?.['external_group_name']
       ?? p.original_data?.['name']
       ?? p.record_id
       ?? '—';
