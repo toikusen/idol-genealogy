@@ -29,6 +29,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   error = false;
   lastProposal: Proposal | null = null;
   showEditHistory = false;
+  linkCopied = false;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -86,6 +87,15 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     } finally {
       this.loading = false;
     }
+  }
+
+  copyLink() {
+    const id = this.route.snapshot.paramMap.get('id')!;
+    const url = `${SITE_URL}/company/${id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      this.linkCopied = true;
+      setTimeout(() => { this.linkCopied = false; }, 2000);
+    });
   }
 
   getInitial(name: string): string {

@@ -38,6 +38,7 @@ export class MemberPageComponent implements OnInit {
   allGroupsList: { id: string; name: string }[] = [];
   lastProposal: Proposal | null = null;
   showEditHistory = false;
+  linkCopied = false;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -121,6 +122,15 @@ export class MemberPageComponent implements OnInit {
   getInitial(member: Member): string {
     if (member.name_roman) return member.name_roman.charAt(0);
     return member.name.charAt(0).toUpperCase();
+  }
+
+  copyLink() {
+    const id = this.route.snapshot.paramMap.get('id')!;
+    const url = `${SITE_URL}/member/${id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      this.linkCopied = true;
+      setTimeout(() => { this.linkCopied = false; }, 2000);
+    });
   }
 
   formatDate(dateStr: string | null): string {

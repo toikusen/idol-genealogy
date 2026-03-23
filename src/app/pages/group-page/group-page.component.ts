@@ -54,6 +54,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   showNewHistoryPanel = false;
   lastProposal: Proposal | null = null;
   showEditHistory = false;
+  linkCopied = false;
   allMembers: { id: string; name: string }[] = [];
 
   get lastProposalDiffFields(): DiffField[] {
@@ -166,6 +167,15 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     } finally {
       this.loading = false;
     }
+  }
+
+  copyLink() {
+    const id = this.route.snapshot.paramMap.get('id')!;
+    const url = `${SITE_URL}/group/${id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      this.linkCopied = true;
+      setTimeout(() => { this.linkCopied = false; }, 2000);
+    });
   }
 
   extractYouTubeId(url: string): string | null {
