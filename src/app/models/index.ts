@@ -140,6 +140,7 @@ export interface Proposal {
   submitter_id: string | null;
   submitter_name: string;
   submitter_email: string | null;
+  submitter_note: string | null;
   status: 'pending' | 'approved' | 'rejected';
   reviewer_note: string | null;
   created_at: string;

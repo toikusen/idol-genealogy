@@ -15,7 +15,7 @@ export class ContactComponent implements OnInit {
 
   ngOnInit() {
     this.seo.setPage(
-      '聯絡我們 | IdolMaps',
+      '聯絡我們 | Idol Maps',
       '有任何資料錯誤或補充建議，歡迎與我們聯絡。',
       `${SITE_URL}/contact`
     );

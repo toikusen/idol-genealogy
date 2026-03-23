@@ -90,6 +90,17 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 resize-none"
             ></textarea>
           </div>
+          <!-- Submitter note -->
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">備註（選填）</label>
+            <textarea
+              [(ngModel)]="submitterNote"
+              name="submitterNote"
+              rows="3"
+              placeholder="提供佐證資料，以利管理員審核（例如：社群貼文截圖說明、公告連結等）"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 resize-none"
+            ></textarea>
+          </div>
           <!-- Submitter info -->
           <div class="border-t border-gray-100 pt-4">
             <p class="text-xs font-medium text-gray-500 mb-3">回報者資訊</p>
@@ -478,6 +489,18 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
             </div>
           }
 
+          <!-- Submitter note -->
+          <div class="border-t border-gray-100 pt-4">
+            <label class="block text-xs font-medium text-gray-600 mb-1">備註（選填）</label>
+            <textarea
+              [(ngModel)]="submitterNote"
+              name="submitterNote"
+              rows="3"
+              placeholder="提供佐證資料，以利管理員審核（例如：社群貼文截圖說明、公告連結等）"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 resize-none"
+            ></textarea>
+          </div>
+
           <!-- Divider -->
           <div class="border-t border-gray-100 pt-4">
             <p class="text-xs font-medium text-gray-500 mb-3">提案者資訊</p>
@@ -549,6 +572,7 @@ export class ProposalPanelComponent implements OnInit {
   formData: Record<string, any> = {};
   submitterName = '';
   submitterEmail = '';
+  submitterNote = '';
   loggedInName: string | null = null;
   loggedInId: string | null = null;
   submitting = false;
@@ -796,6 +820,7 @@ export class ProposalPanelComponent implements OnInit {
           submitter_id: session?.user?.id ?? null,
           submitter_name: this.loggedInName ?? this.submitterName.trim(),
           submitter_email: this.submitterEmail || null,
+          submitter_note: this.submitterNote.trim() || null,
         });
         this.submitted = true;
       } catch (e: any) {
@@ -903,6 +928,7 @@ export class ProposalPanelComponent implements OnInit {
         submitter_id: this.loggedInId,
         submitter_name: this.loggedInName ?? this.submitterName.trim(),
         submitter_email: this.submitterEmail.trim() || null,
+        submitter_note: this.submitterNote.trim() || null,
       });
       this.submitted = true;
     } catch (e: any) {

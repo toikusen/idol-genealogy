@@ -31,7 +31,7 @@
         cursor: pointer;
       ">
         <span style="width:6px;height:6px;border-radius:50%;background:#86efac;flex-shrink:0;"></span>
-        {{ session.user.user_metadata?.['display_name'] || '我的貢獻' }}
+        {{ session.user.user_metadata['display_name'] || '我的貢獻' }}
       </a>
       <button (click)="signOut()" style="
         display: inline-flex;

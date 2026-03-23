@@ -32,6 +32,7 @@ export class HomeComponent implements OnInit {
   companyResults: Company[] = [];
   searching = false;
 
+  memberCount = 0;
   allGroups: Group[] = [];
   allCompanies: Company[] = [];
   topMembers: MemberLeaderboardEntry[] = [];
@@ -52,14 +53,14 @@ export class HomeComponent implements OnInit {
   async ngOnInit() {
     // Set page-level SEO
     this.seo.setPage(
-      'IdolMaps | 台灣地下偶像資料庫',
+      'Idol Maps | 台灣地下偶像資料庫',
       '台灣地下偶像成員與團體的完整資料庫。查詢偶像成員經歷、所屬團體歷史、活動記錄。',
       `${SITE_URL}/`
     );
     this.seo.setJsonLd({
       '@context': 'https://schema.org',
       '@type': 'WebSite',
-      name: 'IdolMaps',
+      name: 'Idol Maps',
       url: `${SITE_URL}/`,
       potentialAction: {
         '@type': 'SearchAction',
@@ -79,14 +80,16 @@ export class HomeComponent implements OnInit {
     }
 
     try {
-      const [recent, groups, companies, topMembers, topGroups] = await Promise.all([
+      const [recent, memberCount, groups, companies, topMembers, topGroups] = await Promise.all([
         this.memberService.getRecent(10),
+        this.memberService.getCount().catch(() => 0),
         this.groupService.getAll(),
         this.companyService.getAll(),
         this.memberService.getTopByViews(5).catch((): MemberLeaderboardEntry[] => []),
         this.groupService.getTopByViews(5).catch((): GroupLeaderboardEntry[] => []),
       ]);
       this.recentMembers = recent;
+      this.memberCount = memberCount;
       this.allGroups = groups;
       this.allCompanies = companies;
       this.topMembers = topMembers;

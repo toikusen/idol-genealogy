@@ -53,6 +53,14 @@
       </div>
     </div>
 
+    <!-- Submitter note -->
+    @if (proposal.submitter_note) {
+      <div class="bg-amber-50 rounded-xl border border-amber-100 p-4 mb-6">
+        <p class="text-xs font-medium text-amber-600 mb-1">提案者備註</p>
+        <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ proposal.submitter_note }}</p>
+      </div>
+    }
+
     <!-- DELETE proposal: show original record summary + reason -->
     @if (proposal.operation === 'DELETE') {
       <div class="bg-white rounded-xl border border-red-100 overflow-hidden mb-6">

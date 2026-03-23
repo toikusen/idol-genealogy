@@ -79,6 +79,14 @@ export class MemberService {
   /** Call after create/update/delete to force next getAll() to re-fetch */
   invalidateCache() { this._allCache = null; }
 
+  async getCount(): Promise<number> {
+    const { count, error } = await this.db
+      .from('members')
+      .select('*', { count: 'exact', head: true });
+    if (error) throw error;
+    return count ?? 0;
+  }
+
   async getRecent(limit = 10): Promise<Member[]> {
     const { data, error } = await this.db
       .from('members')

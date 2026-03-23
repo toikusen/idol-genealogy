@@ -136,7 +136,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       if (group) {
         const displayName = group.name_jp ?? group.name;
         this.seo.setPage(
-          `${displayName} - IdolMaps`,
+          `${displayName} - Idol Maps`,
           `${displayName}的成員組成與活動記錄。`,
           `${SITE_URL}/group/${id}`
           // no image — groups have no photo_url; falls back to og-default.png

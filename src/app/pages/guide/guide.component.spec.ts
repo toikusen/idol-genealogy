@@ -25,7 +25,7 @@ describe('GuideComponent', () => {
     const fixture = TestBed.createComponent(GuideComponent);
     fixture.detectChanges();
     expect(seo.setPage).toHaveBeenCalledWith(
-      '貢獻者手冊 | IdolMaps',
+      '貢獻者手冊 | Idol Maps',
       jasmine.any(String),
       jasmine.any(String),
     );
