@@ -33,6 +33,7 @@ export class HomeComponent implements OnInit {
   searching = false;
 
   memberCount = 0;
+  upcomingBirthdays: { member: Member; daysUntil: number }[] = [];
   allGroups: Group[] = [];
   allCompanies: Company[] = [];
   topMembers: MemberLeaderboardEntry[] = [];
@@ -80,13 +81,14 @@ export class HomeComponent implements OnInit {
     }
 
     try {
-      const [recent, memberCount, groups, companies, topMembers, topGroups] = await Promise.all([
+      const [recent, memberCount, groups, companies, topMembers, topGroups, birthdays] = await Promise.all([
         this.memberService.getRecent(10),
         this.memberService.getCount().catch(() => 0),
         this.groupService.getAll(),
         this.companyService.getAll(),
         this.memberService.getTopByViews(5).catch((): MemberLeaderboardEntry[] => []),
         this.groupService.getTopByViews(5).catch((): GroupLeaderboardEntry[] => []),
+        this.memberService.getUpcomingBirthdays(7).catch(() => []),
       ]);
       this.recentMembers = recent;
       this.memberCount = memberCount;
@@ -94,6 +96,7 @@ export class HomeComponent implements OnInit {
       this.allCompanies = companies;
       this.topMembers = topMembers;
       this.topGroups = topGroups;
+      this.upcomingBirthdays = birthdays;
     } catch {
       this.recentMembers = [];
       this.allGroups = [];

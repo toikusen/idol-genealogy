@@ -79,6 +79,36 @@ export class MemberService {
   /** Call after create/update/delete to force next getAll() to re-fetch */
   invalidateCache() { this._allCache = null; }
 
+  async getUpcomingBirthdays(withinDays = 7): Promise<{ member: Member; daysUntil: number }[]> {
+    const { data, error } = await this.db
+      .from('members')
+      .select('*')
+      .not('birthdate', 'is', null);
+    if (error) throw error;
+    const today = new Date();
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const results: { member: Member; daysUntil: number }[] = [];
+    for (const member of data ?? []) {
+      const days = this.calcDaysUntilBirthday(member.birthdate!, todayMidnight);
+      if (days !== null && days <= withinDays) {
+        results.push({ member, daysUntil: days });
+      }
+    }
+    return results.sort((a, b) => a.daysUntil - b.daysUntil);
+  }
+
+  private calcDaysUntilBirthday(birthdate: string, todayMidnight: Date): number | null {
+    const m = birthdate.match(/(?:^\d{4}-)?(\d{1,2})-(\d{1,2})$/);
+    if (!m) return null;
+    const month = +m[1] - 1;
+    const day = +m[2];
+    let next = new Date(todayMidnight.getFullYear(), month, day);
+    if (next < todayMidnight) {
+      next = new Date(todayMidnight.getFullYear() + 1, month, day);
+    }
+    return Math.round((next.getTime() - todayMidnight.getTime()) / 86400000);
+  }
+
   async getCount(): Promise<number> {
     const { count, error } = await this.db
       .from('members')

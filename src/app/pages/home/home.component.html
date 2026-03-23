@@ -39,12 +39,29 @@
         color: rgba(122,90,122,0.65); margin: 0 0 12px;
       ">台灣地下偶像資料庫</p>
 
-      <!-- Kana -->
-      <p style="
-        font-family: 'JF Openhuninn', sans-serif;
-        font-size: 0.78rem; letter-spacing: 0.22em;
-        color: rgba(122,90,122,0.4); margin: 0 0 44px;
-      ">偶像　團體　成員</p>
+      <!-- Stats counter -->
+      <div style="display: flex; align-items: center; justify-content: center; gap: 32px; margin: 0 0 44px;">
+        <div style="text-align: center;">
+          <div style="font-family: 'JF Openhuninn', sans-serif; font-size: 1.6rem; font-weight: 300; color: #2d1b2e; letter-spacing: 0.04em; line-height: 1;">
+            {{ memberCount || '—' }}
+          </div>
+          <div style="font-family: 'JF Openhuninn', sans-serif; font-size: 0.68rem; letter-spacing: 0.2em; color: rgba(122,90,122,0.5); margin-top: 4px;">成員</div>
+        </div>
+        <div style="width: 1px; height: 28px; background: rgba(232,121,160,0.2);"></div>
+        <div style="text-align: center;">
+          <div style="font-family: 'JF Openhuninn', sans-serif; font-size: 1.6rem; font-weight: 300; color: #2d1b2e; letter-spacing: 0.04em; line-height: 1;">
+            {{ allGroups.length || '—' }}
+          </div>
+          <div style="font-family: 'JF Openhuninn', sans-serif; font-size: 0.68rem; letter-spacing: 0.2em; color: rgba(122,90,122,0.5); margin-top: 4px;">團體</div>
+        </div>
+        <div style="width: 1px; height: 28px; background: rgba(232,121,160,0.2);"></div>
+        <div style="text-align: center;">
+          <div style="font-family: 'JF Openhuninn', sans-serif; font-size: 1.6rem; font-weight: 300; color: #2d1b2e; letter-spacing: 0.04em; line-height: 1;">
+            {{ allCompanies.length || '—' }}
+          </div>
+          <div style="font-family: 'JF Openhuninn', sans-serif; font-size: 0.68rem; letter-spacing: 0.2em; color: rgba(122,90,122,0.5); margin-top: 4px;">事務所</div>
+        </div>
+      </div>
 
       <!-- Decorative rule -->
       <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -454,6 +471,57 @@
       @if (activeTab === 'members') {
         <section class="tab-content">
           <app-ad-banner adSlot="4061570176"></app-ad-banner>
+
+          <!-- ══ UPCOMING BIRTHDAYS ══ -->
+          @if (upcomingBirthdays.length > 0) {
+            <div style="margin: 32px 0 0;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                <span style="font-size: 1rem;">🎂</span>
+                <span style="
+                  font-family: 'JF Openhuninn', sans-serif;
+                  font-size: 0.68rem; letter-spacing: 0.35em;
+                  text-transform: uppercase; color: #b04080;
+                ">近期生日</span>
+                <div style="flex:1; height:1px; background: linear-gradient(to right, rgba(200,80,144,0.25), transparent);"></div>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                @for (entry of upcomingBirthdays; track entry.member.id) {
+                  <a [routerLink]="['/member', entry.member.id]" style="
+                    display: flex; align-items: center; gap: 10px;
+                    padding: 8px 14px 8px 8px;
+                    background: rgba(255,255,255,0.75);
+                    border: 1px solid rgba(232,121,160,0.18);
+                    border-radius: 100px;
+                    text-decoration: none;
+                  ">
+                    @if (entry.member.photo_url) {
+                      <img [src]="entry.member.photo_url" [alt]="entry.member.name"
+                        style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
+                    } @else {
+                      <div style="
+                        width:32px;height:32px;border-radius:50%;flex-shrink:0;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:0.75rem;font-weight:600;color:#fff;
+                        background: linear-gradient(135deg, rgba(232,121,160,0.7), rgba(122,90,122,0.5));
+                      ">{{ (entry.member.name_roman || entry.member.name).charAt(0).toUpperCase() }}</div>
+                    }
+                    <div>
+                      <div style="font-size:0.8rem;color:#2d1b2e;font-weight:500;line-height:1.2;">
+                        {{ entry.member.name_roman || entry.member.name }}
+                      </div>
+                      <div style="font-size:0.65rem;color:rgba(122,90,122,0.55);margin-top:1px;">
+                        @if (entry.daysUntil === 0) {
+                          <span style="color:rgba(232,121,160,0.9);font-weight:600;">🎉 今天生日</span>
+                        } @else {
+                          {{ entry.daysUntil }}天後
+                        }
+                      </div>
+                    </div>
+                  </a>
+                }
+              </div>
+            </div>
+          }
 
           <!-- Section header -->
           <div style="display: flex; align-items: center; gap: 16px; margin: 40px 0 24px;">
