@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Company, Group } from '../models';
+import { Company, Group, Member } from '../models';
 import { isNotFoundError } from './supabase.utils';
 
 @Injectable({ providedIn: 'root' })
@@ -61,7 +61,13 @@ export class CompanyService {
     const { data, error } = await this.db
       .from('groups').select('*').eq('company_id', companyId);
     if (error) throw error;
-    // Active groups first, then disbanded — sorted in component by disbanded_at nullability
+    return data ?? [];
+  }
+
+  async getMembersByCompany(companyId: string): Promise<Member[]> {
+    const { data, error } = await this.db
+      .from('members').select('*').eq('company_id', companyId).order('name', { ascending: true });
+    if (error) throw error;
     return data ?? [];
   }
 

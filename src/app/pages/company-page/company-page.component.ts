@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
-import { Company, Group, Proposal } from '../../models';
+import { Company, Group, Member, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { ProposalService } from '../../core/proposal.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
@@ -25,6 +25,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   showDeletePanel = false;
   activeGroups: Group[] = [];
   disbandedGroups: Group[] = [];
+  soloMembers: Member[] = [];
   loading = true;
   error = false;
   lastProposal: Proposal | null = null;
@@ -53,13 +54,15 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
     try {
-      const [company, groups] = await Promise.all([
+      const [company, groups, soloMembers] = await Promise.all([
         this.companyService.getById(id),
         this.companyService.getGroupsByCompany(id),
+        this.companyService.getMembersByCompany(id),
       ]);
       this.company = company;
       this.activeGroups = groups.filter(g => !g.disbanded_at);
       this.disbandedGroups = groups.filter(g => !!g.disbanded_at);
+      this.soloMembers = soloMembers;
 
       if (company) {
         this.proposalService.getApprovedByRecord('companies', id)

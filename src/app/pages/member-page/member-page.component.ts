@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MemberService } from '../../core/member.service';
 import { HistoryService } from '../../core/history.service';
 import { GroupService } from '../../core/group.service';
+import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ViewCountService } from '../../core/view-count.service';
@@ -39,6 +40,8 @@ export class MemberPageComponent implements OnInit {
   lastProposal: Proposal | null = null;
   showEditHistory = false;
   linkCopied = false;
+  companyName: string | null = null;
+  companyId: string | null = null;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -53,6 +56,7 @@ export class MemberPageComponent implements OnInit {
     private memberService: MemberService,
     private historyService: HistoryService,
     private groupService: GroupService,
+    private companyService: CompanyService,
     private seo: SeoService,
     private proposalService: ProposalService,
     private analytics: AnalyticsService,
@@ -68,6 +72,13 @@ export class MemberPageComponent implements OnInit {
       ]);
       this.member = member;
       this.histories = histories;
+
+      if (member?.company_id) {
+        this.companyId = member.company_id;
+        this.companyService.getById(member.company_id)
+          .then(c => { this.companyName = c?.name ?? null; })
+          .catch(() => {});
+      }
 
       this.groupService.getAll().then(groups => {
         this.allGroupsList = groups.map(g => ({ id: g.id, name: g.name }))

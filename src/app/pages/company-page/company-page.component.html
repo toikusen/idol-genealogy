@@ -278,6 +278,48 @@
 
       </section>
 
+      <!-- ══ Solo members section ══ -->
+      @if (soloMembers.length > 0) {
+        <section style="margin-top: 44px;">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+            <div style="height:1px;width:20px;background:rgba(232,121,160,0.45);"></div>
+            <span style="
+              font-family:'JF Openhuninn',sans-serif;
+              font-size:0.65rem;letter-spacing:0.38em;
+              text-transform:uppercase;color:rgba(232,121,160,0.6);
+              white-space:nowrap;
+            ">旗下 Solo 藝人</span>
+            <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(232,121,160,0.2),transparent);"></div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            @for (m of soloMembers; track m.id) {
+              <a [routerLink]="['/member', m.id]" style="
+                display:inline-flex;align-items:center;gap:8px;
+                padding:6px 14px 6px 8px;border-radius:20px;
+                border:1px solid;text-decoration:none;
+                font-family:'JF Openhuninn',sans-serif;font-size:0.85rem;
+                transition:all 0.2s;
+              "
+              [style.borderColor]="(m.color || '#e879a0') + '55'"
+              [style.color]="m.color || '#e879a0'"
+              [style.background]="(m.color || '#e879a0') + '10'"
+              >
+                @if (m.photo_url) {
+                  <img [src]="m.photo_url" [alt]="m.name"
+                    style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
+                } @else {
+                  <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;"
+                    [style.background]="(m.color || '#e879a0') + '22'"
+                    [style.color]="m.color || '#e879a0'"
+                  >{{ m.name.charAt(0) }}</div>
+                }
+                {{ m.name }}
+              </a>
+            }
+          </div>
+        </section>
+      }
+
       <!-- Attribution widget -->
       @if (lastProposal) {
         <div style="

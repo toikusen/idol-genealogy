@@ -12,6 +12,7 @@ export interface Member {
   x: string | null;
   maid_url: string | null;
   notes: string | null;
+  company_id: string | null;
   updated_at: string;
   created_at: string;
 }

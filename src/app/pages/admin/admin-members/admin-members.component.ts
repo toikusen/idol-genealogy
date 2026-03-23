@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { MemberService } from '../../../core/member.service';
+import { CompanyService } from '../../../core/company.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { SupabaseService } from '../../../core/supabase.service';
 import { IgPhotoService } from '../../../core/ig-photo.service';
-import { Member } from '../../../models';
+import { Member, Company } from '../../../models';
 import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 
 @Component({
@@ -59,6 +60,7 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
   batchProgress = '';
   batchResult = '';
   isAdmin = false;
+  allCompanies: Company[] = [];
   private _sub: Subscription;
 
   birthdateMonth = 0;
@@ -73,6 +75,7 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
 
   constructor(
     private memberService: MemberService,
+    private companyService: CompanyService,
     private adminRole: AdminRoleService,
     private supabase: SupabaseService,
     private igPhoto: IgPhotoService
@@ -82,7 +85,10 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void { this._sub.unsubscribe(); }
 
-  async ngOnInit() { await this.load(); }
+  async ngOnInit() {
+    await this.load();
+    this.companyService.getAll().then(c => { this.allCompanies = c; }).catch(() => {});
+  }
 
   get filteredMembers(): Member[] {
     const q = this.searchQuery.trim().toLowerCase();
