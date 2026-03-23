@@ -54,6 +54,14 @@ export class HistoryService {
     if (error) throw error;
   }
 
+  /** Lightweight: only member_id + group_id pairs, for building filter maps */
+  async getMemberGroupLinks(): Promise<{ member_id: string; group_id: string }[]> {
+    const { data, error } = await this.db
+      .from('history').select('member_id, group_id').not('group_id', 'is', null);
+    if (error) throw error;
+    return (data ?? []) as { member_id: string; group_id: string }[];
+  }
+
   /** Get all history records for a list of member IDs (cross-group lookup) */
   async getByMembers(memberIds: string[]): Promise<History[]> {
     if (memberIds.length === 0) return [];

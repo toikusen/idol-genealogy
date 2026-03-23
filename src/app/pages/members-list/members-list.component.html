@@ -1,0 +1,338 @@
+<div style="min-height: 100vh; position: relative; overflow-x: hidden;">
+
+  <!-- Ambient background -->
+  <div style="
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 10% 0%, rgba(232,121,160,0.07) 0%, transparent 65%),
+      radial-gradient(ellipse 45% 45% at 90% 90%, rgba(124,108,242,0.06) 0%, transparent 60%);
+  "></div>
+
+  <div style="position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 0 20px 96px;">
+
+    <!-- Back + title -->
+    <div style="padding-top: 32px; margin-bottom: 32px;">
+      <a routerLink="/" style="
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 0.78rem; color: rgba(122,90,122,0.6);
+        text-decoration: none; letter-spacing: 0.05em;
+      ">← 返回首頁</a>
+
+      <div style="margin-top: 20px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+        <h1 style="
+          font-family: 'JF Openhuninn', sans-serif;
+          font-size: clamp(1.6rem, 5vw, 2.4rem);
+          font-weight: 300; color: #2d1b2e;
+          letter-spacing: 0.04em; margin: 0;
+        ">全部成員</h1>
+        @if (!loading) {
+          <span style="
+            font-family: 'JF Openhuninn', sans-serif;
+            font-size: 0.8rem; color: rgba(122,90,122,0.45);
+            letter-spacing: 0.1em;
+          ">{{ allMembers.length }} 位</span>
+        }
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 28px;
+    ">
+      <!-- Search -->
+      <div style="
+        display: flex; align-items: center; gap: 8px;
+        background: rgba(255,255,255,0.8);
+        border: 1px solid rgba(232,121,160,0.18);
+        border-radius: 8px; padding: 0 14px;
+      ">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(232,121,160,0.55)" stroke-width="1.8" style="flex-shrink:0;">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onFilterChange()"
+          placeholder="搜尋姓名…"
+          style="
+            border: none; outline: none; background: transparent;
+            padding: 11px 0;
+            font-family: 'JF Openhuninn', sans-serif;
+            font-size: 0.9rem; color: #2d1b2e; width: 100%;
+          "
+        />
+      </div>
+
+      <!-- Group filter (searchable dropdown) -->
+      <div style="position:relative;">
+
+        <!-- Trigger button -->
+        <button
+          type="button"
+          (click)="groupDropdownOpen = !groupDropdownOpen"
+          style="
+            width:100%; height:100%; display:flex; align-items:center; justify-content:space-between; gap:8px;
+            background:rgba(255,255,255,0.8);
+            border:1px solid rgba(232,121,160,0.18);
+            border-radius:8px; padding:11px 14px;
+            font-family:'JF Openhuninn',sans-serif;
+            font-size:0.9rem; cursor:pointer; outline:none;
+          "
+          [style.color]="selectedGroupId ? '#2d1b2e' : 'rgba(122,90,122,0.5)'"
+        >
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ selectedGroupName }}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(122,90,122,0.4)" stroke-width="2" style="flex-shrink:0;transition:transform 0.15s;"
+            [style.transform]="groupDropdownOpen ? 'rotate(180deg)' : 'rotate(0)'">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown panel -->
+        @if (groupDropdownOpen) {
+          <!-- Backdrop to close -->
+          <div
+            style="position:fixed;inset:0;z-index:10;"
+            (click)="groupDropdownOpen = false"
+          ></div>
+
+          <div style="
+            position:absolute; top:calc(100% + 4px); left:0; right:0;
+            background:white;
+            border:1px solid rgba(232,121,160,0.2);
+            border-radius:10px;
+            box-shadow:0 8px 24px rgba(45,27,46,0.1);
+            z-index:20; overflow:hidden;
+            min-width:200px;
+          ">
+            <!-- Search input inside dropdown -->
+            <div style="padding:8px; border-bottom:1px solid rgba(232,121,160,0.1);">
+              <div style="display:flex;align-items:center;gap:6px;background:rgba(232,121,160,0.05);border-radius:6px;padding:6px 10px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(232,121,160,0.5)" stroke-width="2" style="flex-shrink:0;">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input
+                  type="text"
+                  [(ngModel)]="groupSearch"
+                  placeholder="搜尋團體…"
+                  (click)="$event.stopPropagation()"
+                  style="
+                    border:none;outline:none;background:transparent;
+                    font-family:'JF Openhuninn',sans-serif;
+                    font-size:0.85rem;color:#2d1b2e;width:100%;
+                  "
+                  autofocus
+                />
+              </div>
+            </div>
+
+            <!-- Options list -->
+            <div style="max-height:240px;overflow-y:auto;">
+              <!-- Clear option -->
+              <div
+                (click)="selectGroup('')"
+                style="
+                  padding:9px 14px;cursor:pointer;
+                  font-family:'JF Openhuninn',sans-serif;font-size:0.85rem;
+                  transition:background 0.1s;
+                "
+                [style.background]="!selectedGroupId ? 'rgba(232,121,160,0.08)' : ''"
+                [style.color]="!selectedGroupId ? '#c05080' : 'rgba(122,90,122,0.55)'"
+                onmouseover="this.style.background='rgba(232,121,160,0.06)'"
+                onmouseout="this.style.background='';"
+              >全部團體</div>
+
+              @for (g of filteredGroupOptions; track g.id) {
+                <div
+                  (click)="selectGroup(g.id)"
+                  style="
+                    padding:9px 14px;cursor:pointer;
+                    font-family:'JF Openhuninn',sans-serif;font-size:0.85rem;
+                    display:flex;align-items:center;gap:8px;
+                    transition:background 0.1s;
+                  "
+                  [style.background]="g.id === selectedGroupId ? 'rgba(232,121,160,0.08)' : ''"
+                  [style.color]="g.id === selectedGroupId ? '#c05080' : '#2d1b2e'"
+                  onmouseover="this.style.background='rgba(232,121,160,0.06)'"
+                  onmouseout="this.style.background='';"
+                >
+                  <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;"
+                    [style.background]="g.color || '#e879a0'"></span>
+                  {{ g.name }}
+                  @if (g.disbanded_at) {
+                    <span style="font-size:0.65rem;color:rgba(122,90,122,0.4);margin-left:auto;">解散</span>
+                  }
+                </div>
+              }
+
+              @if (filteredGroupOptions.length === 0) {
+                <div style="padding:16px 14px;text-align:center;font-family:'JF Openhuninn',sans-serif;font-size:0.82rem;color:rgba(122,90,122,0.4);">
+                  查無結果
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (loading) {
+      <div style="display:flex;justify-content:center;padding:80px 0;">
+        <div style="
+          width:32px;height:32px;border-radius:50%;
+          border:2px solid rgba(232,121,160,0.15);
+          border-top-color:rgba(232,121,160,0.6);
+          animation:spin 0.8s linear infinite;
+        "></div>
+      </div>
+    }
+
+    <!-- Empty -->
+    @if (!loading && filteredMembers.length === 0) {
+      <div style="text-align:center;padding:80px 0;">
+        <p style="font-family:'JF Openhuninn',sans-serif;font-size:1rem;color:rgba(122,90,122,0.45);">查無結果</p>
+      </div>
+    }
+
+    <!-- Grid -->
+    @if (!loading && filteredMembers.length > 0) {
+      <div style="
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 12px;
+        margin-bottom: 36px;
+      ">
+        @for (m of pagedMembers; track m.id) {
+          <a [routerLink]="['/member', m.id]" style="
+            display: flex; flex-direction: column; align-items: center;
+            padding: 16px 10px 12px;
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(232,121,160,0.1);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+            gap: 8px;
+          "
+          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(45,27,46,0.08)';this.style.borderColor='rgba(232,121,160,0.25)';"
+          onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='rgba(232,121,160,0.1)';"
+          >
+            <!-- Avatar -->
+            @if (m.photo_url) {
+              <img [src]="m.photo_url" [alt]="m.name" style="
+                width: 64px; height: 64px; border-radius: 50%;
+                object-fit: cover; flex-shrink: 0;
+                box-shadow: 0 2px 8px rgba(45,27,46,0.12);
+              "/>
+            } @else {
+              <div style="
+                width: 64px; height: 64px; border-radius: 50%;
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'JF Openhuninn', sans-serif;
+                font-size: 1.4rem; font-weight: 300;
+                flex-shrink: 0;
+              "
+              [style.background]="(m.color || '#e879a0') + '18'"
+              [style.color]="m.color || '#e879a0'"
+              >{{ getInitial(m) }}</div>
+            }
+
+            <!-- Color dot -->
+            @if (m.color) {
+              <div style="
+                width: 6px; height: 6px; border-radius: 50%;
+                margin-top: -4px; flex-shrink: 0;
+              " [style.background]="m.color"></div>
+            }
+
+            <!-- Name -->
+            <div style="
+              font-family: 'JF Openhuninn', sans-serif;
+              font-size: 0.85rem; font-weight: 500;
+              color: #2d1b2e; letter-spacing: 0.04em;
+              text-align: center; line-height: 1.3;
+              word-break: break-all;
+            ">{{ m.name }}</div>
+
+            @if (m.name_roman) {
+              <div style="
+                font-family: 'JF Openhuninn', sans-serif;
+                font-size: 0.68rem; font-style: italic;
+                color: rgba(122,90,122,0.45);
+                text-align: center; line-height: 1.3;
+                overflow: hidden; text-overflow: ellipsis;
+                white-space: nowrap; max-width: 100%;
+              ">{{ m.name_roman }}</div>
+            }
+
+          </a>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;">
+
+          <button
+            (click)="setPage(currentPage - 1)"
+            [disabled]="currentPage === 1"
+            style="
+              padding: 7px 14px; border-radius: 8px;
+              border: 1px solid rgba(232,121,160,0.25);
+              background: rgba(255,255,255,0.7);
+              font-family: 'JF Openhuninn', sans-serif;
+              font-size: 0.82rem; color: #7a5a7a;
+              cursor: pointer; transition: all 0.15s;
+              disabled:opacity:0.35;
+            "
+            [style.opacity]="currentPage === 1 ? '0.35' : '1'"
+          >← 上一頁</button>
+
+          @for (p of pageNumbers; track p) {
+            <button
+              (click)="setPage(p)"
+              style="
+                width: 36px; height: 36px; border-radius: 8px;
+                border: 1px solid;
+                font-family: 'JF Openhuninn', sans-serif;
+                font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
+              "
+              [style.borderColor]="p === currentPage ? 'rgba(232,121,160,0.6)' : 'rgba(232,121,160,0.2)'"
+              [style.background]="p === currentPage ? 'rgba(232,121,160,0.12)' : 'rgba(255,255,255,0.7)'"
+              [style.color]="p === currentPage ? '#c05080' : '#7a5a7a'"
+              [style.fontWeight]="p === currentPage ? '600' : '400'"
+            >{{ p }}</button>
+          }
+
+          <button
+            (click)="setPage(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+            style="
+              padding: 7px 14px; border-radius: 8px;
+              border: 1px solid rgba(232,121,160,0.25);
+              background: rgba(255,255,255,0.7);
+              font-family: 'JF Openhuninn', sans-serif;
+              font-size: 0.82rem; color: #7a5a7a;
+              cursor: pointer; transition: all 0.15s;
+            "
+            [style.opacity]="currentPage === totalPages ? '0.35' : '1'"
+          >下一頁 →</button>
+
+        </div>
+
+        <!-- Page info -->
+        <p style="
+          text-align: center; margin-top: 14px;
+          font-family: 'JF Openhuninn', sans-serif;
+          font-size: 0.72rem; color: rgba(122,90,122,0.4);
+          letter-spacing: 0.08em;
+        ">第 {{ currentPage }} 頁，共 {{ totalPages }} 頁・{{ filteredMembers.length }} 位成員</p>
+      }
+    }
+
+  </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>

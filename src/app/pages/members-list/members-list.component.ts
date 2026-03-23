@@ -1,0 +1,132 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { MemberService } from '../../core/member.service';
+import { GroupService } from '../../core/group.service';
+import { HistoryService } from '../../core/history.service';
+import { SeoService } from '../../core/seo.service';
+import { Member, Group } from '../../models';
+
+const SITE_URL = 'https://idolmaps.com';
+const PAGE_SIZE = 36;
+
+@Component({
+  selector: 'app-members-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
+  templateUrl: './members-list.component.html',
+})
+export class MembersListComponent implements OnInit {
+  allMembers: Member[] = [];
+  allGroups: Group[] = [];
+  /** group_id → Set of member_ids */
+  private groupMemberIds = new Map<string, Set<string>>();
+  loading = true;
+
+  searchQuery = '';
+  selectedGroupId = '';
+  currentPage = 1;
+  groupDropdownOpen = false;
+  groupSearch = '';
+
+  constructor(
+    private memberService: MemberService,
+    private groupService: GroupService,
+    private historyService: HistoryService,
+    private seo: SeoService,
+  ) {}
+
+  async ngOnInit() {
+    this.seo.setPage(
+      '全部成員 - Idol Maps',
+      '台灣地下偶像所有成員一覽。',
+      `${SITE_URL}/members`
+    );
+    try {
+      const [members, groups, links] = await Promise.all([
+        this.memberService.getAll(),
+        this.groupService.getAll(),
+        this.historyService.getMemberGroupLinks(),
+      ]);
+      this.allMembers = [...members].sort((a, b) =>
+        (a.name_roman ?? a.name).localeCompare(b.name_roman ?? b.name, 'zh-TW')
+      );
+      this.allGroups = [...groups].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+      for (const { member_id, group_id } of links) {
+        if (!this.groupMemberIds.has(group_id)) this.groupMemberIds.set(group_id, new Set());
+        this.groupMemberIds.get(group_id)!.add(member_id);
+      }
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  get filteredMembers(): Member[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    const groupSet = this.selectedGroupId ? this.groupMemberIds.get(this.selectedGroupId) : null;
+    return this.allMembers.filter(m => {
+      const matchSearch = !q ||
+        m.name.toLowerCase().includes(q) ||
+        (m.name_roman ?? '').toLowerCase().includes(q) ||
+        (m.nickname ?? '').toLowerCase().includes(q);
+      const matchGroup = !groupSet || groupSet.has(m.id);
+      return matchSearch && matchGroup;
+    });
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredMembers.length / PAGE_SIZE));
+  }
+
+  get pagedMembers(): Member[] {
+    const start = (this.currentPage - 1) * PAGE_SIZE;
+    return this.filteredMembers.slice(start, start + PAGE_SIZE);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const window = 5;
+    let start = Math.max(1, this.currentPage - Math.floor(window / 2));
+    let end = start + window - 1;
+    if (end > total) { end = total; start = Math.max(1, end - window + 1); }
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  onFilterChange() {
+    this.currentPage = 1;
+  }
+
+  get filteredGroupOptions(): Group[] {
+    const q = this.groupSearch.trim().toLowerCase();
+    if (!q) return this.allGroups;
+    return this.allGroups.filter(g =>
+      g.name.toLowerCase().includes(q) ||
+      (g.name_jp ?? '').toLowerCase().includes(q)
+    );
+  }
+
+  get selectedGroupName(): string {
+    if (!this.selectedGroupId) return '全部團體';
+    return this.allGroups.find(g => g.id === this.selectedGroupId)?.name ?? '全部團體';
+  }
+
+  selectGroup(id: string) {
+    this.selectedGroupId = id;
+    this.groupDropdownOpen = false;
+    this.groupSearch = '';
+    this.onFilterChange();
+  }
+
+  setPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  getInitial(m: Member): string {
+    return (m.name_roman ?? m.name).charAt(0).toUpperCase();
+  }
+}
