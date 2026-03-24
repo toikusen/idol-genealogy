@@ -132,7 +132,7 @@ export interface AuditLog {
 
 export interface Proposal {
   id: string;
-  table_name: 'members' | 'groups' | 'history' | 'companies';
+  table_name: 'members' | 'groups' | 'history' | 'companies' | 'group_songs' | 'member_songs';
   record_id: string | null;
   operation: 'INSERT' | 'UPDATE' | 'DELETE';
   proposed_data: Record<string, any>;
@@ -164,4 +164,38 @@ export interface GroupLeaderboardEntry {
   photo_url: string | null;
   color: string | null;
   view_count: number;
+}
+
+export interface MemberSong {
+  id: string;
+  member_id: string;
+  title: string;
+  release_date: string | null;
+  youtube_url: string | null;
+  composer: string | null;
+  lyricist: string | null;
+  arranger: string | null;
+  notes: string | null;
+  sort_order: number;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+export interface GroupSong {
+  id: string;
+  group_id: string;
+  title: string;
+  release_date: string | null;
+  youtube_url: string | null;
+  composer: string | null;
+  lyricist: string | null;
+  arranger: string | null;
+  notes: string | null;
+  sort_order: number;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
 }

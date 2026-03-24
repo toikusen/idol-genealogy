@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
 import { MemberService } from '../../core/member.service';
@@ -19,6 +20,10 @@ import { ProposalService } from '../../core/proposal.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
+import { GroupSongService } from '../../core/group-song.service';
+import { SupabaseService } from '../../core/supabase.service';
+import { AdminRoleService } from '../../core/admin-role.service';
+import { GroupSong } from '../../models';
 
 interface GanttRow {
   history: History;
@@ -32,7 +37,7 @@ const SITE_URL = 'https://idolmaps.com';
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent],
+  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent],
   templateUrl: './group-page.component.html',
 })
 export class GroupPageComponent implements OnInit, OnDestroy {
@@ -47,7 +52,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   playingVideoId: string | null = null;
   loading = true;
   error = false;
-  activeTab: 'members' | 'connections' = 'members';
+  activeTab: 'members' | 'connections' | 'songs' = 'members';
   showGroupProposalPanel = false;
   showDeletePanel = false;
   proposalHistoryEntry: History | null = null;
@@ -56,6 +61,24 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   showEditHistory = false;
   linkCopied = false;
   allMembers: { id: string; name: string }[] = [];
+
+  // Songs tab
+  songs: GroupSong[] = [];
+  songsLoading = false;
+  isLoggedIn = false;
+  isAdmin = false;
+  currentUserId: string | null = null;
+  showAddSongForm = false;
+  editingSong: GroupSong | null = null;
+  songFormData: Partial<GroupSong> = {};
+  songSaving = false;
+  songError = '';
+  reportingSong: GroupSong | null = null;
+  songReportNote = '';
+  songReporterName = '';
+  songReportSubmitting = false;
+  songReportError = '';
+  songReportDone = false;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -79,9 +102,17 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private proposalService: ProposalService,
     private analytics: AnalyticsService,
     private viewCount: ViewCountService,
+    private groupSongService: GroupSongService,
+    private supabaseAuth: SupabaseService,
+    private adminRole: AdminRoleService,
   ) {}
 
   ngOnInit() {
+    this.supabaseAuth.authState$.subscribe(s => {
+      this.isLoggedIn = !!s?.user;
+      this.currentUserId = s?.user?.id ?? null;
+    });
+    this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
     this._routeSub = this.route.paramMap.subscribe(params => {
       this.load(params.get('id')!);
     });
@@ -101,6 +132,10 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.similarGroups = [];
     this.allMemberHistories = [];
     this.activeTab = 'members';
+    this.songs = [];
+    this.showAddSongForm = false;
+    this.editingSong = null;
+    this.songError = '';
     try {
       const [group, teams, histories, videos] = await Promise.all([
         this.groupService.getById(id),
@@ -133,6 +168,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       if (group?.style) {
         this.similarGroups = await this.groupService.getSimilarByStyle(group.style, id);
       }
+      this.groupSongService.getByGroup(id)
+        .then(songs => { this.songs = songs; })
+        .catch(() => {});
 
       if (group) {
         const displayName = group.name_jp ?? group.name;
@@ -263,6 +301,129 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         this.ganttYears.push({ label: String(y), leftPct: pct });
       }
     }
+  }
+
+  openAddSong() {
+    this.editingSong = null;
+    const maxOrder = this.songs.reduce((m, s) => Math.max(m, s.sort_order ?? 0), 0);
+    this.songFormData = { group_id: this.group!.id, sort_order: maxOrder + 1 };
+    this.showAddSongForm = true;
+    this.songError = '';
+  }
+
+  openEditSong(song: GroupSong) {
+    this.editingSong = song;
+    this.songFormData = { ...song };
+    this.showAddSongForm = true;
+    this.songError = '';
+  }
+
+  cancelSongForm() {
+    this.showAddSongForm = false;
+    this.editingSong = null;
+    this.songFormData = {};
+    this.songError = '';
+  }
+
+  async saveSong() {
+    if (!this.songFormData.title?.trim()) { this.songError = '請輸入歌曲名稱'; return; }
+    if (!this.songFormData.sort_order || this.songFormData.sort_order < 1) { this.songError = '請輸入第幾首單曲（最小為 1）'; return; }
+    this.songSaving = true;
+    this.songError = '';
+    try {
+      const id = this.route.snapshot.paramMap.get('id')!;
+      if (this.editingSong) {
+        const updated = await this.groupSongService.update(this.editingSong.id, {
+          title: this.songFormData.title,
+          release_date: this.songFormData.release_date || null,
+          youtube_url: this.songFormData.youtube_url || null,
+          composer: this.songFormData.composer || null,
+          lyricist: this.songFormData.lyricist || null,
+          arranger: this.songFormData.arranger || null,
+          notes: this.songFormData.notes || null,
+          sort_order: this.songFormData.sort_order ?? 0,
+        });
+        this.songs = this.songs.map(s => s.id === updated.id ? updated : s)
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      } else {
+        const created = await this.groupSongService.create({
+          group_id: id,
+          title: this.songFormData.title,
+          release_date: this.songFormData.release_date || null,
+          youtube_url: this.songFormData.youtube_url || null,
+          composer: this.songFormData.composer || null,
+          lyricist: this.songFormData.lyricist || null,
+          arranger: this.songFormData.arranger || null,
+          notes: this.songFormData.notes || null,
+          sort_order: this.songFormData.sort_order ?? 0,
+        });
+        this.songs = [...this.songs, created]
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      }
+      this.cancelSongForm();
+    } catch (e: any) {
+      this.songError = e.message ?? '儲存失敗';
+    } finally {
+      this.songSaving = false;
+    }
+  }
+
+  async deleteSong(song: GroupSong) {
+    if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
+    try {
+      await this.groupSongService.delete(song.id);
+      this.songs = this.songs.filter(s => s.id !== song.id);
+    } catch (e: any) {
+      alert(e.message ?? '刪除失敗');
+    }
+  }
+
+  canEditSong(song: GroupSong): boolean {
+    return this.isAdmin || (!!this.currentUserId && song.created_by === this.currentUserId);
+  }
+
+  startReportSong(song: GroupSong) {
+    this.reportingSong = song;
+    this.songReportNote = '';
+    this.songReporterName = '';
+    this.songReportError = '';
+    this.songReportDone = false;
+  }
+
+  cancelSongReport() {
+    this.reportingSong = null;
+  }
+
+  async submitSongReport() {
+    if (!this.songReportNote.trim()) { this.songReportError = '請說明問題'; return; }
+    this.songReportSubmitting = true;
+    this.songReportError = '';
+    try {
+      const session = await this.supabaseAuth.getSessionOnce();
+      await this.proposalService.submit({
+        table_name: 'group_songs',
+        record_id: this.reportingSong!.id,
+        operation: 'UPDATE',
+        proposed_data: {},
+        original_data: null,
+        submitter_id: session?.user?.id ?? null,
+        submitter_name: this.songReporterName.trim() || (session?.user?.email ?? '匿名'),
+        submitter_email: session?.user?.email ?? null,
+        submitter_note: this.songReportNote.trim(),
+      });
+      this.songReportDone = true;
+      setTimeout(() => { this.reportingSong = null; this.songReportDone = false; }, 2000);
+    } catch (e: any) {
+      this.songReportError = e.message ?? '送出失敗';
+    } finally {
+      this.songReportSubmitting = false;
+    }
+  }
+
+  extractYouTubeThumbnail(url: string | null): string | null {
+    if (!url) return null;
+    const id = this.extractYouTubeId(url);
+    return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null;
   }
 
   get groupMembersList(): { id: string; name: string }[] {

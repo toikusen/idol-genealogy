@@ -12,18 +12,22 @@ import { MemberTimelineComponent } from '../../shared/member-timeline/member-tim
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { MemberCareerGraphComponent } from '../../shared/member-career-graph/member-career-graph.component';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
-import { Member, History, Proposal } from '../../models';
+import { Member, History, Proposal, MemberSong } from '../../models';
 import { ProposalService } from '../../core/proposal.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
+import { MemberSongService } from '../../core/member-song.service';
+import { SupabaseService } from '../../core/supabase.service';
+import { AdminRoleService } from '../../core/admin-role.service';
+import { FormsModule } from '@angular/forms';
 
 const SITE_URL = 'https://idolmaps.com';
 
 @Component({
   selector: 'app-member-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent],
   templateUrl: './member-page.component.html',
 })
 export class MemberPageComponent implements OnInit {
@@ -43,6 +47,23 @@ export class MemberPageComponent implements OnInit {
   companyName: string | null = null;
   companyId: string | null = null;
 
+  // Songs section
+  memberSongs: MemberSong[] = [];
+  isLoggedIn = false;
+  isAdmin = false;
+  currentUserId: string | null = null;
+  showAddSongForm = false;
+  editingSong: MemberSong | null = null;
+  songFormData: Partial<MemberSong> = {};
+  songSaving = false;
+  songError = '';
+  reportingSong: MemberSong | null = null;
+  songReportNote = '';
+  songReporterName = '';
+  songReportSubmitting = false;
+  songReportError = '';
+  songReportDone = false;
+
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
   }
@@ -61,9 +82,18 @@ export class MemberPageComponent implements OnInit {
     private proposalService: ProposalService,
     private analytics: AnalyticsService,
     private viewCount: ViewCountService,
+    private memberSongService: MemberSongService,
+    private supabaseAuth: SupabaseService,
+    private adminRole: AdminRoleService,
   ) {}
 
   async ngOnInit() {
+    this.supabaseAuth.authState$.subscribe(s => {
+      this.isLoggedIn = !!s?.user;
+      this.currentUserId = s?.user?.id ?? null;
+    });
+    this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
+
     const id = this.route.snapshot.paramMap.get('id')!;
     try {
       const [member, histories] = await Promise.all([
@@ -121,13 +151,143 @@ export class MemberPageComponent implements OnInit {
       if (member) {
         this.proposalService.getApprovedByRecord('members', id)
           .then(proposals => { this.lastProposal = proposals[0] ?? null; })
-          .catch(() => {}); // silently ignore — attribution is non-critical
+          .catch(() => {});
       }
+
+      this.memberSongService.getByMember(id)
+        .then(songs => { this.memberSongs = songs; })
+        .catch(() => {});
     } catch {
       this.error = true;
     } finally {
       this.loading = false;
     }
+  }
+
+  canEditSong(song: MemberSong): boolean {
+    return this.isAdmin || (!!this.currentUserId && song.created_by === this.currentUserId);
+  }
+
+  openAddSong() {
+    this.editingSong = null;
+    const maxOrder = this.memberSongs.reduce((m, s) => Math.max(m, s.sort_order ?? 0), 0);
+    this.songFormData = { member_id: this.member!.id, sort_order: maxOrder + 1 };
+    this.showAddSongForm = true;
+    this.songError = '';
+  }
+
+  openEditSong(song: MemberSong) {
+    this.editingSong = song;
+    this.songFormData = { ...song };
+    this.showAddSongForm = true;
+    this.songError = '';
+  }
+
+  cancelSongForm() {
+    this.showAddSongForm = false;
+    this.editingSong = null;
+    this.songFormData = {};
+    this.songError = '';
+  }
+
+  async saveSong() {
+    if (!this.songFormData.title?.trim()) { this.songError = '請輸入歌曲名稱'; return; }
+    if (!this.songFormData.sort_order || this.songFormData.sort_order < 1) { this.songError = '請輸入第幾首單曲（最小為 1）'; return; }
+    this.songSaving = true;
+    this.songError = '';
+    try {
+      const memberId = this.route.snapshot.paramMap.get('id')!;
+      if (this.editingSong) {
+        const updated = await this.memberSongService.update(this.editingSong.id, {
+          title: this.songFormData.title,
+          release_date: this.songFormData.release_date || null,
+          youtube_url: this.songFormData.youtube_url || null,
+          composer: this.songFormData.composer || null,
+          lyricist: this.songFormData.lyricist || null,
+          arranger: this.songFormData.arranger || null,
+          notes: this.songFormData.notes || null,
+          sort_order: this.songFormData.sort_order ?? 1,
+        });
+        this.memberSongs = this.memberSongs.map(s => s.id === updated.id ? updated : s)
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      } else {
+        const created = await this.memberSongService.create({
+          member_id: memberId,
+          title: this.songFormData.title,
+          release_date: this.songFormData.release_date || null,
+          youtube_url: this.songFormData.youtube_url || null,
+          composer: this.songFormData.composer || null,
+          lyricist: this.songFormData.lyricist || null,
+          arranger: this.songFormData.arranger || null,
+          notes: this.songFormData.notes || null,
+          sort_order: this.songFormData.sort_order ?? 1,
+        });
+        this.memberSongs = [...this.memberSongs, created]
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      }
+      this.cancelSongForm();
+    } catch (e: any) {
+      this.songError = e.message ?? '儲存失敗';
+    } finally {
+      this.songSaving = false;
+    }
+  }
+
+  async deleteSong(song: MemberSong) {
+    if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
+    try {
+      await this.memberSongService.delete(song.id);
+      this.memberSongs = this.memberSongs.filter(s => s.id !== song.id);
+    } catch (e: any) {
+      alert(e.message ?? '刪除失敗');
+    }
+  }
+
+  startReportSong(song: MemberSong) {
+    this.reportingSong = song;
+    this.songReportNote = '';
+    this.songReporterName = '';
+    this.songReportError = '';
+    this.songReportDone = false;
+  }
+
+  cancelSongReport() { this.reportingSong = null; }
+
+  async submitSongReport() {
+    if (!this.songReportNote.trim()) { this.songReportError = '請說明問題'; return; }
+    this.songReportSubmitting = true;
+    this.songReportError = '';
+    try {
+      const session = await this.supabaseAuth.getSessionOnce();
+      await this.proposalService.submit({
+        table_name: 'member_songs',
+        record_id: this.reportingSong!.id,
+        operation: 'UPDATE',
+        proposed_data: {},
+        original_data: null,
+        submitter_id: session?.user?.id ?? null,
+        submitter_name: this.songReporterName.trim() || (session?.user?.email ?? '匿名'),
+        submitter_email: session?.user?.email ?? null,
+        submitter_note: this.songReportNote.trim(),
+      });
+      this.songReportDone = true;
+      setTimeout(() => { this.reportingSong = null; this.songReportDone = false; }, 2000);
+    } catch (e: any) {
+      this.songReportError = e.message ?? '送出失敗';
+    } finally {
+      this.songReportSubmitting = false;
+    }
+  }
+
+  extractYouTubeId(url: string): string | null {
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  extractYouTubeThumbnail(url: string | null): string | null {
+    if (!url) return null;
+    const id = this.extractYouTubeId(url);
+    return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null;
   }
 
   getInitial(member: Member): string {
