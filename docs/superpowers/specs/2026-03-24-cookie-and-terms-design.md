@@ -22,7 +22,7 @@
 - 首次造訪時顯示
 - 點「我了解，繼續瀏覽」後：
   - 寫入 `localStorage.setItem('cookie_consent', 'accepted')`
-  - 元件隱藏（`ngIf` 控制）
+  - 元件隱藏（Angular 19 `@if (showBanner)` 控制流）
 - 頁面重整後讀取 localStorage，若已同意則不顯示
 
 ### 整合
@@ -45,7 +45,7 @@
 - 按鈕：`linear-gradient(135deg, #e879a0, #c84a87)`，白色文字
 - 隱私權政策：`color: #e879a0`，連結至 `/privacy`
 - 位置：`position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%)`
-- z-index：100（高於一般內容，低於 modal）
+- z-index：999（確保高於現有的 login badge z-index: 1000 之下，但高於一般內容；login badge 在左下角，與置中卡片不重疊）
 - 行動裝置（< 640px）：`left: 12px; right: 12px; transform: none; bottom: 12px`
 
 ---
@@ -57,7 +57,7 @@
 - 路徑：`/terms`
 - Component：`src/app/pages/terms/terms.component.ts` + `.html`
 - 加入 `app.routes.ts` lazy load
-- 加入 SEO：`seo.setPage('使用條款 | Idol Maps', '...', 'https://idolmaps.com/terms')`
+- 加入 SEO：`seo.setPage('使用條款 | Idol Maps', 'Idol Maps 服務使用條款，包含使用規範、投稿授權、廣告聲明與免責聲明。', 'https://idolmaps.com/terms')`
 
 ### 內容章節（繁體中文）
 
@@ -90,16 +90,20 @@
 7. **條款變更**
    - 本站保留隨時修改條款的權利，修改後繼續使用即表示同意
 
+8. **聯絡我們**
+   - 如對本條款有任何疑問，請至 [聯絡我們](/contact) 頁面與我們聯繫
+
 ### 頁面樣式
 
 沿用現有頁面風格（與 `/privacy` 頁面相同的版型）：
 - `font-family: 'JF Openhuninn'`
 - 章節標題用粉紅色
-- 最後更新日期顯示於頂部
+- 最後更新日期顯示於頂部（`terms.component.ts` 需加入 `today = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })`）
 
 ### 連結入口
 
-在 `/privacy` 頁面底部加入「使用條款」連結（`routerLink="/terms"`）
+- `/privacy` 頁面底部加入「使用條款」連結（`routerLink="/terms"`）
+- Cookie 橫幅的「隱私權政策」連結旁補上「使用條款」連結，提升 AdSense 審核員的頁面可發現性
 
 ---
 
