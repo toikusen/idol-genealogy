@@ -5,7 +5,8 @@ import { RouterLink } from '@angular/router';
   selector: 'app-cookie-banner',
   standalone: true,
   imports: [RouterLink],
-  templateUrl: './cookie-banner.component.html'
+  templateUrl: './cookie-banner.component.html',
+  styleUrl: './cookie-banner.component.css'
 })
 export class CookieBannerComponent {
   showBanner = typeof localStorage !== 'undefined'
@@ -13,7 +14,9 @@ export class CookieBannerComponent {
     : false;
 
   accept(): void {
-    localStorage.setItem('cookie_consent', 'accepted');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('cookie_consent', 'accepted');
+    }
     this.showBanner = false;
   }
 }
