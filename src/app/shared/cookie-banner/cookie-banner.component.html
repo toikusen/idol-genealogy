@@ -1,0 +1,59 @@
+@if (showBanner) {
+  <div class="cookie-banner">
+    <p style="
+      font-size: 0.85rem;
+      color: #2d1b2e;
+      line-height: 1.7;
+      margin: 0 0 16px;
+    ">
+      本網站使用 Cookie 以提升瀏覽體驗及顯示相關廣告。繼續使用即表示您同意我們的
+      <a routerLink="/privacy" style="color: #e879a0; text-decoration: none;">隱私權政策</a>
+      及
+      <a routerLink="/terms" style="color: #e879a0; text-decoration: none;">使用條款</a>。
+    </p>
+    <button
+      (click)="accept()"
+      style="
+        background: linear-gradient(135deg, #e879a0, #c84a87);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 24px;
+        font-size: 0.85rem;
+        font-family: 'JF Openhuninn', sans-serif;
+        cursor: pointer;
+        width: 100%;
+        letter-spacing: 0.05em;
+      "
+    >我了解，繼續瀏覽</button>
+  </div>
+}
+
+<style>
+.cookie-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  background: #fff;
+  border: 1px solid rgba(232,121,160,0.25);
+  border-radius: 12px;
+  padding: 20px 24px;
+  max-width: 26rem;
+  width: calc(100% - 48px);
+  box-shadow: 0 4px 20px rgba(30,10,30,0.1);
+  text-align: center;
+  font-family: 'JF Openhuninn', sans-serif;
+}
+
+@media (max-width: 640px) {
+  .cookie-banner {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    transform: none;
+    width: auto;
+  }
+}
+</style>
