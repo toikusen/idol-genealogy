@@ -6,10 +6,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SupabaseService } from './core/supabase.service';
 import { AdminRoleService } from './core/admin-role.service';
 import { AnalyticsService } from './core/analytics.service';
+import { CookieBannerComponent } from './shared/cookie-banner/cookie-banner.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, AsyncPipe],
+  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent],
   templateUrl: './app.component.html',
 })
 export class AppComponent {
