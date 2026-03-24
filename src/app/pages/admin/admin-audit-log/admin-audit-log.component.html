@@ -7,7 +7,7 @@
       class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300">
       <option value="">全部資料表</option>
       @for (t of tableOptions; track t) {
-        <option [value]="t">{{ t }}</option>
+        <option [value]="t">{{ tableLabel(t) }}</option>
       }
     </select>
     <select [(ngModel)]="filterOperation" (change)="load()"
@@ -37,7 +37,8 @@
           <tr>
             <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">時間</th>
             <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">操作者</th>
-            <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">資料表</th>
+            <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">類別</th>
+            <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">對象</th>
             <th class="px-4 py-3 text-left text-xs text-gray-500 font-medium">操作</th>
             <th class="px-4 py-3 text-right text-xs text-gray-500 font-medium">還原</th>
           </tr>
@@ -55,7 +56,8 @@
               <td class="px-4 py-3 text-gray-600 text-xs">
                 {{ getOperatorName(log) }}
               </td>
-              <td class="px-4 py-3 text-gray-600 text-xs font-mono">{{ log.table_name }}</td>
+              <td class="px-4 py-3 text-gray-600 text-xs">{{ tableLabel(log.table_name) }}</td>
+              <td class="px-4 py-3 text-gray-700 text-xs font-medium">{{ getRecordLabel(log) }}</td>
               <td class="px-4 py-3">
                 <span class="px-2 py-0.5 rounded-full text-xs font-medium" [ngClass]="operationClass(log.operation)">
                   {{ operationLabel(log.operation) }}
@@ -93,7 +95,7 @@
             <!-- Expanded diff row -->
             @if (expandedId === log.id) {
               <tr class="bg-gray-50">
-                <td colspan="5" class="px-6 py-4">
+                <td colspan="6" class="px-6 py-4">
                   @let diffs = getDiff(log);
                   @if (diffs.length === 0) {
                     <span class="text-xs text-gray-400">無欄位差異</span>
@@ -109,9 +111,9 @@
                       <tbody>
                         @for (d of diffs; track d.field) {
                           <tr class="border-t border-gray-100">
-                            <td class="py-1 pr-4 font-mono text-gray-500">{{ d.field }}</td>
-                            <td class="py-1 pr-4 text-red-600 font-mono">{{ d.before ?? '—' }}</td>
-                            <td class="py-1 text-green-700 font-mono">{{ d.after ?? '—' }}</td>
+                            <td class="py-1 pr-4 text-gray-500">{{ d.label }}</td>
+                            <td class="py-1 pr-4 text-red-600">{{ d.before }}</td>
+                            <td class="py-1 text-green-700">{{ d.after }}</td>
                           </tr>
                         }
                       </tbody>
