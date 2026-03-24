@@ -25,6 +25,14 @@ export class SeoService {
     this.meta.updateTag({ name: 'twitter:title', content: pageTitle });
     this.meta.updateTag({ name: 'twitter:description', content: description });
     this.meta.updateTag({ name: 'twitter:image', content: ogImage });
+    // canonical
+    let link = this.doc.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!link) {
+      link = this.doc.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      this.doc.head.appendChild(link);
+    }
+    link.setAttribute('href', url);
   }
 
   setJsonLd(data: object): void {
@@ -33,6 +41,19 @@ export class SeoService {
     script.type = 'application/ld+json';
     script.id = 'ld-json';
     script.textContent = JSON.stringify(data);
+    this.doc.head.appendChild(script);
+  }
+
+  /** Inject multiple JSON-LD schemas as a @graph block */
+  setJsonLdGraph(schemas: object[]): void {
+    this.clearJsonLd();
+    const script = this.doc.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'ld-json';
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': schemas,
+    });
     this.doc.head.appendChild(script);
   }
 
