@@ -116,29 +116,65 @@ export class MemberPageComponent implements OnInit {
       }).catch(() => {});
 
       if (member) {
-        const displayName = member.name_roman ?? member.name;
+        const displayName = member.name ?? member.name_roman ?? '';
+        const romanName = member.name_roman;
+
+        // Auto-generated description — used for meta only, NOT shown in UI
+        const groupParts = histories
+          .filter(h => h.group || h.external_group_name)
+          .sort((a, b) => (a.joined_at ?? '').localeCompare(b.joined_at ?? ''))
+          .map(h => {
+            const gName = h.group?.name_jp ?? h.group?.name ?? h.external_group_name ?? '';
+            const from = h.joined_at ? h.joined_at.slice(0, 4) : null;
+            const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' ? '至今' : null);
+            const range = from ? (to ? `${from}–${to}` : from) : '';
+            return range ? `${gName}（${range}）` : gName;
+          });
+        const nameStr = romanName ? `${displayName}（${romanName}）` : displayName;
+        const description = groupParts.length > 0
+          ? `${nameStr}是台灣地下偶像，曾隸屬${groupParts.join('、')}。`
+          : `${displayName}的完整資料，包含所屬團體與活動記錄。`;
+
         this.seo.setPage(
           `${displayName} - Idol Maps`,
-          `${displayName}的完整活動記錄，包含所屬團體與歷史經歷。`,
+          description,
           `${SITE_URL}/member/${id}`,
           member.photo_url ?? undefined
         );
 
-        const jsonLd: Record<string, any> = {
-          '@context': 'https://schema.org',
+        // JSON-LD
+        const sameAs: string[] = [
+          member.instagram ? `https://instagram.com/${member.instagram}` : null,
+          member.facebook ? `https://facebook.com/${member.facebook}` : null,
+          member.x ? `https://x.com/${member.x}` : null,
+          member.maid_url ?? null,
+        ].filter((v): v is string => !!v);
+
+        const personSchema: Record<string, any> = {
           '@type': 'Person',
           name: displayName,
           url: `${SITE_URL}/member/${id}`,
+          ...(romanName && { alternateName: romanName }),
+          ...(member.nickname && { alternateName: member.nickname }),
+          ...(member.birthdate && { birthDate: member.birthdate }),
+          ...(member.photo_url && { image: member.photo_url }),
+          ...(sameAs.length > 0 && { sameAs }),
         };
-        if (member.birthdate) jsonLd['birthDate'] = member.birthdate;
-        if (member.notes) jsonLd['description'] = member.notes;
-        if (member.photo_url) jsonLd['image'] = member.photo_url;
-        const groups = histories
+        const groupsForSchema = histories
           .filter(h => h.group)
-          .map(h => ({ '@type': 'MusicGroup', name: h.group!.name }));
-        if (groups.length > 0) jsonLd['memberOf'] = groups;
+          .map(h => ({ '@type': 'MusicGroup', name: h.group!.name_jp ?? h.group!.name }));
+        if (groupsForSchema.length > 0) personSchema['memberOf'] = groupsForSchema;
 
-        this.seo.setJsonLd(jsonLd);
+        const breadcrumb = {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: `${SITE_URL}/` },
+            { '@type': 'ListItem', position: 2, name: '全部成員', item: `${SITE_URL}/members` },
+            { '@type': 'ListItem', position: 3, name: displayName, item: `${SITE_URL}/member/${id}` },
+          ],
+        };
+
+        this.seo.setJsonLdGraph([personSchema, breadcrumb]);
 
         this.analytics.trackEvent('view_member', {
           member_id: id,
