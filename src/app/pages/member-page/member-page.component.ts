@@ -154,8 +154,12 @@ export class MemberPageComponent implements OnInit {
           '@type': 'Person',
           name: displayName,
           url: `${SITE_URL}/member/${id}`,
-          ...(romanName && { alternateName: romanName }),
-          ...(member.nickname && { alternateName: member.nickname }),
+          ...((() => {
+            const alternateNames = [romanName, member.nickname].filter((v): v is string => !!v);
+            return alternateNames.length > 0
+              ? { alternateName: alternateNames.length === 1 ? alternateNames[0] : alternateNames }
+              : {};
+          })()),
           ...(member.birthdate && { birthDate: member.birthdate }),
           ...(member.photo_url && { image: member.photo_url }),
           ...(sameAs.length > 0 && { sameAs }),
