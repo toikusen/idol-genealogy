@@ -36,11 +36,27 @@ async function run() {
     process.exit(1);
   }
 
+  // Query all companies
+  const { data: companies, error: companiesError } = await supabase
+    .from('companies')
+    .select('id, updated_at');
+  if (companiesError) {
+    console.error('Error fetching companies:', companiesError.message);
+    process.exit(1);
+  }
+
   // Write prerender-routes.txt
   const routes = [
     '/',
+    '/members',
+    '/contributors',
+    '/guide',
+    '/about',
+    '/contact',
+    '/privacy',
     ...members.map(m => `/member/${m.id}`),
     ...groups.map(g => `/group/${g.id}`),
+    ...companies.map(c => `/company/${c.id}`),
   ];
   writeFileSync('prerender-routes.txt', routes.join('\n') + '\n', 'utf8');
   console.log(`prerender-routes.txt: ${routes.length} routes written.`);
@@ -66,6 +82,12 @@ async function run() {
     <lastmod>${(g.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>`),
+    ...companies.map(c => `  <url>
+    <loc>${SITE_URL}/company/${c.id}</loc>
+    <lastmod>${(c.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>`),
   ];
 
