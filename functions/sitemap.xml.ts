@@ -19,17 +19,19 @@ async function fetchIds(table: string): Promise<string[]> {
 }
 
 export const onRequest: PagesFunction = async () => {
-  const [groupIds, memberIds] = await Promise.all([
+  const [groupIds, memberIds, companyIds] = await Promise.all([
     fetchIds('groups'),
     fetchIds('members'),
+    fetchIds('companies'),
   ]);
 
-  const staticUrls = ['', '/companies', '/privacy'];
+  const staticUrls = ['', '/members', '/contributors', '/about', '/contact', '/privacy', '/guide', '/companies'];
 
   const urls = [
     ...staticUrls.map(path => `${SITE}${path}`),
     ...groupIds.map(id => `${SITE}/group/${id}`),
     ...memberIds.map(id => `${SITE}/member/${id}`),
+    ...companyIds.map(id => `${SITE}/company/${id}`),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
