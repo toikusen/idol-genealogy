@@ -43,6 +43,21 @@ export class MembersListComponent implements OnInit {
       '台灣地下偶像所有成員一覽。',
       `${SITE_URL}/members`
     );
+    this.seo.setJsonLdGraph([
+      {
+        '@type': 'CollectionPage',
+        name: '全部成員',
+        url: 'https://idolmaps.com/members',
+        description: '台灣地下偶像所有成員一覽',
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: 'https://idolmaps.com/' },
+          { '@type': 'ListItem', position: 2, name: '全部成員', item: 'https://idolmaps.com/members' },
+        ],
+      },
+    ]);
     try {
       const [members, groups, links] = await Promise.all([
         this.memberService.getAll(),
