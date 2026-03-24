@@ -77,13 +77,23 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
           `${SITE_URL}/company/${id}`,
           company.photo_url ?? undefined
         );
-        this.seo.setJsonLd({
-          '@context': 'https://schema.org',
+
+        const orgSchema: Record<string, any> = {
           '@type': 'Organization',
           name: company.name,
           url: `${SITE_URL}/company/${id}`,
           ...(company.photo_url ? { logo: company.photo_url } : {}),
-        });
+        };
+
+        const breadcrumb = {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: `${SITE_URL}/` },
+            { '@type': 'ListItem', position: 2, name: company.name, item: `${SITE_URL}/company/${id}` },
+          ],
+        };
+
+        this.seo.setJsonLdGraph([orgSchema, breadcrumb]);
       }
     } catch {
       this.error = true;
