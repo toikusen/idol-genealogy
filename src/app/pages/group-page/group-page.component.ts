@@ -174,26 +174,54 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
       if (group) {
         const displayName = group.name_jp ?? group.name;
+
+        // Auto-generated description — used for meta only, NOT shown in UI
+        const activeCount = histories.filter(h => h.status === 'active').length;
+        const parts: string[] = [];
+        if (group.founded_at) parts.push(`成立於 ${group.founded_at.slice(0, 4)} 年`);
+        if (activeCount > 0) parts.push(`現有 ${activeCount} 名活躍成員`);
+        if (this.companyName) parts.push(`隸屬 ${this.companyName}`);
+        const description = parts.length > 0
+          ? `${displayName}，${parts.join('，')}。`
+          : `${displayName}的成員組成與活動記錄。`;
+
         this.seo.setPage(
           `${displayName} - Idol Maps`,
-          `${displayName}的成員組成與活動記錄。`,
-          `${SITE_URL}/group/${id}`
-          // no image — groups have no photo_url; falls back to og-default.png
+          description,
+          `${SITE_URL}/group/${id}`,
+          group.photo_url ?? undefined
         );
 
-        const jsonLd: Record<string, any> = {
-          '@context': 'https://schema.org',
+        // JSON-LD
+        const sameAs: string[] = [
+          group.instagram ? `https://instagram.com/${group.instagram}` : null,
+          group.facebook ? `https://facebook.com/${group.facebook}` : null,
+          group.x ? `https://x.com/${group.x}` : null,
+          group.youtube ?? null,
+        ].filter((v): v is string => !!v);
+
+        const musicGroupSchema: Record<string, any> = {
           '@type': 'MusicGroup',
           name: displayName,
           url: `${SITE_URL}/group/${id}`,
+          ...(group.founded_at && { foundingDate: group.founded_at }),
+          ...(group.photo_url && { image: group.photo_url }),
+          ...(sameAs.length > 0 && { sameAs }),
         };
-        if (group.founded_at) jsonLd['foundingDate'] = group.founded_at;
         const members = histories
           .filter(h => h.member)
           .map(h => ({ '@type': 'Person', name: h.member!.name ?? h.member!.name_roman }));
-        if (members.length > 0) jsonLd['member'] = members;
+        if (members.length > 0) musicGroupSchema['member'] = members;
 
-        this.seo.setJsonLd(jsonLd);
+        const breadcrumb = {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: `${SITE_URL}/` },
+            { '@type': 'ListItem', position: 2, name: displayName, item: `${SITE_URL}/group/${id}` },
+          ],
+        };
+
+        this.seo.setJsonLdGraph([musicGroupSchema, breadcrumb]);
         this.analytics.trackEvent('view_group', {
           group_id: id,
           group_name: displayName,
