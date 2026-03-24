@@ -36,7 +36,7 @@ interface TimelineSegment {
                       <a class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full"
                          [routerLink]="['/group', seg.history.group_id]"
                          [style.background]="(seg.history.group?.color || '#e879a0') + '18'"
-                         [style.color]="seg.history.group?.color || '#e879a0'"
+                         [style.color]="safeColor(seg.history.group?.color || '#e879a0')"
                          style="text-decoration:none;">
                         {{ seg.history.group?.name || '—' }}
                         @if (seg.history.team) {
@@ -139,6 +139,15 @@ export class MemberTimelineComponent implements OnChanges {
   @Input() histories: History[] = [];
   @Output() reportHistory = new EventEmitter<History>();
   segments: TimelineSegment[] = [];
+
+  safeColor(hex: string, fallback = '#7a5a7a'): string {
+    const clean = hex.replace('#', '');
+    if (clean.length < 6) return fallback;
+    const r = parseInt(clean.substring(0, 2), 16) / 255;
+    const g = parseInt(clean.substring(2, 4), 16) / 255;
+    const b = parseInt(clean.substring(4, 6), 16) / 255;
+    return 0.299 * r + 0.587 * g + 0.114 * b > 0.75 ? fallback : hex;
+  }
 
   hasLeft(h: History): boolean {
     if (!h.left_at) return false;

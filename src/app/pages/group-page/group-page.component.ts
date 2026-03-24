@@ -276,4 +276,15 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     const b = parseInt(clean.substring(4, 6), 16) || 160;
     return `${r},${g},${b}`;
   }
+
+  /** 若代表色過亮（如白色），改用深色替代，避免文字在淺背景上不可見 */
+  safeColor(hex: string, fallback = '#7a5a7a'): string {
+    const clean = hex.replace('#', '');
+    if (clean.length < 6) return fallback;
+    const r = parseInt(clean.substring(0, 2), 16) / 255;
+    const g = parseInt(clean.substring(2, 4), 16) / 255;
+    const b = parseInt(clean.substring(4, 6), 16) / 255;
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luminance > 0.75 ? fallback : hex;
+  }
 }
