@@ -145,9 +145,10 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       ]);
       this.group = group;
       if (group?.company_id) {
-        this.companyService.getById(group.company_id)
-          .then(c => { this.companyName = c?.name ?? null; })
-          .catch(() => {});
+        try {
+          const company = await this.companyService.getById(group.company_id);
+          this.companyName = company?.name ?? null;
+        } catch { /* ignore */ }
       }
       this.teams = teams;
       this.histories = histories;
