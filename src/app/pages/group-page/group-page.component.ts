@@ -90,6 +90,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
   ganttRows: GanttRow[] = [];
   ganttYears: { label: string; leftPct: number }[] = [];
+  tooltipRow: GanttRow | null = null;
+  tooltipX = 0;
+  tooltipY = 0;
   private _routeSub?: Subscription;
 
   constructor(
@@ -275,7 +278,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     try {
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return '—';
-      return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'short' });
+      return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' });
     } catch {
       return '—';
     }
@@ -457,6 +460,21 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
   get groupMembersList(): { id: string; name: string }[] {
     return this.allMembers;
+  }
+
+  onBarMouseEnter(event: MouseEvent, row: GanttRow) {
+    this.tooltipRow = row;
+    this.tooltipX = event.clientX;
+    this.tooltipY = event.clientY;
+  }
+
+  onBarMouseMove(event: MouseEvent) {
+    this.tooltipX = event.clientX;
+    this.tooltipY = event.clientY;
+  }
+
+  onBarMouseLeave() {
+    this.tooltipRow = null;
   }
 
   hexToRgb(hex: string): string {
