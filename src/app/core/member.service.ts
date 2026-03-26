@@ -79,7 +79,7 @@ export class MemberService {
   /** Call after create/update/delete to force next getAll() to re-fetch */
   invalidateCache() { this._allCache = null; }
 
-  async getUpcomingBirthdays(withinDays = 7): Promise<{ member: Member; daysUntil: number }[]> {
+  async getUpcomingBirthdays(withinDays = 30): Promise<{ member: Member; daysUntil: number }[]> {
     const { data, error } = await this.db
       .from('members')
       .select('*')
