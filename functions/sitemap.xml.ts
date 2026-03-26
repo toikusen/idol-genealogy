@@ -25,13 +25,13 @@ export const onRequest: PagesFunction = async () => {
     fetchIds('companies'),
   ]);
 
-  const staticUrls = ['', '/members', '/contributors', '/about', '/contact', '/privacy', '/guide', '/companies'];
+  const staticUrls = ['/', '/members/', '/contributors/', '/about/', '/contact/', '/privacy/', '/guide/', '/companies/'];
 
   const urls = [
     ...staticUrls.map(path => `${SITE}${path}`),
-    ...groupIds.map(id => `${SITE}/group/${id}`),
-    ...memberIds.map(id => `${SITE}/member/${id}`),
-    ...companyIds.map(id => `${SITE}/company/${id}`),
+    ...groupIds.map(id => `${SITE}/group/${id}/`),
+    ...memberIds.map(id => `${SITE}/member/${id}/`),
+    ...companyIds.map(id => `${SITE}/company/${id}/`),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

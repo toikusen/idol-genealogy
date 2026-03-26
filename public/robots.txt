@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: /*?q=
 
 Sitemap: https://idolmaps.com/sitemap.xml
