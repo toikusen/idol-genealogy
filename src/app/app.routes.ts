@@ -1,5 +1,18 @@
-import { Routes } from '@angular/router';
+import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
 import { adminGuard } from './core/admin.guard';
+import { companyPageResolver, groupPageResolver, memberPageResolver } from './core/page-data.resolvers';
+
+function handleMatcher(segments: UrlSegment[]): UrlMatchResult | null {
+  if (segments.length !== 1) return null;
+  const segment = segments[0].path;
+  if (!segment.startsWith('@') || segment.length < 2) return null;
+  return {
+    consumed: segments,
+    posParams: {
+      handle: new UrlSegment(segment.slice(1), {}),
+    },
+  };
+}
 
 export const routes: Routes = [
   {
@@ -12,10 +25,17 @@ export const routes: Routes = [
   },
   {
     path: 'member/:id',
+    resolve: { pageData: memberPageResolver },
+    loadComponent: () => import('./pages/member-page/member-page.component').then(m => m.MemberPageComponent)
+  },
+  {
+    matcher: handleMatcher,
+    resolve: { pageData: memberPageResolver },
     loadComponent: () => import('./pages/member-page/member-page.component').then(m => m.MemberPageComponent)
   },
   {
     path: 'group/:id',
+    resolve: { pageData: groupPageResolver },
     loadComponent: () => import('./pages/group-page/group-page.component').then(m => m.GroupPageComponent)
   },
   {
@@ -57,6 +77,7 @@ export const routes: Routes = [
   },
   {
     path: 'company/:id',
+    resolve: { pageData: companyPageResolver },
     loadComponent: () => import('./pages/company-page/company-page.component').then(m => m.CompanyPageComponent)
   },
   {

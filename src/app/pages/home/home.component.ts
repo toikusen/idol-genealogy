@@ -10,8 +10,7 @@ import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry }
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
-
-const SITE_URL = 'https://idolmaps.com';
+import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 
 @Component({
   selector: 'app-home',
@@ -57,13 +56,13 @@ export class HomeComponent implements OnInit {
     this.seo.setPage(
       'Idol Maps | 台灣地下偶像資料庫',
       '台灣地下偶像成員與團體的完整資料庫。查詢偶像成員經歷、所屬團體歷史、活動記錄。',
-      `${SITE_URL}/`
+      siteUrl('/')
     );
     this.seo.setJsonLd({
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       name: 'Idol Maps',
-      url: `${SITE_URL}/`,
+      url: siteUrl('/'),
       potentialAction: {
         '@type': 'SearchAction',
         target: {

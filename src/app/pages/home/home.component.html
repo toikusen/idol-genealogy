@@ -227,7 +227,7 @@
             ">Companies · 公司 ({{companyResults.length}})</div>
             <div style="display: flex; flex-wrap: wrap; gap: 8px;">
               @for (company of companyResults; track company.id) {
-                <a [routerLink]="['/company', company.id]" class="company-result-chip">
+                <a [routerLink]="'/company/' + company.id + '/'" class="company-result-chip">
                   @if (company.photo_url) {
                     <img [src]="company.photo_url" [alt]="company.name"
                       style="width:18px;height:18px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
@@ -259,7 +259,7 @@
 
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 @for (member of memberResults; track member.id) {
-                  <a [routerLink]="['/member', member.id]" class="member-result-card">
+                  <a [routerLink]="'/member/' + member.id + '/'" class="member-result-card">
                     <div style="
                       width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
                       background: linear-gradient(135deg, rgba(232,121,160,0.15), rgba(124,108,242,0.1));
@@ -292,7 +292,7 @@
                   </a>
                 }
                 @for (r of aliasResults; track r.member.id) {
-                  <a [routerLink]="['/member', r.member.id]" class="member-result-card">
+                  <a [routerLink]="'/member/' + r.member.id + '/'" class="member-result-card">
                     <div style="
                       width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
                       background: linear-gradient(135deg, rgba(232,121,160,0.15), rgba(124,108,242,0.1));
@@ -343,7 +343,7 @@
 
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 @for (group of groupResults; track group.id) {
-                  <a [routerLink]="['/group', group.id]" class="group-result-card">
+                  <a [routerLink]="'/group/' + group.id + '/'" class="group-result-card">
                     <div style="
                       width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
                       display: flex; align-items: center; justify-content: center;
@@ -428,7 +428,7 @@
                 <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem;">
                   @for (entry of topMembers; track entry.id; let i = $index) {
                     <li>
-                      <a [routerLink]="['/member', entry.id]"
+                      <a [routerLink]="'/member/' + entry.id + '/'"
                          style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: #2d1b2e; font-size: 0.875rem;">
                         <span style="color: rgba(122,90,122,0.45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
                         @if (entry.photo_url) {
@@ -449,7 +449,7 @@
                 <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem;">
                   @for (entry of topGroups; track entry.id; let i = $index) {
                     <li>
-                      <a [routerLink]="['/group', entry.id]"
+                      <a [routerLink]="'/group/' + entry.id + '/'"
                          style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: #2d1b2e; font-size: 0.875rem;">
                         <span style="color: rgba(122,90,122,0.45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
                         @if (entry.photo_url) {
@@ -486,7 +486,7 @@
               </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 @for (entry of upcomingBirthdays; track entry.member.id) {
-                  <a [routerLink]="['/member', entry.member.id]" style="
+                  <a [routerLink]="'/member/' + entry.member.id + '/'" style="
                     display: flex; align-items: center; gap: 10px;
                     padding: 8px 14px 8px 8px;
                     background: rgba(255,255,255,0.75);
@@ -561,7 +561,7 @@
           } @else {
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
               @for (member of recentMembers; track member.id) {
-                <a [routerLink]="['/member', member.id]" class="recent-member-card">
+                <a [routerLink]="'/member/' + member.id + '/'" class="recent-member-card">
                   <div style="
                     width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
                     background: linear-gradient(135deg, rgba(232,121,160,0.18) 0%, rgba(124,108,242,0.12) 100%);
@@ -607,7 +607,7 @@
 
           <!-- Browse all -->
           <div style="text-align:center;margin-top:28px;">
-            <a routerLink="/members" style="
+            <a routerLink="/members/" style="
               display:inline-flex;align-items:center;gap:6px;
               padding:10px 24px;border-radius:999px;
               border:1px solid rgba(232,121,160,0.3);
@@ -673,7 +673,7 @@
           <!-- Group grid -->
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 24px;">
             @for (group of displayedGroups; track group.id) {
-              <a [routerLink]="['/group', group.id]" class="browse-group-card">
+              <a [routerLink]="'/group/' + group.id + '/'" class="browse-group-card">
                 <div style="
                   width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
                   display: flex; align-items: center; justify-content: center;
@@ -781,7 +781,7 @@
                   ">{{section.name}}</h3>
                   <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                     @if (section.companyId) {
-                      <a [routerLink]="['/company', section.companyId]" style="
+                      <a [routerLink]="'/company/' + section.companyId + '/'" style="
                         display: inline-flex; align-items: center; gap: 4px;
                         font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.65rem; letter-spacing: 0.1em;
@@ -813,7 +813,7 @@
                 @if (section.groups.length > 0) {
                   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
                     @for (group of section.groups; track group.id) {
-                      <a [routerLink]="['/group', group.id]" class="company-group-card" [class.company-group-disbanded]="!!group.disbanded_at">
+                      <a [routerLink]="'/group/' + group.id + '/'" class="company-group-card" [class.company-group-disbanded]="!!group.disbanded_at">
                         <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px;" [style.background]="group.disbanded_at ? '#c0a8c0' : (group.color || '#b07d2a')"></div>
                         <div style="min-width:0;">
                           <div style="
@@ -843,7 +843,7 @@
                 @if (section.soloMembers.length > 0) {
                   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top: {{section.groups.length > 0 ? '10px' : '0'}};">
                     @for (m of section.soloMembers; track m.id) {
-                      <a [routerLink]="['/member', m.id]" style="
+                      <a [routerLink]="'/member/' + m.id + '/'" style="
                         display:inline-flex;align-items:center;gap:6px;
                         padding:4px 12px 4px 6px;border-radius:20px;
                         border:1px solid rgba(232,121,160,0.25);
@@ -983,27 +983,27 @@
           支持本站
         </a>
         <span style="color: rgba(184,160,184,0.3); font-size: 0.7rem;">·</span>
-        <a routerLink="/about" style="
+        <a routerLink="/about/" style="
           font-size: 0.75rem; color: rgba(122,90,122,0.55);
           text-decoration: none; letter-spacing: 0.04em;
         ">關於我們</a>
         <span style="color: rgba(184,160,184,0.3); font-size: 0.7rem;">·</span>
-        <a routerLink="/contact" style="
+        <a routerLink="/contact/" style="
           font-size: 0.75rem; color: rgba(122,90,122,0.55);
           text-decoration: none; letter-spacing: 0.04em;
         ">聯絡我們</a>
         <span style="color: rgba(184,160,184,0.3); font-size: 0.7rem;">·</span>
-        <a routerLink="/privacy" style="
+        <a routerLink="/privacy/" style="
           font-size: 0.75rem; color: rgba(122,90,122,0.55);
           text-decoration: none; letter-spacing: 0.04em;
         ">隱私政策</a>
         <span style="color: rgba(184,160,184,0.3); font-size: 0.7rem;">·</span>
-        <a routerLink="/guide" style="
+        <a routerLink="/guide/" style="
           font-size: 0.75rem; color: rgba(122,90,122,0.55);
           text-decoration: none; letter-spacing: 0.04em;
         ">貢獻者手冊</a>
         <span style="color: rgba(184,160,184,0.3); font-size: 0.7rem;">·</span>
-        <a routerLink="/contributors" style="
+        <a routerLink="/contributors/" style="
           font-size: 0.75rem; color: rgba(122,90,122,0.55);
           text-decoration: none; letter-spacing: 0.04em;
         ">貢獻者排行榜</a>

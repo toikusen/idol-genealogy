@@ -25,7 +25,7 @@ export const onRequest: PagesFunction = async () => {
     fetchIds('companies'),
   ]);
 
-  const staticUrls = ['/', '/members/', '/contributors/', '/about/', '/contact/', '/privacy/', '/guide/', '/companies/'];
+  const staticUrls = ['/', '/members/', '/contributors/', '/about/', '/contact/', '/privacy/', '/terms/', '/guide/'];
 
   const urls = [
     ...staticUrls.map(path => `${SITE}${path}`),

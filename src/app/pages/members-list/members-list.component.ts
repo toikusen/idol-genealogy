@@ -7,8 +7,7 @@ import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
 import { SeoService } from '../../core/seo.service';
 import { Member, Group } from '../../models';
-
-const SITE_URL = 'https://idolmaps.com';
+import { siteUrl } from '../../core/public-url.utils';
 const PAGE_SIZE = 36;
 
 @Component({
@@ -41,20 +40,20 @@ export class MembersListComponent implements OnInit {
     this.seo.setPage(
       '全部成員 - Idol Maps',
       '台灣地下偶像所有成員一覽。',
-      `${SITE_URL}/members`
+      siteUrl('/members')
     );
     this.seo.setJsonLdGraph([
       {
         '@type': 'CollectionPage',
         name: '全部成員',
-        url: 'https://idolmaps.com/members',
+        url: siteUrl('/members'),
         description: '台灣地下偶像所有成員一覽',
       },
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: 'https://idolmaps.com/' },
-          { '@type': 'ListItem', position: 2, name: '全部成員', item: 'https://idolmaps.com/members' },
+          { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: siteUrl('/') },
+          { '@type': 'ListItem', position: 2, name: '全部成員', item: siteUrl('/members') },
         ],
       },
     ]);

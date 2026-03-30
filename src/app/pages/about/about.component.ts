@@ -4,8 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TeamMemberService } from '../../core/team-member.service';
 import { SeoService } from '../../core/seo.service';
 import { TeamMember } from '../../models';
-
-const SITE_URL = 'https://idolmaps.com';
+import { siteUrl } from '../../core/public-url.utils';
 
 @Component({
   selector: 'app-about',
@@ -25,7 +24,7 @@ export class AboutComponent implements OnInit {
     this.seo.setPage(
       '關於我們 | Idol Maps',
       '了解 Idol Maps 的成立緣起與編輯團隊。',
-      `${SITE_URL}/about`
+      siteUrl('/about')
     );
     try {
       this.members = await this.teamService.getAll();

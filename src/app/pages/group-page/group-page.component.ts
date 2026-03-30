@@ -3,10 +3,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GroupService } from '../../core/group.service';
-import { HistoryService } from '../../core/history.service';
-import { MemberService } from '../../core/member.service';
-import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ViewCountService } from '../../core/view-count.service';
@@ -24,6 +20,8 @@ import { GroupSongService } from '../../core/group-song.service';
 import { SupabaseService } from '../../core/supabase.service';
 import { AdminRoleService } from '../../core/admin-role.service';
 import { GroupSong } from '../../models';
+import { groupPath, siteUrl } from '../../core/public-url.utils';
+import { GroupPageData } from '../../core/page-data.resolvers';
 
 interface GanttRow {
   history: History;
@@ -31,8 +29,6 @@ interface GanttRow {
   widthPct: number;
   isActive: boolean;
 }
-
-const SITE_URL = 'https://idolmaps.com';
 
 @Component({
   selector: 'app-group-page',
@@ -97,10 +93,6 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
-    private groupService: GroupService,
-    private historyService: HistoryService,
-    private memberService: MemberService,
-    private companyService: CompanyService,
     private seo: SeoService,
     private proposalService: ProposalService,
     private analytics: AnalyticsService,
@@ -116,132 +108,97 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       this.currentUserId = s?.user?.id ?? null;
     });
     this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
-    this._routeSub = this.route.paramMap.subscribe(params => {
-      this.load(params.get('id')!);
+    this._routeSub = this.route.data.subscribe(({ pageData }) => {
+      this.applyPageData(pageData as GroupPageData);
     });
   }
 
   ngOnDestroy() { this._routeSub?.unsubscribe(); }
 
-  private async load(id: string) {
-    this.loading = true;
-    this.error = false;
-    this.group = null;
-    this.companyName = null;
+  private applyPageData(pageData: GroupPageData) {
+    this.loading = false;
+    this.error = pageData.error;
+    this.group = pageData.group;
+    this.companyName = pageData.companyName;
+    this.teams = pageData.teams;
+    this.histories = pageData.histories;
+    this.allMemberHistories = pageData.allMemberHistories;
+    this.videos = pageData.videos;
+    this.similarGroups = pageData.similarGroups;
+    this.lastProposal = pageData.lastProposal;
+    this.allMembers = pageData.allMembers;
+    this.songs = pageData.songs;
     this.selectedHistory = null;
     this.playingVideoId = null;
     this.ganttRows = [];
     this.ganttYears = [];
-    this.similarGroups = [];
-    this.allMemberHistories = [];
     this.activeTab = 'members';
-    this.songs = [];
     this.showAddSongForm = false;
     this.editingSong = null;
     this.songError = '';
-    try {
-      const [group, teams, histories, videos] = await Promise.all([
-        this.groupService.getById(id),
-        this.groupService.getTeamsByGroup(id),
-        this.historyService.getByGroup(id),
-        this.groupService.getVideosByGroup(id),
-      ]);
-      this.group = group;
-      if (group?.company_id) {
-        try {
-          const company = await this.companyService.getById(group.company_id);
-          this.companyName = company?.name ?? null;
-        } catch { /* ignore */ }
-      }
-      this.teams = teams;
-      this.histories = histories;
-      this.videos = videos;
-      this.buildGantt(histories, group);
-      if (group) {
-        this.proposalService.getApprovedByRecord('groups', id)
-          .then(proposals => { this.lastProposal = proposals[0] ?? null; })
-          .catch(() => {});
-      }
-      const memberIds = [...new Set(histories.map(h => h.member_id).filter((id): id is string => !!id))];
-      this.allMemberHistories = await this.historyService.getByMembers(memberIds);
-      this.memberService.getAll().then(members => {
-        this.allMembers = members
-          .map(m => ({ id: m.id, name: m.name ?? m.name_roman ?? m.id }))
-          .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-      }).catch(() => {});
-      if (group?.style) {
-        this.similarGroups = await this.groupService.getSimilarByStyle(group.style, id);
-      }
-      this.groupSongService.getByGroup(id)
-        .then(songs => { this.songs = songs; })
-        .catch(() => {});
+    this.buildGantt(pageData.histories, pageData.group);
 
-      if (group) {
-        const displayName = group.name_jp ?? group.name;
-
-        // Auto-generated description — used for meta only, NOT shown in UI
-        const activeCount = histories.filter(h => h.status === 'active').length;
-        const parts: string[] = [];
-        if (group.founded_at) parts.push(`成立於 ${group.founded_at.slice(0, 4)} 年`);
-        if (activeCount > 0) parts.push(`現有 ${activeCount} 名活躍成員`);
-        if (this.companyName) parts.push(`隸屬 ${this.companyName}`);
-        const description = parts.length > 0
-          ? `${displayName}，${parts.join('，')}。`
-          : `${displayName}的成員組成與活動記錄。`;
-
-        this.seo.setPage(
-          `${displayName} - Idol Maps`,
-          description,
-          `${SITE_URL}/group/${id}`,
-          group.photo_url ?? undefined
-        );
-
-        // JSON-LD
-        const sameAs: string[] = [
-          group.instagram ? `https://instagram.com/${group.instagram}` : null,
-          group.facebook ? `https://facebook.com/${group.facebook}` : null,
-          group.x ? `https://x.com/${group.x}` : null,
-          group.youtube ?? null,
-        ].filter((v): v is string => !!v);
-
-        const musicGroupSchema: Record<string, any> = {
-          '@type': 'MusicGroup',
-          name: displayName,
-          url: `${SITE_URL}/group/${id}`,
-          ...(group.founded_at && { foundingDate: group.founded_at }),
-          ...(group.photo_url && { image: group.photo_url }),
-          ...(sameAs.length > 0 && { sameAs }),
-        };
-        const members = histories
-          .filter(h => h.member)
-          .map(h => ({ '@type': 'Person', name: h.member!.name ?? h.member!.name_roman }));
-        if (members.length > 0) musicGroupSchema['member'] = members;
-
-        const breadcrumb = {
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: `${SITE_URL}/` },
-            { '@type': 'ListItem', position: 2, name: displayName, item: `${SITE_URL}/group/${id}` },
-          ],
-        };
-
-        this.seo.setJsonLdGraph([musicGroupSchema, breadcrumb]);
-        this.analytics.trackEvent('view_group', {
-          group_id: id,
-          group_name: displayName,
-        });
-        this.viewCount.increment('group', id).catch(() => {});
-      }
-    } catch {
-      this.error = true;
-    } finally {
-      this.loading = false;
+    if (!pageData.group || pageData.error) {
+      this.error = pageData.error;
+      return;
     }
+
+    const displayName = pageData.group.name_jp ?? pageData.group.name;
+    const activeCount = pageData.histories.filter(h => h.status === 'active').length;
+    const parts: string[] = [];
+    if (pageData.group.founded_at) parts.push(`成立於 ${pageData.group.founded_at.slice(0, 4)} 年`);
+    if (activeCount > 0) parts.push(`現有 ${activeCount} 名活躍成員`);
+    if (pageData.companyName) parts.push(`隸屬 ${pageData.companyName}`);
+    const description = parts.length > 0
+      ? `${displayName}，${parts.join('，')}。`
+      : `${displayName}的成員組成與活動記錄。`;
+
+    this.seo.setPage(
+      `${displayName} - Idol Maps`,
+      description,
+      siteUrl(groupPath(pageData.id)),
+      pageData.group.photo_url ?? undefined
+    );
+
+    const sameAs: string[] = [
+      pageData.group.instagram ? `https://instagram.com/${pageData.group.instagram}` : null,
+      pageData.group.facebook ? `https://facebook.com/${pageData.group.facebook}` : null,
+      pageData.group.x ? `https://x.com/${pageData.group.x}` : null,
+      pageData.group.youtube ?? null,
+    ].filter((v): v is string => !!v);
+
+    const musicGroupSchema: Record<string, any> = {
+      '@type': 'MusicGroup',
+      name: displayName,
+      url: siteUrl(groupPath(pageData.id)),
+      ...(pageData.group.founded_at && { foundingDate: pageData.group.founded_at }),
+      ...(pageData.group.photo_url && { image: pageData.group.photo_url }),
+      ...(sameAs.length > 0 && { sameAs }),
+    };
+    const members = pageData.histories
+      .filter(h => h.member)
+      .map(h => ({ '@type': 'Person', name: h.member!.name ?? h.member!.name_roman }));
+    if (members.length > 0) musicGroupSchema['member'] = members;
+
+    const breadcrumb = {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: siteUrl('/') },
+        { '@type': 'ListItem', position: 2, name: displayName, item: siteUrl(groupPath(pageData.id)) },
+      ],
+    };
+
+    this.seo.setJsonLdGraph([musicGroupSchema, breadcrumb]);
+    this.analytics.trackEvent('view_group', {
+      group_id: pageData.id,
+      group_name: displayName,
+    });
+    this.viewCount.increment('group', pageData.id).catch(() => {});
   }
 
   copyLink() {
     const id = this.route.snapshot.paramMap.get('id')!;
-    const url = `${SITE_URL}/group/${id}`;
+    const url = siteUrl(groupPath(id));
     navigator.clipboard.writeText(url).then(() => {
       this.linkCopied = true;
       setTimeout(() => { this.linkCopied = false; }, 2000);

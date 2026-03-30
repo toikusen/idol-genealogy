@@ -61,7 +61,7 @@ interface MemberRow {
                 <!-- Prev node -->
                 @if (!cell.isExternal) {
                   <!-- Internal group: link to group page -->
-                  <a [routerLink]="['/group', cell.groupId]"
+                  <a [routerLink]="'/group/' + cell.groupId + '/'"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
                     [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
@@ -79,7 +79,7 @@ interface MemberRow {
                   </a>
                 } @else if (!cell.externalCountry) {
                   <!-- Solo experience: link to member page -->
-                  <a [routerLink]="['/member', cell.memberId]"
+                  <a [routerLink]="'/member/' + cell.memberId + '/'"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
                     [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
@@ -154,7 +154,7 @@ interface MemberRow {
                 <!-- Next node -->
                 @if (!cell.isExternal) {
                   <!-- Internal group: link to group page -->
-                  <a [routerLink]="['/group', cell.groupId]"
+                  <a [routerLink]="'/group/' + cell.groupId + '/'"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
                     [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
@@ -172,7 +172,7 @@ interface MemberRow {
                   </a>
                 } @else if (!cell.externalCountry) {
                   <!-- Solo experience: link to member page -->
-                  <a [routerLink]="['/member', cell.memberId]"
+                  <a [routerLink]="'/member/' + cell.memberId + '/'"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
                     [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"

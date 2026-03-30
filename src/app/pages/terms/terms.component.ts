@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../core/seo.service';
+import { siteUrl } from '../../core/public-url.utils';
 
 @Component({
   selector: 'app-terms',
@@ -15,7 +16,7 @@ export class TermsComponent {
     seo.setPage(
       '使用條款 | Idol Maps',
       'Idol Maps 服務使用條款，包含使用規範、投稿授權、廣告聲明與免責聲明。',
-      'https://idolmaps.com/terms'
+      siteUrl('/terms')
     );
   }
 }

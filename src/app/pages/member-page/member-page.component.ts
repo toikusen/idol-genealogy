@@ -1,10 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MemberService } from '../../core/member.service';
-import { HistoryService } from '../../core/history.service';
-import { GroupService } from '../../core/group.service';
-import { CompanyService } from '../../core/company.service';
+import { Subscription } from 'rxjs';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ViewCountService } from '../../core/view-count.service';
@@ -21,8 +18,8 @@ import { MemberSongService } from '../../core/member-song.service';
 import { SupabaseService } from '../../core/supabase.service';
 import { AdminRoleService } from '../../core/admin-role.service';
 import { FormsModule } from '@angular/forms';
-
-const SITE_URL = 'https://idolmaps.com';
+import { memberPath, siteUrl } from '../../core/public-url.utils';
+import { MemberPageData } from '../../core/page-data.resolvers';
 
 @Component({
   selector: 'app-member-page',
@@ -30,7 +27,7 @@ const SITE_URL = 'https://idolmaps.com';
   imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent],
   templateUrl: './member-page.component.html',
 })
-export class MemberPageComponent implements OnInit {
+export class MemberPageComponent implements OnInit, OnDestroy {
   member: Member | null = null;
   histories: History[] = [];
   loading = true;
@@ -63,6 +60,7 @@ export class MemberPageComponent implements OnInit {
   songReportSubmitting = false;
   songReportError = '';
   songReportDone = false;
+  private routeDataSub?: Subscription;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -74,10 +72,6 @@ export class MemberPageComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private memberService: MemberService,
-    private historyService: HistoryService,
-    private groupService: GroupService,
-    private companyService: CompanyService,
     private seo: SeoService,
     private proposalService: ProposalService,
     private analytics: AnalyticsService,
@@ -93,115 +87,96 @@ export class MemberPageComponent implements OnInit {
       this.currentUserId = s?.user?.id ?? null;
     });
     this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
+    this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
+      this.applyPageData(pageData as MemberPageData);
+    });
+  }
 
-    const id = this.route.snapshot.paramMap.get('id')!;
-    try {
-      const [member, histories] = await Promise.all([
-        this.memberService.getById(id),
-        this.historyService.getByMember(id)
-      ]);
-      this.member = member;
-      this.histories = histories;
+  ngOnDestroy() {
+    this.routeDataSub?.unsubscribe();
+  }
 
-      if (member?.company_id) {
-        this.companyId = member.company_id;
-        this.companyService.getById(member.company_id)
-          .then(c => { this.companyName = c?.name ?? null; })
-          .catch(() => {});
-      }
+  private applyPageData(pageData: MemberPageData) {
+    this.loading = false;
+    this.error = pageData.error;
+    this.member = pageData.member;
+    this.histories = pageData.histories;
+    this.companyName = pageData.companyName;
+    this.companyId = pageData.companyId;
+    this.allGroupsList = pageData.allGroupsList;
+    this.lastProposal = pageData.lastProposal;
+    this.memberSongs = pageData.memberSongs;
 
-      this.groupService.getAll().then(groups => {
-        this.allGroupsList = groups.map(g => ({ id: g.id, name: g.name }))
-          .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-      }).catch(() => {});
+    if (!pageData.member || pageData.error) return;
 
-      if (member) {
-        const displayName = member.name ?? member.name_roman ?? '';
-        const romanName = member.name_roman;
+    const member = pageData.member;
+    const id = member.id;
+    const displayName = member.name ?? member.name_roman ?? '';
+    const romanName = member.name_roman;
 
-        // Auto-generated description — used for meta only, NOT shown in UI
-        const groupParts = histories
-          .filter(h => h.group || h.external_group_name)
-          .sort((a, b) => (a.joined_at ?? '').localeCompare(b.joined_at ?? ''))
-          .map(h => {
-            const gName = h.group?.name_jp ?? h.group?.name ?? h.external_group_name ?? '';
-            const from = h.joined_at ? h.joined_at.slice(0, 4) : null;
-            const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' ? '至今' : null);
-            const range = from ? (to ? `${from}–${to}` : from) : '';
-            return range ? `${gName}（${range}）` : gName;
-          });
-        const nameStr = romanName ? `${displayName}（${romanName}）` : displayName;
-        const description = groupParts.length > 0
-          ? `${nameStr}是台灣地下偶像，曾隸屬${groupParts.join('、')}。`
-          : `${displayName}的完整資料，包含所屬團體與活動記錄。`;
+    const groupParts = pageData.histories
+      .filter(h => h.group || h.external_group_name)
+      .sort((a, b) => (a.joined_at ?? '').localeCompare(b.joined_at ?? ''))
+      .map(h => {
+        const gName = h.group?.name_jp ?? h.group?.name ?? h.external_group_name ?? '';
+        const from = h.joined_at ? h.joined_at.slice(0, 4) : null;
+        const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' ? '至今' : null);
+        const range = from ? (to ? `${from}–${to}` : from) : '';
+        return range ? `${gName}（${range}）` : gName;
+      });
+    const nameStr = romanName ? `${displayName}（${romanName}）` : displayName;
+    const description = groupParts.length > 0
+      ? `${nameStr}是台灣地下偶像，曾隸屬${groupParts.join('、')}。`
+      : `${displayName}的完整資料，包含所屬團體與活動記錄。`;
 
-        this.seo.setPage(
-          `${displayName} - Idol Maps`,
-          description,
-          `${SITE_URL}/member/${id}`,
-          member.photo_url ?? undefined
-        );
+    this.seo.setPage(
+      `${displayName} - Idol Maps`,
+      description,
+      siteUrl(memberPath(id)),
+      member.photo_url ?? undefined
+    );
 
-        // JSON-LD
-        const sameAs: string[] = [
-          member.instagram ? `https://instagram.com/${member.instagram}` : null,
-          member.facebook ? `https://facebook.com/${member.facebook}` : null,
-          member.x ? `https://x.com/${member.x}` : null,
-          member.maid_url ?? null,
-        ].filter((v): v is string => !!v);
+    const sameAs: string[] = [
+      member.instagram ? `https://instagram.com/${member.instagram}` : null,
+      member.facebook ? `https://facebook.com/${member.facebook}` : null,
+      member.x ? `https://x.com/${member.x}` : null,
+      member.maid_url ?? null,
+    ].filter((v): v is string => !!v);
 
-        const personSchema: Record<string, any> = {
-          '@type': 'Person',
-          name: displayName,
-          url: `${SITE_URL}/member/${id}`,
-          ...((() => {
-            const alternateNames = [romanName, member.nickname].filter((v): v is string => !!v);
-            return alternateNames.length > 0
-              ? { alternateName: alternateNames.length === 1 ? alternateNames[0] : alternateNames }
-              : {};
-          })()),
-          ...(member.birthdate && { birthDate: member.birthdate }),
-          ...(member.photo_url && { image: member.photo_url }),
-          ...(sameAs.length > 0 && { sameAs }),
-        };
-        const groupsForSchema = histories
-          .filter(h => h.group)
-          .map(h => ({ '@type': 'MusicGroup', name: h.group!.name_jp ?? h.group!.name }));
-        if (groupsForSchema.length > 0) personSchema['memberOf'] = groupsForSchema;
+    const personSchema: Record<string, any> = {
+      '@type': 'Person',
+      name: displayName,
+      url: siteUrl(memberPath(id)),
+      ...((() => {
+        const alternateNames = [romanName, member.nickname].filter((v): v is string => !!v);
+        return alternateNames.length > 0
+          ? { alternateName: alternateNames.length === 1 ? alternateNames[0] : alternateNames }
+          : {};
+      })()),
+      ...(member.birthdate && { birthDate: member.birthdate }),
+      ...(member.photo_url && { image: member.photo_url }),
+      ...(sameAs.length > 0 && { sameAs }),
+    };
+    const groupsForSchema = pageData.histories
+      .filter(h => h.group)
+      .map(h => ({ '@type': 'MusicGroup', name: h.group!.name_jp ?? h.group!.name }));
+    if (groupsForSchema.length > 0) personSchema['memberOf'] = groupsForSchema;
 
-        const breadcrumb = {
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: `${SITE_URL}/` },
-            { '@type': 'ListItem', position: 2, name: '全部成員', item: `${SITE_URL}/members` },
-            { '@type': 'ListItem', position: 3, name: displayName, item: `${SITE_URL}/member/${id}` },
-          ],
-        };
+    const breadcrumb = {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: siteUrl('/') },
+        { '@type': 'ListItem', position: 2, name: '全部成員', item: siteUrl('/members') },
+        { '@type': 'ListItem', position: 3, name: displayName, item: siteUrl(memberPath(id)) },
+      ],
+    };
 
-        this.seo.setJsonLdGraph([personSchema, breadcrumb]);
-
-        this.analytics.trackEvent('view_member', {
-          member_id: id,
-          member_name: displayName,
-        });
-        this.viewCount.increment('member', id).catch(() => {});
-      }
-
-      // Load last approved proposal (non-blocking — don't let failure affect page load)
-      if (member) {
-        this.proposalService.getApprovedByRecord('members', id)
-          .then(proposals => { this.lastProposal = proposals[0] ?? null; })
-          .catch(() => {});
-      }
-
-      this.memberSongService.getByMember(id)
-        .then(songs => { this.memberSongs = songs; })
-        .catch(() => {});
-    } catch {
-      this.error = true;
-    } finally {
-      this.loading = false;
-    }
+    this.seo.setJsonLdGraph([personSchema, breadcrumb]);
+    this.analytics.trackEvent('view_member', {
+      member_id: id,
+      member_name: displayName,
+    });
+    this.viewCount.increment('member', id).catch(() => {});
   }
 
   canEditSong(song: MemberSong): boolean {
@@ -236,7 +211,7 @@ export class MemberPageComponent implements OnInit {
     this.songSaving = true;
     this.songError = '';
     try {
-      const memberId = this.route.snapshot.paramMap.get('id')!;
+      const memberId = this.member?.id ?? this.route.snapshot.paramMap.get('id')!;
       if (this.editingSong) {
         const updated = await this.memberSongService.update(this.editingSong.id, {
           title: this.songFormData.title,
@@ -336,8 +311,8 @@ export class MemberPageComponent implements OnInit {
   }
 
   copyLink() {
-    const id = this.route.snapshot.paramMap.get('id')!;
-    const url = `${SITE_URL}/member/${id}`;
+    const id = this.member?.id ?? this.route.snapshot.paramMap.get('id')!;
+    const url = siteUrl(memberPath(id));
     navigator.clipboard.writeText(url).then(() => {
       this.linkCopied = true;
       setTimeout(() => { this.linkCopied = false; }, 2000);

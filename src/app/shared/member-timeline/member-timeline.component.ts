@@ -34,7 +34,7 @@ interface TimelineSegment {
                   @if (seg.history.group_id) {
                     @if (!hasLeft(seg.history)) {
                       <a class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full"
-                         [routerLink]="['/group', seg.history.group_id]"
+                         [routerLink]="'/group/' + seg.history.group_id + '/'"
                          [style.background]="(seg.history.group?.color || '#e879a0') + '18'"
                          [style.color]="safeColor(seg.history.group?.color || '#e879a0')"
                          style="text-decoration:none;">
@@ -45,7 +45,7 @@ interface TimelineSegment {
                       </a>
                     } @else {
                       <a class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500"
-                         [routerLink]="['/group', seg.history.group_id]"
+                         [routerLink]="'/group/' + seg.history.group_id + '/'"
                          style="text-decoration:none;">
                         {{ seg.history.group?.name || '—' }}
                         @if (seg.history.team) {

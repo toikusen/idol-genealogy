@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { writeFileSync } from 'fs';
 
-const SITE_URL = 'https://idol-genealogy.pages.dev';
+const SITE_URL = 'https://idolmaps.com';
 const SUPABASE_URL = process.env['SUPABASE_URL'];
 const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'];
 
@@ -48,15 +48,16 @@ async function run() {
   // Write prerender-routes.txt
   const routes = [
     '/',
-    '/members',
-    '/contributors',
-    '/guide',
-    '/about',
-    '/contact',
-    '/privacy',
-    ...members.map(m => `/member/${m.id}`),
-    ...groups.map(g => `/group/${g.id}`),
-    ...companies.map(c => `/company/${c.id}`),
+    '/members/',
+    '/contributors/',
+    '/guide/',
+    '/about/',
+    '/contact/',
+    '/privacy/',
+    '/terms/',
+    ...members.map(m => `/member/${m.id}/`),
+    ...groups.map(g => `/group/${g.id}/`),
+    ...companies.map(c => `/company/${c.id}/`),
   ];
   writeFileSync('prerender-routes.txt', routes.join('\n') + '\n', 'utf8');
   console.log(`prerender-routes.txt: ${routes.length} routes written.`);
@@ -72,19 +73,19 @@ async function run() {
     <priority>1.0</priority>
   </url>`,
     ...members.map(m => `  <url>
-    <loc>${SITE_URL}/member/${m.id}</loc>
+    <loc>${SITE_URL}/member/${m.id}/</loc>
     <lastmod>${(m.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`),
     ...groups.map(g => `  <url>
-    <loc>${SITE_URL}/group/${g.id}</loc>
+    <loc>${SITE_URL}/group/${g.id}/</loc>
     <lastmod>${(g.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`),
     ...companies.map(c => `  <url>
-    <loc>${SITE_URL}/company/${c.id}</loc>
+    <loc>${SITE_URL}/company/${c.id}/</loc>
     <lastmod>${(c.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

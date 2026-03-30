@@ -136,7 +136,7 @@ export class GlobalGroupMapComponent implements OnInit, OnDestroy {
 
   navigate(groupId: string) {
     if (!this.didDrag) {
-      this.router.navigate(['/group', groupId]);
+      this.router.navigateByUrl(`/group/${groupId}/`);
     }
   }
 

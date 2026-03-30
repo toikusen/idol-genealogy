@@ -2,16 +2,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { CompanyService } from '../../core/company.service';
+import { Subscription } from 'rxjs';
 import { SeoService } from '../../core/seo.service';
 import { Company, Group, Member, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
-import { ProposalService } from '../../core/proposal.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
-
-const SITE_URL = 'https://idolmaps.com';
+import { companyPath, siteUrl } from '../../core/public-url.utils';
+import { CompanyPageData } from '../../core/page-data.resolvers';
 
 @Component({
   selector: 'app-company-page',
@@ -31,6 +30,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   lastProposal: Proposal | null = null;
   showEditHistory = false;
   linkCopied = false;
+  private routeDataSub?: Subscription;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -42,69 +42,59 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
-    private companyService: CompanyService,
     private seo: SeoService,
-    private proposalService: ProposalService,
   ) {}
 
   ngOnDestroy() {
+    this.routeDataSub?.unsubscribe();
     this.seo.clearJsonLd?.();
   }
 
-  async ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id')!;
-    try {
-      const [company, groups, soloMembers] = await Promise.all([
-        this.companyService.getById(id),
-        this.companyService.getGroupsByCompany(id),
-        this.companyService.getMembersByCompany(id),
-      ]);
-      this.company = company;
-      this.activeGroups = groups.filter(g => !g.disbanded_at);
-      this.disbandedGroups = groups.filter(g => !!g.disbanded_at);
-      this.soloMembers = soloMembers;
+  ngOnInit() {
+    this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
+      this.applyPageData(pageData as CompanyPageData);
+    });
+  }
 
-      if (company) {
-        this.proposalService.getApprovedByRecord('companies', id)
-          .then(proposals => { this.lastProposal = proposals[0] ?? null; })
-          .catch(() => {});
-      }
+  private applyPageData(pageData: CompanyPageData) {
+    this.loading = false;
+    this.error = pageData.error;
+    this.company = pageData.company;
+    this.activeGroups = pageData.activeGroups;
+    this.disbandedGroups = pageData.disbandedGroups;
+    this.soloMembers = pageData.soloMembers;
+    this.lastProposal = pageData.lastProposal;
 
-      if (company) {
-        this.seo.setPage(
-          `${company.name} | Idol Maps`,
-          company.description ?? `${company.name}旗下團體與成員記錄。`,
-          `${SITE_URL}/company/${id}`,
-          company.photo_url ?? undefined
-        );
+    if (!pageData.company || pageData.error) return;
 
-        const orgSchema: Record<string, any> = {
-          '@type': 'Organization',
-          name: company.name,
-          url: `${SITE_URL}/company/${id}`,
-          ...(company.photo_url ? { logo: company.photo_url } : {}),
-        };
+    this.seo.setPage(
+      `${pageData.company.name} | Idol Maps`,
+      pageData.company.description ?? `${pageData.company.name}旗下團體與成員記錄。`,
+      siteUrl(companyPath(pageData.id)),
+      pageData.company.photo_url ?? undefined
+    );
 
-        const breadcrumb = {
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: `${SITE_URL}/` },
-            { '@type': 'ListItem', position: 2, name: company.name, item: `${SITE_URL}/company/${id}` },
-          ],
-        };
+    const orgSchema: Record<string, any> = {
+      '@type': 'Organization',
+      name: pageData.company.name,
+      url: siteUrl(companyPath(pageData.id)),
+      ...(pageData.company.photo_url ? { logo: pageData.company.photo_url } : {}),
+    };
 
-        this.seo.setJsonLdGraph([orgSchema, breadcrumb]);
-      }
-    } catch {
-      this.error = true;
-    } finally {
-      this.loading = false;
-    }
+    const breadcrumb = {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: siteUrl('/') },
+        { '@type': 'ListItem', position: 2, name: pageData.company.name, item: siteUrl(companyPath(pageData.id)) },
+      ],
+    };
+
+    this.seo.setJsonLdGraph([orgSchema, breadcrumb]);
   }
 
   copyLink() {
     const id = this.route.snapshot.paramMap.get('id')!;
-    const url = `${SITE_URL}/company/${id}`;
+    const url = siteUrl(companyPath(id));
     navigator.clipboard.writeText(url).then(() => {
       this.linkCopied = true;
       setTimeout(() => { this.linkCopied = false; }, 2000);

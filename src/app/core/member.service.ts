@@ -62,6 +62,19 @@ export class MemberService {
     return data;
   }
 
+  async getByHandle(handle: string): Promise<Member | null> {
+    const normalized = handle.trim().replace(/^@+/, '');
+    if (!normalized) return null;
+
+    const { data, error } = await this.db
+      .from('members')
+      .select('*')
+      .or(`instagram.ilike.${normalized},x.ilike.${normalized},facebook.ilike.${normalized}`)
+      .limit(1);
+    if (error) throw error;
+    return data?.[0] ?? null;
+  }
+
   async getAll(): Promise<Member[]> {
     if (this._allCache) return this._allCache;
     if (this._allPromise) return this._allPromise;

@@ -225,7 +225,7 @@
             ">現役</p>
             <div style="display:flex;flex-wrap:wrap;gap:8px;">
               @for (g of activeGroups; track g.id) {
-                <a [routerLink]="['/group', g.id]"
+                <a [routerLink]="'/group/' + g.id + '/'"
                   style="
                     display:inline-flex;align-items:center;gap:6px;
                     padding:6px 14px;border-radius:20px;
@@ -256,7 +256,7 @@
             ">解散・活動停止</p>
             <div style="display:flex;flex-wrap:wrap;gap:8px;">
               @for (g of disbandedGroups; track g.id) {
-                <a [routerLink]="['/group', g.id]"
+                <a [routerLink]="'/group/' + g.id + '/'"
                   style="
                     display:inline-flex;align-items:center;gap:6px;
                     padding:6px 14px;border-radius:20px;
@@ -293,7 +293,7 @@
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
             @for (m of soloMembers; track m.id) {
-              <a [routerLink]="['/member', m.id]" style="
+              <a [routerLink]="'/member/' + m.id + '/'" style="
                 display:inline-flex;align-items:center;gap:8px;
                 padding:6px 14px 6px 8px;border-radius:20px;
                 border:1px solid;text-decoration:none;
@@ -406,14 +406,14 @@
           <div style="height:1px;width:40px;background:linear-gradient(to left,transparent,rgba(124,108,242,0.2));"></div>
         </div>
         <p style="font-family:'JF Openhuninn',sans-serif;font-style:italic;font-size:0.75rem;color:rgba(184,160,184,0.45);letter-spacing:0.15em;margin-bottom:14px;">偶像成員記録 · Idol Archive</p>
-        <a routerLink="/privacy" style="font-size:0.72rem;color:rgba(122,90,122,0.4);text-decoration:none;letter-spacing:0.04em;">隱私政策</a>
+        <a routerLink="/privacy/" style="font-size:0.72rem;color:rgba(122,90,122,0.4);text-decoration:none;letter-spacing:0.04em;">隱私政策</a>
         <div style="text-align:center;margin-top:16px;">
-          <a routerLink="/guide" style="
+          <a routerLink="/guide/" style="
             font-size:0.72rem;color:rgba(122,90,122,0.45);
             text-decoration:none;letter-spacing:0.06em;
           ">貢獻者手冊</a>
           <span style="color:rgba(184,160,184,0.3);font-size:0.7rem;margin:0 6px;">·</span>
-          <a routerLink="/contributors" style="
+          <a routerLink="/contributors/" style="
             font-size:0.72rem;color:rgba(122,90,122,0.45);
             text-decoration:none;letter-spacing:0.06em;
           ">貢獻者排行榜 →</a>

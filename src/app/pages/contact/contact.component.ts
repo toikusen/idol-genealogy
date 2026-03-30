@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../core/seo.service';
-
-const SITE_URL = 'https://idolmaps.com';
+import { siteUrl } from '../../core/public-url.utils';
 
 @Component({
   selector: 'app-contact',
@@ -17,7 +16,7 @@ export class ContactComponent implements OnInit {
     this.seo.setPage(
       '聯絡我們 | Idol Maps',
       '有任何資料錯誤或補充建議，歡迎與我們聯絡。',
-      `${SITE_URL}/contact`
+      siteUrl('/contact')
     );
   }
 }

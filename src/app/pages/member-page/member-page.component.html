@@ -232,7 +232,7 @@
                   <rect x="2" y="7" width="20" height="14" rx="2"/>
                   <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
                 </svg>
-                <a [routerLink]="['/company', companyId]" style="
+                <a [routerLink]="'/company/' + companyId + '/'" style="
                   font-family:'JF Openhuninn',sans-serif;
                   font-size:0.78rem;color:rgba(124,108,242,0.7);
                   letter-spacing:0.06em;text-decoration:none;
@@ -692,17 +692,17 @@
           color: rgba(184,160,184,0.45); letter-spacing: 0.15em;
           margin-bottom: 14px;
         ">偶像成員記録 · Idol Archive</p>
-        <a routerLink="/privacy" style="
+        <a routerLink="/privacy/" style="
           font-size: 0.72rem; color: rgba(122,90,122,0.45);
           text-decoration: none; letter-spacing: 0.04em;
         ">隱私政策</a>
         <div style="text-align:center;margin-top:16px;">
-          <a routerLink="/guide" style="
+          <a routerLink="/guide/" style="
             font-size:0.72rem;color:rgba(122,90,122,0.45);
             text-decoration:none;letter-spacing:0.06em;
           ">貢獻者手冊</a>
           <span style="color:rgba(184,160,184,0.3);font-size:0.7rem;margin:0 6px;">·</span>
-          <a routerLink="/contributors" style="
+          <a routerLink="/contributors/" style="
             font-size:0.72rem;color:rgba(122,90,122,0.45);
             text-decoration:none;letter-spacing:0.06em;
           ">貢獻者排行榜 →</a>
