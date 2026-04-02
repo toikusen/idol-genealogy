@@ -47,7 +47,7 @@
             <div style="display: flex; align-items: flex-start; gap: 14px; min-width: 200px; flex: 1 1 200px;">
               <!-- Avatar -->
               @if (member.photo_url) {
-                <img [src]="member.photo_url" [alt]="member.name" style="
+                <img [src]="member.photo_url" [alt]="member.name" loading="lazy" style="
                   width: 64px; height: 64px; border-radius: 50%;
                   object-fit: cover; flex-shrink: 0;
                 "/>

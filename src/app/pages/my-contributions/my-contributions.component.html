@@ -25,7 +25,7 @@
              [style.filter]="isBadgeUnlocked(badge) ? 'none' : 'grayscale(1)'">
           <div style="display:inline-block;padding:3px;border-radius:50%;"
                [style.box-shadow]="isCurrentBadge(badge) ? '0 0 0 2px rgba(232,121,160,0.6)' : 'none'">
-            <img [src]="badge.image" [alt]="badge.name" style="width:80px;height:80px;object-fit:contain;display:block;">
+            <img [src]="badge.image" [alt]="badge.name" loading="lazy" style="width:80px;height:80px;object-fit:contain;display:block;">
           </div>
           <div style="font-size:0.65rem;letter-spacing:0.04em;margin-top:2px;"
                [style.color]="isBadgeUnlocked(badge) ? 'rgba(122,90,122,0.85)' : 'rgba(122,90,122,0.35)'">
