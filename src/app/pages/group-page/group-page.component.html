@@ -4,13 +4,12 @@
   <div style="
     position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background:
-      radial-gradient(ellipse 60% 50% at 10% 0%, rgba(232,121,160,0.09) 0%, transparent 65%),
-      radial-gradient(ellipse 45% 45% at 90% 90%, rgba(124,108,242,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse 35% 30% at 75% 20%, rgba(249,209,224,0.11) 0%, transparent 55%);
+      radial-gradient(ellipse 60% 50% at 15% 0%, rgba(124,108,242,0.10) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 40% at 85% 90%, rgba(232,121,160,0.07) 0%, transparent 60%);
   "></div>
 
   <!-- ── Main content ── -->
-  <div class="group-outer" style="position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 0 32px 96px;">
+  <div id="main-content" class="group-outer" style="position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 0 32px 96px;">
 
     <!-- ── Loading state ── -->
     @if (loading) {
@@ -350,7 +349,7 @@
                 outline: 2px solid rgba(232,121,160,0.2);
                 flex-shrink: 0;
               " [style.outline-color]="group.color + '44'">
-                <img [src]="group.photo_url" [alt]="group.name" style="
+                <img [src]="group.photo_url" [alt]="group.name" loading="lazy" style="
                   width: 100%; height: 100%; object-fit: cover;
                   display: block;
                 ">
@@ -386,6 +385,7 @@
                 <img
                   [src]="selectedHistory.member!.photo_url!"
                   [alt]="selectedHistory.member?.name"
+                  loading="lazy"
                   style="
                     width: 80px; height: 80px; border-radius: 50%;
                     object-fit: cover; flex-shrink: 0;
@@ -844,7 +844,7 @@
                       <a [href]="song.youtube_url" target="_blank" rel="noopener"
                         class="flex-shrink-0 relative block rounded-lg overflow-hidden"
                         style="width:80px;height:54px;background:#000;">
-                        <img [src]="thumb" alt="" style="width:100%;height:100%;object-fit:cover;opacity:0.9;"/>
+                        <img [src]="thumb" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;opacity:0.9;"/>
                         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="rgba(255,255,255,0.9)" style="filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5))">
                             <polygon points="5,3 19,12 5,21"/>
@@ -987,6 +987,7 @@
                     >
                       <img
                         [src]="'https://img.youtube.com/vi/' + vid + '/hqdefault.jpg'"
+                        loading="lazy"
                         style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; transition: transform 0.3s;"
                         class="video-thumb"
                         alt=""
@@ -1368,10 +1369,6 @@
 }
 
 <style>
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
   .back-link {
     display: inline-flex;
     align-items: center;
