@@ -1,3 +1,5 @@
+<a href="#main-content" class="skip-link">跳到主內容</a>
+
 <router-outlet />
 
 @if ((session$ | async); as session) {
@@ -36,7 +38,8 @@
       <button (click)="signOut()" style="
         display: inline-flex;
         align-items: center;
-        padding: 6px 10px 6px 6px;
+        padding: 8px 14px 8px 10px;
+        min-height: 44px;
         border: none;
         border-left: 1px solid rgba(232,121,160,0.15);
         background: transparent;
