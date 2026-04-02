@@ -66,6 +66,13 @@ describe('getGroupCompleteness', () => {
     const full: Group = { ...baseGroup, photo_url: 'url', founded_at: '2020-01-01', name_jp: '日文名', youtube: 'yt' };
     expect(getGroupCompleteness(full).isComplete).toBeTrue();
   });
+
+  it('returns partial score proportional to filled fields', () => {
+    // 6 tracked fields: photo_url, founded_at, name_jp, hasSocial, style, disbanded_at
+    // fill 2 of 6 → 33%
+    const g: Group = { ...baseGroup, photo_url: 'url', founded_at: '2020-01-01' };
+    expect(getGroupCompleteness(g).score).toBe(Math.round(2 / 6 * 100));
+  });
 });
 
 const baseCompany: Company = {
@@ -87,5 +94,12 @@ describe('getCompanyCompleteness', () => {
   it('returns score 100 when all tracked fields present', () => {
     const full: Company = { ...baseCompany, photo_url: 'url', website: 'https://x.com', instagram: 'ig', description: '說明' };
     expect(getCompanyCompleteness(full).score).toBe(100);
+  });
+
+  it('returns partial score proportional to filled fields', () => {
+    // 4 tracked fields: photo_url, website, hasSocial, description
+    // fill 2 of 4 → 50%
+    const c: Company = { ...baseCompany, photo_url: 'url', website: 'https://example.com' };
+    expect(getCompanyCompleteness(c).score).toBe(50);
   });
 });
