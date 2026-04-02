@@ -42,7 +42,7 @@
 每張卡片包含：
 - 左：頭像（若無則顯示佔位符）
 - 中：名稱、缺少的核心欄位 tag（例如「缺生日」「缺社群」）、完整度進度條 %
-- 右：「補充資料」按鈕 → 連到該條目頁面
+- 右：「補充資料」按鈕 → 連到該條目頁面並自動開啟提案 panel
 
 ## Completeness Logic
 
@@ -103,6 +103,18 @@ WantedPageComponent          ← 新頁面 /wanted
   WantedListComponent        ← Tab 切換 + 卡片列表
     WantedCardComponent      ← 單一條目卡片
 ```
+
+## Deep Link — 自動開啟提案 Panel
+
+卡片上的「補充資料」按鈕連到對應條目頁面，並帶上 query param：
+
+- `/member/:id?propose=true`
+- `/group/:id?propose=true`
+- `/company/:id?propose=true`
+
+成員、團體、公司頁面各自在 `ngOnInit` 偵測 `propose=true`，若存在則自動開啟 proposal panel。
+
+點擊名字或頭像則正常導向條目頁面，不帶 query param。
 
 ## Routing
 
