@@ -44,6 +44,7 @@ describe('ProposalService', () => {
       submitter_name: 'Tester',
       submitter_id: null,
       submitter_email: null,
+      submitter_note: null,
     });
     expect(mockDb.from).toHaveBeenCalledWith('proposals');
   });

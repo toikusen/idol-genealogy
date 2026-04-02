@@ -8,7 +8,7 @@ const mockProposal: Proposal = {
   proposed_data: { name: 'New' }, original_data: { name: 'Old' },
   reviewed_data: null, status: 'approved',
   submitter_id: 'u1', submitter_name: 'Alice', submitter_email: null,
-  reviewer_note: null, created_at: '2026-03-01T00:00:00Z',
+  reviewer_note: null, submitter_note: null, created_at: '2026-03-01T00:00:00Z',
   reviewed_at: '2026-03-02T00:00:00Z', reviewed_by: null,
 };
 
