@@ -1,6 +1,7 @@
 @font-face {
   font-family: 'JF Openhuninn';
-  src: url('/fonts/jf-openhuninn-2.1.ttf') format('truetype');
+  src: url('/fonts/jf-openhuninn-2.1.woff2') format('woff2'),
+       url('/fonts/jf-openhuninn-2.1.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
