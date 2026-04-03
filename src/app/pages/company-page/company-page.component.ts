@@ -54,6 +54,11 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
       this.applyPageData(pageData as CompanyPageData);
     });
+    this.route.queryParams.subscribe(params => {
+      if (params['propose'] === 'true') {
+        this.showProposalPanel = true;
+      }
+    });
   }
 
   private applyPageData(pageData: CompanyPageData) {
