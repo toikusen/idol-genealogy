@@ -111,6 +111,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this._routeSub = this.route.data.subscribe(({ pageData }) => {
       this.applyPageData(pageData as GroupPageData);
     });
+    this.route.queryParams.subscribe(params => {
+      if (params['propose'] === 'true') {
+        this.showGroupProposalPanel = true;
+      }
+    });
   }
 
   ngOnDestroy() { this._routeSub?.unsubscribe(); }

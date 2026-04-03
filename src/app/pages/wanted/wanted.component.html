@@ -1,0 +1,252 @@
+<!-- src/app/pages/wanted/wanted.component.html -->
+<div class="min-h-screen" style="background: var(--bg-primary); color: var(--text-primary);">
+  <div class="max-w-4xl mx-auto px-4 py-10">
+
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold mb-1" style="color: var(--text-primary);">資料待補充</h1>
+      <p class="text-sm" style="color: var(--text-secondary);">以下條目缺少重要資料，歡迎提案補充。</p>
+    </div>
+
+    @if (loading) {
+      <div class="text-center py-20" style="color: var(--text-secondary);">載入中…</div>
+    } @else if (error) {
+      <div class="text-center py-20 text-red-400">載入失敗，請稍後再試。</div>
+    } @else {
+
+      <!-- Summary bar -->
+      <div class="flex flex-wrap gap-4 mb-8 text-sm" style="color: var(--text-secondary);">
+        <span>成員 <strong style="color: var(--text-primary);">{{ wantedMembers.length }}</strong> / {{ totalMembers }} 不完整</span>
+        <span style="opacity: 0.3;">·</span>
+        <span>團體 <strong style="color: var(--text-primary);">{{ wantedGroups.length }}</strong> / {{ totalGroups }} 不完整</span>
+        <span style="opacity: 0.3;">·</span>
+        <span>公司 <strong style="color: var(--text-primary);">{{ wantedCompanies.length }}</strong> / {{ totalCompanies }} 不完整</span>
+      </div>
+
+      <!-- Avatar grid overview -->
+      <div class="mb-8">
+        <p class="text-xs mb-3" style="color: var(--text-secondary);">
+          <span class="inline-block w-2.5 h-2.5 rounded-full border-2 border-red-400 mr-1"></span>完整度 &lt; 50%
+          <span class="inline-block w-2.5 h-2.5 rounded-full border-2 border-yellow-400 ml-3 mr-1"></span>完整度 50–80%
+        </p>
+        <div class="flex flex-wrap gap-2">
+          @for (entry of wantedMembers; track entry.member.id) {
+            <a [routerLink]="['/member', entry.member.id]"
+               [title]="entry.member.name"
+               class="block w-10 h-10 rounded-full border-2 overflow-hidden flex-shrink-0 transition-transform hover:scale-110"
+               [class]="borderClass(entry.completeness.score)">
+              @if (entry.member.photo_url) {
+                <img [src]="entry.member.photo_url" [alt]="entry.member.name" class="w-full h-full object-cover" loading="lazy">
+              } @else {
+                <div class="w-full h-full flex items-center justify-center text-xs font-bold"
+                     style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">
+                  {{ getInitial(entry.member.name) }}
+                </div>
+              }
+            </a>
+          }
+          @for (entry of wantedGroups; track entry.group.id) {
+            <a [routerLink]="['/group', entry.group.id]"
+               [title]="entry.group.name"
+               class="block w-10 h-10 rounded-full border-2 overflow-hidden flex-shrink-0 transition-transform hover:scale-110"
+               [class]="borderClass(entry.completeness.score)">
+              @if (entry.group.photo_url) {
+                <img [src]="entry.group.photo_url" [alt]="entry.group.name" class="w-full h-full object-cover" loading="lazy">
+              } @else {
+                <div class="w-full h-full flex items-center justify-center text-xs font-bold"
+                     style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">
+                  {{ getInitial(entry.group.name) }}
+                </div>
+              }
+            </a>
+          }
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex gap-1 mb-6 border-b" style="border-color: rgba(124,108,242,0.15);">
+        <button
+          role="tab"
+          [attr.aria-selected]="activeTab === 'members'"
+          (click)="activeTab = 'members'"
+          class="px-4 py-2 text-sm font-medium transition-colors"
+          [ngStyle]="tabStyle('members')">
+          成員 ({{ wantedMembers.length }})
+        </button>
+        <button
+          role="tab"
+          [attr.aria-selected]="activeTab === 'groups'"
+          (click)="activeTab = 'groups'"
+          class="px-4 py-2 text-sm font-medium transition-colors"
+          [ngStyle]="tabStyle('groups')">
+          團體 ({{ wantedGroups.length }})
+        </button>
+        <button
+          role="tab"
+          [attr.aria-selected]="activeTab === 'companies'"
+          (click)="activeTab = 'companies'"
+          class="px-4 py-2 text-sm font-medium transition-colors"
+          [ngStyle]="tabStyle('companies')">
+          公司 ({{ wantedCompanies.length }})
+        </button>
+      </div>
+
+      <!-- Member list -->
+      @if (activeTab === 'members') {
+        @if (wantedMembers.length === 0) {
+          <p class="text-center py-12" style="color: var(--text-secondary);">所有成員資料均已完整！</p>
+        }
+        <div class="space-y-3">
+          @for (entry of wantedMembers; track entry.member.id) {
+            <div class="flex items-center gap-4 rounded-xl px-4 py-3"
+                 style="background: var(--card-bg, rgba(255,255,255,0.04)); border: 1px solid rgba(124,108,242,0.1);">
+              <a [routerLink]="['/member', entry.member.id]"
+                 class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
+                 [class]="borderClass(entry.completeness.score)">
+                @if (entry.member.photo_url) {
+                  <img [src]="entry.member.photo_url" [alt]="entry.member.name" class="w-full h-full object-cover" loading="lazy">
+                } @else {
+                  <div class="w-full h-full flex items-center justify-center font-bold"
+                       style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">
+                    {{ getInitial(entry.member.name) }}
+                  </div>
+                }
+              </a>
+              <div class="flex-1 min-w-0">
+                <a [routerLink]="['/member', entry.member.id]"
+                   class="font-medium hover:underline truncate block"
+                   style="color: var(--text-primary);">{{ entry.member.name }}</a>
+                <div class="flex flex-wrap gap-1 mt-1">
+                  @for (label of entry.completeness.missingCoreLabels; track label) {
+                    <span class="text-xs px-1.5 py-0.5 rounded"
+                          style="background: rgba(239,68,68,0.1); color: rgba(239,68,68,0.8);">缺{{ label }}</span>
+                  }
+                </div>
+                <div class="mt-2 flex items-center gap-2">
+                  <div class="flex-1 h-1.5 rounded-full" style="background: rgba(124,108,242,0.1);">
+                    <div class="h-full rounded-full transition-all"
+                         [style.width.%]="entry.completeness.score"
+                         [style.background]="entry.completeness.score < 50 ? 'rgba(239,68,68,0.7)' : 'rgba(234,179,8,0.7)'">
+                    </div>
+                  </div>
+                  <span class="text-xs flex-shrink-0" style="color: var(--text-secondary);">{{ entry.completeness.score }}%</span>
+                </div>
+              </div>
+              <a [routerLink]="['/member', entry.member.id]"
+                 [queryParams]="{ propose: 'true' }"
+                 class="flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-opacity hover:opacity-80"
+                 style="background: rgba(124,108,242,0.15); color: rgba(124,108,242,0.9);">
+                補充資料
+              </a>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Group list -->
+      @if (activeTab === 'groups') {
+        @if (wantedGroups.length === 0) {
+          <p class="text-center py-12" style="color: var(--text-secondary);">所有團體資料均已完整！</p>
+        }
+        <div class="space-y-3">
+          @for (entry of wantedGroups; track entry.group.id) {
+            <div class="flex items-center gap-4 rounded-xl px-4 py-3"
+                 style="background: var(--card-bg, rgba(255,255,255,0.04)); border: 1px solid rgba(124,108,242,0.1);">
+              <a [routerLink]="['/group', entry.group.id]"
+                 class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
+                 [class]="borderClass(entry.completeness.score)">
+                @if (entry.group.photo_url) {
+                  <img [src]="entry.group.photo_url" [alt]="entry.group.name" class="w-full h-full object-cover" loading="lazy">
+                } @else {
+                  <div class="w-full h-full flex items-center justify-center font-bold"
+                       style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">
+                    {{ getInitial(entry.group.name) }}
+                  </div>
+                }
+              </a>
+              <div class="flex-1 min-w-0">
+                <a [routerLink]="['/group', entry.group.id]"
+                   class="font-medium hover:underline truncate block"
+                   style="color: var(--text-primary);">{{ entry.group.name }}</a>
+                <div class="flex flex-wrap gap-1 mt-1">
+                  @for (label of entry.completeness.missingCoreLabels; track label) {
+                    <span class="text-xs px-1.5 py-0.5 rounded"
+                          style="background: rgba(239,68,68,0.1); color: rgba(239,68,68,0.8);">缺{{ label }}</span>
+                  }
+                </div>
+                <div class="mt-2 flex items-center gap-2">
+                  <div class="flex-1 h-1.5 rounded-full" style="background: rgba(124,108,242,0.1);">
+                    <div class="h-full rounded-full transition-all"
+                         [style.width.%]="entry.completeness.score"
+                         [style.background]="entry.completeness.score < 50 ? 'rgba(239,68,68,0.7)' : 'rgba(234,179,8,0.7)'">
+                    </div>
+                  </div>
+                  <span class="text-xs flex-shrink-0" style="color: var(--text-secondary);">{{ entry.completeness.score }}%</span>
+                </div>
+              </div>
+              <a [routerLink]="['/group', entry.group.id]"
+                 [queryParams]="{ propose: 'true' }"
+                 class="flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-opacity hover:opacity-80"
+                 style="background: rgba(124,108,242,0.15); color: rgba(124,108,242,0.9);">
+                補充資料
+              </a>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Company list -->
+      @if (activeTab === 'companies') {
+        @if (wantedCompanies.length === 0) {
+          <p class="text-center py-12" style="color: var(--text-secondary);">所有公司資料均已完整！</p>
+        }
+        <div class="space-y-3">
+          @for (entry of wantedCompanies; track entry.company.id) {
+            <div class="flex items-center gap-4 rounded-xl px-4 py-3"
+                 style="background: var(--card-bg, rgba(255,255,255,0.04)); border: 1px solid rgba(124,108,242,0.1);">
+              <a [routerLink]="['/company', entry.company.id]"
+                 class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
+                 [class]="borderClass(entry.completeness.score)">
+                @if (entry.company.photo_url) {
+                  <img [src]="entry.company.photo_url" [alt]="entry.company.name" class="w-full h-full object-cover" loading="lazy">
+                } @else {
+                  <div class="w-full h-full flex items-center justify-center font-bold"
+                       style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">
+                    {{ getInitial(entry.company.name) }}
+                  </div>
+                }
+              </a>
+              <div class="flex-1 min-w-0">
+                <a [routerLink]="['/company', entry.company.id]"
+                   class="font-medium hover:underline truncate block"
+                   style="color: var(--text-primary);">{{ entry.company.name }}</a>
+                <div class="flex flex-wrap gap-1 mt-1">
+                  @for (label of entry.completeness.missingCoreLabels; track label) {
+                    <span class="text-xs px-1.5 py-0.5 rounded"
+                          style="background: rgba(239,68,68,0.1); color: rgba(239,68,68,0.8);">缺{{ label }}</span>
+                  }
+                </div>
+                <div class="mt-2 flex items-center gap-2">
+                  <div class="flex-1 h-1.5 rounded-full" style="background: rgba(124,108,242,0.1);">
+                    <div class="h-full rounded-full transition-all"
+                         [style.width.%]="entry.completeness.score"
+                         [style.background]="entry.completeness.score < 50 ? 'rgba(239,68,68,0.7)' : 'rgba(234,179,8,0.7)'">
+                    </div>
+                  </div>
+                  <span class="text-xs flex-shrink-0" style="color: var(--text-secondary);">{{ entry.completeness.score }}%</span>
+                </div>
+              </div>
+              <a [routerLink]="['/company', entry.company.id]"
+                 [queryParams]="{ propose: 'true' }"
+                 class="flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-opacity hover:opacity-80"
+                 style="background: rgba(124,108,242,0.15); color: rgba(124,108,242,0.9);">
+                補充資料
+              </a>
+            </div>
+          }
+        </div>
+      }
+
+    }
+  </div>
+</div>

@@ -90,6 +90,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
       this.applyPageData(pageData as MemberPageData);
     });
+    this.route.queryParams.subscribe(params => {
+      if (params['propose'] === 'true') {
+        this.showProposalPanel = true;
+      }
+    });
   }
 
   ngOnDestroy() {

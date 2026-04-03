@@ -111,5 +111,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/my-contributions/my-contributions.component').then(m => m.MyContributionsComponent),
   },
+  {
+    path: 'wanted',
+    loadComponent: () => import('./pages/wanted/wanted.component').then(m => m.WantedComponent)
+  },
   { path: '**', redirectTo: '' }
 ];

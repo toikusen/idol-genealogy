@@ -6,7 +6,7 @@ const baseProposal: Proposal = {
   proposed_data: { name: 'New Name' }, original_data: { name: 'Old Name' },
   reviewed_data: null, status: 'approved', submitter_id: null,
   submitter_name: 'Alice', submitter_email: null,
-  reviewer_note: null, created_at: '', reviewed_at: null, reviewed_by: null,
+  reviewer_note: null, submitter_note: null, created_at: '', reviewed_at: null, reviewed_by: null,
 };
 
 describe('getEffectiveProposed', () => {
