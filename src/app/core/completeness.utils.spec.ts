@@ -63,12 +63,18 @@ describe('getGroupCompleteness', () => {
   });
 
   it('returns isComplete true when all core fields present', () => {
-    const full: Group = { ...baseGroup, photo_url: 'url', founded_at: '2020-01-01', name_jp: '日文名', youtube: 'yt' };
+    // core: photo_url, founded_at, hasSocial (name_jp is optional)
+    const full: Group = { ...baseGroup, photo_url: 'url', founded_at: '2020-01-01', youtube: 'yt' };
     expect(getGroupCompleteness(full).isComplete).toBeTrue();
   });
 
+  it('returns isComplete true even without name_jp', () => {
+    const g: Group = { ...baseGroup, photo_url: 'url', founded_at: '2020-01-01', instagram: 'ig' };
+    expect(getGroupCompleteness(g).isComplete).toBeTrue();
+  });
+
   it('returns partial score proportional to filled fields', () => {
-    // 6 tracked fields: photo_url, founded_at, name_jp, hasSocial, style, disbanded_at
+    // 6 tracked fields: photo_url, founded_at, hasSocial, name_jp, style, disbanded_at
     // fill 2 of 6 → 33%
     const g: Group = { ...baseGroup, photo_url: 'url', founded_at: '2020-01-01' };
     expect(getGroupCompleteness(g).score).toBe(Math.round(2 / 6 * 100));
