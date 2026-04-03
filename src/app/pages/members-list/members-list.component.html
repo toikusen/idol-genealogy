@@ -235,8 +235,8 @@
                 font-size: 1.4rem; font-weight: 300;
                 flex-shrink: 0;
               "
-              [style.background]="(m.color || '#e879a0') + '18'"
-              [style.color]="m.color || '#e879a0'"
+              [style.background]="safeColor(m.color) + '33'"
+              [style.color]="safeColor(m.color)"
               >{{ getInitial(m) }}</div>
             }
 
@@ -245,7 +245,7 @@
               <div style="
                 width: 6px; height: 6px; border-radius: 50%;
                 margin-top: -4px; flex-shrink: 0;
-              " [style.background]="m.color"></div>
+              " [style.background]="safeColor(m.color)"></div>
             }
 
             <!-- Name -->

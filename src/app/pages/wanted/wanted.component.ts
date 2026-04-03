@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
+import { HistoryService } from '../../core/history.service';
 import { SeoService } from '../../core/seo.service';
 import { Member, Group, Company } from '../../models';
 import {
@@ -53,6 +54,7 @@ export class WantedComponent implements OnInit {
     private memberService: MemberService,
     private groupService: GroupService,
     private companyService: CompanyService,
+    private historyService: HistoryService,
     private seo: SeoService,
   ) {}
 
@@ -64,28 +66,33 @@ export class WantedComponent implements OnInit {
     );
 
     try {
-      const [members, groups, companies] = await Promise.all([
+      const [members, groups, companies, links] = await Promise.all([
         this.memberService.getAll(),
         this.groupService.getAll(),
         this.companyService.getAll(),
+        this.historyService.getMemberGroupLinks(),
       ]);
+
+      const memberIdsWithHistory = new Set(links.map(l => l.member_id));
+      const groupIdsWithMembers = new Set(links.filter(l => l.group_id).map(l => l.group_id));
+      const companyIdsWithGroups = new Set(groups.filter(g => g.company_id).map(g => g.company_id));
 
       this.totalMembers = members.length;
       this.totalGroups = groups.length;
       this.totalCompanies = companies.length;
 
       this.wantedMembers = members
-        .map(member => ({ member, completeness: getMemberCompleteness(member) }))
+        .map(member => ({ member, completeness: getMemberCompleteness(member, memberIdsWithHistory.has(member.id)) }))
         .filter(e => !e.completeness.isComplete)
         .sort((a, b) => a.completeness.score - b.completeness.score);
 
       this.wantedGroups = groups
-        .map(group => ({ group, completeness: getGroupCompleteness(group) }))
+        .map(group => ({ group, completeness: getGroupCompleteness(group, groupIdsWithMembers.has(group.id)) }))
         .filter(e => !e.completeness.isComplete)
         .sort((a, b) => a.completeness.score - b.completeness.score);
 
       this.wantedCompanies = companies
-        .map(company => ({ company, completeness: getCompanyCompleteness(company) }))
+        .map(company => ({ company, completeness: getCompanyCompleteness(company, companyIdsWithGroups.has(company.id)) }))
         .filter(e => !e.completeness.isComplete)
         .sort((a, b) => a.completeness.score - b.completeness.score);
     } catch {

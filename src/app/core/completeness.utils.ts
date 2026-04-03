@@ -20,7 +20,7 @@ function calcCompleteness(
   };
 }
 
-export function getMemberCompleteness(m: Member): CompletenessResult {
+export function getMemberCompleteness(m: Member, hasHistory = true): CompletenessResult {
   const hasSocial = !!(m.instagram || m.facebook || m.x);
   return calcCompleteness(
     [
@@ -28,12 +28,13 @@ export function getMemberCompleteness(m: Member): CompletenessResult {
       [!!m.birthdate,  '生日'],
       [!!m.name_roman, '英文/拼音名'],
       [hasSocial,      '社群帳號'],
+      [hasHistory,     '歷程記錄'],
     ],
     [!!m.nickname, !!m.color, !!m.color_name]
   );
 }
 
-export function getGroupCompleteness(g: Group): CompletenessResult {
+export function getGroupCompleteness(g: Group, hasMembers = true): CompletenessResult {
   const hasSocial = !!(g.instagram || g.facebook || g.x || g.youtube);
   return calcCompleteness(
     [
@@ -41,18 +42,20 @@ export function getGroupCompleteness(g: Group): CompletenessResult {
       [!!g.founded_at, '成立日期'],
       [!!g.name_jp,    '日文名稱'],
       [hasSocial,      '社群帳號'],
+      [hasMembers,     '成員'],
     ],
     [!!g.style, !!g.disbanded_at]
   );
 }
 
-export function getCompanyCompleteness(c: Company): CompletenessResult {
+export function getCompanyCompleteness(c: Company, hasGroups = true): CompletenessResult {
   const hasSocial = !!(c.instagram || c.facebook || c.x || c.youtube);
   return calcCompleteness(
     [
       [!!c.photo_url, '頭像'],
       [!!c.website,   '官網'],
       [hasSocial,     '社群帳號'],
+      [hasGroups,     '旗下團體'],
     ],
     [!!c.description]
   );

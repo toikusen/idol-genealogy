@@ -88,7 +88,7 @@ export class HomeComponent implements OnInit {
         this.companyService.getAll(),
         this.memberService.getTopByViews(5).catch((): MemberLeaderboardEntry[] => []),
         this.groupService.getTopByViews(5).catch((): GroupLeaderboardEntry[] => []),
-        this.memberService.getUpcomingBirthdays(7).catch(() => []),
+        this.memberService.getUpcomingBirthdays(30).catch(() => []),
         this.memberService.getSoloMembers().catch(() => []),
       ]);
       this.recentMembers = recent;
@@ -146,8 +146,8 @@ export class HomeComponent implements OnInit {
   }
 
   getInitial(member: Member): string {
-    if (member.name_roman) return member.name_roman.charAt(0);
-    return member.name.charAt(0).toUpperCase();
+    const displayName = member.name || member.name_roman || '';
+    return displayName.charAt(0).toUpperCase() || '?';
   }
 
   formatDate(dateStr: string | null): string {
@@ -238,5 +238,16 @@ export class HomeComponent implements OnInit {
 
   get noResults(): boolean {
     return this.query.trim().length > 0 && !this.searching && !this.hasResults;
+  }
+
+  safeColor(hex: string | null | undefined, fallback = '#e879a0'): string {
+    if (!hex) return fallback;
+    const clean = hex.replace('#', '');
+    if (clean.length < 6) return fallback;
+    const r = parseInt(clean.substring(0, 2), 16) / 255;
+    const g = parseInt(clean.substring(2, 4), 16) / 255;
+    const b = parseInt(clean.substring(4, 6), 16) / 255;
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luminance > 0.75 ? fallback : hex;
   }
 }

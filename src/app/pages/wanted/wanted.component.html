@@ -2,6 +2,24 @@
 <div class="min-h-screen" style="background: var(--bg-primary); color: var(--text-primary);">
   <div class="max-w-4xl mx-auto px-4 py-10">
 
+    <!-- Back link -->
+    <div class="mb-6">
+      <a routerLink="/" style="
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 0.78rem; letter-spacing: 0.08em;
+        color: rgba(122,90,122,0.55);
+        text-decoration: none;
+      "
+      onmouseover="this.style.color='rgba(124,108,242,0.85)'"
+      onmouseout="this.style.color='rgba(122,90,122,0.55)'"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M19 12H5M5 12l7-7M5 12l7 7"/>
+        </svg>
+        首頁
+      </a>
+    </div>
+
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-2xl font-bold mb-1" style="color: var(--text-primary);">資料待補充</h1>
@@ -32,6 +50,7 @@
         <div class="flex flex-wrap gap-2">
           @for (entry of wantedMembers; track entry.member.id) {
             <a [routerLink]="['/member', entry.member.id]"
+               [queryParams]="{ propose: 'true' }"
                [title]="entry.member.name"
                class="block w-10 h-10 rounded-full border-2 overflow-hidden flex-shrink-0 transition-transform hover:scale-110"
                [class]="borderClass(entry.completeness.score)">
@@ -47,6 +66,7 @@
           }
           @for (entry of wantedGroups; track entry.group.id) {
             <a [routerLink]="['/group', entry.group.id]"
+               [queryParams]="{ propose: 'true' }"
                [title]="entry.group.name"
                class="block w-10 h-10 rounded-full border-2 overflow-hidden flex-shrink-0 transition-transform hover:scale-110"
                [class]="borderClass(entry.completeness.score)">
@@ -101,6 +121,7 @@
             <div class="flex items-center gap-4 rounded-xl px-4 py-3"
                  style="background: var(--card-bg, rgba(255,255,255,0.04)); border: 1px solid rgba(124,108,242,0.1);">
               <a [routerLink]="['/member', entry.member.id]"
+                 [queryParams]="{ propose: 'true' }"
                  class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
                  [class]="borderClass(entry.completeness.score)">
                 @if (entry.member.photo_url) {
@@ -114,6 +135,7 @@
               </a>
               <div class="flex-1 min-w-0">
                 <a [routerLink]="['/member', entry.member.id]"
+                   [queryParams]="{ propose: 'true' }"
                    class="font-medium hover:underline truncate block"
                    style="color: var(--text-primary);">{{ entry.member.name }}</a>
                 <div class="flex flex-wrap gap-1 mt-1">
@@ -153,6 +175,7 @@
             <div class="flex items-center gap-4 rounded-xl px-4 py-3"
                  style="background: var(--card-bg, rgba(255,255,255,0.04)); border: 1px solid rgba(124,108,242,0.1);">
               <a [routerLink]="['/group', entry.group.id]"
+                 [queryParams]="{ propose: 'true' }"
                  class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
                  [class]="borderClass(entry.completeness.score)">
                 @if (entry.group.photo_url) {
@@ -166,6 +189,7 @@
               </a>
               <div class="flex-1 min-w-0">
                 <a [routerLink]="['/group', entry.group.id]"
+                   [queryParams]="{ propose: 'true' }"
                    class="font-medium hover:underline truncate block"
                    style="color: var(--text-primary);">{{ entry.group.name }}</a>
                 <div class="flex flex-wrap gap-1 mt-1">
@@ -205,6 +229,7 @@
             <div class="flex items-center gap-4 rounded-xl px-4 py-3"
                  style="background: var(--card-bg, rgba(255,255,255,0.04)); border: 1px solid rgba(124,108,242,0.1);">
               <a [routerLink]="['/company', entry.company.id]"
+                 [queryParams]="{ propose: 'true' }"
                  class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
                  [class]="borderClass(entry.completeness.score)">
                 @if (entry.company.photo_url) {
@@ -218,6 +243,7 @@
               </a>
               <div class="flex-1 min-w-0">
                 <a [routerLink]="['/company', entry.company.id]"
+                   [queryParams]="{ propose: 'true' }"
                    class="font-medium hover:underline truncate block"
                    style="color: var(--text-primary);">{{ entry.company.name }}</a>
                 <div class="flex flex-wrap gap-1 mt-1">

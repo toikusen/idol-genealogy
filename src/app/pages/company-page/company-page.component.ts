@@ -116,4 +116,15 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     }
     return 'background: linear-gradient(135deg, #1a1a2e 0%, #2d1b4e 100%);';
   }
+
+  safeColor(hex: string | null | undefined, fallback = '#e879a0'): string {
+    if (!hex) return fallback;
+    const clean = hex.replace('#', '');
+    if (clean.length < 6) return fallback;
+    const r = parseInt(clean.substring(0, 2), 16) / 255;
+    const g = parseInt(clean.substring(2, 4), 16) / 255;
+    const b = parseInt(clean.substring(4, 6), 16) / 255;
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luminance > 0.75 ? fallback : hex;
+  }
 }
