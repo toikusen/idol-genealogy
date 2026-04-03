@@ -40,11 +40,10 @@ export function getGroupCompleteness(g: Group, hasMembers = true): CompletenessR
     [
       [!!g.photo_url,  '頭像'],
       [!!g.founded_at, '成立日期'],
-      [!!g.name_jp,    '日文名稱'],
       [hasSocial,      '社群帳號'],
       [hasMembers,     '成員'],
     ],
-    [!!g.style, !!g.disbanded_at]
+    [!!g.name_jp, !!g.style, !!g.disbanded_at]
   );
 }
 
