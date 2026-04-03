@@ -13,6 +13,7 @@ import {
   getCompanyCompleteness,
   CompletenessResult,
 } from '../../core/completeness.utils';
+import { siteUrl } from '../../core/public-url.utils';
 
 export interface WantedMember {
   member: Member;
@@ -59,6 +60,7 @@ export class WantedComponent implements OnInit {
     this.seo.setPage(
       '資料待補充 - Idol Maps',
       '查看哪些成員、團體、公司缺少資料，並幫助補充完整。',
+      siteUrl('/wanted'),
     );
 
     try {
