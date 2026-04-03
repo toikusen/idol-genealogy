@@ -93,6 +93,12 @@ export class WantedComponent implements OnInit {
     }
   }
 
+  tabStyle(tab: 'members' | 'groups' | 'companies'): Record<string, string> {
+    return this.activeTab === tab
+      ? { color: 'rgba(124,108,242,1)', borderBottom: '2px solid rgba(124,108,242,0.8)', marginBottom: '-1px' }
+      : { color: 'var(--text-secondary)' };
+  }
+
   borderClass(score: number): string {
     return score < 50 ? 'border-red-400' : 'border-yellow-400';
   }

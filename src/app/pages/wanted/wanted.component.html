@@ -66,27 +66,27 @@
       <!-- Tabs -->
       <div class="flex gap-1 mb-6 border-b" style="border-color: rgba(124,108,242,0.15);">
         <button
+          role="tab"
+          [attr.aria-selected]="activeTab === 'members'"
           (click)="activeTab = 'members'"
           class="px-4 py-2 text-sm font-medium transition-colors"
-          [style]="activeTab === 'members'
-            ? 'color: rgba(124,108,242,1); border-bottom: 2px solid rgba(124,108,242,0.8); margin-bottom: -1px;'
-            : 'color: var(--text-secondary);'">
+          [ngStyle]="tabStyle('members')">
           成員 ({{ wantedMembers.length }})
         </button>
         <button
+          role="tab"
+          [attr.aria-selected]="activeTab === 'groups'"
           (click)="activeTab = 'groups'"
           class="px-4 py-2 text-sm font-medium transition-colors"
-          [style]="activeTab === 'groups'
-            ? 'color: rgba(124,108,242,1); border-bottom: 2px solid rgba(124,108,242,0.8); margin-bottom: -1px;'
-            : 'color: var(--text-secondary);'">
+          [ngStyle]="tabStyle('groups')">
           團體 ({{ wantedGroups.length }})
         </button>
         <button
+          role="tab"
+          [attr.aria-selected]="activeTab === 'companies'"
           (click)="activeTab = 'companies'"
           class="px-4 py-2 text-sm font-medium transition-colors"
-          [style]="activeTab === 'companies'
-            ? 'color: rgba(124,108,242,1); border-bottom: 2px solid rgba(124,108,242,0.8); margin-bottom: -1px;'
-            : 'color: var(--text-secondary);'">
+          [ngStyle]="tabStyle('companies')">
           公司 ({{ wantedCompanies.length }})
         </button>
       </div>
