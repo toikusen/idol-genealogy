@@ -4,8 +4,9 @@ import { SupabaseService } from './supabase.service';
 import { Member } from '../models';
 
 const mockMember = {
-  id: 'uuid-1', name: '山田花子', name_jp: '山田花子',
-  photo_url: null, birthdate: '1995-01-01', notes: null,
+  id: 'uuid-1', name: '山田花子', name_hiragana: 'やまだはなこ', name_roman: 'Hanako Yamada', emoji: '🌸',
+  photo_url: null, color: null, color_name: null, birthdate: '1995-01-01', nickname: null,
+  instagram: null, facebook: null, x: null, maid_url: null, notes: null, company_id: null,
   updated_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z'
 } as unknown as Member;
 
@@ -66,7 +67,7 @@ describe('MemberService', () => {
 
   it('should be created', () => expect(service).toBeTruthy());
 
-  it('search() should call supabase with or() covering name and name_jp', async () => {
+  it('search() should call supabase with or() covering name, hiragana, romaji and emoji', async () => {
     const results = await service.search('山田');
     expect(mockSupabaseService.client.from).toHaveBeenCalledWith('members');
     expect(results).toEqual([mockMember]);

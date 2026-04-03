@@ -296,13 +296,21 @@
                         font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.92rem; color: var(--text-primary); font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                      ">{{member.name}}</div>
-                      @if (member.name_roman) {
+                      ">
+                        @if (member.emoji) {
+                          <span style="margin-right:4px;">{{ member.emoji }}</span>
+                        }
+                        {{member.name}}
+                      </div>
+                      @if (member.name_hiragana || member.name_roman) {
                         <div style="
                           font-family: 'JF Openhuninn', sans-serif;
                           font-size: 0.78rem; color: rgba(122,90,122,0.5);
                           letter-spacing: 0.04em;
-                        ">{{member.name_roman}}</div>
+                        ">
+                          {{ member.name_hiragana || member.name_roman }}
+                          <span *ngIf="member.name_hiragana && member.name_roman"> · {{ member.name_roman }}</span>
+                        </div>
                       }
                     </div>
                   </a>
@@ -330,15 +338,21 @@
                         font-size: 0.92rem; color: var(--text-primary); font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                       ">
+                        @if (r.member.emoji) {
+                          <span style="margin-right:4px;">{{ r.member.emoji }}</span>
+                        }
                         {{r.member.name}}
                         <span style="color: rgba(232,121,160,0.7); font-size: 0.82rem;">({{r.alias}})</span>
                       </div>
-                      @if (r.member.name_roman) {
+                      @if (r.member.name_hiragana || r.member.name_roman) {
                         <div style="
                           font-family: 'JF Openhuninn', sans-serif;
                           font-size: 0.78rem; color: rgba(122,90,122,0.5);
                           letter-spacing: 0.04em;
-                        ">{{r.member.name_roman}}</div>
+                        ">
+                          {{ r.member.name_hiragana || r.member.name_roman }}
+                          <span *ngIf="r.member.name_hiragana && r.member.name_roman"> · {{ r.member.name_roman }}</span>
+                        </div>
                       }
                     </div>
                   </a>
@@ -598,14 +612,22 @@
                       font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.95rem; font-weight: 500; color: var(--text-primary);
                       line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                    ">{{member.name}}</div>
-                    @if (member.name_roman) {
+                    ">
+                      @if (member.emoji) {
+                        <span style="margin-right:4px;">{{ member.emoji }}</span>
+                      }
+                      {{member.name}}
+                    </div>
+                    @if (member.name_hiragana || member.name_roman) {
                       <div style="
                         font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.78rem; color: rgba(122,90,122,0.5);
                         letter-spacing: 0.03em; margin-top: 2px;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                      ">{{member.name_roman}}</div>
+                      ">
+                        {{ member.name_hiragana || member.name_roman }}
+                        <span *ngIf="member.name_hiragana && member.name_roman"> · {{ member.name_roman }}</span>
+                      </div>
                     }
                     <div style="
                       font-family: 'JF Openhuninn', sans-serif;

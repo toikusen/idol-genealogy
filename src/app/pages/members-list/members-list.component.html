@@ -255,9 +255,14 @@
               color: var(--text-primary); letter-spacing: 0.04em;
               text-align: center; line-height: 1.3;
               word-break: break-all;
-            ">{{ m.name }}</div>
+            ">
+              @if (m.emoji) {
+                <span style="margin-right:4px;">{{ m.emoji }}</span>
+              }
+              {{ m.name }}
+            </div>
 
-            @if (m.name_roman) {
+            @if (m.name_hiragana || m.name_roman) {
               <div style="
                 font-family: 'JF Openhuninn', sans-serif;
                 font-size: 0.68rem; font-style: italic;
@@ -265,7 +270,10 @@
                 text-align: center; line-height: 1.3;
                 overflow: hidden; text-overflow: ellipsis;
                 white-space: nowrap; max-width: 100%;
-              ">{{ m.name_roman }}</div>
+              ">
+                {{ m.name_hiragana || m.name_roman }}
+                <span *ngIf="m.name_hiragana && m.name_roman"> · {{ m.name_roman }}</span>
+              </div>
             }
 
           </a>

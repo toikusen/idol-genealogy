@@ -1,7 +1,9 @@
 export interface Member {
   id: string;
   name: string;
+  name_hiragana: string | null;
   name_roman: string | null;
+  emoji: string | null;
   photo_url: string | null;
   color: string | null;
   color_name: string | null;

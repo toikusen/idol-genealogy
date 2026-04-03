@@ -15,12 +15,14 @@ export class MemberService {
   async search(query: string): Promise<Member[]> {
     const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
     const variants = kanaVariants(safe);
-    // Search name with all kana variants; name_roman only needs the original query (it's romaji)
-    const nameFilters = variants.map(v => `name.ilike.%${v}%`).join(',');
+    // Search both stage name and hiragana with kana variants; romaji only needs the raw query.
+    const nameFilters = variants
+      .flatMap(v => [`name.ilike.%${v}%`, `name_hiragana.ilike.%${v}%`])
+      .join(',');
     const { data, error } = await this.db
       .from('members')
       .select('*')
-      .or(`${nameFilters},name_roman.ilike.%${safe}%`);
+      .or(`${nameFilters},name_roman.ilike.%${safe}%,emoji.ilike.%${safe}%`);
     if (error) throw error;
     return data ?? [];
   }

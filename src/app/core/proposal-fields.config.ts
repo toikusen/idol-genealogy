@@ -2,7 +2,7 @@
 
 export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
   members: [
-    'name', 'name_roman', 'nickname', 'birthdate',
+    'name', 'name_hiragana', 'name_roman', 'emoji', 'nickname', 'birthdate',
     'color', 'color_name', 'instagram', 'facebook', 'x', 'maid_url', 'photo_url',
   ],
   groups: [
@@ -22,7 +22,7 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
 /** Field label map for display in forms and review UI */
 export const FIELD_LABELS: Record<string, Record<string, string>> = {
   members: {
-    name: '姓名', name_roman: '英文/拼音名', nickname: '暱稱',
+    name: '姓名', name_hiragana: '日文平假名', name_roman: '英文/拼音名', emoji: '表情符號', nickname: '暱稱',
     birthdate: '生日', color: '代表色(HEX)', color_name: '代表色名稱',
     instagram: 'Instagram', facebook: 'Facebook', x: 'X (Twitter)',
     maid_url: '女僕帳號', photo_url: '頭像圖片',

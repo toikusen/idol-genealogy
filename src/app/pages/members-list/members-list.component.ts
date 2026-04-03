@@ -82,8 +82,10 @@ export class MembersListComponent implements OnInit {
     return this.allMembers.filter(m => {
       const matchSearch = !q ||
         m.name.toLowerCase().includes(q) ||
+        (m.name_hiragana ?? '').toLowerCase().includes(q) ||
         (m.name_roman ?? '').toLowerCase().includes(q) ||
-        (m.nickname ?? '').toLowerCase().includes(q);
+        (m.nickname ?? '').toLowerCase().includes(q) ||
+        (m.emoji ?? '').includes(q);
       const matchGroup = !groupSet || groupSet.has(m.id);
       return matchSearch && matchGroup;
     });

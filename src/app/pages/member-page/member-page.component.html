@@ -147,7 +147,12 @@
               font-weight: 300; line-height: 1.05;
               letter-spacing: 0.03em; color: var(--text-primary);
               margin: 0 0 10px;
-            ">{{ member.name }}</h1>
+            ">
+              @if (member.emoji) {
+                <span style="margin-right: 10px;">{{ member.emoji }}</span>
+              }
+              {{ member.name }}
+            </h1>
 
             <!-- Action buttons -->
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:2px;">
@@ -172,13 +177,23 @@
             </div>
 
             <!-- Roman / phonetic name -->
-            @if (member.name_roman) {
+            @if (member.name_hiragana || member.name_roman) {
+              @if (member.name_hiragana) {
+                <p style="
+                  font-family: 'JF Openhuninn', sans-serif;
+                  font-size: 0.92rem;
+                  color: rgba(122,90,122,0.58);
+                  letter-spacing: 0.12em; margin: 0 0 6px;
+                ">{{ member.name_hiragana }}</p>
+              }
+              @if (member.name_roman) {
               <p style="
                 font-family: 'JF Openhuninn', sans-serif;
                 font-size: 1rem; font-style: italic;
                 color: rgba(122,90,122,0.5);
                 letter-spacing: 0.08em; margin: 0 0 10px;
               ">{{ member.name_roman }}</p>
+              }
             }
 
             <!-- Nickname chip -->

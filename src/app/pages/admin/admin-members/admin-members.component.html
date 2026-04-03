@@ -75,7 +75,18 @@
               ></span>
             </div>
           </td>
-          <td class="px-4 py-3 font-medium text-gray-800">{{ m.name }}</td>
+          <td class="px-4 py-3">
+            <div class="font-medium text-gray-800">
+              @if (m.emoji) {
+                <span class="mr-1">{{ m.emoji }}</span>
+              }
+              {{ m.name }}
+            </div>
+            <div *ngIf="m.name_hiragana || m.name_roman" class="text-xs text-gray-400">
+              {{ m.name_hiragana || m.name_roman }}
+              <span *ngIf="m.name_hiragana && m.name_roman"> · {{ m.name_roman }}</span>
+            </div>
+          </td>
           <td class="px-4 py-3 text-gray-500">{{ m.nickname || '—' }}</td>
           <td class="px-4 py-3">
             <div *ngIf="m.color" class="flex items-center gap-2">
@@ -185,13 +196,35 @@
         />
       </div>
 
-      <!-- name_jp -->
+      <!-- name_hiragana -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">日文羅馬字</label>
+        <label class="block text-xs font-medium text-gray-600 mb-1">日文平假名</label>
+        <input
+          type="text"
+          [(ngModel)]="editing.name_hiragana"
+          placeholder="例：あいみ"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- name_roman -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">英文／羅馬字</label>
         <input
           type="text"
           [(ngModel)]="editing.name_roman"
-          placeholder="日本語名前"
+          placeholder="例：Aimi"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+        />
+      </div>
+
+      <!-- emoji -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">表情符號</label>
+        <input
+          type="text"
+          [(ngModel)]="editing.emoji"
+          placeholder="例：🍓"
           class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
         />
       </div>

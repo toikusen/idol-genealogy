@@ -117,6 +117,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     const member = pageData.member;
     const id = member.id;
     const displayName = member.name ?? member.name_roman ?? '';
+    const hiraganaName = member.name_hiragana;
     const romanName = member.name_roman;
 
     const groupParts = pageData.histories
@@ -129,7 +130,8 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         const range = from ? (to ? `${from}–${to}` : from) : '';
         return range ? `${gName}（${range}）` : gName;
       });
-    const nameStr = romanName ? `${displayName}（${romanName}）` : displayName;
+    const altNames = [hiraganaName, romanName].filter((v): v is string => !!v);
+    const nameStr = altNames.length > 0 ? `${displayName}（${altNames.join(' / ')}）` : displayName;
     const description = groupParts.length > 0
       ? `${nameStr}是台灣地下偶像，曾隸屬${groupParts.join('、')}。`
       : `${displayName}的完整資料，包含所屬團體與活動記錄。`;
@@ -153,7 +155,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       name: displayName,
       url: siteUrl(memberPath(id)),
       ...((() => {
-        const alternateNames = [romanName, member.nickname].filter((v): v is string => !!v);
+        const alternateNames = [hiraganaName, romanName, member.nickname].filter((v): v is string => !!v);
         return alternateNames.length > 0
           ? { alternateName: alternateNames.length === 1 ? alternateNames[0] : alternateNames }
           : {};
