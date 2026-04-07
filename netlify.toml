@@ -1,0 +1,17 @@
+[build]
+  command = "npm run build"
+  publish = "dist/idol-genealogy/browser"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml; charset=UTF-8"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"

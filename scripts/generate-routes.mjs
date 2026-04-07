@@ -1,19 +1,15 @@
 // scripts/generate-routes.mjs
 // Pre-build script: queries Supabase → writes prerender-routes.txt + public/sitemap.xml
-// Requires env vars: SUPABASE_URL, SUPABASE_ANON_KEY
 // Requires Node 18+ (native fetch)
 
 import { createClient } from '@supabase/supabase-js';
 import { writeFileSync } from 'fs';
 
 const SITE_URL = 'https://idolmaps.com';
-const SUPABASE_URL = process.env['SUPABASE_URL'];
-const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'];
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('Error: SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required.');
-  process.exit(1);
-}
+// Fall back to the public anon key already committed in environment.ts
+const SUPABASE_URL = process.env['SUPABASE_URL'] ?? 'https://ziiagdrrytyrmzoeegjk.supabase.co';
+const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'] ?? 'sb_publishable_PtKb4LIJeJN3cECUJllW7w_UFRVTbTv';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
