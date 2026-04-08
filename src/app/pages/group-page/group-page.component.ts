@@ -165,6 +165,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       pageData.group.photo_url ?? undefined
     );
 
+    // Thin content: no member histories, no notes, no photo, no social links → noindex
+    const hasGroupSocial = !!(pageData.group.instagram || pageData.group.facebook || pageData.group.x || pageData.group.youtube);
+    const isGroupThin = pageData.histories.length === 0 && !pageData.group.notes && !pageData.group.photo_url && !hasGroupSocial;
+    this.seo.setRobotsNoIndex(isGroupThin);
+
     const sameAs: string[] = [
       pageData.group.instagram ? `https://instagram.com/${pageData.group.instagram}` : null,
       pageData.group.facebook ? `https://facebook.com/${pageData.group.facebook}` : null,

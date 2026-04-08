@@ -143,6 +143,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       member.photo_url ?? undefined
     );
 
+    // Thin content: no histories, no notes, no photo, no social links → noindex
+    const hasSocial = !!(member.instagram || member.facebook || member.x || member.maid_url);
+    const isThin = pageData.histories.length === 0 && !member.notes && !member.photo_url && !hasSocial;
+    this.seo.setRobotsNoIndex(isThin);
+
     const sameAs: string[] = [
       member.instagram ? `https://instagram.com/${member.instagram}` : null,
       member.facebook ? `https://facebook.com/${member.facebook}` : null,

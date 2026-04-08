@@ -61,4 +61,17 @@ export class SeoService {
     const existing = this.doc.head.querySelector('#ld-json');
     if (existing) this.doc.head.removeChild(existing);
   }
+
+  setRobotsNoIndex(noIndex: boolean): void {
+    const robots = noIndex ? 'noindex, follow' : 'index, follow';
+    let tag = this.doc.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    if (tag) {
+      tag.setAttribute('content', robots);
+    } else {
+      tag = this.doc.createElement('meta');
+      tag.setAttribute('name', 'robots');
+      tag.setAttribute('content', robots);
+      this.doc.head.appendChild(tag);
+    }
+  }
 }
