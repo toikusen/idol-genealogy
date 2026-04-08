@@ -27,7 +27,7 @@
       ">關於我們</h1>
     </div>
 
-    <!-- Website introduction -->
+    <!-- 網站介紹 -->
     <section style="margin-bottom: 48px; color: #4a3050; line-height: 1.9; font-size: 0.92rem;">
       <h2 style="font-size: 1rem; font-weight: 600; color: #3a2040; margin-bottom: 16px;">這個網站是什麼？</h2>
       <p style="margin-bottom: 16px;">
@@ -38,7 +38,75 @@
       </p>
     </section>
 
-    <!-- Editorial team -->
+    <!-- 成立背景 -->
+    <section style="margin-bottom: 48px; color: #4a3050; line-height: 1.9; font-size: 0.92rem;">
+      <h2 style="font-size: 1rem; font-weight: 600; color: #3a2040; margin-bottom: 16px;">成立背景</h2>
+      <p style="margin-bottom: 16px;">
+        Idol Maps 的創辦人同時身為網頁設計師與台灣地下偶像圈的歐他（應援者）。長期在圈子裡活動，親身感受到資訊散落各處、難以查詢的困境——一個成員可能曾經待過好幾個團體，但這些脈絡只存在粉絲的記憶裡，沒有任何地方被系統性地保存下來。
+      </p>
+      <p style="margin-bottom: 16px;">
+        有感於此，決定結合自己的技術背景，動手做一個專門為這個圈子設計的資料庫。目標不是取代任何現有的資訊來源，而是作為一個中立的歸檔平台，讓成員的每一段活動歷程都有跡可查。
+      </p>
+      <p>
+        這是一個以愛為出發點建立的計畫，也希望吸引同樣關心這個圈子的人一起來參與貢獻。
+      </p>
+    </section>
+
+    <!-- 資料來源 -->
+    <section style="margin-bottom: 48px; color: #4a3050; line-height: 1.9; font-size: 0.92rem;">
+      <h2 style="font-size: 1rem; font-weight: 600; color: #3a2040; margin-bottom: 16px;">資料來源</h2>
+      <p style="margin-bottom: 16px;">
+        Idol Maps 的資料以兩種方式建立：
+      </p>
+      <ul style="padding-left: 1.4em; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;">
+        <li>
+          <strong style="color: #3a2040;">使用者提案</strong>——任何人都可以針對現有的成員、團體或公司頁面提交修改提案，包括補充資料、更正錯誤、新增條目等。提案送出後會由管理員審核。
+        </li>
+        <li>
+          <strong style="color: #3a2040;">管理員直接新增</strong>——管理團隊會主動整理公開資訊，建立新的條目或補充缺漏的欄位。
+        </li>
+      </ul>
+      <p>
+        所有資料均來自公開管道，包括偶像本人或所屬事務所的社群貼文、官方公告、演出資訊、媒體報導等。我們不收錄任何未公開的個人資訊。
+      </p>
+    </section>
+
+    <!-- 編輯方針 -->
+    <section style="margin-bottom: 48px; color: #4a3050; line-height: 1.9; font-size: 0.92rem;">
+      <h2 style="font-size: 1rem; font-weight: 600; color: #3a2040; margin-bottom: 16px;">編輯方針</h2>
+      <ul style="padding-left: 1.4em; display: flex; flex-direction: column; gap: 12px;">
+        <li>
+          <strong style="color: #3a2040;">以公開資訊為依據</strong>——所有新增或修改的內容，必須能夠對應到可查閱的公開來源，例如社群貼文、官方公告或媒體報導。無法追溯來源的資訊不予收錄。
+        </li>
+        <li>
+          <strong style="color: #3a2040;">保護個人隱私</strong>——本站僅記錄與偶像活動相關的公開資訊，不收錄本名、住址、私人聯絡方式等個人隱私資料。
+        </li>
+        <li>
+          <strong style="color: #3a2040;">中立客觀呈現</strong>——資料以事實性描述為主，不帶個人評價或主觀立場。爭議性內容須經管理員審核後才會上線。
+        </li>
+        <li>
+          <strong style="color: #3a2040;">尊重當事人意願</strong>——若偶像本人或所屬事務所要求移除特定資料，本站將予以配合處理。
+        </li>
+        <li>
+          <strong style="color: #3a2040;">持續更新維護</strong>——鼓勵社群成員在發現資料有誤或過時時，透過提案機制反映，共同維持資料的準確性。
+        </li>
+      </ul>
+    </section>
+
+    <!-- 資料涵蓋範圍 -->
+    <section style="margin-bottom: 48px; color: #4a3050; line-height: 1.9; font-size: 0.92rem;">
+      <h2 style="font-size: 1rem; font-weight: 600; color: #3a2040; margin-bottom: 16px;">資料涵蓋範圍</h2>
+      <p style="margin-bottom: 16px;">
+        Idol Maps 目前的收錄範圍以<strong style="color: #3a2040;">台灣的地下偶像</strong>為主，包含：
+      </p>
+      <ul style="padding-left: 1.4em; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;">
+        <li>在台灣活動的地下偶像成員與團體</li>
+        <li>台灣本地的偶像經紀公司與製作公司</li>
+        <li>成員跨團體、跨公司的歷史脈絡</li>
+      </ul>
+    </section>
+
+    <!-- 編輯團隊 -->
     @if (members.length > 0) {
       <section style="margin-bottom: 48px;">
         <h2 style="font-size: 1rem; font-weight: 600; color: #3a2040; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid rgba(232,121,160,0.1);">編輯團隊</h2>

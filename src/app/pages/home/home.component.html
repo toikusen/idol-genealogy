@@ -994,6 +994,31 @@
       />
     }
 
+    <!-- ══ SITE INTRO (SEO + context for new visitors) ══ -->
+    <section style="
+      margin-top: 80px; padding: 40px 32px;
+      border-top: 1px solid rgba(232,121,160,0.1);
+      color: rgba(122,90,122,0.65);
+      font-size: 0.82rem; line-height: 1.9;
+    ">
+      <h2 style="
+        font-family: 'JF Openhuninn', sans-serif;
+        font-size: 0.88rem; font-weight: 600;
+        color: rgba(58,32,64,0.7); margin-bottom: 12px;
+        letter-spacing: 0.04em;
+      ">關於 Idol Maps</h2>
+      <p style="margin-bottom: 10px;">
+        Idol Maps 是專為台灣地下偶像生態設計的開放資料庫，目前收錄 {{ memberCount }} 位成員、{{ allGroups.length }} 個團體與 {{ allCompanies.length }} 間公司的資料。
+      </p>
+      <p style="margin-bottom: 10px;">
+        每位成員的頁面記錄了完整的活動履歷，包含跨團體、跨公司的歷史脈絡，讓散落在各社群平台的資訊得以被系統性地保存。資料由社群成員提案貢獻，並經管理員審核後上線。
+      </p>
+      <p>
+        無論是想查詢某位成員的團體歷史，還是想了解某個團體的成員組成變遷，都可以在這裡找到紀錄。
+        <a routerLink="/about/" style="color: rgba(122,90,122,0.65); text-decoration: underline; text-underline-offset: 3px;">了解更多關於本站</a>
+      </p>
+    </section>
+
     <!-- ══ FOOTER ══ -->
     <footer style="margin-top: 80px; text-align: center;">
 

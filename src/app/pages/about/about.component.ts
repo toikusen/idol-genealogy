@@ -23,7 +23,7 @@ export class AboutComponent implements OnInit {
   async ngOnInit() {
     this.seo.setPage(
       '關於我們 | Idol Maps',
-      '了解 Idol Maps 的成立緣起與編輯團隊。',
+      '了解 Idol Maps 的成立緣起、資料來源說明、編輯方針與資料涵蓋範圍。',
       siteUrl('/about')
     );
     try {
