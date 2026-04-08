@@ -3,7 +3,7 @@ export const SITE_URL = 'https://idolmaps.com';
 export function normalizePublicPath(path: string): string {
   if (!path || path === '/') return '/';
   const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
-  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash.slice(0, -1) : withLeadingSlash;
 }
 
 export function siteUrl(path: string): string {

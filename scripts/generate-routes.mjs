@@ -44,16 +44,16 @@ async function run() {
   // Write prerender-routes.txt
   const routes = [
     '/',
-    '/members/',
-    '/contributors/',
-    '/guide/',
-    '/about/',
-    '/contact/',
-    '/privacy/',
-    '/terms/',
-    ...members.map(m => `/member/${m.id}/`),
-    ...groups.map(g => `/group/${g.id}/`),
-    ...companies.map(c => `/company/${c.id}/`),
+    '/members',
+    '/contributors',
+    '/guide',
+    '/about',
+    '/contact',
+    '/privacy',
+    '/terms',
+    ...members.map(m => `/member/${m.id}`),
+    ...groups.map(g => `/group/${g.id}`),
+    ...companies.map(c => `/company/${c.id}`),
   ];
   writeFileSync('prerender-routes.txt', routes.join('\n') + '\n', 'utf8');
   console.log(`prerender-routes.txt: ${routes.length} routes written.`);
@@ -68,20 +68,38 @@ async function run() {
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>`,
+    `  <url>
+    <loc>${SITE_URL}/members</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>`,
+    `  <url>
+    <loc>${SITE_URL}/about</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>`,
+    `  <url>
+    <loc>${SITE_URL}/guide</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>`,
     ...members.map(m => `  <url>
-    <loc>${SITE_URL}/member/${m.id}/</loc>
+    <loc>${SITE_URL}/member/${m.id}</loc>
     <lastmod>${(m.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`),
     ...groups.map(g => `  <url>
-    <loc>${SITE_URL}/group/${g.id}/</loc>
+    <loc>${SITE_URL}/group/${g.id}</loc>
     <lastmod>${(g.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`),
     ...companies.map(c => `  <url>
-    <loc>${SITE_URL}/company/${c.id}/</loc>
+    <loc>${SITE_URL}/company/${c.id}</loc>
     <lastmod>${(c.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
