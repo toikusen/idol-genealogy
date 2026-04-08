@@ -9,13 +9,14 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
+import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
 
 @Component({
   selector: 'app-company-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent],
+  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, AdBannerComponent],
   templateUrl: './company-page.component.html',
 })
 export class CompanyPageComponent implements OnInit, OnDestroy {
