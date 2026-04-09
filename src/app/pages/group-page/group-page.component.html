@@ -1053,57 +1053,58 @@
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(184,160,184,0.2), transparent);"></div>
           </div>
 
-          <!-- Cards -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;">
-            @for (g of similarGroups; track g.id) {
-              <a
-                [routerLink]="'/group/' + g.id + '/'"
-                style="text-decoration: none; display: block; border-radius: 4px; overflow: hidden;
-                  background: rgba(255,255,255,0.6);
-                  border: 1px solid rgba(255,255,255,0.85);
-                  box-shadow: 0 1px 8px rgba(45,27,46,0.04);
-                  transition: transform 0.2s, box-shadow 0.2s;
-                "
-                class="similar-card"
+          <!-- Carousel -->
+          <div class="similar-carousel-outer">
+            <button class="carousel-nav-btn prev" (click)="carouselPrev()" [disabled]="!carouselCanPrev" aria-label="上一頁">&#8249;</button>
+            <button class="carousel-nav-btn next" (click)="carouselNext()" [disabled]="!carouselCanNext" aria-label="下一頁">&#8250;</button>
+
+            <div class="similar-carousel-viewport">
+              <div
+                class="similar-carousel-track"
+                [style.transform]="'translateX(-' + (carouselIndex * (100 / carouselVisibleCount)) + '%)'"
               >
-                <!-- Color bar -->
-                <div style="height: 3px;" [style.background]="g.color"></div>
+                @for (g of similarGroups; track g.id) {
+                  <div class="similar-carousel-slide">
+                    <a [routerLink]="'/group/' + g.id + '/'" class="similar-card">
+                      <!-- Color bar -->
+                      <div style="height: 3px;" [style.background]="g.color"></div>
 
-                <div style="padding: 14px 16px 16px;">
-                  <!-- Color dot + name -->
-                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                    <span style="
-                      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-                    " [style.background]="g.color"></span>
-                    <p style="
-                      font-family: 'JF Openhuninn', sans-serif;
-                      font-size: 0.95rem; font-weight: 400;
-                      color: var(--text-primary); margin: 0;
-                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                      line-height: 1.3;
-                    ">{{ g.name_jp || g.name }}</p>
+                      <div style="padding: 12px 14px 14px;">
+                        <!-- Color dot + name -->
+                        <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 5px;">
+                          <span style="width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;" [style.background]="g.color"></span>
+                          <p style="
+                            font-family: 'JF Openhuninn', sans-serif;
+                            font-size: 0.9rem; font-weight: 400;
+                            color: var(--text-primary); margin: 0;
+                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                            line-height: 1.3;
+                          ">{{ g.name_jp || g.name }}</p>
+                        </div>
+
+                        @if (g.name_jp) {
+                          <p style="
+                            font-family: 'JF Openhuninn', sans-serif;
+                            font-style: italic; font-size: 0.72rem;
+                            color: rgba(122,90,122,0.42); margin: 0 0 5px;
+                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                          ">{{ g.name }}</p>
+                        }
+
+                        @if (g.company) {
+                          <p style="
+                            font-family: 'JF Openhuninn', sans-serif;
+                            font-size: 0.6rem; letter-spacing: 0.1em;
+                            color: rgba(122,90,122,0.35); margin: 0;
+                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                          ">{{ g.company }}</p>
+                        }
+                      </div>
+                    </a>
                   </div>
-
-                  @if (g.name_jp) {
-                    <p style="
-                      font-family: 'JF Openhuninn', sans-serif;
-                      font-style: italic; font-size: 0.75rem;
-                      color: rgba(122,90,122,0.42); margin: 0 0 6px;
-                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                    ">{{ g.name }}</p>
-                  }
-
-                  @if (g.company) {
-                    <p style="
-                      font-family: 'JF Openhuninn', sans-serif;
-                      font-size: 0.62rem; letter-spacing: 0.1em;
-                      color: rgba(122,90,122,0.35); margin: 0;
-                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                    ">{{ g.company }}</p>
-                  }
-                </div>
-              </a>
-            }
+                }
+              </div>
+            </div>
           </div>
 
         </section>
@@ -1397,9 +1398,78 @@
     transform: translateX(2px);
   }
 
+  /* ── Similar groups carousel ── */
+  .similar-carousel-outer {
+    position: relative;
+    padding: 0 22px;
+  }
+  .similar-carousel-viewport {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  }
+  .similar-carousel-track {
+    display: flex;
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+  .similar-carousel-slide {
+    flex: 0 0 calc(100% / 2);
+    padding: 0 5px;
+    box-sizing: border-box;
+  }
+  @media (min-width: 768px) {
+    .similar-carousel-slide {
+      flex: 0 0 calc(100% / 5);
+    }
+  }
+  .carousel-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(184,160,184,0.35);
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: rgba(122,90,122,0.65);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+    z-index: 2;
+    padding: 0;
+    line-height: 1;
+    box-shadow: 0 1px 6px rgba(45,27,46,0.08);
+  }
+  .carousel-nav-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.97);
+    border-color: rgba(184,160,184,0.65);
+    color: rgba(122,90,122,1);
+  }
+  .carousel-nav-btn:disabled {
+    opacity: 0.22;
+    cursor: default;
+  }
+  .carousel-nav-btn.prev { left: 0; }
+  .carousel-nav-btn.next { right: 0; }
+  .similar-card {
+    text-decoration: none;
+    display: block;
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.85);
+    box-shadow: 0 1px 8px rgba(45,27,46,0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
   .similar-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(45,27,46,0.09) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(45,27,46,0.09);
   }
 
   div:hover > .video-thumb {

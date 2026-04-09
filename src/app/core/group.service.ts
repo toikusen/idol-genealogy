@@ -93,7 +93,7 @@ export class GroupService {
       .from('groups').select('*')
       .or(orFilter)
       .neq('id', excludeId)
-      .limit(6);
+      .is('disbanded_at', null);
     if (error) throw error;
     return data ?? [];
   }

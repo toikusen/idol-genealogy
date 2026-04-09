@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -44,6 +44,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   allMemberHistories: History[] = [];
   videos: GroupVideo[] = [];
   similarGroups: Group[] = [];
+  carouselIndex = 0;
+  carouselVisibleCount = 2;
   selectedHistory: History | null = null;
   playingVideoId: string | null = null;
   loading = true;
@@ -102,7 +104,24 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private adminRole: AdminRoleService,
   ) {}
 
+  @HostListener('window:resize')
+  onWindowResize() {
+    const newCount = window.innerWidth >= 768 ? 5 : 2;
+    if (newCount !== this.carouselVisibleCount) {
+      this.carouselVisibleCount = newCount;
+      this.carouselIndex = 0;
+    }
+  }
+
+  get carouselCanPrev(): boolean { return this.carouselIndex > 0; }
+  get carouselCanNext(): boolean {
+    return this.carouselIndex < this.similarGroups.length - this.carouselVisibleCount;
+  }
+  carouselPrev() { if (this.carouselCanPrev) this.carouselIndex--; }
+  carouselNext() { if (this.carouselCanNext) this.carouselIndex++; }
+
   ngOnInit() {
+    this.carouselVisibleCount = window.innerWidth >= 768 ? 5 : 2;
     this.supabaseAuth.authState$.subscribe(s => {
       this.isLoggedIn = !!s?.user;
       this.currentUserId = s?.user?.id ?? null;
@@ -130,6 +149,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.allMemberHistories = pageData.allMemberHistories;
     this.videos = pageData.videos;
     this.similarGroups = pageData.similarGroups;
+    this.carouselIndex = 0;
     this.lastProposal = pageData.lastProposal;
     this.allMembers = pageData.allMembers;
     this.songs = pageData.songs;
