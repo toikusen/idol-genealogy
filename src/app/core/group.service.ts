@@ -87,10 +87,11 @@ export class GroupService {
     this.invalidateCache();
   }
 
-  async getSimilarByStyle(style: string, excludeId: string): Promise<Group[]> {
+  async getSimilarByStyle(styles: string[], excludeId: string): Promise<Group[]> {
+    const orFilter = styles.map(s => `style.like.%${s}%`).join(',');
     const { data, error } = await this.db
       .from('groups').select('*')
-      .eq('style', style)
+      .or(orFilter)
       .neq('id', excludeId)
       .limit(6);
     if (error) throw error;

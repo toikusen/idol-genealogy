@@ -259,17 +259,19 @@
           @if (group.style || group.instagram || group.facebook || group.x || group.youtube) {
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(184,160,184,0.12);">
 
-              <!-- Style tag -->
+              <!-- Style tags -->
               @if (group.style) {
-                <span style="
-                  font-family: 'JF Openhuninn', sans-serif;
-                  font-size: 0.65rem; letter-spacing: 0.2em;
-                  color: rgba(122,90,122,0.55);
-                  padding: 3px 10px;
-                  border: 1px solid rgba(184,160,184,0.25);
-                  border-radius: 2px;
-                  background: rgba(184,160,184,0.06);
-                ">{{ group.style }}</span>
+                @for (s of group.style.split(','); track s) {
+                  <span style="
+                    font-family: 'JF Openhuninn', sans-serif;
+                    font-size: 0.65rem; letter-spacing: 0.2em;
+                    color: rgba(122,90,122,0.55);
+                    padding: 3px 10px;
+                    border: 1px solid rgba(184,160,184,0.25);
+                    border-radius: 2px;
+                    background: rgba(184,160,184,0.06);
+                  ">{{ s }}</span>
+                }
               }
 
               <!-- Divider between style and SNS if both exist -->
@@ -1047,7 +1049,7 @@
               font-size: 0.65rem; letter-spacing: 0.38em;
               text-transform: uppercase; color: rgba(122,90,122,0.38);
               white-space: nowrap;
-            ">同風格團體 · {{ group!.style }}</span>
+            ">其他人也看了</span>
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(184,160,184,0.2), transparent);"></div>
           </div>
 

@@ -32,6 +32,10 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   companies: Company[] = [];
 
+  // Style multi-select
+  readonly STYLE_OPTIONS = ['王道系', '樂曲派', '搖滾系', '金屬系', '可愛系 / 電波系', 'EDM / 電音系', '情緒系（エモ）'];
+  editingStyles: string[] = [];
+
   // Videos
   videos: GroupVideo[] = [];
   newVideoUrl = '';
@@ -78,6 +82,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   openCreate() {
     this.editing = { color: '#e879a0' };
+    this.editingStyles = [];
     this.isEdit = false;
     this.error = '';
     this.igFetchError = '';
@@ -90,6 +95,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   async openEdit(g: Group) {
     this.editing = { ...g };
+    this.editingStyles = g.style ? g.style.split(',') : [];
     this.isEdit = true;
     this.error = '';
     this.igFetchError = '';
@@ -98,6 +104,16 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.videos = await this.groupService.getVideosByGroup(g.id);
     this.loadCompanies();
+  }
+
+  toggleStyle(s: string) {
+    const idx = this.editingStyles.indexOf(s);
+    if (idx === -1) this.editingStyles = [...this.editingStyles, s];
+    else this.editingStyles = this.editingStyles.filter(x => x !== s);
+  }
+
+  isStyleSelected(s: string): boolean {
+    return this.editingStyles.includes(s);
   }
 
   async fetchIgPhoto() {
@@ -172,6 +188,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   async save() {
     if (!this.editing.name?.trim()) { this.error = '團體名稱為必填'; return; }
+    this.editing.style = this.editingStyles.length > 0 ? this.editingStyles.join(',') : null;
     this.saving = true;
     try {
       if (this.isEdit && this.editing.id) {

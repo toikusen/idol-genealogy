@@ -170,7 +170,7 @@ export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
       proposalService.getApprovedByRecord('groups', id).catch(() => []),
       historyService.getByMembers(memberIds).catch(() => []),
       memberService.getAll().catch(() => []),
-      group.style ? groupService.getSimilarByStyle(group.style, id).catch(() => []) : Promise.resolve([]),
+      group.style ? groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
       groupSongService.getByGroup(id).catch(() => []),
     ]);
 

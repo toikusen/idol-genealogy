@@ -212,13 +212,18 @@
 
       <!-- style -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">風格</label>
-        <input
-          type="text"
-          [(ngModel)]="editing.style"
-          placeholder="例：清純系、地下偶像…"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
-        />
+        <label class="block text-xs font-medium text-gray-600 mb-1">風格（可複選）</label>
+        <div class="flex flex-wrap gap-2">
+          @for (s of STYLE_OPTIONS; track s) {
+            <button
+              type="button"
+              (click)="toggleStyle(s)"
+              [class]="isStyleSelected(s)
+                ? 'px-3 py-1 rounded-full text-xs font-medium border border-purple-400 bg-purple-100 text-purple-700 transition-colors'
+                : 'px-3 py-1 rounded-full text-xs font-medium border border-gray-200 bg-white text-gray-500 hover:border-purple-300 hover:text-purple-500 transition-colors'"
+            >{{ s }}</button>
+          }
+        </div>
       </div>
 
       <!-- instagram -->
