@@ -112,7 +112,10 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.lastProposal = pageData.lastProposal;
     this.memberSongs = pageData.memberSongs;
 
-    if (!pageData.member || pageData.error) return;
+    if (!pageData.member || pageData.error) {
+      this.seo.setRobotsNoIndex(true);
+      return;
+    }
 
     const member = pageData.member;
     const id = member.id;
