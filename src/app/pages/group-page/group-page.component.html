@@ -153,7 +153,7 @@
             font-weight: 300; line-height: 1.05;
             letter-spacing: 0.02em; color: var(--text-primary);
             margin: 0 0 10px;
-          ">{{ group.name_jp || group.name }}</h1>
+          ">{{ group.name }}</h1>
 
           <!-- Action buttons -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:2px;">
@@ -176,16 +176,6 @@
               }
             </button>
           </div>
-
-          <!-- Roman name -->
-          @if (group.name_jp) {
-            <p style="
-              font-family: 'JF Openhuninn', sans-serif;
-              font-style: italic; font-size: 1.05rem;
-              color: rgba(122,90,122,0.48); letter-spacing: 0.07em;
-              margin: 0 0 16px;
-            ">{{ group.name }}</p>
-          }
 
           <!-- Founded / disbanded dates -->
           <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 12px;">
@@ -255,29 +245,9 @@
             </div>
           }
 
-          <!-- Style tag + SNS links -->
-          @if (group.style || group.instagram || group.facebook || group.x || group.youtube) {
+          <!-- SNS links -->
+          @if (group.instagram || group.facebook || group.x || group.youtube) {
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(184,160,184,0.12);">
-
-              <!-- Style tags -->
-              @if (group.style) {
-                @for (s of group.style.split(','); track s) {
-                  <span style="
-                    font-family: 'JF Openhuninn', sans-serif;
-                    font-size: 0.65rem; letter-spacing: 0.2em;
-                    color: rgba(122,90,122,0.55);
-                    padding: 3px 10px;
-                    border: 1px solid rgba(184,160,184,0.25);
-                    border-radius: 2px;
-                    background: rgba(184,160,184,0.06);
-                  ">{{ s }}</span>
-                }
-              }
-
-              <!-- Divider between style and SNS if both exist -->
-              @if (group.style && (group.instagram || group.facebook || group.x || group.youtube)) {
-                <div style="width: 1px; height: 14px; background: rgba(184,160,184,0.2);"></div>
-              }
 
               <!-- SNS icons -->
               <div style="display: flex; align-items: center; gap: 10px;">
