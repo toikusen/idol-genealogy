@@ -118,7 +118,8 @@
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
               </a>
-              <span *ngIf="!m.instagram && !m.facebook && !m.x && !m.maid_url" class="text-gray-400 text-xs">—</span>
+              <span *ngIf="!m.instagram && !m.facebook && !m.x && !m.maid_url && !m.no_sns" class="text-gray-400 text-xs">—</span>
+              <span *ngIf="!m.instagram && !m.facebook && !m.x && !m.maid_url && m.no_sns" class="text-gray-400 text-xs" title="已確認無社群帳號">無帳號</span>
             </div>
           </td>
           <td class="px-4 py-3 text-right space-x-2">
@@ -386,6 +387,19 @@
           <option [ngValue]="null">— 無（隸屬於某個團體）—</option>
           <option *ngFor="let c of allCompanies" [ngValue]="c.id">{{ c.name }}</option>
         </select>
+      </div>
+
+      <!-- no_sns -->
+      <div class="flex items-center gap-2 py-1">
+        <input
+          type="checkbox"
+          id="no_sns"
+          [(ngModel)]="editing.no_sns"
+          class="w-4 h-4 rounded border-gray-300 text-pink-500 focus:ring-pink-300 cursor-pointer"
+        />
+        <label for="no_sns" class="text-xs font-medium text-gray-600 cursor-pointer select-none">
+          確認無社群帳號（不計入完整度要求）
+        </label>
       </div>
 
       <!-- notes -->

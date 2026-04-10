@@ -21,7 +21,7 @@ function calcCompleteness(
 }
 
 export function getMemberCompleteness(m: Member, hasHistory = true): CompletenessResult {
-  const hasSocial = !!(m.instagram || m.facebook || m.x);
+  const hasSocial = !!(m.instagram || m.facebook || m.x) || m.no_sns === true;
   return calcCompleteness(
     [
       [hasSocial,  '社群帳號'],
