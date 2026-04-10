@@ -24,13 +24,10 @@ export function getMemberCompleteness(m: Member, hasHistory = true): Completenes
   const hasSocial = !!(m.instagram || m.facebook || m.x);
   return calcCompleteness(
     [
-      [!!m.photo_url,  '頭像'],
-      [!!m.birthdate,  '生日'],
-      [!!m.name_roman, '英文/拼音名'],
-      [hasSocial,      '社群帳號'],
-      [hasHistory,     '歷程記錄'],
+      [hasSocial,  '社群帳號'],
+      [hasHistory, '歷程記錄'],
     ],
-    [!!m.nickname, !!m.color, !!m.color_name]
+    [!!m.photo_url, !!m.birthdate, !!m.nickname, !!m.color, !!m.color_name]
   );
 }
 
@@ -52,7 +49,6 @@ export function getCompanyCompleteness(c: Company, hasGroups = true): Completene
   return calcCompleteness(
     [
       [!!c.photo_url, '頭像'],
-      [!!c.website,   '官網'],
       [hasSocial,     '社群帳號'],
       [hasGroups,     '旗下團體'],
     ],
