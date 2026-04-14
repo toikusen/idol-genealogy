@@ -34,7 +34,7 @@ async function run() {
 
   // Query histories to know which members/groups have any activity
   const { data: histories, error: historiesError } = await supabase
-    .from('histories')
+    .from('history')
     .select('member_id, group_id');
   if (historiesError) {
     console.error('Error fetching histories:', historiesError.message);
