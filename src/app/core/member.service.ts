@@ -100,10 +100,19 @@ export class MemberService {
       .select('*')
       .not('birthdate', 'is', null);
     if (error) throw error;
+
+    const { data: activeHistories, error: historyError } = await this.db
+      .from('history')
+      .select('member_id')
+      .eq('status', 'active');
+    if (historyError) throw historyError;
+    const activeMemberIds = new Set((activeHistories ?? []).map(h => h.member_id));
+
     const today = new Date();
     const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const results: { member: Member; daysUntil: number }[] = [];
     for (const member of data ?? []) {
+      if (!activeMemberIds.has(member.id)) continue;
       const days = this.calcDaysUntilBirthday(member.birthdate!, todayMidnight);
       if (days !== null && days <= withinDays) {
         results.push({ member, daysUntil: days });
