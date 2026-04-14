@@ -115,5 +115,8 @@ export const routes: Routes = [
     path: 'wanted',
     loadComponent: () => import('./pages/wanted/wanted.component').then(m => m.WantedComponent)
   },
-  { path: '**', redirectTo: '' }
+  {
+    path: '**',
+    loadComponent: () => import('./pages/not-found/not-found.component').then(m => m.NotFoundComponent)
+  }
 ];

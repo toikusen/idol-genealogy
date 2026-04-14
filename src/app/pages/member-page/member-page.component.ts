@@ -113,7 +113,13 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.memberSongs = pageData.memberSongs;
 
     if (!pageData.member || pageData.error) {
+      this.seo.setPage(
+        '找不到成員 | Idol Maps',
+        '很抱歉，您要查詢的成員不存在或已被移除。',
+        siteUrl('/members')
+      );
       this.seo.setRobotsNoIndex(true);
+      this.seo.clearJsonLd();
       return;
     }
 

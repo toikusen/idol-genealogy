@@ -14,23 +14,41 @@ const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'] ?? 'sb_publishable_Pt
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function run() {
-  // Query all members
+  // Query all members (include thin-content signals for sitemap filtering)
   const { data: members, error: membersError } = await supabase
     .from('members')
-    .select('id, updated_at');
+    .select('id, updated_at, notes, photo_url, instagram, facebook, x, maid_url');
   if (membersError) {
     console.error('Error fetching members:', membersError.message);
     process.exit(1);
   }
 
-  // Query all groups
+  // Query all groups (include thin-content signals)
   const { data: groups, error: groupsError } = await supabase
     .from('groups')
-    .select('id, updated_at');
+    .select('id, updated_at, notes, photo_url, instagram, facebook, x, youtube');
   if (groupsError) {
     console.error('Error fetching groups:', groupsError.message);
     process.exit(1);
   }
+
+  // Query histories to know which members/groups have any activity
+  const { data: histories, error: historiesError } = await supabase
+    .from('histories')
+    .select('member_id, group_id');
+  if (historiesError) {
+    console.error('Error fetching histories:', historiesError.message);
+    process.exit(1);
+  }
+  const membersWithHistory = new Set(histories.map(h => h.member_id).filter(Boolean));
+  const groupsWithHistory = new Set(histories.map(h => h.group_id).filter(Boolean));
+
+  const memberIsIndexable = (m) =>
+    membersWithHistory.has(m.id) || !!m.notes || !!m.photo_url ||
+    !!m.instagram || !!m.facebook || !!m.x || !!m.maid_url;
+  const groupIsIndexable = (g) =>
+    groupsWithHistory.has(g.id) || !!g.notes || !!g.photo_url ||
+    !!g.instagram || !!g.facebook || !!g.x || !!g.youtube;
 
   // Query all companies
   const { data: companies, error: companiesError } = await supabase
@@ -86,13 +104,13 @@ async function run() {
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`,
-    ...members.map(m => `  <url>
+    ...members.filter(memberIsIndexable).map(m => `  <url>
     <loc>${SITE_URL}/member/${m.id}</loc>
     <lastmod>${(m.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`),
-    ...groups.map(g => `  <url>
+    ...groups.filter(groupIsIndexable).map(g => `  <url>
     <loc>${SITE_URL}/group/${g.id}</loc>
     <lastmod>${(g.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>

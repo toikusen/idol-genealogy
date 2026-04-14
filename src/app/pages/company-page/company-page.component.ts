@@ -71,7 +71,17 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     this.soloMembers = pageData.soloMembers;
     this.lastProposal = pageData.lastProposal;
 
-    if (!pageData.company || pageData.error) return;
+    if (!pageData.company || pageData.error) {
+      this.seo.setPage(
+        '找不到公司 | Idol Maps',
+        '很抱歉，您要查詢的公司不存在或已被移除。',
+        siteUrl('/')
+      );
+      this.seo.setRobotsNoIndex(true);
+      this.seo.clearJsonLd?.();
+      return;
+    }
+    this.seo.setRobotsNoIndex(false);
 
     this.seo.setPage(
       `${pageData.company.name} | Idol Maps`,

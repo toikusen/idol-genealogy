@@ -165,6 +165,13 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
     if (!pageData.group || pageData.error) {
       this.error = pageData.error;
+      this.seo.setPage(
+        '找不到團體 | Idol Maps',
+        '很抱歉，您要查詢的團體不存在或已被移除。',
+        siteUrl('/')
+      );
+      this.seo.setRobotsNoIndex(true);
+      this.seo.clearJsonLd();
       return;
     }
 
