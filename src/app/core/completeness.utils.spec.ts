@@ -5,6 +5,7 @@ const baseMember: Member = {
   id: '1', name: '測試', name_hiragana: null, name_roman: null, emoji: null, photo_url: null, color: null,
   color_name: null, birthdate: null, nickname: null, instagram: null,
   facebook: null, x: null, maid_url: null, notes: null, company_id: null,
+  no_sns: false,
   updated_at: '', created_at: '',
 };
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -19,7 +19,7 @@ import { SITE_URL, siteUrl } from '../../core/public-url.utils';
   templateUrl: './home.component.html',
   styles: [],
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   showMemberInsertPanel = false;
   showGroupInsertPanel = false;
   showCompanyInsertPanel = false;
@@ -40,6 +40,11 @@ export class HomeComponent implements OnInit {
   topGroups: GroupLeaderboardEntry[] = [];
   activeTab: 'members' | 'groups' | 'companies' | 'events' = 'members';
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
+
+  activeGroups: Group[] = [];
+  disbandedGroups: Group[] = [];
+  traineeGroups: Group[] = [];
+  companySections: { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] = [];
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -99,6 +104,18 @@ export class HomeComponent implements OnInit {
       this.topGroups = topGroups;
       this.upcomingBirthdays = birthdays;
       this.allSoloMembers = soloMembers;
+
+      // Cache computed group/company views — only recomputed when source data changes
+      this.activeGroups = groups
+        .filter(g => !g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
+        .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+      this.disbandedGroups = groups
+        .filter(g => !!g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
+        .sort((a, b) => (b.disbanded_at ?? '').localeCompare(a.disbanded_at ?? ''));
+      this.traineeGroups = groups
+        .filter(g => g.notes?.includes('類型：研修・見習'))
+        .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+      this.companySections = this.buildCompanySections();
     } catch {
       this.recentMembers = [];
       this.allGroups = [];
@@ -161,22 +178,8 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  get activeGroups(): Group[] {
-    return this.allGroups
-      .filter(g => !g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
-      .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
-  }
-
-  get disbandedGroups(): Group[] {
-    return this.allGroups
-      .filter(g => !!g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
-      .sort((a, b) => (b.disbanded_at ?? '').localeCompare(a.disbanded_at ?? ''));
-  }
-
-  get traineeGroups(): Group[] {
-    return this.allGroups
-      .filter(g => g.notes?.includes('類型：研修・見習'))
-      .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+  ngOnDestroy() {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
   }
 
   get displayedGroups(): Group[] {
@@ -185,7 +188,7 @@ export class HomeComponent implements OnInit {
     return this.activeGroups;
   }
 
-  get companySections(): { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] {
+  private buildCompanySections(): { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] {
     const companyNameById = new Map(this.allCompanies.map(c => [c.id, c.name]));
     const companyIdByName = new Map(this.allCompanies.map(c => [c.name, c.id]));
     const map = new Map<string, Group[]>();

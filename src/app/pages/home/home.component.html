@@ -309,7 +309,7 @@
                           letter-spacing: 0.04em;
                         ">
                           {{ member.name_hiragana || member.name_roman }}
-                          <span *ngIf="member.name_hiragana && member.name_roman"> · {{ member.name_roman }}</span>
+                          @if (member.name_hiragana && member.name_roman) {<span> · {{ member.name_roman }}</span>}
                         </div>
                       }
                     </div>
@@ -351,7 +351,7 @@
                           letter-spacing: 0.04em;
                         ">
                           {{ r.member.name_hiragana || r.member.name_roman }}
-                          <span *ngIf="r.member.name_hiragana && r.member.name_roman"> · {{ r.member.name_roman }}</span>
+                          @if (r.member.name_hiragana && r.member.name_roman) {<span> · {{ r.member.name_roman }}</span>}
                         </div>
                       }
                     </div>
@@ -626,7 +626,7 @@
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                       ">
                         {{ member.name_hiragana || member.name_roman }}
-                        <span *ngIf="member.name_hiragana && member.name_roman"> · {{ member.name_roman }}</span>
+                        @if (member.name_hiragana && member.name_roman) {<span> · {{ member.name_roman }}</span>}
                       </div>
                     }
                     <div style="

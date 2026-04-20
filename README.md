@@ -1,59 +1,51 @@
 # IdolGenealogy
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.5.
+A community-driven database for Japanese idol groups — tracking members, groups, companies, and their genealogical connections over time.
 
-## Development server
+## What It Does
 
-To start a local development server, run:
+- Browse idol members with career timelines, group affiliations, and SNS links
+- Explore group-to-group genealogy through interactive graph visualizations
+- View company rosters and their group histories
+- Submit and review member/group data proposals (community editing with admin approval)
+- Birthdays, "wanted" data gaps, and contributor tracking
+
+## Tech Stack
+
+| Layer | Tech |
+|---|---|
+| Framework | Angular 19 (SSR + prerender) |
+| Backend | Supabase (PostgreSQL + Auth + Storage) |
+| Hosting | Netlify |
+| Styling | Tailwind CSS |
+| Charts | Custom D3-based graph components |
+
+## Pages
+
+| Route | Description |
+|---|---|
+| `/` | Home — recent updates, birthdays |
+| `/members` | Full member list |
+| `/member/:id` or `/@handle` | Member detail page |
+| `/group/:id` | Group detail + genealogy graph |
+| `/company/:id` | Company page |
+| `/wanted` | Data gaps the community wants filled |
+| `/contributors` | Community contributors |
+| `/guide` | Contribution guide |
+| `/my-contributions` | Logged-in user's proposal history |
+| `/admin` | Admin panel (role-gated) |
+
+## Development
 
 ```bash
+npm install
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open http://localhost:4200
 
-## Code scaffolding
+See [SETUP.md](./SETUP.md) for Supabase configuration and deployment instructions.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Contributing
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Data corrections and additions go through the proposal system — login with Google and submit edits from any member or group page. Admin users review and approve proposals.
