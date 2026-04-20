@@ -13,7 +13,7 @@ import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
 import { companyIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
-import { normalizeSnsUrl } from '../../core/sns-url.utils';
+import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
 
 @Component({
   selector: 'app-company-page',
@@ -99,7 +99,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
       facebook: normalizeSnsUrl(pageData.company.facebook, 'facebook'),
       x: normalizeSnsUrl(pageData.company.x, 'x'),
       youtube: normalizeSnsUrl(pageData.company.youtube, 'youtube'),
-      website: pageData.company.website?.trim() || null,
+      website: normalizeWebsiteUrl(pageData.company.website),
     };
 
     const affiliatedCount =

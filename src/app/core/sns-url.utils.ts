@@ -9,10 +9,28 @@ const SNS_BASES = {
   instagram: 'https://instagram.com/',
   facebook: 'https://facebook.com/',
   x: 'https://x.com/',
-  youtube: 'https://youtube.com/',
 } as const;
 
-export type SnsPlatform = keyof typeof SNS_BASES;
+export type SnsPlatform = keyof typeof SNS_BASES | 'youtube';
+
+function normalizeYouTubeUrl(value: string): string | null {
+  const token = value.replace(/^\/+/, '');
+  if (!token) return null;
+
+  if (/^(?:@|channel\/|c\/|user\/|watch\?|playlist\?|shorts\/|live\/)/i.test(token)) {
+    return `https://www.youtube.com/${token}`;
+  }
+
+  // Bare @handles are the most common legacy case and should resolve to
+  // canonical channel URLs like https://www.youtube.com/@channel.
+  if (!token.includes('/') && !token.includes('?')) {
+    const handle = token.replace(/^@+/, '');
+    return handle ? `https://www.youtube.com/@${handle}` : null;
+  }
+
+  // Preserve meaningful YouTube path prefixes for channel/user/c/watch URLs.
+  return `https://www.youtube.com/${token}`;
+}
 
 export function normalizeSnsUrl(
   value: string | null | undefined,
@@ -22,7 +40,17 @@ export function normalizeSnsUrl(
   const trimmed = value.trim();
   if (!trimmed) return null;
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (platform === 'youtube') return normalizeYouTubeUrl(trimmed);
   const handle = trimmed.replace(/^@+/, '').replace(/^\/+/, '');
   if (!handle) return null;
   return SNS_BASES[platform] + handle;
+}
+
+export function normalizeWebsiteUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed || /\s/.test(trimmed)) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  const path = trimmed.replace(/^\/+/, '');
+  return path ? `https://${path}` : null;
 }
