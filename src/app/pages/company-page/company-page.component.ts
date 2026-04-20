@@ -13,6 +13,7 @@ import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
 import { companyIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { normalizeSnsUrl } from '../../core/sns-url.utils';
 
 @Component({
   selector: 'app-company-page',
@@ -33,6 +34,13 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   showEditHistory = false;
   linkCopied = false;
   adEligible = false;
+  snsUrls: {
+    instagram: string | null;
+    facebook: string | null;
+    x: string | null;
+    youtube: string | null;
+    website: string | null;
+  } = { instagram: null, facebook: null, x: null, youtube: null, website: null };
   private routeDataSub?: Subscription;
 
   get lastProposalDiffFields(): DiffField[] {
@@ -82,8 +90,17 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd?.();
       this.adEligible = false;
+      this.snsUrls = { instagram: null, facebook: null, x: null, youtube: null, website: null };
       return;
     }
+
+    this.snsUrls = {
+      instagram: normalizeSnsUrl(pageData.company.instagram, 'instagram'),
+      facebook: normalizeSnsUrl(pageData.company.facebook, 'facebook'),
+      x: normalizeSnsUrl(pageData.company.x, 'x'),
+      youtube: normalizeSnsUrl(pageData.company.youtube, 'youtube'),
+      website: pageData.company.website?.trim() || null,
+    };
 
     const affiliatedCount =
       pageData.activeGroups.length + pageData.disbandedGroups.length + pageData.soloMembers.length;
@@ -98,11 +115,20 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
       pageData.company.photo_url ?? undefined
     );
 
+    const sameAs: string[] = [
+      this.snsUrls.instagram,
+      this.snsUrls.facebook,
+      this.snsUrls.x,
+      this.snsUrls.youtube,
+      this.snsUrls.website,
+    ].filter((v): v is string => !!v);
+
     const orgSchema: Record<string, any> = {
       '@type': 'Organization',
       name: pageData.company.name,
       url: siteUrl(companyPath(pageData.id)),
       ...(pageData.company.photo_url ? { logo: pageData.company.photo_url } : {}),
+      ...(sameAs.length ? { sameAs } : {}),
     };
 
     const breadcrumb = {

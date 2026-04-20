@@ -21,6 +21,7 @@ import { FormsModule } from '@angular/forms';
 import { memberPath, siteUrl } from '../../core/public-url.utils';
 import { MemberPageData } from '../../core/page-data.resolvers';
 import { memberIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { normalizeSnsUrl } from '../../core/sns-url.utils';
 
 @Component({
   selector: 'app-member-page',
@@ -45,6 +46,9 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   companyName: string | null = null;
   companyId: string | null = null;
   adEligible = false;
+  snsUrls: { instagram: string | null; facebook: string | null; x: string | null; maid: string | null } = {
+    instagram: null, facebook: null, x: null, maid: null,
+  };
 
   // Songs section
   memberSongs: MemberSong[] = [];
@@ -123,6 +127,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd();
       this.adEligible = false;
+      this.snsUrls = { instagram: null, facebook: null, x: null, maid: null };
       return;
     }
 
@@ -159,11 +164,17 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.seo.setRobotsNoIndex(!isIndexable(signals));
     this.adEligible = isAdEligible(signals);
 
+    this.snsUrls = {
+      instagram: normalizeSnsUrl(member.instagram, 'instagram'),
+      facebook: normalizeSnsUrl(member.facebook, 'facebook'),
+      x: normalizeSnsUrl(member.x, 'x'),
+      maid: member.maid_url?.trim() || null,
+    };
     const sameAs: string[] = [
-      member.instagram ? `https://instagram.com/${member.instagram}` : null,
-      member.facebook ? `https://facebook.com/${member.facebook}` : null,
-      member.x ? `https://x.com/${member.x}` : null,
-      member.maid_url ?? null,
+      this.snsUrls.instagram,
+      this.snsUrls.facebook,
+      this.snsUrls.x,
+      this.snsUrls.maid,
     ].filter((v): v is string => !!v);
 
     const personSchema: Record<string, any> = {
