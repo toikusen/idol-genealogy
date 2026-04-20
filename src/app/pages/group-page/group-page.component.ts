@@ -23,6 +23,7 @@ import { GroupSong } from '../../models';
 import { groupPath, siteUrl } from '../../core/public-url.utils';
 import { GroupPageData } from '../../core/page-data.resolvers';
 import { groupIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { normalizeSnsUrl } from '../../core/sns-url.utils';
 
 interface GanttRow {
   history: History;
@@ -61,6 +62,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   linkCopied = false;
   allMembers: { id: string; name: string }[] = [];
   adEligible = false;
+  snsUrls: { instagram: string | null; facebook: string | null; x: string | null; youtube: string | null } = {
+    instagram: null, facebook: null, x: null, youtube: null,
+  };
 
   // Songs tab
   songs: GroupSong[] = [];
@@ -175,6 +179,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd();
       this.adEligible = false;
+      this.snsUrls = { instagram: null, facebook: null, x: null, youtube: null };
       return;
     }
 
@@ -199,11 +204,17 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.seo.setRobotsNoIndex(!isIndexable(signals));
     this.adEligible = isAdEligible(signals);
 
+    this.snsUrls = {
+      instagram: normalizeSnsUrl(pageData.group.instagram, 'instagram'),
+      facebook: normalizeSnsUrl(pageData.group.facebook, 'facebook'),
+      x: normalizeSnsUrl(pageData.group.x, 'x'),
+      youtube: normalizeSnsUrl(pageData.group.youtube, 'youtube'),
+    };
     const sameAs: string[] = [
-      pageData.group.instagram ? `https://instagram.com/${pageData.group.instagram}` : null,
-      pageData.group.facebook ? `https://facebook.com/${pageData.group.facebook}` : null,
-      pageData.group.x ? `https://x.com/${pageData.group.x}` : null,
-      pageData.group.youtube ?? null,
+      this.snsUrls.instagram,
+      this.snsUrls.facebook,
+      this.snsUrls.x,
+      this.snsUrls.youtube,
     ].filter((v): v is string => !!v);
 
     const musicGroupSchema: Record<string, any> = {

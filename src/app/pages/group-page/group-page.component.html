@@ -246,13 +246,13 @@
           }
 
           <!-- SNS links -->
-          @if (group.instagram || group.facebook || group.x || group.youtube) {
+          @if (snsUrls.instagram || snsUrls.facebook || snsUrls.x || snsUrls.youtube) {
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(184,160,184,0.12);">
 
               <!-- SNS icons -->
               <div style="display: flex; align-items: center; gap: 10px;">
-                @if (group.instagram) {
-                  <a [href]="group.instagram" target="_blank" rel="noopener noreferrer"
+                @if (snsUrls.instagram) {
+                  <a [href]="snsUrls.instagram" target="_blank" rel="noopener noreferrer"
                     style="color: rgba(232,121,160,0.6); transition: color 0.2s; display: flex;"
                     title="Instagram">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -262,8 +262,8 @@
                     </svg>
                   </a>
                 }
-                @if (group.facebook) {
-                  <a [href]="group.facebook" target="_blank" rel="noopener noreferrer"
+                @if (snsUrls.facebook) {
+                  <a [href]="snsUrls.facebook" target="_blank" rel="noopener noreferrer"
                     style="color: rgba(96,130,210,0.65); transition: color 0.2s; display: flex;"
                     title="Facebook">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -271,8 +271,8 @@
                     </svg>
                   </a>
                 }
-                @if (group.x) {
-                  <a [href]="group.x" target="_blank" rel="noopener noreferrer"
+                @if (snsUrls.x) {
+                  <a [href]="snsUrls.x" target="_blank" rel="noopener noreferrer"
                     style="color: rgba(90,80,100,0.55); transition: color 0.2s; display: flex;"
                     title="X">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
@@ -280,8 +280,8 @@
                     </svg>
                   </a>
                 }
-                @if (group.youtube) {
-                  <a [href]="group.youtube" target="_blank" rel="noopener noreferrer"
+                @if (snsUrls.youtube) {
+                  <a [href]="snsUrls.youtube" target="_blank" rel="noopener noreferrer"
                     style="color: rgba(210,60,60,0.6); transition: color 0.2s; display: flex;"
                     title="YouTube">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
