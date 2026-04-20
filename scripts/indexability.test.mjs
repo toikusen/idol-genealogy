@@ -110,8 +110,15 @@ describe('companyIndexabilitySignals', () => {
     assert.equal(companyIndexabilitySignals({ ...baseCompany, instagram: 'ig' }, 0).hasExternalLink, true);
   });
 
-  it('hasRelation stays false for companies', () => {
-    assert.equal(companyIndexabilitySignals(baseCompany, 10).hasRelation, false);
+  it('hasRelation reflects affiliation presence (roster is both primary and supporting)', () => {
+    assert.equal(companyIndexabilitySignals(baseCompany, 0).hasRelation, false);
+    assert.equal(companyIndexabilitySignals(baseCompany, 1).hasRelation, true);
+    assert.equal(companyIndexabilitySignals(baseCompany, 10).hasRelation, true);
+  });
+
+  it('is indexable from affiliations alone (roster-only company)', () => {
+    const signals = companyIndexabilitySignals(baseCompany, 3);
+    assert.equal(isIndexable(signals), true);
   });
 });
 
