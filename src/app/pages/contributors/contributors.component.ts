@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProposalService, ContributorEntry } from '../../core/proposal.service';
 import { SupabaseService } from '../../core/supabase.service';
+import { SeoService } from '../../core/seo.service';
 import { getBadge, TABLE_LABELS, Badge } from '../../core/badge.utils';
 
 @Component({
@@ -19,9 +20,11 @@ export class ContributorsComponent implements OnInit {
   constructor(
     private proposalService: ProposalService,
     private supabase: SupabaseService,
+    private seo: SeoService,
   ) {}
 
   async ngOnInit() {
+    this.seo.setRobotsNoIndex(true);
     const session = await this.supabase.getSessionOnce();
     this.currentUserId = session?.user?.id ?? null;
 

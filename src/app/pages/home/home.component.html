@@ -500,7 +500,9 @@
       <!-- ── 成員 tab ── -->
       @if (activeTab === 'members') {
         <section id="panel-members" class="tab-content" role="tabpanel" aria-labelledby="tab-members">
-          <app-ad-banner adSlot="4061570176"></app-ad-banner>
+          @if (adEligible) {
+            <app-ad-banner adSlot="4061570176"></app-ad-banner>
+          }
 
           <!-- ══ UPCOMING BIRTHDAYS ══ -->
           @if (upcomingBirthdays.length > 0) {

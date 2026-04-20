@@ -22,6 +22,7 @@ import { AdminRoleService } from '../../core/admin-role.service';
 import { GroupSong } from '../../models';
 import { groupPath, siteUrl } from '../../core/public-url.utils';
 import { GroupPageData } from '../../core/page-data.resolvers';
+import { groupIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
 
 interface GanttRow {
   history: History;
@@ -59,6 +60,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   showEditHistory = false;
   linkCopied = false;
   allMembers: { id: string; name: string }[] = [];
+  adEligible = false;
 
   // Songs tab
   songs: GroupSong[] = [];
@@ -172,6 +174,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       );
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd();
+      this.adEligible = false;
       return;
     }
 
@@ -192,10 +195,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       pageData.group.photo_url ?? undefined
     );
 
-    // Thin content: no member histories, no notes, no photo, no social links → noindex
-    const hasGroupSocial = !!(pageData.group.instagram || pageData.group.facebook || pageData.group.x || pageData.group.youtube);
-    const isGroupThin = pageData.histories.length === 0 && !pageData.group.notes && !pageData.group.photo_url && !hasGroupSocial;
-    this.seo.setRobotsNoIndex(isGroupThin);
+    const signals = groupIndexabilitySignals(pageData.group, pageData.histories.length);
+    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.adEligible = isAdEligible(signals);
 
     const sameAs: string[] = [
       pageData.group.instagram ? `https://instagram.com/${pageData.group.instagram}` : null,

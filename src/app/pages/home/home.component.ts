@@ -44,6 +44,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   activeGroups: Group[] = [];
   disbandedGroups: Group[] = [];
   traineeGroups: Group[] = [];
+  adEligible = false;
   companySections: { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] = [];
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -116,6 +117,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         .filter(g => g.notes?.includes('類型：研修・見習'))
         .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
       this.companySections = this.buildCompanySections();
+      this.adEligible =
+        this.recentMembers.length > 0 || this.allGroups.length > 0 || this.allCompanies.length > 0;
     } catch {
       this.recentMembers = [];
       this.allGroups = [];

@@ -332,7 +332,9 @@
       </header>
 
       <!-- ══ Ad banner ══ -->
-      <app-ad-banner adSlot="4061570176"></app-ad-banner>
+      @if (adEligible) {
+        <app-ad-banner adSlot="4061570176"></app-ad-banner>
+      }
 
       <!-- ══ Selected member detail panel ══ -->
       @if (selectedHistory !== null) {
