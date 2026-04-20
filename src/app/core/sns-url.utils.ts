@@ -4,6 +4,10 @@
 // but legacy records may carry bare handles ("foo", "@foo"). Both must end up as a
 // single canonical absolute URL so anchor hrefs work and JSON-LD `sameAs` entries
 // don't get double-prefixed.
+//
+// YouTube is special: its modern URL shape is "https://www.youtube.com/@channel" —
+// the "@" is part of the path, not a prefix to strip. Path-style legacy handles
+// (channel/UCxxx, c/name, user/name) are preserved as-is without prepending "@".
 
 const SNS_BASES = {
   instagram: 'https://instagram.com/',
@@ -24,5 +28,19 @@ export function normalizeSnsUrl(
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   const handle = trimmed.replace(/^@+/, '').replace(/^\/+/, '');
   if (!handle) return null;
+  if (platform === 'youtube') {
+    const prefix = handle.includes('/') ? '' : '@';
+    return SNS_BASES.youtube + prefix + handle;
+  }
   return SNS_BASES[platform] + handle;
+}
+
+export function normalizeWebsiteUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  const cleaned = trimmed.replace(/^\/+/, '');
+  if (!cleaned) return null;
+  return 'https://' + cleaned;
 }
