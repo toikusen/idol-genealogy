@@ -121,8 +121,15 @@ describe('companyIndexabilitySignals', () => {
     expect(companyIndexabilitySignals({ ...baseCompany, instagram: 'ig' }, 0).hasExternalLink).toBeTrue();
   });
 
-  it('hasRelation stays false for companies (captured via hasHistory)', () => {
-    expect(companyIndexabilitySignals(baseCompany, 10).hasRelation).toBeFalse();
+  it('hasRelation reflects affiliation presence (roster is both primary and supporting)', () => {
+    expect(companyIndexabilitySignals(baseCompany, 0).hasRelation).toBeFalse();
+    expect(companyIndexabilitySignals(baseCompany, 1).hasRelation).toBeTrue();
+    expect(companyIndexabilitySignals(baseCompany, 10).hasRelation).toBeTrue();
+  });
+
+  it('is indexable from affiliations alone (roster-only company)', () => {
+    const signals = companyIndexabilitySignals(baseCompany, 3);
+    expect(isIndexable(signals)).toBeTrue();
   });
 });
 

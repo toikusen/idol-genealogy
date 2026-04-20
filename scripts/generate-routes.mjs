@@ -111,12 +111,7 @@ async function run() {
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>`,
-    `  <url>
-    <loc>${SITE_URL}/members</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>`,
+    // /members is noindex,follow — omit from sitemap to avoid conflicting signals.
     `  <url>
     <loc>${SITE_URL}/about</loc>
     <lastmod>${buildDate}</lastmod>

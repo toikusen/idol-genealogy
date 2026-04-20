@@ -43,7 +43,7 @@ export function companyIndexabilitySignals(company, affiliatedEntityCount) {
     hasPhoto: !!company.photo_url,
     hasNotes: nonEmptyText(company.description),
     hasExternalLink: !!(company.website || company.instagram || company.facebook || company.x || company.youtube),
-    hasRelation: false,
+    hasRelation: affiliatedEntityCount >= 1,
   };
 }
 

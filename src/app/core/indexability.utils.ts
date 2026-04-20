@@ -82,9 +82,10 @@ export function companyIndexabilitySignals(
     hasPhoto: !!company.photo_url,
     hasNotes: nonEmptyText(company.description),
     hasExternalLink: !!(company.website || company.instagram || company.facebook || company.x || company.youtube),
-    // Companies don't have an extra relation field beyond their affiliations,
-    // which are already captured in hasHistory.
-    hasRelation: false,
+    // For companies the roster *is* the content: a page with real affiliations
+    // has search value even without photos or socials. Mirror hasHistory into
+    // hasRelation so affiliation-only company pages still clear isIndexable.
+    hasRelation: affiliatedEntityCount >= 1,
   };
 }
 
