@@ -4,6 +4,12 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { writeFileSync } from 'fs';
+import {
+  memberIndexabilitySignals,
+  groupIndexabilitySignals,
+  companyIndexabilitySignals,
+  isIndexable,
+} from './indexability.mjs';
 
 const SITE_URL = 'https://idolmaps.com';
 
@@ -14,25 +20,22 @@ const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'] ?? 'sb_publishable_Pt
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function run() {
-  // Query all members (include thin-content signals for sitemap filtering)
   const { data: members, error: membersError } = await supabase
     .from('members')
-    .select('id, updated_at, notes, photo_url, instagram, facebook, x, maid_url');
+    .select('id, updated_at, notes, photo_url, instagram, facebook, x, maid_url, company_id');
   if (membersError) {
     console.error('Error fetching members:', membersError.message);
     process.exit(1);
   }
 
-  // Query all groups (include thin-content signals)
   const { data: groups, error: groupsError } = await supabase
     .from('groups')
-    .select('id, updated_at, notes, photo_url, instagram, facebook, x, youtube');
+    .select('id, updated_at, notes, photo_url, instagram, facebook, x, youtube, company_id');
   if (groupsError) {
     console.error('Error fetching groups:', groupsError.message);
     process.exit(1);
   }
 
-  // Query histories to know which members/groups have any activity
   const { data: histories, error: historiesError } = await supabase
     .from('history')
     .select('member_id, group_id');
@@ -40,27 +43,42 @@ async function run() {
     console.error('Error fetching histories:', historiesError.message);
     process.exit(1);
   }
-  const membersWithHistory = new Set(histories.map(h => h.member_id).filter(Boolean));
-  const groupsWithHistory = new Set(histories.map(h => h.group_id).filter(Boolean));
+  const memberHistoryCount = new Map();
+  const groupHistoryCount = new Map();
+  for (const h of histories) {
+    if (h.member_id) memberHistoryCount.set(h.member_id, (memberHistoryCount.get(h.member_id) ?? 0) + 1);
+    if (h.group_id) groupHistoryCount.set(h.group_id, (groupHistoryCount.get(h.group_id) ?? 0) + 1);
+  }
 
-  const memberIsIndexable = (m) =>
-    membersWithHistory.has(m.id) || !!m.notes || !!m.photo_url ||
-    !!m.instagram || !!m.facebook || !!m.x || !!m.maid_url;
-  const groupIsIndexable = (g) =>
-    groupsWithHistory.has(g.id) || !!g.notes || !!g.photo_url ||
-    !!g.instagram || !!g.facebook || !!g.x || !!g.youtube;
-
-  // Query all companies
   const { data: companies, error: companiesError } = await supabase
     .from('companies')
-    .select('id, updated_at');
+    .select('id, updated_at, description, photo_url, instagram, facebook, x, youtube, website');
   if (companiesError) {
     console.error('Error fetching companies:', companiesError.message);
     process.exit(1);
   }
 
-  // Write prerender-routes.txt
-  const routes = [
+  // Companies: affiliated entity count = groups + solo members (member with company_id and no history counts as solo).
+  // Approximation: count any group or member with matching company_id.
+  const companyAffiliationCount = new Map();
+  for (const g of groups) {
+    if (g.company_id) companyAffiliationCount.set(g.company_id, (companyAffiliationCount.get(g.company_id) ?? 0) + 1);
+  }
+  for (const m of members) {
+    if (m.company_id) companyAffiliationCount.set(m.company_id, (companyAffiliationCount.get(m.company_id) ?? 0) + 1);
+  }
+
+  const indexableMembers = members.filter(m =>
+    isIndexable(memberIndexabilitySignals(m, memberHistoryCount.get(m.id) ?? 0)),
+  );
+  const indexableGroups = groups.filter(g =>
+    isIndexable(groupIndexabilitySignals(g, groupHistoryCount.get(g.id) ?? 0)),
+  );
+  const indexableCompanies = companies.filter(c =>
+    isIndexable(companyIndexabilitySignals(c, companyAffiliationCount.get(c.id) ?? 0)),
+  );
+
+  const staticRoutes = [
     '/',
     '/members',
     '/contributors',
@@ -69,14 +87,21 @@ async function run() {
     '/contact',
     '/privacy',
     '/terms',
-    ...members.map(m => `/member/${m.id}`),
-    ...groups.map(g => `/group/${g.id}`),
-    ...companies.map(c => `/company/${c.id}`),
+  ];
+  const routes = [
+    ...staticRoutes,
+    ...indexableMembers.map(m => `/member/${m.id}`),
+    ...indexableGroups.map(g => `/group/${g.id}`),
+    ...indexableCompanies.map(c => `/company/${c.id}`),
   ];
   writeFileSync('prerender-routes.txt', routes.join('\n') + '\n', 'utf8');
-  console.log(`prerender-routes.txt: ${routes.length} routes written.`);
+  console.log(
+    `prerender-routes.txt: ${routes.length} routes ` +
+    `(${indexableMembers.length}/${members.length} members, ` +
+    `${indexableGroups.length}/${groups.length} groups, ` +
+    `${indexableCompanies.length}/${companies.length} companies).`,
+  );
 
-  // Write public/sitemap.xml
   const buildDate = new Date().toISOString().slice(0, 10);
 
   const urlEntries = [
@@ -104,19 +129,19 @@ async function run() {
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`,
-    ...members.filter(memberIsIndexable).map(m => `  <url>
+    ...indexableMembers.map(m => `  <url>
     <loc>${SITE_URL}/member/${m.id}</loc>
     <lastmod>${(m.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`),
-    ...groups.filter(groupIsIndexable).map(g => `  <url>
+    ...indexableGroups.map(g => `  <url>
     <loc>${SITE_URL}/group/${g.id}</loc>
     <lastmod>${(g.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`),
-    ...companies.map(c => `  <url>
+    ...indexableCompanies.map(c => `  <url>
     <loc>${SITE_URL}/company/${c.id}</loc>
     <lastmod>${(c.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>

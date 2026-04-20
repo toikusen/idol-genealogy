@@ -20,6 +20,7 @@ import { AdminRoleService } from '../../core/admin-role.service';
 import { FormsModule } from '@angular/forms';
 import { memberPath, siteUrl } from '../../core/public-url.utils';
 import { MemberPageData } from '../../core/page-data.resolvers';
+import { memberIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
 
 @Component({
   selector: 'app-member-page',
@@ -43,6 +44,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   linkCopied = false;
   companyName: string | null = null;
   companyId: string | null = null;
+  adEligible = false;
 
   // Songs section
   memberSongs: MemberSong[] = [];
@@ -120,6 +122,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       );
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd();
+      this.adEligible = false;
       return;
     }
 
@@ -152,10 +155,9 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       member.photo_url ?? undefined
     );
 
-    // Thin content: no histories, no notes, no photo, no social links → noindex
-    const hasSocial = !!(member.instagram || member.facebook || member.x || member.maid_url);
-    const isThin = pageData.histories.length === 0 && !member.notes && !member.photo_url && !hasSocial;
-    this.seo.setRobotsNoIndex(isThin);
+    const signals = memberIndexabilitySignals(member, pageData.histories.length);
+    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.adEligible = isAdEligible(signals);
 
     const sameAs: string[] = [
       member.instagram ? `https://instagram.com/${member.instagram}` : null,

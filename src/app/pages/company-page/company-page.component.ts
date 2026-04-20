@@ -12,6 +12,7 @@ import { RecordEditHistoryComponent } from '../../shared/record-edit-history/rec
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
+import { companyIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
 
 @Component({
   selector: 'app-company-page',
@@ -31,6 +32,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   lastProposal: Proposal | null = null;
   showEditHistory = false;
   linkCopied = false;
+  adEligible = false;
   private routeDataSub?: Subscription;
 
   get lastProposalDiffFields(): DiffField[] {
@@ -79,9 +81,15 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
       );
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd?.();
+      this.adEligible = false;
       return;
     }
-    this.seo.setRobotsNoIndex(false);
+
+    const affiliatedCount =
+      pageData.activeGroups.length + pageData.disbandedGroups.length + pageData.soloMembers.length;
+    const signals = companyIndexabilitySignals(pageData.company, affiliatedCount);
+    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.adEligible = isAdEligible(signals);
 
     this.seo.setPage(
       `${pageData.company.name} | Idol Maps`,
