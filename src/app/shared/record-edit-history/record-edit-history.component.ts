@@ -38,19 +38,20 @@ export class RecordEditHistoryComponent implements OnInit {
 
   async ngOnInit() {
     try {
-      const tasks: Promise<any>[] = [
+      const [mainProposals, historyProposals] = await Promise.all([
         this.proposalService.getApprovedByRecord(this.tableName, this.recordId),
-        this.tableName === 'groups' ? this.loadCompanyMap() : Promise.resolve(null),
         this.relatedHistoryField
-          ? this.proposalService.getApprovedHistoryByField(this.relatedHistoryField, this.recordId)
-          : Promise.resolve([]),
-        this.relatedHistoryField === 'member_id' ? this.loadGroupMap() : Promise.resolve(null),
-        this.relatedHistoryField === 'group_id' ? this.loadMemberMap() : Promise.resolve(null),
-      ];
+          ? this.proposalService.getApprovedHistoryByField(this.relatedHistoryField, this.recordId).catch(() => [] as Proposal[])
+          : Promise.resolve([] as Proposal[]),
+      ]);
 
-      const [mainProposals, , historyProposals] = await Promise.all(tasks);
+      await Promise.all([
+        this.tableName === 'groups' ? this.loadCompanyMap().catch(() => {}) : Promise.resolve(),
+        this.relatedHistoryField ? this.loadMemberMap().catch(() => {}) : Promise.resolve(),
+        this.relatedHistoryField ? this.loadGroupMap().catch(() => {}) : Promise.resolve(),
+      ]);
 
-      const merged = [...mainProposals, ...(historyProposals as Proposal[])];
+      const merged = [...mainProposals, ...historyProposals];
       merged.sort((a, b) =>
         new Date(b.reviewed_at ?? b.created_at).getTime() -
         new Date(a.reviewed_at ?? a.created_at).getTime()

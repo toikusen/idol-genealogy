@@ -127,13 +127,10 @@ export class ProposalService {
   }
 
   async getApprovedHistoryByField(field: 'member_id' | 'group_id', value: string): Promise<Proposal[]> {
-    const { data, error } = await this.db
-      .from('proposals')
-      .select('*')
-      .eq('table_name', 'history')
-      .eq('status', 'approved')
-      .filter(`proposed_data->>${field}`, 'eq', value)
-      .order('reviewed_at', { ascending: false });
+    const { data, error } = await this.db.rpc('get_approved_history_by_field', {
+      p_field: field,
+      p_value: value,
+    });
     if (error) throw error;
     return (data ?? []) as Proposal[];
   }
