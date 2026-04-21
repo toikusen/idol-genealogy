@@ -69,7 +69,9 @@ interface FlatGroup {
 
     <!-- Shared member card template -->
     <ng-template #memberCard let-node="node" let-dim="dim">
-      <div class="cursor-pointer" (click)="selectMember.emit(node.history!)"
+      <button type="button"
+           class="block w-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
+           (click)="selectMember.emit(node.history!)"
            [style.opacity]="dim ? '0.6' : '1'">
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white
                     p-3 text-center hover:shadow-md hover:-translate-y-1 transition-all duration-200">
@@ -89,7 +91,7 @@ interface FlatGroup {
             <p class="text-xs text-gray-400 mt-0.5 leading-tight">{{ node.sublabel }}</p>
           }
         </div>
-      </div>
+      </button>
     </ng-template>
 
     <!-- Has teams: each team section with its own grid -->
@@ -108,7 +110,9 @@ interface FlatGroup {
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               @for (child of node.children || []; track child.id) {
-                <div class="cursor-pointer" (click)="selectMember.emit(child.history!)"
+                <button type="button"
+                     class="block w-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
+                     (click)="selectMember.emit(child.history!)"
                      [style.opacity]="child.history?.left_at ? '0.65' : '1'">
                   <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white
                               p-3 text-center hover:shadow-md hover:-translate-y-1 transition-all duration-200">
@@ -128,7 +132,7 @@ interface FlatGroup {
                       <p class="text-xs text-gray-400 mt-0.5 leading-tight">{{ child.sublabel }}</p>
                     }
                   </div>
-                </div>
+                </button>
               }
             </div>
           </div>

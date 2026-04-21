@@ -132,32 +132,34 @@
             <!-- Options list -->
             <div style="max-height:240px;overflow-y:auto;">
               <!-- Clear option -->
-              <div
+              <button
+                type="button"
                 (click)="selectGroup('')"
+                class="group-option-btn"
                 style="
                   padding:9px 14px;cursor:pointer;
                   font-family:'JF Openhuninn',sans-serif;font-size:0.85rem;
-                  transition:background 0.1s;
+                    transition:background 0.1s;
+                    width:100%;text-align:left;border:none;
                 "
                 [style.background]="!selectedGroupId ? 'rgba(232,121,160,0.08)' : ''"
                 [style.color]="!selectedGroupId ? '#c05080' : 'rgba(122,90,122,0.55)'"
-                onmouseover="this.style.background='rgba(232,121,160,0.06)'"
-                onmouseout="this.style.background='';"
-              >全部團體</div>
+              >全部團體</button>
 
               @for (g of filteredGroupOptions; track g.id) {
-                <div
+                <button
+                  type="button"
                   (click)="selectGroup(g.id)"
+                  class="group-option-btn"
                   style="
                     padding:9px 14px;cursor:pointer;
                     font-family:'JF Openhuninn',sans-serif;font-size:0.85rem;
                     display:flex;align-items:center;gap:8px;
                     transition:background 0.1s;
+                    width:100%;text-align:left;border:none;
                   "
                   [style.background]="g.id === selectedGroupId ? 'rgba(232,121,160,0.08)' : ''"
                   [style.color]="g.id === selectedGroupId ? '#c05080' : '#2d1b2e'"
-                  onmouseover="this.style.background='rgba(232,121,160,0.06)'"
-                  onmouseout="this.style.background='';"
                 >
                   <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;"
                     [style.background]="g.color || '#e879a0'"></span>
@@ -165,7 +167,7 @@
                   @if (g.disbanded_at) {
                     <span style="font-size:0.65rem;color:rgba(122,90,122,0.4);margin-left:auto;">解散</span>
                   }
-                </div>
+                </button>
               }
 
               @if (filteredGroupOptions.length === 0) {
@@ -207,7 +209,7 @@
         margin-bottom: 36px;
       ">
         @for (m of pagedMembers; track m.id) {
-          <a [routerLink]="'/member/' + m.id + '/'" style="
+          <a [routerLink]="'/member/' + m.id + '/'" class="member-grid-card" style="
             display: flex; flex-direction: column; align-items: center;
             padding: 16px 10px 12px;
             background: rgba(255,255,255,0.7);
@@ -216,10 +218,7 @@
             text-decoration: none;
             transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
             gap: 8px;
-          "
-          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(45,27,46,0.08)';this.style.borderColor='rgba(232,121,160,0.25)';"
-          onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='rgba(232,121,160,0.1)';"
-          >
+          ">
             <!-- Avatar -->
             @if (m.photo_url) {
               <img [src]="m.photo_url" [alt]="m.name" loading="lazy" style="
@@ -345,4 +344,16 @@
 </div>
 
 <style>
+.member-grid-card:hover,
+.member-grid-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(45, 27, 46, 0.08);
+  border-color: rgba(232, 121, 160, 0.25) !important;
+}
+
+.group-option-btn:hover,
+.group-option-btn:focus-visible {
+  background: rgba(232, 121, 160, 0.06) !important;
+  outline: none;
+}
 </style>

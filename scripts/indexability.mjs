@@ -50,19 +50,25 @@ export function companyIndexabilitySignals(company, affiliatedEntityCount) {
 function supportingCount(s) {
   let n = 0;
   if (s.hasPhoto) n++;
-  if (s.hasNotes) n++;
   if (s.hasExternalLink) n++;
   if (s.hasRelation) n++;
   return n;
 }
 
+function qualityCount(s) {
+  return supportingCount(s) + (s.hasNotes ? 1 : 0);
+}
+
 export function isIndexable(s) {
-  const hasPrimary = s.hasHistory || s.hasNotes;
-  const hasSupporting = s.hasPhoto || s.hasExternalLink || s.hasRelation;
-  return hasPrimary && hasSupporting;
+  if (s.hasNotes) {
+    return supportingCount(s) >= 1;
+  }
+  if (!s.hasHistory) return false;
+  return supportingCount(s) >= 2 && (s.hasPhoto || s.hasExternalLink);
 }
 
 export function isAdEligible(s) {
   if (!s.hasHistory) return false;
-  return supportingCount(s) >= 2;
+  const hasRichContext = s.hasNotes || (s.hasPhoto && s.hasExternalLink);
+  return hasRichContext && qualityCount(s) >= 2;
 }

@@ -76,6 +76,29 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     return formatRelativeTime(date);
   }
 
+  get latestEditSummary(): string {
+    if (!this.lastProposal) {
+      return '這頁目前沒有可顯示的編輯摘要；如果你知道新的公開資訊，歡迎協助補充。';
+    }
+    const submitter = this.lastProposal.submitter_name || '貢獻者';
+    const relative = this.formatRelativeTime(this.lastProposal.reviewed_at);
+    if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
+      return `${relative}由 ${submitter} 補充，最近一次重點更新了「${this.lastProposalDiffFields[0].label}」。`;
+    }
+    return `${relative}由 ${submitter}${this.lastProposal.operation === 'INSERT' ? '建立了這筆頁面資料。' : '送出了一次補充。'}`;
+  }
+
+  get editorialSuggestions(): string[] {
+    if (!this.member) return [];
+    const suggestions: string[] = [];
+    const hasSocial = !!(this.member.instagram || this.member.facebook || this.member.x || this.member.maid_url) || this.member.no_sns === true;
+    if (!this.member.photo_url) suggestions.push('可補上成員照片或公開宣材照');
+    if (!hasSocial) suggestions.push('可補上官方社群或公開個人頁面');
+    if (!this.histories.length) suggestions.push('可補上加入、卒業或移籍等活動歷程');
+    if (!this.member.birthdate) suggestions.push('可補上公開生日資訊');
+    return suggestions.slice(0, 3);
+  }
+
   constructor(
     private route: ActivatedRoute,
     private seo: SeoService,

@@ -4,6 +4,7 @@ import { ProposalService, ContributorEntry } from '../../core/proposal.service';
 import { SupabaseService } from '../../core/supabase.service';
 import { SeoService } from '../../core/seo.service';
 import { getBadge, TABLE_LABELS, Badge } from '../../core/badge.utils';
+import { siteUrl } from '../../core/public-url.utils';
 
 @Component({
   selector: 'app-contributors',
@@ -24,6 +25,11 @@ export class ContributorsComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    this.seo.setPage(
+      '貢獻者排行榜 | Idol Maps',
+      '查看 Idol Maps 社群貢獻者排行榜與徽章進度。',
+      siteUrl('/contributors'),
+    );
     this.seo.setRobotsNoIndex(true);
     const session = await this.supabase.getSessionOnce();
     this.currentUserId = session?.user?.id ?? null;

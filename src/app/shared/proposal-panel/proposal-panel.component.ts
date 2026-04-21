@@ -16,7 +16,12 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
   imports: [CommonModule, FormsModule, PhotoUploadComponent],
   template: `
     <!-- Overlay -->
-    <div class="fixed inset-0 bg-black/40 z-40" (click)="close()"></div>
+    <button
+      type="button"
+      class="fixed inset-0 bg-black/40 z-40 border-0 p-0 cursor-default"
+      aria-label="關閉提案面板"
+      (click)="close()"
+    ></button>
 
     <!-- Panel -->
     <div class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col overflow-hidden">

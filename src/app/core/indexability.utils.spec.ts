@@ -127,9 +127,9 @@ describe('companyIndexabilitySignals', () => {
     expect(companyIndexabilitySignals(baseCompany, 10).hasRelation).toBeTrue();
   });
 
-  it('is indexable from affiliations alone (roster-only company)', () => {
+  it('is not indexable from affiliations alone when no other quality signal exists', () => {
     const signals = companyIndexabilitySignals(baseCompany, 3);
-    expect(isIndexable(signals)).toBeTrue();
+    expect(isIndexable(signals)).toBeFalse();
   });
 });
 
@@ -158,11 +158,17 @@ describe('isIndexable', () => {
     expect(isIndexable({ ...emptySignals, hasNotes: true })).toBeFalse();
   });
 
-  it('returns true when at least one primary and one supporting signal are present', () => {
-    expect(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true })).toBeTrue();
-    expect(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true })).toBeTrue();
-    expect(isIndexable({ ...emptySignals, hasHistory: true, hasRelation: true })).toBeTrue();
+  it('returns false for history-only shells that do not have enough supporting depth', () => {
+    expect(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true })).toBeFalse();
+    expect(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true })).toBeFalse();
+    expect(isIndexable({ ...emptySignals, hasHistory: true, hasRelation: true })).toBeFalse();
+  });
+
+  it('returns true when prose exists with one support or history has both media and another support', () => {
+    expect(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasRelation: true })).toBeTrue();
+    expect(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasExternalLink: true })).toBeTrue();
     expect(isIndexable({ ...emptySignals, hasNotes: true, hasRelation: true })).toBeTrue();
+    expect(isIndexable({ ...emptySignals, hasNotes: true, hasExternalLink: true })).toBeTrue();
   });
 });
 
@@ -177,15 +183,17 @@ describe('isAdEligible', () => {
     })).toBeFalse();
   });
 
-  it('returns false when history is present but fewer than 2 supporting signals', () => {
+  it('returns false when history is present but rich editorial/media context is missing', () => {
     expect(isAdEligible({ ...emptySignals, hasHistory: true })).toBeFalse();
     expect(isAdEligible({ ...emptySignals, hasHistory: true, hasPhoto: true })).toBeFalse();
     expect(isAdEligible({ ...emptySignals, hasHistory: true, hasRelation: true })).toBeFalse();
+    expect(isAdEligible({ ...emptySignals, hasHistory: true, hasPhoto: true, hasRelation: true })).toBeFalse();
   });
 
-  it('returns true when history is present and at least 2 supporting signals are set', () => {
+  it('returns true when history is present and the page has real prose or photo+external context', () => {
     expect(isAdEligible({ ...emptySignals, hasHistory: true, hasPhoto: true, hasExternalLink: true })).toBeTrue();
     expect(isAdEligible({ ...emptySignals, hasHistory: true, hasNotes: true, hasRelation: true })).toBeTrue();
+    expect(isAdEligible({ ...emptySignals, hasHistory: true, hasNotes: true, hasPhoto: true })).toBeTrue();
     expect(isAdEligible({
       hasHistory: true, hasPhoto: true, hasNotes: true, hasExternalLink: true, hasRelation: true,
     })).toBeTrue();

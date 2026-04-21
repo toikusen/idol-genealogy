@@ -51,6 +51,30 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     return formatRelativeTime(date);
   }
 
+  get latestEditSummary(): string {
+    if (!this.lastProposal) {
+      return '這頁目前沒有可顯示的編輯摘要；如果你知道新的公開資訊，歡迎協助補充。';
+    }
+    const submitter = this.lastProposal.submitter_name || '貢獻者';
+    const relative = this.formatRelativeTime(this.lastProposal.reviewed_at);
+    if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
+      return `${relative}由 ${submitter} 補充，最近一次重點更新了「${this.lastProposalDiffFields[0].label}」。`;
+    }
+    return `${relative}由 ${submitter}${this.lastProposal.operation === 'INSERT' ? '建立了這筆公司頁資料。' : '送出了一次補充。'}`;
+  }
+
+  get editorialSuggestions(): string[] {
+    if (!this.company) return [];
+    const suggestions: string[] = [];
+    const affiliatedCount = this.activeGroups.length + this.disbandedGroups.length + this.soloMembers.length;
+    const hasOfficialLink = !!(this.company.instagram || this.company.facebook || this.company.x || this.company.youtube || this.company.website);
+    if (!this.company.photo_url) suggestions.push('可補上公司標誌或對外識別圖');
+    if (!this.company.description) suggestions.push('可補上公司簡介與經營方向');
+    if (!hasOfficialLink) suggestions.push('可補上官網或官方社群連結');
+    if (!affiliatedCount) suggestions.push('可補上旗下團體或相關成員');
+    return suggestions.slice(0, 3);
+  }
+
   constructor(
     private route: ActivatedRoute,
     private seo: SeoService,
@@ -105,15 +129,14 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     const affiliatedCount =
       pageData.activeGroups.length + pageData.disbandedGroups.length + pageData.soloMembers.length;
     const signals = companyIndexabilitySignals(pageData.company, affiliatedCount);
-    this.seo.setRobotsNoIndex(!isIndexable(signals));
-    this.adEligible = isAdEligible(signals);
-
     this.seo.setPage(
       `${pageData.company.name} | Idol Maps`,
       pageData.company.description ?? `${pageData.company.name}旗下團體與成員記錄。`,
       siteUrl(companyPath(pageData.id)),
       pageData.company.photo_url ?? undefined
     );
+    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.adEligible = isAdEligible(signals);
 
     const sameAs: string[] = [
       this.snsUrls.instagram,

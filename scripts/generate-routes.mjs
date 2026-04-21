@@ -124,6 +124,24 @@ async function run() {
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`,
+    `  <url>
+    <loc>${SITE_URL}/contact</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>`,
+    `  <url>
+    <loc>${SITE_URL}/privacy</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>`,
+    `  <url>
+    <loc>${SITE_URL}/terms</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>`,
     ...indexableMembers.map(m => `  <url>
     <loc>${SITE_URL}/member/${m.id}</loc>
     <lastmod>${(m.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>

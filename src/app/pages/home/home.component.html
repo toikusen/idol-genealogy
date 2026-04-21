@@ -567,18 +567,7 @@
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(200,80,144,0.25), transparent);"></div>
             <button
               (click)="showMemberInsertPanel = true"
-              style="
-                display: inline-flex; align-items: center; gap: 4px;
-                padding: 4px 12px; border-radius: 999px; flex-shrink: 0;
-                border: 1px solid rgba(232,121,160,0.35);
-                background: rgba(252,228,239,0.5);
-                font-family: 'JF Openhuninn', sans-serif;
-                font-size: 0.72rem; letter-spacing: 0.08em;
-                color: #c05080; cursor: pointer;
-                transition: background 0.2s, border-color 0.2s;
-              "
-              onmouseover="this.style.background='rgba(232,121,160,0.15)';this.style.borderColor='rgba(232,121,160,0.6)';"
-              onmouseout="this.style.background='rgba(252,228,239,0.5)';this.style.borderColor='rgba(232,121,160,0.35)';"
+              class="home-action-chip home-action-chip--member"
             >＋ 提案新增成員</button>
           </div>
 
@@ -647,19 +636,7 @@
 
           <!-- Browse all -->
           <div style="text-align:center;margin-top:28px;">
-            <a routerLink="/members/" style="
-              display:inline-flex;align-items:center;gap:6px;
-              padding:10px 24px;border-radius:999px;
-              border:1px solid rgba(232,121,160,0.3);
-              background:rgba(252,228,239,0.4);
-              font-family:'JF Openhuninn',sans-serif;
-              font-size:0.85rem;letter-spacing:0.08em;
-              color:#c05080;text-decoration:none;
-              transition:background 0.2s,border-color 0.2s;
-            "
-            onmouseover="this.style.background='rgba(232,121,160,0.12)';this.style.borderColor='rgba(232,121,160,0.55)';"
-            onmouseout="this.style.background='rgba(252,228,239,0.4)';this.style.borderColor='rgba(232,121,160,0.3)';"
-            >瀏覽全部 {{ memberCount }} 位成員
+            <a routerLink="/members/" class="home-browse-pill home-browse-pill--member">瀏覽全部 {{ memberCount }} 位成員
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
             </a>
           </div>
@@ -682,18 +659,7 @@
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(98,72,192,0.3), transparent);"></div>
             <button
               (click)="showGroupInsertPanel = true"
-              style="
-                display: inline-flex; align-items: center; gap: 4px;
-                padding: 4px 12px; border-radius: 999px; flex-shrink: 0;
-                border: 1px solid rgba(98,72,192,0.3);
-                background: rgba(240,236,255,0.5);
-                font-family: 'JF Openhuninn', sans-serif;
-                font-size: 0.72rem; letter-spacing: 0.08em;
-                color: #5040a8; cursor: pointer;
-                transition: background 0.2s, border-color 0.2s;
-              "
-              onmouseover="this.style.background='rgba(98,72,192,0.12)';this.style.borderColor='rgba(98,72,192,0.5)';"
-              onmouseout="this.style.background='rgba(240,236,255,0.5)';this.style.borderColor='rgba(98,72,192,0.3)';"
+              class="home-action-chip home-action-chip--group"
             >＋ 提案新增團體</button>
           </div>
 
@@ -791,18 +757,7 @@
               ">{{companySections.length}} 公司</span>
               <button
                 (click)="showCompanyInsertPanel = true"
-                style="
-                  display: inline-flex; align-items: center; gap: 4px;
-                  padding: 4px 12px; border-radius: 999px;
-                  border: 1px solid rgba(176,125,42,0.3);
-                  background: rgba(255,248,220,0.5);
-                  font-family: 'JF Openhuninn', sans-serif;
-                  font-size: 0.72rem; letter-spacing: 0.08em;
-                  color: #8a6020; cursor: pointer;
-                  transition: background 0.2s, border-color 0.2s;
-                "
-                onmouseover="this.style.background='rgba(176,125,42,0.12)';this.style.borderColor='rgba(176,125,42,0.5)';"
-                onmouseout="this.style.background='rgba(255,248,220,0.5)';this.style.borderColor='rgba(176,125,42,0.3)';"
+                class="home-action-chip home-action-chip--company"
               >＋ 提案新增公司</button>
             </div>
           </div>
@@ -1060,19 +1015,7 @@
       <div style="margin-bottom: 24px;">
         <a
           routerLink="/wanted"
-          style="
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 8px 20px;
-            border: 1px solid rgba(124,108,242,0.35);
-            border-radius: 2px;
-            font-family: 'JF Openhuninn', sans-serif;
-            font-size: 0.75rem; letter-spacing: 0.25em;
-            color: rgba(124,108,242,0.75);
-            text-decoration: none;
-            transition: border-color 0.2s, background 0.2s, color 0.2s;
-          "
-          onmouseover="this.style.borderColor='rgba(124,108,242,0.7)';this.style.background='rgba(124,108,242,0.06)';this.style.color='rgba(124,108,242,1)'"
-          onmouseout="this.style.borderColor='rgba(124,108,242,0.35)';this.style.background='transparent';this.style.color='rgba(124,108,242,0.75)'"
+          class="home-browse-pill home-browse-pill--contribute"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -1379,6 +1322,88 @@
   }
   .company-group-disbanded { opacity: 0.55; }
   .company-group-disbanded:hover { opacity: 0.75; }
+
+  .home-action-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    font-family: 'JF Openhuninn', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .home-action-chip--member {
+    border: 1px solid rgba(232,121,160,0.35);
+    background: rgba(252,228,239,0.5);
+    color: #c05080;
+  }
+  .home-action-chip--member:hover,
+  .home-action-chip--member:focus-visible {
+    background: rgba(232,121,160,0.15);
+    border-color: rgba(232,121,160,0.6);
+  }
+  .home-action-chip--group {
+    border: 1px solid rgba(98,72,192,0.3);
+    background: rgba(240,236,255,0.5);
+    color: #5040a8;
+  }
+  .home-action-chip--group:hover,
+  .home-action-chip--group:focus-visible {
+    background: rgba(98,72,192,0.12);
+    border-color: rgba(98,72,192,0.5);
+  }
+  .home-action-chip--company {
+    border: 1px solid rgba(176,125,42,0.3);
+    background: rgba(255,248,220,0.5);
+    color: #8a6020;
+  }
+  .home-action-chip--company:hover,
+  .home-action-chip--company:focus-visible {
+    background: rgba(176,125,42,0.12);
+    border-color: rgba(176,125,42,0.5);
+  }
+
+  .home-browse-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .home-browse-pill--member {
+    padding: 10px 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(232,121,160,0.3);
+    background: rgba(252,228,239,0.4);
+    font-family: 'JF Openhuninn', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    color: #c05080;
+  }
+  .home-browse-pill--member:hover,
+  .home-browse-pill--member:focus-visible {
+    background: rgba(232,121,160,0.12);
+    border-color: rgba(232,121,160,0.55);
+  }
+  .home-browse-pill--contribute {
+    padding: 8px 20px;
+    border: 1px solid rgba(124,108,242,0.35);
+    border-radius: 2px;
+    font-family: 'JF Openhuninn', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    color: rgba(124,108,242,0.75);
+  }
+  .home-browse-pill--contribute:hover,
+  .home-browse-pill--contribute:focus-visible {
+    border-color: rgba(124,108,242,0.7);
+    background: rgba(124,108,242,0.06);
+    color: rgba(124,108,242,1);
+  }
 
   /* ── Group sub-tabs ── */
   .group-tab {

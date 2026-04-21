@@ -31,6 +31,16 @@ interface MemberRow {
   selector: 'app-group-connection-graph',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  styles: [`
+    .gcg-node-link {
+      border-color: var(--gcg-border);
+    }
+    .gcg-node-link:hover,
+    .gcg-node-link:focus-visible {
+      border-color: var(--gcg-border-hover);
+      outline: none;
+    }
+  `],
   template: `
     @if (rows.length === 0) {
       <p class="text-sm text-gray-400 text-center py-6">尚無成員流動記錄</p>
@@ -62,12 +72,14 @@ interface MemberRow {
                 @if (!cell.isExternal) {
                   <!-- Internal group: link to group page -->
                   <a [routerLink]="'/group/' + cell.groupId + '/'"
+                    class="gcg-node-link"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
                     [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    style="flex-shrink:0; border:1.5px solid #e5e7eb; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
-                    onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
+                    [style.--gcg-border]="'#e5e7eb'"
+                    [style.--gcg-border-hover]="'#f9a8d4'"
+                    style="flex-shrink:0; border:1.5px solid var(--gcg-border); text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;">
                     <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>
@@ -80,12 +92,14 @@ interface MemberRow {
                 } @else if (!cell.externalCountry) {
                   <!-- Solo experience: link to member page -->
                   <a [routerLink]="'/member/' + cell.memberId + '/'"
+                    class="gcg-node-link"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
                     [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    style="flex-shrink:0; border:1.5px dashed #d1d5db; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
-                    onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#d1d5db'">
+                    [style.--gcg-border]="'#d1d5db'"
+                    [style.--gcg-border-hover]="'#f9a8d4'"
+                    style="flex-shrink:0; border:1.5px dashed var(--gcg-border); text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;">
                     <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>
@@ -155,12 +169,14 @@ interface MemberRow {
                 @if (!cell.isExternal) {
                   <!-- Internal group: link to group page -->
                   <a [routerLink]="'/group/' + cell.groupId + '/'"
+                    class="gcg-node-link"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
                     [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    style="flex-shrink:0; border:1.5px solid #e5e7eb; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
-                    onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#e5e7eb'">
+                    [style.--gcg-border]="'#e5e7eb'"
+                    [style.--gcg-border-hover]="'#f9a8d4'"
+                    style="flex-shrink:0; border:1.5px solid var(--gcg-border); text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;">
                     <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>
@@ -173,12 +189,14 @@ interface MemberRow {
                 } @else if (!cell.externalCountry) {
                   <!-- Solo experience: link to member page -->
                   <a [routerLink]="'/member/' + cell.memberId + '/'"
+                    class="gcg-node-link"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
                     [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    style="flex-shrink:0; border:1.5px dashed #d1d5db; text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;"
-                    onmouseover="this.style.borderColor='#f9a8d4'" onmouseout="this.style.borderColor='#d1d5db'">
+                    [style.--gcg-border]="'#d1d5db'"
+                    [style.--gcg-border-hover]="'#f9a8d4'"
+                    style="flex-shrink:0; border:1.5px dashed var(--gcg-border); text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;">
                     <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>

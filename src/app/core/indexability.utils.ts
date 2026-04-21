@@ -92,30 +92,37 @@ export function companyIndexabilitySignals(
 function supportingCount(s: IndexabilitySignals): number {
   let n = 0;
   if (s.hasPhoto) n++;
-  if (s.hasNotes) n++;
   if (s.hasExternalLink) n++;
   if (s.hasRelation) n++;
   return n;
 }
 
-/**
- * A page is indexable when it has at least one "primary" signal (actual
- * content: history or free-text notes) AND at least one supporting signal
- * (photo, external link, or relation). This keeps sparse-shell pages out of
- * the sitemap while still letting minimally-documented entities in.
- */
-export function isIndexable(s: IndexabilitySignals): boolean {
-  const hasPrimary = s.hasHistory || s.hasNotes;
-  const hasSupporting = s.hasPhoto || s.hasExternalLink || s.hasRelation;
-  return hasPrimary && hasSupporting;
+function qualityCount(s: IndexabilitySignals): number {
+  return supportingCount(s) + (s.hasNotes ? 1 : 0);
 }
 
 /**
- * Ad eligibility is stricter than indexability: history is mandatory and at
- * least two supporting signals must be present. The goal is to avoid placing
- * AdSense units on thin pages, which is a common rejection reason.
+ * Notes/descriptions are treated as the strongest editorial signal: pages with
+ * real prose can be indexed with one additional supporting signal. History-only
+ * pages are stricter and must also include a media/external cue plus another
+ * support, which keeps bare roster shells out of Google.
+ */
+export function isIndexable(s: IndexabilitySignals): boolean {
+  if (s.hasNotes) {
+    return supportingCount(s) >= 1;
+  }
+  if (!s.hasHistory) return false;
+  return supportingCount(s) >= 2 && (s.hasPhoto || s.hasExternalLink);
+}
+
+/**
+ * Ad eligibility is stricter than indexability: history is mandatory and pages
+ * must also have either real prose or both a representative image and an
+ * external profile. This keeps ads off thin shells that happen to have roster
+ * links only.
  */
 export function isAdEligible(s: IndexabilitySignals): boolean {
   if (!s.hasHistory) return false;
-  return supportingCount(s) >= 2;
+  const hasRichContext = s.hasNotes || (s.hasPhoto && s.hasExternalLink);
+  return hasRichContext && qualityCount(s) >= 2;
 }

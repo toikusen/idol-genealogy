@@ -15,6 +15,10 @@ export class SeoService {
 
   setPage(pageTitle: string, description: string, url: string, image?: string): void {
     const ogImage = image ?? DEFAULT_OG_IMAGE;
+    // Reset page-scoped SEO state so simple content pages do not inherit stale
+    // robots directives or JSON-LD from a previously visited detail page.
+    this.clearJsonLd();
+    this.setRobotsNoIndex(false);
     this.title.setTitle(pageTitle);
     this.meta.updateTag({ name: 'description', content: description });
     this.meta.updateTag({ property: 'og:title', content: pageTitle });
@@ -29,10 +33,18 @@ export class SeoService {
     let link = this.doc.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!link) {
       link = this.doc.createElement('link');
-      link.setAttribute('rel', 'canonical');
+      if (typeof link.setAttribute === 'function') {
+        link.setAttribute('rel', 'canonical');
+      } else {
+        (link as HTMLLinkElement & { rel?: string }).rel = 'canonical';
+      }
       this.doc.head.appendChild(link);
     }
-    link.setAttribute('href', url);
+    if (typeof link.setAttribute === 'function') {
+      link.setAttribute('href', url);
+    } else {
+      (link as HTMLLinkElement & { href?: string }).href = url;
+    }
   }
 
   setJsonLd(data: object): void {
@@ -66,11 +78,20 @@ export class SeoService {
     const robots = noIndex ? 'noindex, follow' : 'index, follow';
     let tag = this.doc.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
     if (tag) {
-      tag.setAttribute('content', robots);
+      if (typeof tag.setAttribute === 'function') {
+        tag.setAttribute('content', robots);
+      } else {
+        (tag as HTMLMetaElement & { content?: string }).content = robots;
+      }
     } else {
       tag = this.doc.createElement('meta');
-      tag.setAttribute('name', 'robots');
-      tag.setAttribute('content', robots);
+      if (typeof tag.setAttribute === 'function') {
+        tag.setAttribute('name', 'robots');
+        tag.setAttribute('content', robots);
+      } else {
+        (tag as HTMLMetaElement & { name?: string; content?: string }).name = 'robots';
+        (tag as HTMLMetaElement & { name?: string; content?: string }).content = robots;
+      }
       this.doc.head.appendChild(tag);
     }
   }

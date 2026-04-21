@@ -26,6 +26,25 @@ export class AboutComponent implements OnInit {
       '了解 Idol Maps 的成立緣起、資料來源說明、編輯方針與資料涵蓋範圍。',
       siteUrl('/about')
     );
+    this.seo.setJsonLdGraph([
+      {
+        '@type': 'AboutPage',
+        name: '關於 Idol Maps',
+        url: siteUrl('/about'),
+      },
+      {
+        '@type': 'Organization',
+        name: 'Idol Maps',
+        url: siteUrl('/'),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: siteUrl('/') },
+          { '@type': 'ListItem', position: 2, name: '關於我們', item: siteUrl('/about') },
+        ],
+      },
+    ]);
     try {
       this.members = await this.teamService.getAll();
     } catch {

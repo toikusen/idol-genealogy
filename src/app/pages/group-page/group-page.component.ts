@@ -92,6 +92,29 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     return formatRelativeTime(date);
   }
 
+  get latestEditSummary(): string {
+    if (!this.lastProposal) {
+      return '這頁目前沒有可顯示的編輯摘要；如果你知道新的公開資訊，歡迎協助補充。';
+    }
+    const submitter = this.lastProposal.submitter_name || '貢獻者';
+    const relative = this.formatRelativeTime(this.lastProposal.reviewed_at);
+    if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
+      return `${relative}由 ${submitter} 補充，最近一次重點更新了「${this.lastProposalDiffFields[0].label}」。`;
+    }
+    return `${relative}由 ${submitter}${this.lastProposal.operation === 'INSERT' ? '建立了這筆團體頁資料。' : '送出了一次補充。'}`;
+  }
+
+  get editorialSuggestions(): string[] {
+    if (!this.group) return [];
+    const suggestions: string[] = [];
+    const hasSocial = !!(this.group.instagram || this.group.facebook || this.group.x || this.group.youtube);
+    if (!this.group.photo_url) suggestions.push('可補上團體照片或官方主視覺');
+    if (!this.group.founded_at) suggestions.push('可補上成立日期或活動開始時間');
+    if (!hasSocial) suggestions.push('可補上官方社群或影音連結');
+    if (!this.histories.length) suggestions.push('可補上現役與畢業成員歷程');
+    return suggestions.slice(0, 3);
+  }
+
   ganttRows: GanttRow[] = [];
   ganttYears: { label: string; leftPct: number }[] = [];
   tooltipRow: GanttRow | null = null;
@@ -502,4 +525,5 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
     return luminance > 0.75 ? fallback : hex;
   }
+
 }
