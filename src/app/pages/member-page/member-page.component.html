@@ -618,60 +618,48 @@
       </section>
 
       <!-- Source and editorial note -->
-      <section style="
-        margin:40px 0 24px;
-        padding:18px 20px 20px;
+      <div style="
+        margin:40px 0 20px;
+        padding:13px 16px 13px 0;
         border-radius:10px;
-        border:1px solid rgba(232,121,160,0.12);
-        background:rgba(255,255,255,0.68);
-        box-shadow:0 2px 20px rgba(45,27,46,0.04);
+        background:rgba(255,255,255,0.78);
+        border:1px solid rgba(232,121,160,0.11);
+        box-shadow:0 2px 18px rgba(45,27,46,0.05);
+        backdrop-filter:blur(10px);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        flex-wrap:wrap;
+        overflow:hidden;
       ">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <div style="height:1px;width:18px;background:rgba(232,121,160,0.35);"></div>
-          <span style="font-family:'JF Openhuninn',sans-serif;font-size:0.62rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(122,90,122,0.42);">Sources · 編輯說明</span>
+        <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+          <div style="width:3px;height:36px;flex-shrink:0;border-radius:0 2px 2px 0;background:linear-gradient(to bottom,rgba(232,121,160,0.55),rgba(249,189,210,0.2));"></div>
+          @if (latestEditSummary) {
+            <span style="font-family:'JF Openhuninn',sans-serif;font-size:0.73rem;color:rgba(122,90,122,0.52);letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ latestEditSummary }}</span>
+          } @else {
+            <span style="font-family:'JF Openhuninn',sans-serif;font-size:0.73rem;color:rgba(184,160,184,0.4);letter-spacing:0.04em;">尚無編輯紀錄</span>
+          }
         </div>
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;">
-          <div style="padding:14px 15px;border-radius:8px;background:rgba(252,248,250,0.82);border:1px solid rgba(232,121,160,0.08);">
-            <div style="font-family:'JF Openhuninn',sans-serif;font-size:0.7rem;letter-spacing:0.12em;color:rgba(192,80,128,0.72);margin-bottom:8px;">公開資料聲明</div>
-            <p style="font-size:0.78rem;line-height:1.8;color:rgba(122,90,122,0.62);margin:0;">
-              本頁整理自官方社群、公開公告、演出資訊與貢獻者提供的公開可查資料，不收錄未公開或私密來源內容。
-            </p>
-          </div>
-
-          <div style="padding:14px 15px;border-radius:8px;background:rgba(252,248,250,0.82);border:1px solid rgba(232,121,160,0.08);">
-            <div style="font-family:'JF Openhuninn',sans-serif;font-size:0.7rem;letter-spacing:0.12em;color:rgba(192,80,128,0.72);margin-bottom:8px;">最後更新重點</div>
-            <p style="font-size:0.78rem;line-height:1.8;color:rgba(122,90,122,0.62);margin:0;">{{ latestEditSummary }}</p>
-            @if (lastProposal) {
-              <button
-                type="button"
-                (click)="showEditHistory = true"
-                style="margin-top:10px;border:none;background:transparent;padding:0;font-size:0.74rem;color:rgba(124,108,242,0.82);border-bottom:1px solid rgba(124,108,242,0.25);cursor:pointer;letter-spacing:0.05em;"
-              >查看編輯紀錄 →</button>
-            }
-          </div>
-
-          <div style="padding:14px 15px;border-radius:8px;background:rgba(252,248,250,0.82);border:1px solid rgba(232,121,160,0.08);">
-            <div style="font-family:'JF Openhuninn',sans-serif;font-size:0.7rem;letter-spacing:0.12em;color:rgba(192,80,128,0.72);margin-bottom:8px;">補充建議</div>
-            @if (editorialSuggestions.length > 0) {
-              <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                @for (suggestion of editorialSuggestions; track suggestion) {
-                  <span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:0.72rem;color:rgba(122,90,122,0.72);background:rgba(232,121,160,0.07);border:1px solid rgba(232,121,160,0.12);">{{ suggestion }}</span>
-                }
-              </div>
-            } @else {
-              <p style="font-size:0.78rem;line-height:1.8;color:rgba(122,90,122,0.62);margin:0;">
-                這一頁的主要公開欄位已相對完整，若有新活動、名稱變動或官方連結更新，仍歡迎補充。
-              </p>
-            }
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;padding-right:2px;">
+          @if (lastProposal) {
             <button
               type="button"
-              (click)="showProposalPanel = true"
-              style="margin-top:10px;border:none;background:transparent;padding:0;font-size:0.74rem;color:rgba(192,80,128,0.82);border-bottom:1px solid rgba(192,80,128,0.22);cursor:pointer;letter-spacing:0.05em;"
-            >補充這頁資料 →</button>
-          </div>
+              (click)="showEditHistory = true"
+              style="border:none;background:transparent;padding:5px 10px;border-radius:6px;font-family:'JF Openhuninn',sans-serif;font-size:0.71rem;color:rgba(124,108,242,0.72);cursor:pointer;letter-spacing:0.05em;transition:background 0.15s;white-space:nowrap;"
+              onmouseenter="this.style.background='rgba(124,108,242,0.07)'"
+              onmouseleave="this.style.background='transparent'"
+            >編輯紀錄 →</button>
+          }
+          <button
+            type="button"
+            (click)="showProposalPanel = true"
+            style="border:none;background:rgba(232,121,160,0.07);padding:5px 12px;border-radius:6px;font-family:'JF Openhuninn',sans-serif;font-size:0.71rem;color:rgba(192,80,128,0.8);cursor:pointer;letter-spacing:0.05em;border:1px solid rgba(232,121,160,0.14);transition:background 0.15s;white-space:nowrap;"
+            onmouseenter="this.style.background='rgba(232,121,160,0.13)'"
+            onmouseleave="this.style.background='rgba(232,121,160,0.07)'"
+          >補充資料 →</button>
         </div>
-      </section>
+      </div>
 
       <!-- Edit History Panel -->
       @if (showEditHistory && member) {
@@ -679,6 +667,7 @@
           [tableName]="'members'"
           [recordId]="member.id"
           [recordLabel]="member.name"
+          [relatedHistoryField]="'member_id'"
           (closed)="showEditHistory = false"
         />
       }

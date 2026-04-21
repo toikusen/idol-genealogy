@@ -102,9 +102,9 @@
               display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;
             ">
               <span style="color:rgba(122,90,122,0.5);">「{{ field.label }}」</span>
-              <span>{{ field.oldValue }}</span>
+              <span>{{ resolveFieldValue(field.key, field.oldValue) }}</span>
               <span style="color:rgba(232,121,160,0.5);">→</span>
-              <span style="color:#2d1b2e;">{{ field.newValue }}</span>
+              <span style="color:#2d1b2e;">{{ resolveFieldValue(field.key, field.newValue) }}</span>
             </div>
           }
         </div>

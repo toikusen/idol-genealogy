@@ -126,6 +126,18 @@ export class ProposalService {
     return (data ?? []) as Proposal[];
   }
 
+  async getApprovedHistoryByField(field: 'member_id' | 'group_id', value: string): Promise<Proposal[]> {
+    const { data, error } = await this.db
+      .from('proposals')
+      .select('*')
+      .eq('table_name', 'history')
+      .eq('status', 'approved')
+      .filter(`proposed_data->>${field}`, 'eq', value)
+      .order('reviewed_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as Proposal[];
+  }
+
   async getLeaderboard(): Promise<ContributorEntry[]> {
     const { data, error } = await this.db.rpc('get_leaderboard');
     if (error) throw error;

@@ -52,15 +52,13 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   }
 
   get latestEditSummary(): string {
-    if (!this.lastProposal) {
-      return '這頁目前沒有可顯示的編輯摘要；如果你知道新的公開資訊，歡迎協助補充。';
-    }
+    if (!this.lastProposal) return '';
     const submitter = this.lastProposal.submitter_name || '貢獻者';
     const relative = this.formatRelativeTime(this.lastProposal.reviewed_at);
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
-      return `${relative}由 ${submitter} 補充，最近一次重點更新了「${this.lastProposalDiffFields[0].label}」。`;
+      return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
     }
-    return `${relative}由 ${submitter}${this.lastProposal.operation === 'INSERT' ? '建立了這筆公司頁資料。' : '送出了一次補充。'}`;
+    return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
   }
 
   get editorialSuggestions(): string[] {
