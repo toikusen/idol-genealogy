@@ -116,9 +116,9 @@ describe('companyIndexabilitySignals', () => {
     assert.equal(companyIndexabilitySignals(baseCompany, 10).hasRelation, true);
   });
 
-  it('is indexable from affiliations alone (roster-only company)', () => {
+  it('is not indexable from affiliations alone (roster-only company is thin content)', () => {
     const signals = companyIndexabilitySignals(baseCompany, 3);
-    assert.equal(isIndexable(signals), true);
+    assert.equal(isIndexable(signals), false);
   });
 });
 
@@ -143,11 +143,17 @@ describe('isIndexable', () => {
     assert.equal(isIndexable({ ...emptySignals, hasNotes: true }), false);
   });
 
-  it('returns true with at least one primary and one supporting', () => {
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true }), true);
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true }), true);
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasRelation: true }), true);
+  it('returns false for history-only shells with fewer than 2 supporting signals', () => {
+    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true }), false);
+    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true }), false);
+    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasRelation: true }), false);
+  });
+
+  it('returns true when prose exists with one support or history has both media and another support', () => {
+    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasRelation: true }), true);
+    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasExternalLink: true }), true);
     assert.equal(isIndexable({ ...emptySignals, hasNotes: true, hasRelation: true }), true);
+    assert.equal(isIndexable({ ...emptySignals, hasNotes: true, hasExternalLink: true }), true);
   });
 });
 

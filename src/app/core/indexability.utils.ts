@@ -82,9 +82,9 @@ export function companyIndexabilitySignals(
     hasPhoto: !!company.photo_url,
     hasNotes: nonEmptyText(company.description),
     hasExternalLink: !!(company.website || company.instagram || company.facebook || company.x || company.youtube),
-    // For companies the roster *is* the content: a page with real affiliations
-    // has search value even without photos or socials. Mirror hasHistory into
-    // hasRelation so affiliation-only company pages still clear isIndexable.
+    // Companies share hasHistory and hasRelation when affiliations exist; a
+    // page still needs a second independent supporting signal (photo or link)
+    // to clear isIndexable — thin roster-only shells are kept out of Google.
     hasRelation: affiliatedEntityCount >= 1,
   };
 }

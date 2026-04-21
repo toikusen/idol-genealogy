@@ -43,6 +43,9 @@ export function companyIndexabilitySignals(company, affiliatedEntityCount) {
     hasPhoto: !!company.photo_url,
     hasNotes: nonEmptyText(company.description),
     hasExternalLink: !!(company.website || company.instagram || company.facebook || company.x || company.youtube),
+    // Companies share hasHistory and hasRelation when affiliations exist; a
+    // page still needs a second independent supporting signal (photo or link)
+    // to clear isIndexable — thin roster-only shells are kept out of Google.
     hasRelation: affiliatedEntityCount >= 1,
   };
 }

@@ -19,6 +19,24 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://idolmaps.com/contact</loc>
+    <lastmod>2026-04-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://idolmaps.com/privacy</loc>
+    <lastmod>2026-04-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://idolmaps.com/terms</loc>
+    <lastmod>2026-04-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://idolmaps.com/member/6ce1d3d4-f219-4da5-8b48-e6aa4ead7e27</loc>
     <lastmod>2026-03-23</lastmod>
     <changefreq>monthly</changefreq>
