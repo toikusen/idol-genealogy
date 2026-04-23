@@ -23,6 +23,7 @@ import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
   styleUrl: './company-page.component.css',
 })
 export class CompanyPageComponent implements OnInit, OnDestroy {
+  private readonly defaultGroupChipColor = '#7c6cf2';
   company: Company | null = null;
   showProposalPanel = false;
   showDeletePanel = false;
@@ -184,6 +185,30 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     return 'background: linear-gradient(135deg, #1a1a2e 0%, #2d1b4e 100%);';
   }
 
+  getGroupChipTextColor(): string {
+    return '#2d1b2e';
+  }
+
+  getGroupChipBorderColor(hex: string | null | undefined): string {
+    return this.isLightColor(hex)
+      ? 'rgba(122,90,122,0.24)'
+      : this.hexToRgba(hex, 0.28, this.defaultGroupChipColor);
+  }
+
+  getGroupChipBackground(hex: string | null | undefined): string {
+    return this.isLightColor(hex)
+      ? 'rgba(255,255,255,0.92)'
+      : this.hexToRgba(hex, 0.1, this.defaultGroupChipColor);
+  }
+
+  getGroupChipDotColor(hex: string | null | undefined): string {
+    return this.normalizeHex(hex, this.defaultGroupChipColor);
+  }
+
+  getGroupChipDotBorderColor(hex: string | null | undefined): string {
+    return this.isLightColor(hex) ? 'rgba(122,90,122,0.32)' : 'transparent';
+  }
+
   safeColor(hex: string | null | undefined, fallback = '#e879a0'): string {
     if (!hex) return fallback;
     const clean = hex.replace('#', '');
@@ -193,5 +218,32 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     const b = parseInt(clean.substring(4, 6), 16) / 255;
     const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
     return luminance > 0.75 ? fallback : hex;
+  }
+
+  private isLightColor(hex: string | null | undefined): boolean {
+    const normalized = this.normalizeHex(hex);
+    if (!normalized) return false;
+    const clean = normalized.replace('#', '');
+    const r = parseInt(clean.substring(0, 2), 16) / 255;
+    const g = parseInt(clean.substring(2, 4), 16) / 255;
+    const b = parseInt(clean.substring(4, 6), 16) / 255;
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luminance > 0.82;
+  }
+
+  private hexToRgba(hex: string | null | undefined, alpha: number, fallback: string): string {
+    const normalized = this.normalizeHex(hex, fallback);
+    const clean = normalized.replace('#', '');
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  private normalizeHex(hex: string | null | undefined, fallback?: string): string {
+    if (!hex) return fallback ?? '';
+    const clean = hex.replace('#', '');
+    if (!/^[0-9a-fA-F]{6}$/.test(clean)) return fallback ?? '';
+    return `#${clean}`;
   }
 }

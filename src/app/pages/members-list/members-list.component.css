@@ -4,3 +4,9 @@
     padding-right: 16px !important;
   }
 }
+
+@media (max-width: 520px) {
+  .filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

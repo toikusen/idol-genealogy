@@ -218,12 +218,14 @@
                    font-size:0.82rem;
                     transition:all 0.2s;
                   "
-                  [style.borderColor]="g.color || '#7c6cf2'"
-                  [style.color]="g.color || '#7c6cf2'"
-                  [style.background]="(g.color || '#7c6cf2') + '12'"
+                  [style.borderColor]="getGroupChipBorderColor(g.color)"
+                  [style.color]="getGroupChipTextColor()"
+                  [style.background]="getGroupChipBackground(g.color)"
                 >
-                  <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;"
-                    [style.background]="g.color || '#7c6cf2'"></span>
+                  <span
+                    style="width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1px solid;"
+                    [style.background]="getGroupChipDotColor(g.color)"
+                    [style.borderColor]="getGroupChipDotBorderColor(g.color)"></span>
                   {{ g.name_jp || g.name }}
                 </a>
               }
@@ -409,4 +411,3 @@
     (closed)="showDeletePanel = false"
   />
 }
-

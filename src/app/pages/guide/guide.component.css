@@ -1,0 +1,172 @@
+.guide-shell {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.guide-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 32px 96px;
+}
+
+.guide-login-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.guide-title {
+  color: var(--text-heading);
+}
+
+.guide-step-index {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-family: sans-serif;
+}
+
+.guide-step-index--primary {
+  background: var(--idol-pink);
+  color: #fff;
+}
+
+.guide-step-index--muted {
+  background: var(--pink-glow-20);
+  color: var(--text-pink);
+}
+
+.guide-step-title,
+.guide-badge-title {
+  color: var(--text-primary);
+}
+
+.guide-body,
+.guide-list,
+.guide-note {
+  color: var(--text-secondary);
+}
+
+.guide-callout {
+  background: var(--bg-purple-tint);
+  border: 1px solid rgba(124, 108, 242, 0.2);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+
+.guide-callout-title,
+.guide-login-title {
+  color: #8f85ff;
+}
+
+.guide-callout-body,
+.guide-login-list {
+  color: #c9c3ff;
+}
+
+.guide-callout-emphasis {
+  color: #a999ff;
+}
+
+.guide-good-source {
+  background: rgba(34, 197, 94, 0.05);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.guide-good-source-title {
+  color: var(--status-approved);
+}
+
+.guide-good-source-list {
+  color: #4d7a54;
+}
+
+.guide-danger-callout,
+.guide-danger-card {
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.guide-danger-title {
+  color: #d15757;
+}
+
+.guide-danger-list {
+  color: #8d6262;
+}
+
+.guide-warning-muted {
+  color: var(--text-faint-55);
+}
+
+.guide-neutral-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--mauve-12);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.guide-neutral-title {
+  color: var(--text-secondary);
+}
+
+.guide-neutral-list {
+  color: var(--text-secondary);
+}
+
+.guide-login-button {
+  display: inline-block;
+  padding: 10px 28px;
+  border-radius: 999px;
+  background: var(--idol-pink);
+  color: #fff;
+  font-size: 0.78rem;
+  font-family: sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .guide-good-source-list {
+    color: #9ed3a6;
+  }
+
+  .guide-danger-title {
+    color: #f08a8a;
+  }
+
+  .guide-danger-list {
+    color: #d2a2a2;
+  }
+
+  .guide-warning-muted {
+    color: var(--text-faint-40);
+  }
+}
+
+@media (max-width: 720px) {
+  .guide-inner {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .guide-source-grid,
+  .guide-rule-grid,
+  .guide-login-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

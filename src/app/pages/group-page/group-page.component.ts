@@ -121,6 +121,10 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   tooltipY = 0;
   private _routeSub?: Subscription;
 
+  private getCarouselVisibleCount(): number {
+    return typeof window !== 'undefined' && window.innerWidth >= 768 ? 5 : 2;
+  }
+
   constructor(
     private route: ActivatedRoute,
     private seo: SeoService,
@@ -134,7 +138,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
   @HostListener('window:resize')
   onWindowResize() {
-    const newCount = window.innerWidth >= 768 ? 5 : 2;
+    const newCount = this.getCarouselVisibleCount();
     if (newCount !== this.carouselVisibleCount) {
       this.carouselVisibleCount = newCount;
       this.carouselIndex = 0;
@@ -149,7 +153,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   carouselNext() { if (this.carouselCanNext) this.carouselIndex++; }
 
   ngOnInit() {
-    this.carouselVisibleCount = window.innerWidth >= 768 ? 5 : 2;
+    this.carouselVisibleCount = this.getCarouselVisibleCount();
     this.supabaseAuth.authState$.subscribe(s => {
       this.isLoggedIn = !!s?.user;
       this.currentUserId = s?.user?.id ?? null;

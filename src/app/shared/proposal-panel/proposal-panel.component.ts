@@ -1,5 +1,5 @@
 // src/app/shared/proposal-panel/proposal-panel.component.ts
-import { Component, Input, Output, EventEmitter, OnInit, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -24,16 +24,21 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
     ></button>
 
     <!-- Panel -->
-    <div class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col overflow-hidden">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="proposal-panel-title"
+      class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col overflow-hidden"
+    >
       <!-- Header -->
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-pink-50">
         <div>
-          <h2 class="text-base font-semibold text-gray-800">
+          <h2 id="proposal-panel-title" class="text-base font-semibold text-gray-800">
             {{ operation === 'INSERT' ? '提案新增' : operation === 'DELETE' ? '回報問題' : '提案修改' }}
           </h2>
           <p class="text-xs text-gray-400 mt-0.5">{{ tableLabel }}</p>
         </div>
-        <button (click)="close()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        <button (click)="close()" aria-label="關閉" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
       </div>
 
       <!-- Login banner (guests only) -->
@@ -557,7 +562,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
     </div>
   `,
 })
-export class ProposalPanelComponent implements OnInit {
+export class ProposalPanelComponent implements OnInit, AfterViewInit {
   @Input() tableName: 'members' | 'groups' | 'history' | 'companies' = 'members';
   @Input() recordId: string | null = null;
   @Input() operation: 'INSERT' | 'UPDATE' | 'DELETE' = 'UPDATE';
@@ -738,6 +743,35 @@ export class ProposalPanelComponent implements OnInit {
     public router: Router,
     private el: ElementRef,
   ) {}
+
+  ngAfterViewInit() {
+    setTimeout(() => {
+      const host = this.el.nativeElement as HTMLElement;
+      const closeBtn = host.querySelector('button[aria-label="關閉"]') as HTMLElement | null;
+      closeBtn?.focus();
+    });
+  }
+
+  @HostListener('keydown', ['$event'])
+  onKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') { this.close(); return; }
+    if (event.key !== 'Tab') return;
+    const host = this.el.nativeElement as HTMLElement;
+    const panel = host.querySelector('[role="dialog"]') as HTMLElement | null;
+    if (!panel) return;
+    const selector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const nodes = panel.querySelectorAll(selector) as NodeListOf<HTMLElement>;
+    const focusable: HTMLElement[] = [];
+    nodes.forEach((el: HTMLElement) => { if (!el.closest('[hidden]')) focusable.push(el); });
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault(); last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault(); first.focus();
+    }
+  }
 
   async ngOnInit() {
     if (this.forceExternal) this.isExternalRecord = true;

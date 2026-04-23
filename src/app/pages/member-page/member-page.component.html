@@ -146,7 +146,7 @@
               >✏️ 提案修改</button>
               <button
                 (click)="showDeletePanel = true"
-                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 border border-gray-200 rounded-full hover:border-red-300 hover:text-red-400 transition-colors"
+                class="report-btn"
               >⚑ 回報問題</button>
               <button
                 (click)="copyLink()"
@@ -406,52 +406,52 @@
 
         <!-- 新增 / 編輯表單 -->
         @if (showAddSongForm) {
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
-            <h4 class="text-sm font-medium text-gray-700 mb-4">{{ editingSong ? '編輯歌曲' : '新增歌曲' }}</h4>
+          <div class="rounded-2xl p-5 mb-5" style="background:var(--bg-surface);border:1px solid var(--border-subtle);box-shadow:var(--shadow-sm);">
+            <h4 class="text-sm font-medium mb-4" style="color:var(--text-secondary);">{{ editingSong ? '編輯歌曲' : '新增歌曲' }}</h4>
             <div class="grid gap-3">
               <div>
-                <label for="msong-title" class="block text-xs text-gray-500 mb-1">歌曲名稱 <span class="text-red-400">*</span></label>
+                <label for="msong-title" class="block text-xs mb-1" style="color:var(--text-faint-65);">歌曲名稱 <span class="text-red-400">*</span></label>
                 <input id="msong-title" type="text" [(ngModel)]="songFormData.title" placeholder="歌曲名稱"
-                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                  class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
               </div>
               <div class="grid grid-cols-3 gap-3">
                 <div>
-                  <label for="msong-lyricist" class="block text-xs text-gray-500 mb-1">作詞</label>
+                  <label for="msong-lyricist" class="block text-xs mb-1" style="color:var(--text-faint-65);">作詞</label>
                   <input id="msong-lyricist" type="text" [(ngModel)]="songFormData.lyricist" placeholder="作詞者"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                    class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                 </div>
                 <div>
-                  <label for="msong-composer" class="block text-xs text-gray-500 mb-1">作曲</label>
+                  <label for="msong-composer" class="block text-xs mb-1" style="color:var(--text-faint-65);">作曲</label>
                   <input id="msong-composer" type="text" [(ngModel)]="songFormData.composer" placeholder="作曲者"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                    class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                 </div>
                 <div>
-                  <label for="msong-arranger" class="block text-xs text-gray-500 mb-1">編曲</label>
+                  <label for="msong-arranger" class="block text-xs mb-1" style="color:var(--text-faint-65);">編曲</label>
                   <input id="msong-arranger" type="text" [(ngModel)]="songFormData.arranger" placeholder="編曲者"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                    class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label for="msong-release-date" class="block text-xs text-gray-500 mb-1">發行日期</label>
+                  <label for="msong-release-date" class="block text-xs mb-1" style="color:var(--text-faint-65);">發行日期</label>
                   <input id="msong-release-date" type="date" [(ngModel)]="songFormData.release_date"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                    class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                 </div>
                 <div>
-                  <label for="msong-sort-order" class="block text-xs text-gray-500 mb-1">第幾首單曲 <span class="text-red-400">*</span></label>
+                  <label for="msong-sort-order" class="block text-xs mb-1" style="color:var(--text-faint-65);">第幾首單曲 <span class="text-red-400">*</span></label>
                   <input id="msong-sort-order" type="number" [(ngModel)]="songFormData.sort_order" min="1" placeholder="例：1 代表第 1 首單曲"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                    class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                 </div>
               </div>
               <div>
-                <label for="msong-youtube-url" class="block text-xs text-gray-500 mb-1">YouTube 連結</label>
+                <label for="msong-youtube-url" class="block text-xs mb-1" style="color:var(--text-faint-65);">YouTube 連結</label>
                 <input id="msong-youtube-url" type="url" [(ngModel)]="songFormData.youtube_url" placeholder="https://youtube.com/watch?v=..."
-                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                  class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
               </div>
               <div>
-                <label for="msong-notes" class="block text-xs text-gray-500 mb-1">備注 / 資訊來源</label>
+                <label for="msong-notes" class="block text-xs mb-1" style="color:var(--text-faint-65);">備注 / 資訊來源</label>
                 <textarea id="msong-notes" [(ngModel)]="songFormData.notes" rows="2" placeholder="請附上資訊來源或其他備注…"
-                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 resize-none"></textarea>
+                  class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 resize-none" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"></textarea>
               </div>
             </div>
             @if (songError) {
@@ -459,7 +459,7 @@
             }
             <div class="flex gap-3 mt-4">
               <button type="button" (click)="cancelSongForm()"
-                class="flex-1 px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                class="flex-1 px-4 py-2 text-sm rounded-lg transition-colors" style="color:var(--text-faint-55);border:1px solid var(--border-default);background:transparent;">
                 取消
               </button>
               <button type="button" (click)="saveSong()" [disabled]="songSaving"
@@ -478,16 +478,16 @@
         <!-- 歌曲列表 -->
         @if (memberSongs.length === 0 && !showAddSongForm) {
           <div class="py-8 text-center">
-            <p class="text-sm text-gray-400">尚無原創曲記錄</p>
+            <p class="text-sm" style="color:var(--text-faint-55);">尚無原創曲記錄</p>
             @if (!isLoggedIn) {
-              <p class="text-xs text-gray-300 mt-1">登入後可新增歌曲資料</p>
+              <p class="text-xs mt-1" style="color:var(--text-faint-40);">登入後可新增歌曲資料</p>
             }
           </div>
         }
 
         <div class="space-y-3">
           @for (song of memberSongs; track song.id) {
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 hover:shadow-md transition-all duration-200">
+            <div class="rounded-2xl px-4 py-3 hover:shadow-md transition-all duration-200" style="background:var(--bg-surface);border:1px solid var(--border-subtle);box-shadow:var(--shadow-xs);">
               <div class="flex gap-3 items-start">
 
                 @if (extractYouTubeThumbnail(song.youtube_url); as thumb) {
@@ -508,21 +508,21 @@
                   <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
                       @if (song.sort_order >= 1) {
-                        <p class="text-xs text-gray-400 mb-0.5">第 {{ song.sort_order }} 首原創單曲</p>
+                        <p class="text-xs mb-0.5" style="color:var(--text-faint-55);">第 {{ song.sort_order }} 首原創單曲</p>
                       }
-                      <p class="text-sm font-medium text-gray-800 leading-snug">{{ song.title }}</p>
+                      <p class="text-sm font-medium leading-snug" style="color:var(--text-primary);">{{ song.title }}</p>
                       <div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                         @if (song.lyricist) {
-                          <span class="text-xs text-gray-400">作詞：{{ song.lyricist }}</span>
+                          <span class="text-xs" style="color:var(--text-faint-55);">作詞：{{ song.lyricist }}</span>
                         }
                         @if (song.composer) {
-                          <span class="text-xs text-gray-400">作曲：{{ song.composer }}</span>
+                          <span class="text-xs" style="color:var(--text-faint-55);">作曲：{{ song.composer }}</span>
                         }
                         @if (song.arranger) {
-                          <span class="text-xs text-gray-400">編曲：{{ song.arranger }}</span>
+                          <span class="text-xs" style="color:var(--text-faint-55);">編曲：{{ song.arranger }}</span>
                         }
                         @if (song.release_date) {
-                          <span class="text-xs text-gray-400">發行時間：{{ song.release_date.slice(0,10).replaceAll('-','.') }}</span>
+                          <span class="text-xs" style="color:var(--text-faint-55);">發行時間：{{ song.release_date.slice(0,10).replaceAll('-','.') }}</span>
                         }
                       </div>
                       @if (!extractYouTubeThumbnail(song.youtube_url) && song.youtube_url) {
@@ -530,23 +530,16 @@
                           class="text-xs text-pink-500 hover:underline mt-1 inline-block">▶ YouTube</a>
                       }
                     </div>
-                    <div class="flex gap-1 flex-shrink-0">
+                    <div class="song-card-actions">
                       @if (canEditSong(song)) {
-                        <button type="button" (click)="openEditSong(song)"
-                          class="text-gray-300 hover:text-blue-400 transition-colors"
-                          style="font-size:0.65rem;line-height:1;border:1px solid currentColor;border-radius:4px;padding:2px 6px;">
+                        <button type="button" (click)="openEditSong(song)" class="song-action-btn song-action-btn--edit">
                           編輯
                         </button>
-                        <button type="button" (click)="deleteSong(song)"
-                          class="text-gray-300 hover:text-red-400 transition-colors"
-                          style="font-size:0.65rem;line-height:1;border:1px solid currentColor;border-radius:4px;padding:2px 6px;">
+                        <button type="button" (click)="deleteSong(song)" class="song-action-btn song-action-btn--danger">
                           刪除
                         </button>
                       }
-                      <button type="button" (click)="startReportSong(song)"
-                        title="回報此記錄有問題"
-                        class="text-gray-300 hover:text-red-400 transition-colors"
-                        style="font-size:0.65rem;line-height:1;border:1px solid currentColor;border-radius:4px;padding:2px 4px;">
+                      <button type="button" (click)="startReportSong(song)" title="回報此記錄有問題" class="song-action-btn song-action-btn--danger">
                         ⚑ 回報
                       </button>
                     </div>
@@ -557,27 +550,27 @@
 
               <!-- 回報表單 (inline) -->
               @if (reportingSong?.id === song.id) {
-                <div class="mt-3 pt-3 border-t border-gray-100">
+                <div class="mt-3 pt-3 border-t" style="border-color:var(--border-subtle);">
                   @if (songReportDone) {
                     <p class="text-xs text-green-500">✓ 已送出，感謝回報！</p>
                   } @else {
-                    <p class="text-xs text-gray-500 mb-2">請說明這筆資料的問題：</p>
+                    <p class="text-xs mb-2" style="color:var(--text-faint-65);">請說明這筆資料的問題：</p>
                     @if (!isLoggedIn) {
                       <input type="text" [(ngModel)]="songReporterName" placeholder="你的名稱（選填）"
-                        class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs mb-2 focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                        class="w-full rounded-lg px-3 py-1.5 text-xs mb-2 focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                     }
                     <textarea [(ngModel)]="songReportNote" rows="2" placeholder="例：作詞者名稱有誤，來源：…"
-                      class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-pink-300"></textarea>
+                      class="w-full rounded-lg px-3 py-1.5 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"></textarea>
                     @if (songReportError) {
                       <p class="text-xs text-red-500 mt-1">{{ songReportError }}</p>
                     }
                     <div class="flex gap-2 mt-2">
                       <button type="button" (click)="cancelSongReport()"
-                        class="px-3 py-1 text-xs text-gray-400 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        class="song-form-action px-3 py-1 text-xs rounded-lg transition-colors" style="color:var(--text-faint-55);border:1px solid var(--border-default);background:transparent;">
                         取消
                       </button>
                       <button type="button" (click)="submitSongReport()" [disabled]="songReportSubmitting"
-                        class="px-3 py-1 text-xs text-white bg-pink-500 hover:bg-pink-600 disabled:opacity-50 rounded-lg transition-colors">
+                        class="song-form-action px-3 py-1 text-xs text-white bg-pink-500 hover:bg-pink-600 disabled:opacity-50 rounded-lg transition-colors">
                         {{ songReportSubmitting ? '送出中…' : '送出回報' }}
                       </button>
                     </div>
@@ -723,4 +716,3 @@
     (closed)="showOverseasPanel = false"
   />
 }
-

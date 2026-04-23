@@ -9,6 +9,7 @@ import { siteUrl } from '../../core/public-url.utils';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './guide.component.html',
+  styleUrl: './guide.component.css',
 })
 export class GuideComponent implements OnInit {
   constructor(private seo: SeoService) {}

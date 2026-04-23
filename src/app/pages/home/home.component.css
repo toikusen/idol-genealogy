@@ -335,3 +335,9 @@ input::placeholder {
     padding-right: 16px !important;
   }
 }
+
+@media (max-width: 600px) {
+  .calendar-iframe {
+    height: 400px !important;
+  }
+}
