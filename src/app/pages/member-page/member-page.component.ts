@@ -28,6 +28,7 @@ import { normalizeSnsUrl } from '../../core/sns-url.utils';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent],
   templateUrl: './member-page.component.html',
+  styleUrl: './member-page.component.css',
 })
 export class MemberPageComponent implements OnInit, OnDestroy {
   member: Member | null = null;

@@ -20,6 +20,7 @@ import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
   standalone: true,
   imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, AdBannerComponent],
   templateUrl: './company-page.component.html',
+  styleUrl: './company-page.component.css',
 })
 export class CompanyPageComponent implements OnInit, OnDestroy {
   company: Company | null = null;

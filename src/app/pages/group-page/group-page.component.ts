@@ -37,6 +37,7 @@ interface GanttRow {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent],
   templateUrl: './group-page.component.html',
+  styleUrl: './group-page.component.css',
 })
 export class GroupPageComponent implements OnInit, OnDestroy {
   group: Group | null = null;

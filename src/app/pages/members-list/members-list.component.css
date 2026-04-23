@@ -1,0 +1,6 @@
+@media (max-width: 600px) {
+  #main-content {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}

@@ -15,6 +15,7 @@ const PAGE_SIZE = 36;
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './members-list.component.html',
+  styleUrl: './members-list.component.css',
 })
 export class MembersListComponent implements OnInit {
   allMembers: Member[] = [];

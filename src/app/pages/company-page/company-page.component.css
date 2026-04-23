@@ -1,0 +1,21 @@
+.sns-link {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 20px; border: 1px solid;
+  font-family: 'JF Openhuninn', sans-serif;
+  font-size: 0.72rem; letter-spacing: 0.08em;
+  text-decoration: none; transition: all 0.2s ease;
+}
+.sns-link--ig { color:#c2507a;border-color:rgba(194,80,122,0.25);background:rgba(194,80,122,0.05); }
+.sns-link--ig:hover { background:rgba(194,80,122,0.1);border-color:rgba(194,80,122,0.45); }
+.sns-link--fb { color:#3b6ec2;border-color:rgba(59,110,194,0.25);background:rgba(59,110,194,0.05); }
+.sns-link--fb:hover { background:rgba(59,110,194,0.1);border-color:rgba(59,110,194,0.45); }
+.sns-link--x { color:#2a2a2a;border-color:rgba(42,42,42,0.18);background:rgba(42,42,42,0.04); }
+.sns-link--x:hover { background:rgba(42,42,42,0.08);border-color:rgba(42,42,42,0.35); }
+.sns-link--yt { color:#dc2626;border-color:rgba(220,38,38,0.25);background:rgba(220,38,38,0.05); }
+.sns-link--yt:hover { background:rgba(220,38,38,0.1);border-color:rgba(220,38,38,0.45); }
+.sns-link--web { color:#6b7280;border-color:rgba(107,114,128,0.25);background:rgba(107,114,128,0.05); }
+.sns-link--web:hover { background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.45); }
+
+@media (max-width: 520px) {
+  .company-outer { padding-left: 16px !important; padding-right: 16px !important; }
+}

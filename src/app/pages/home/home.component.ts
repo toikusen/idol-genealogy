@@ -17,7 +17,7 @@ import { SITE_URL, siteUrl } from '../../core/public-url.utils';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, AdBannerComponent, ProposalPanelComponent, SafeUrlPipe],
   templateUrl: './home.component.html',
-  styles: [],
+  styleUrl: './home.component.css',
 })
 export class HomeComponent implements OnInit, OnDestroy {
   showMemberInsertPanel = false;
