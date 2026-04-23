@@ -67,7 +67,7 @@
 
           <!-- Searching spinner -->
           @if (searching) {
-            <div style="
+            <div role="status" aria-label="搜尋中" style="
               width: 16px; height: 16px; border-radius: 50%;
               border: 1.5px solid rgba(232,121,160,0.2);
               border-top-color: rgba(232,121,160,0.7);
@@ -455,10 +455,10 @@
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
                 <span style="font-size: 1rem;">🎂</span>
                 <span style="
-                  font-size: 0.68rem; letter-spacing: 0.35em;
-                  text-transform: uppercase; color: #b04080;
+                  font-size: 0.72rem; letter-spacing: 0.35em;
+                  text-transform: uppercase; color: var(--section-member);
                 ">近期生日</span>
-                <div style="flex:1; height:1px; background: linear-gradient(to right, rgba(200,80,144,0.25), transparent);"></div>
+                <div style="flex:1; height:1px; background: linear-gradient(to right, var(--section-member-muted), transparent);"></div>
               </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 @for (entry of upcomingBirthdays; track entry.member.id) {
@@ -501,13 +501,13 @@
 
           <!-- Section header -->
           <div style="display: flex; align-items: center; gap: 16px; margin: 40px 0 24px;">
-            <div style="height: 1px; width: 24px; background: rgba(200,80,144,0.5);"></div>
+            <div style="height: 1px; width: 24px; background: var(--section-member);"></div>
             <span style="
-              font-size: 0.68rem; letter-spacing: 0.35em;
-              text-transform: uppercase; color: #b04080;
+              font-size: 0.72rem; letter-spacing: 0.35em;
+              text-transform: uppercase; color: var(--section-member);
               white-space: nowrap;
             ">RECENT · 最近更新</span>
-            <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(200,80,144,0.25), transparent);"></div>
+            <div style="flex: 1; height: 1px; background: linear-gradient(to right, var(--section-member-muted), transparent);"></div>
             <button
               (click)="showMemberInsertPanel = true"
               class="home-action-chip home-action-chip--member"
@@ -588,13 +588,13 @@
 
           <!-- Section header -->
           <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-            <div style="height: 1px; width: 24px; background: rgba(98,72,192,0.55);"></div>
+            <div style="height: 1px; width: 24px; background: var(--section-group);"></div>
             <span style="
-              font-size: 0.68rem; letter-spacing: 0.35em;
-              text-transform: uppercase; color: #5040a8;
+              font-size: 0.72rem; letter-spacing: 0.35em;
+              text-transform: uppercase; color: var(--section-group);
               white-space: nowrap;
             ">GROUPS · 團體列表</span>
-            <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(98,72,192,0.3), transparent);"></div>
+            <div style="flex: 1; height: 1px; background: linear-gradient(to right, var(--section-group-muted), transparent);"></div>
             <button
               (click)="showGroupInsertPanel = true"
               class="home-action-chip home-action-chip--group"
@@ -648,7 +648,7 @@
                 <div style="flex-shrink: 0; text-align: right;">
                   @if (group.founded_at) {
                     <div style="
-                      font-size: 0.74rem; color: #6248c0;
+                      font-size: 0.74rem; color: var(--section-group);
                       letter-spacing: 0.05em; font-weight: 600;
                     ">{{group.founded_at | slice:0:4}}</div>
                   }
@@ -675,13 +675,13 @@
 
           <!-- Section header -->
           <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px; flex-wrap: wrap;">
-            <div style="height: 1px; width: 24px; background: rgba(160,110,30,0.5); flex-shrink: 0;"></div>
+            <div style="height: 1px; width: 24px; background: var(--section-company); flex-shrink: 0;"></div>
             <span style="
-              font-size: 0.68rem; letter-spacing: 0.35em;
-              text-transform: uppercase; color: #8a6020;
+              font-size: 0.72rem; letter-spacing: 0.35em;
+              text-transform: uppercase; color: var(--section-company);
               white-space: nowrap;
             ">COMPANIES · 事務所一覧</span>
-            <div style="flex: 1; min-width: 20px; height: 1px; background: linear-gradient(to right, rgba(160,110,30,0.25), transparent);"></div>
+            <div style="flex: 1; min-width: 20px; height: 1px; background: linear-gradient(to right, var(--section-company-muted), transparent);"></div>
             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
               <span style="
                 font-size: 0.78rem; color: rgba(140,100,40,0.5);
@@ -801,13 +801,13 @@
           <!-- Section header -->
           <div style="display: flex; align-items: center; gap: 16px; margin: 40px 0 24px;">
             <span style="
-              font-size: 0.68rem; letter-spacing: 0.35em;
-              text-transform: uppercase; color: rgba(200,112,106,0.6);
+              font-size: 0.72rem; letter-spacing: 0.35em;
+              text-transform: uppercase; color: var(--section-event);
               white-space: nowrap;
             ">SCHEDULE · 活動日程</span>
-            <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(200,112,106,0.2), transparent);"></div>
+            <div style="flex: 1; height: 1px; background: linear-gradient(to right, var(--section-event-muted), transparent);"></div>
             <span style="
-              font-size: 0.6rem; letter-spacing: 0.15em;
+              font-size: 0.65rem; letter-spacing: 0.12em;
               color: rgba(200,112,106,0.45);
               white-space: nowrap;
             ">由OTAKU EVENT整理</span>
@@ -832,7 +832,6 @@
                 width: 100%;
                 height: 600px;
                 border: none;
-                filter: hue-rotate(150deg) saturate(0.5) brightness(1.03);
               "
               scrolling="no"
               frameborder="0"
@@ -947,13 +946,7 @@
         </a>
       </div>
 
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px;">
-        <div style="height: 1px; width: 48px; background: linear-gradient(to right, transparent, rgba(232,121,160,0.25));"></div>
-        <div style="width: 3px; height: 3px; border-radius: 50%; background: rgba(232,121,160,0.3);"></div>
-        <div style="width: 3px; height: 3px; border-radius: 50%; background: rgba(124,108,242,0.25);"></div>
-        <div style="width: 3px; height: 3px; border-radius: 50%; background: rgba(232,121,160,0.3);"></div>
-        <div style="height: 1px; width: 48px; background: linear-gradient(to left, transparent, rgba(232,121,160,0.25));"></div>
-      </div>
+      <div style="height: 1px; width: 80px; margin: 0 auto 16px; background: linear-gradient(to right, transparent, rgba(232,121,160,0.25), transparent);"></div>
       <p style="
         font-style: italic; font-size: 0.78rem;
         color: rgba(184,160,184,0.5); letter-spacing: 0.15em;

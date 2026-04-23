@@ -232,6 +232,7 @@ input::placeholder {
   align-items: center;
   gap: 4px;
   padding: 4px 12px;
+  min-height: 36px;
   border-radius: 999px;
   flex-shrink: 0;
   font-size: 0.72rem;
@@ -315,6 +316,11 @@ input::placeholder {
   transition: all 0.2s ease; white-space: nowrap;
 }
 .group-tab:hover { color: #5040b8; }
+.group-tab:focus-visible {
+  outline: 2px solid var(--idol-pink);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
 .group-tab--active { color: #4030a8; border-bottom-color: #6248c0; }
 
 .tab-count {

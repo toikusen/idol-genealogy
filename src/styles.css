@@ -53,6 +53,17 @@
   --text-pink-65: rgba(232, 121, 160, 0.65);
   --text-link: #c2507a;
   --text-ghost: rgba(184, 160, 184, 0.60);
+  --text-label: rgba(122, 90, 122, 0.78); /* functional uppercase labels — higher contrast than --text-faint */
+
+  /* ── Section accent colors ── */
+  --section-member: #b04080;
+  --section-member-muted: rgba(200, 80, 144, 0.25);
+  --section-group: #5040a8;
+  --section-group-muted: rgba(98, 72, 192, 0.30);
+  --section-company: #8a6020;
+  --section-company-muted: rgba(160, 110, 30, 0.25);
+  --section-event: rgba(200, 112, 106, 0.60);
+  --section-event-muted: rgba(200, 112, 106, 0.20);
 
   /* ── Pink accent variants (for decorative elements) ── */
   --pink-glow-08: rgba(232, 121, 160, 0.08);
