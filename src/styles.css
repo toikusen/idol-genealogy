@@ -76,7 +76,7 @@
   --section-group-muted: rgba(98, 72, 192, 0.30);
   --section-company: #8a6020;
   --section-company-muted: rgba(160, 110, 30, 0.25);
-  --section-event: rgba(200, 112, 106, 0.60);
+  --section-event: #a85848;
   --section-event-muted: rgba(200, 112, 106, 0.20);
 
   /* ── Status colors ── */

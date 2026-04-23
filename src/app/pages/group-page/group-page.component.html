@@ -36,7 +36,7 @@
         ">錯誤</div>
         <p style="
           font-style: italic; font-size: 1.1rem;
-          color: var(--text-faint-55); letter-spacing: 0.06em;
+          color: var(--text-secondary); letter-spacing: 0.06em;
         ">Could not load group data</p>
         <a routerLink="/" style="
           font-size: 0.78rem; letter-spacing: 0.18em;
@@ -61,7 +61,7 @@
         ">找不到此團體</div>
         <p style="
           font-style: italic; font-size: 1.1rem;
-          color: var(--text-faint-55); letter-spacing: 0.06em;
+          color: var(--text-secondary); letter-spacing: 0.06em;
         ">This group could not be found in the archive</p>
         <a routerLink="/" style="
           font-size: 0.78rem; letter-spacing: 0.18em;
@@ -122,8 +122,8 @@
               box-shadow: 0 0 8px rgba({{ hexToRgb(group.color) }}, 0.4);
             " [style.background]="group.color"></div>
             <span style="
-              font-size: 0.62rem; letter-spacing: 0.38em;
-              text-transform: uppercase; color: var(--text-faint-40);
+              font-size: 0.72rem; letter-spacing: 0.25em;
+              text-transform: uppercase; color: var(--text-label);
             ">Group · 團體</span>
             <div style="flex: 1; height: 1px; background: rgba(232,121,160,0.1);"></div>
           </div>
@@ -676,7 +676,7 @@
 
             <!-- 新增 / 編輯表單 -->
             @if (showAddSongForm) {
-              <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm p-5 mb-6">
+              <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
                 <h4 class="text-sm font-medium text-gray-700 mb-4">{{ editingSong ? '編輯歌曲' : '新增歌曲' }}</h4>
                 <div class="grid gap-3">
                   <div>
@@ -762,7 +762,7 @@
 
             <div class="space-y-3">
               @for (song of songs; track song.id) {
-                <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-white shadow-sm px-4 py-3 hover:shadow-md transition-all duration-200">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 hover:shadow-md transition-all duration-200">
                   <div class="flex gap-3 items-start">
 
                     <!-- YouTube 縮圖 (若有) -->
