@@ -31,7 +31,7 @@
                [style.color]="isBadgeUnlocked(badge) ? 'rgba(122,90,122,0.85)' : 'rgba(122,90,122,0.35)'">
             {{ badge.name }}
           </div>
-          <div style="font-size:0.6rem;color:rgba(122,90,122,0.3);">{{ badge.threshold }}筆</div>
+          <div style="font-size:0.72rem;color:var(--text-secondary);">{{ badge.threshold }}筆</div>
         </div>
       }
     </div>
@@ -49,11 +49,11 @@
 
     <!-- Stats chips -->
     <div style="display:flex;gap:8px;justify-content:center;margin-bottom:28px;flex-wrap:wrap;">
-      <span style="padding:4px 14px;border-radius:12px;font-size:0.72rem;background:rgba(134,239,172,0.15);border:1px solid rgba(134,239,172,0.5);color:#16a34a;">
+      <span style="padding:4px 14px;border-radius:12px;font-size:0.72rem;background:rgba(134,239,172,0.15);border:1px solid rgba(134,239,172,0.5);color:var(--status-approved);">
         ✓ 已核准 {{ approvedCount }} 筆
       </span>
       @if (pendingCount > 0) {
-        <span style="padding:4px 14px;border-radius:12px;font-size:0.72rem;background:rgba(253,224,71,0.15);border:1px solid rgba(253,224,71,0.6);color:#ca8a04;">
+        <span style="padding:4px 14px;border-radius:12px;font-size:0.72rem;background:rgba(253,224,71,0.15);border:1px solid rgba(253,224,71,0.6);color:var(--status-pending);">
           ⏳ 審核中 {{ pendingCount }} 筆
         </span>
       }
@@ -91,9 +91,9 @@
               {{ getSubject(p) }}
             </div>
             @if (p.status === 'approved') {
-              <span style="padding:1px 8px;border-radius:10px;font-size:0.65rem;white-space:nowrap;background:rgba(134,239,172,0.15);border:1px solid rgba(134,239,172,0.4);color:#16a34a;">✓ 核准</span>
+              <span style="padding:1px 8px;border-radius:10px;font-size:0.65rem;white-space:nowrap;background:rgba(134,239,172,0.15);border:1px solid rgba(134,239,172,0.4);color:var(--status-approved);">✓ 核准</span>
             } @else {
-              <span style="padding:1px 8px;border-radius:10px;font-size:0.65rem;white-space:nowrap;background:rgba(253,224,71,0.15);border:1px solid rgba(253,224,71,0.4);color:#ca8a04;">⏳ 審核中</span>
+              <span style="padding:1px 8px;border-radius:10px;font-size:0.65rem;white-space:nowrap;background:rgba(253,224,71,0.15);border:1px solid rgba(253,224,71,0.4);color:var(--status-pending);">⏳ 審核中</span>
             }
           </div>
         }
