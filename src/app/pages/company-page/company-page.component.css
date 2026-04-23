@@ -1,7 +1,6 @@
 .sns-link {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 10px; border-radius: 20px; border: 1px solid;
-  font-family: 'JF Openhuninn', sans-serif;
   font-size: 0.72rem; letter-spacing: 0.08em;
   text-decoration: none; transition: all 0.2s ease;
 }

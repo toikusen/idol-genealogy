@@ -18,7 +18,7 @@
     <!-- Error -->
     @if (!loading && error) {
       <div style="text-align:center;padding:80px 0;">
-        <p style="font-family:'JF Openhuninn',sans-serif;font-size:1.1rem;color:rgba(122,90,122,0.6);">載入失敗</p>
+        <p style="font-size:1.1rem;color:rgba(122,90,122,0.6);">載入失敗</p>
         <a routerLink="/" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 首頁</a>
       </div>
     }
@@ -26,7 +26,7 @@
     <!-- Not found -->
     @if (!loading && !error && company === null) {
       <div style="text-align:center;padding:80px 0;">
-        <p style="font-family:'JF Openhuninn',sans-serif;font-size:1.1rem;color:rgba(122,90,122,0.6);">找不到此事務所</p>
+        <p style="font-size:1.1rem;color:rgba(122,90,122,0.6);">找不到此事務所</p>
         <a routerLink="/" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 首頁</a>
       </div>
     }
@@ -38,7 +38,7 @@
       <div style="padding-top: 32px; margin-bottom: 0;">
         <a routerLink="/" style="
           display: inline-flex; align-items: center; gap: 6px;
-          font-size: 0.78rem; color: rgba(122,90,122,0.6);
+          font-size: 0.78rem; color: var(--text-faint-60);
           text-decoration: none; letter-spacing: 0.05em;
         ">← 返回首頁</a>
       </div>
@@ -66,7 +66,6 @@
               border: 3px solid white;
               box-shadow: 0 4px 16px rgba(45,27,46,0.15);
               display:flex;align-items:center;justify-content:center;
-              font-family:'JF Openhuninn',sans-serif;
               font-size:2rem; font-weight:300; color:white;
             ">{{ getInitial(company.name) }}</div>
           }
@@ -79,7 +78,6 @@
         <!-- Label -->
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
           <span style="
-            font-family:'JF Openhuninn',sans-serif;
             font-size:0.6rem;letter-spacing:0.42em;
             text-transform:uppercase;color:rgba(124,108,242,0.5);
           ">Company · 公司</span>
@@ -87,7 +85,6 @@
 
         <!-- Name -->
         <h1 style="
-          font-family:'JF Openhuninn',sans-serif;
           font-size:clamp(1.8rem,5vw,2.6rem);
           font-weight:400;letter-spacing:0.02em;
           color:#2d1b2e;margin:0 0 10px;
@@ -118,7 +115,6 @@
         <!-- Founded -->
         @if (company.founded_at) {
           <p style="
-            font-family:'JF Openhuninn',sans-serif;
             font-size:0.78rem;color:rgba(122,90,122,0.5);
             letter-spacing:0.08em;margin:0 0 12px;
           ">{{ company.founded_at | slice:0:4 }}年成立</p>
@@ -127,7 +123,6 @@
         <!-- Description -->
         @if (company.description) {
           <p style="
-            font-family:'JF Openhuninn',sans-serif;
             font-size:0.9rem;line-height:1.85;
             color:rgba(60,40,60,0.7);
             max-width:560px;margin:0 0 20px;
@@ -194,7 +189,6 @@
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
           <div style="height:1px;width:20px;background:rgba(124,108,242,0.45);"></div>
           <span style="
-            font-family:'JF Openhuninn',sans-serif;
             font-size:0.65rem;letter-spacing:0.38em;
             text-transform:uppercase;color:rgba(124,108,242,0.55);
             white-space:nowrap;
@@ -204,14 +198,13 @@
 
         <!-- No groups -->
         @if (activeGroups.length === 0 && disbandedGroups.length === 0) {
-          <p style="font-family:'JF Openhuninn',sans-serif;font-size:0.85rem;color:rgba(122,90,122,0.45);">目前無旗下團體</p>
+          <p style="font-size:0.85rem;color:rgba(122,90,122,0.45);">目前無旗下團體</p>
         }
 
         <!-- Active groups -->
         @if (activeGroups.length > 0) {
           <div style="margin-bottom:24px;">
             <p style="
-              font-family:'JF Openhuninn',sans-serif;
               font-size:0.68rem;letter-spacing:0.2em;
               color:rgba(122,90,122,0.45);margin:0 0 12px;
             ">現役</p>
@@ -222,7 +215,7 @@
                     display:inline-flex;align-items:center;gap:6px;
                     padding:6px 14px;border-radius:20px;
                     border: 1px solid; text-decoration:none;
-                    font-family:'JF Openhuninn',sans-serif;font-size:0.82rem;
+                   font-size:0.82rem;
                     transition:all 0.2s;
                   "
                   [style.borderColor]="g.color || '#7c6cf2'"
@@ -242,7 +235,6 @@
         @if (disbandedGroups.length > 0) {
           <div>
             <p style="
-              font-family:'JF Openhuninn',sans-serif;
               font-size:0.68rem;letter-spacing:0.2em;
               color:rgba(122,90,122,0.4);margin:0 0 12px;
             ">解散・活動停止</p>
@@ -256,7 +248,7 @@
                     color:rgba(122,90,122,0.5);
                     background:rgba(180,160,180,0.06);
                     text-decoration:none;
-                    font-family:'JF Openhuninn',sans-serif;font-size:0.82rem;
+                   font-size:0.82rem;
                     transition:all 0.2s;
                   "
                 >
@@ -276,7 +268,6 @@
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
             <div style="height:1px;width:20px;background:rgba(232,121,160,0.45);"></div>
             <span style="
-              font-family:'JF Openhuninn',sans-serif;
               font-size:0.65rem;letter-spacing:0.38em;
               text-transform:uppercase;color:rgba(232,121,160,0.6);
               white-space:nowrap;
@@ -289,7 +280,7 @@
                 display:inline-flex;align-items:center;gap:8px;
                 padding:6px 14px 6px 8px;border-radius:20px;
                 border:1px solid;text-decoration:none;
-                font-family:'JF Openhuninn',sans-serif;font-size:0.85rem;
+               font-size:0.85rem;
                 transition:all 0.2s;
               "
               [style.borderColor]="(m.color || '#e879a0') + '55'"
@@ -329,9 +320,9 @@
         <div style="display:flex;align-items:center;gap:14px;min-width:0;">
           <div style="width:3px;height:36px;flex-shrink:0;border-radius:0 2px 2px 0;background:linear-gradient(to bottom,rgba(124,108,242,0.55),rgba(180,170,255,0.2));"></div>
           @if (latestEditSummary) {
-            <span style="font-family:'JF Openhuninn',sans-serif;font-size:0.73rem;color:rgba(122,90,122,0.52);letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ latestEditSummary }}</span>
+            <span style="font-size:0.73rem;color:rgba(122,90,122,0.52);letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ latestEditSummary }}</span>
           } @else {
-            <span style="font-family:'JF Openhuninn',sans-serif;font-size:0.73rem;color:rgba(184,160,184,0.4);letter-spacing:0.04em;">尚無編輯紀錄</span>
+            <span style="font-size:0.73rem;color:rgba(184,160,184,0.4);letter-spacing:0.04em;">尚無編輯紀錄</span>
           }
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;padding-right:2px;">
@@ -339,7 +330,7 @@
             <button
               type="button"
               (click)="showEditHistory = true"
-              style="border:none;background:transparent;padding:5px 10px;border-radius:6px;font-family:'JF Openhuninn',sans-serif;font-size:0.71rem;color:rgba(124,108,242,0.72);cursor:pointer;letter-spacing:0.05em;transition:background 0.15s;white-space:nowrap;"
+              style="border:none;background:transparent;padding:5px 10px;border-radius:6px;font-size:0.71rem;color:rgba(124,108,242,0.72);cursor:pointer;letter-spacing:0.05em;transition:background 0.15s;white-space:nowrap;"
               onmouseenter="this.style.background='rgba(124,108,242,0.07)'"
               onmouseleave="this.style.background='transparent'"
             >編輯紀錄 →</button>
@@ -347,7 +338,7 @@
           <button
             type="button"
             (click)="showProposalPanel = true"
-            style="border:none;background:rgba(124,108,242,0.07);padding:5px 12px;border-radius:6px;font-family:'JF Openhuninn',sans-serif;font-size:0.71rem;color:rgba(80,64,168,0.82);cursor:pointer;letter-spacing:0.05em;border:1px solid rgba(124,108,242,0.14);transition:background 0.15s;white-space:nowrap;"
+            style="border:none;background:rgba(124,108,242,0.07);padding:5px 12px;border-radius:6px;font-size:0.71rem;color:rgba(80,64,168,0.82);cursor:pointer;letter-spacing:0.05em;border:1px solid rgba(124,108,242,0.14);transition:background 0.15s;white-space:nowrap;"
             onmouseenter="this.style.background='rgba(124,108,242,0.13)'"
             onmouseleave="this.style.background='rgba(124,108,242,0.07)'"
           >補充資料 →</button>
@@ -380,7 +371,7 @@
           <div style="width:3px;height:3px;border-radius:50%;background:rgba(124,108,242,0.25);"></div>
           <div style="height:1px;width:40px;background:linear-gradient(to left,transparent,rgba(124,108,242,0.2));"></div>
         </div>
-        <p style="font-family:'JF Openhuninn',sans-serif;font-style:italic;font-size:0.75rem;color:rgba(184,160,184,0.45);letter-spacing:0.15em;margin-bottom:14px;">偶像成員記録 · Idol Archive</p>
+        <p style="font-style:italic;font-size:0.75rem;color:rgba(184,160,184,0.45);letter-spacing:0.15em;margin-bottom:14px;">偶像成員記録 · Idol Archive</p>
         <a routerLink="/privacy/" style="font-size:0.72rem;color:rgba(122,90,122,0.4);text-decoration:none;letter-spacing:0.04em;">隱私政策</a>
         <div style="text-align:center;margin-top:16px;">
           <a routerLink="/guide/" style="

@@ -9,13 +9,12 @@
       <!-- Decorative top mark -->
       <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 40px;">
         <div style="height: 1px; width: 60px; background: linear-gradient(to right, transparent, rgba(232,121,160,0.4));"></div>
-        <span style="font-family: 'JF Openhuninn', sans-serif; font-size: 0.7rem; color: rgba(122,90,122,0.45); letter-spacing: 0.35em; text-transform: uppercase;">Archive · 記録庫</span>
+        <span style="font-size: 0.7rem; color: var(--text-faint-45); letter-spacing: 0.35em; text-transform: uppercase;">Archive · 記録庫</span>
         <div style="height: 1px; width: 60px; background: linear-gradient(to left, transparent, rgba(232,121,160,0.4));"></div>
       </div>
 
       <!-- Primary display heading -->
       <h1 style="
-        font-family: 'JF Openhuninn', sans-serif;
         font-size: clamp(2.8rem, 7vw, 5rem);
         font-weight: 300; line-height: 1.05;
         letter-spacing: 0.02em; color: var(--text-primary);
@@ -24,7 +23,6 @@
 
       <!-- Subtitle -->
       <p style="
-        font-family: 'JF Openhuninn', sans-serif;
         font-size: 1.25rem; font-weight: 300;
         font-style: italic; letter-spacing: 0.08em;
         color: rgba(122,90,122,0.65); margin: 0 0 12px;
@@ -62,7 +60,6 @@
             style="
               flex: 1; border: none; outline: none; box-shadow: none; background: transparent;
               padding: 20px 16px;
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 1rem; letter-spacing: 0.06em;
               color: var(--text-primary);
             "
@@ -83,8 +80,7 @@
           <div style="
             margin-left: 16px; padding-left: 16px;
             border-left: 1px solid rgba(232,121,160,0.15);
-            font-family: 'JF Openhuninn', sans-serif;
-            font-size: 0.68rem; color: rgba(184,160,184,0.6);
+            font-size: 0.68rem; color: var(--text-ghost);
             letter-spacing: 0.15em; white-space: nowrap;
           ">搜尋</div>
         </div>
@@ -189,9 +185,8 @@
         <!-- Section header -->
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
           <span style="
-            font-family: 'JF Openhuninn', sans-serif;
             font-size: 0.68rem; letter-spacing: 0.35em;
-            text-transform: uppercase; color: rgba(122,90,122,0.45);
+            text-transform: uppercase; color: var(--text-faint-45);
             white-space: nowrap;
           ">RESULTS · 検索結果</span>
           <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.2), transparent);"></div>
@@ -201,7 +196,6 @@
         @if (companyResults.length > 0) {
           <div style="margin-bottom: 20px;">
             <div style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.85rem; font-weight: 600; letter-spacing: 0.2em;
               text-transform: uppercase; color: rgba(180,140,60,0.75);
               margin-bottom: 12px;
@@ -232,7 +226,6 @@
           @if (memberResults.length > 0 || aliasResults.length > 0) {
             <div>
               <div style="
-                font-family: 'JF Openhuninn', sans-serif;
                 font-size: 0.85rem; font-weight: 600; letter-spacing: 0.2em;
                 text-transform: uppercase; color: rgba(232,121,160,0.7);
                 margin-bottom: 12px;
@@ -246,7 +239,6 @@
                       background: linear-gradient(135deg, rgba(232,121,160,0.15), rgba(124,108,242,0.1));
                       border: 1px solid var(--border-default);
                       display: flex; align-items: center; justify-content: center;
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.85rem; color: rgba(232,121,160,0.7);
                       overflow: hidden;
                     ">
@@ -258,7 +250,6 @@
                     </div>
                     <div style="min-width: 0;">
                       <div style="
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.92rem; color: var(--text-primary); font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                       ">
@@ -269,8 +260,7 @@
                       </div>
                       @if (member.name_hiragana || member.name_roman) {
                         <div style="
-                          font-family: 'JF Openhuninn', sans-serif;
-                          font-size: 0.78rem; color: rgba(122,90,122,0.5);
+                          font-size: 0.78rem; color: var(--text-faint);
                           letter-spacing: 0.04em;
                         ">
                           {{ member.name_hiragana || member.name_roman }}
@@ -287,7 +277,6 @@
                       background: linear-gradient(135deg, rgba(232,121,160,0.15), rgba(124,108,242,0.1));
                       border: 1px solid var(--border-default);
                       display: flex; align-items: center; justify-content: center;
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.85rem; color: rgba(232,121,160,0.7);
                       overflow: hidden;
                     ">
@@ -299,7 +288,6 @@
                     </div>
                     <div style="min-width: 0;">
                       <div style="
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.92rem; color: var(--text-primary); font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                       ">
@@ -311,8 +299,7 @@
                       </div>
                       @if (r.member.name_hiragana || r.member.name_roman) {
                         <div style="
-                          font-family: 'JF Openhuninn', sans-serif;
-                          font-size: 0.78rem; color: rgba(122,90,122,0.5);
+                          font-size: 0.78rem; color: var(--text-faint);
                           letter-spacing: 0.04em;
                         ">
                           {{ r.member.name_hiragana || r.member.name_roman }}
@@ -330,7 +317,6 @@
           @if (groupResults.length > 0) {
             <div>
               <div style="
-                font-family: 'JF Openhuninn', sans-serif;
                 font-size: 0.85rem; font-weight: 600; letter-spacing: 0.2em;
                 text-transform: uppercase; color: rgba(124,108,242,0.6);
                 margin-bottom: 12px;
@@ -354,14 +340,12 @@
                     </div>
                     <div style="min-width: 0;">
                       <div style="
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.92rem; color: var(--text-primary); font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                       ">{{group.name_jp || group.name}}</div>
                       @if (group.name_jp) {
                         <div style="
-                          font-family: 'JF Openhuninn', sans-serif;
-                          font-size: 0.78rem; color: rgba(122,90,122,0.5);
+                          font-size: 0.78rem; color: var(--text-faint);
                           letter-spacing: 0.04em;
                         ">{{group.name}}</div>
                       }
@@ -369,7 +353,6 @@
                     @if (group.founded_at) {
                       <div style="
                         margin-left: auto; flex-shrink: 0;
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.72rem; color: rgba(124,108,242,0.4);
                         letter-spacing: 0.06em;
                       ">{{group.founded_at | slice:0:4}}</div>
@@ -392,18 +375,15 @@
         background: rgba(255,255,255,0.5); margin-bottom: 64px;
       ">
         <div style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-size: 3rem; color: rgba(232,121,160,0.15); line-height: 1;
           margin-bottom: 20px;
         ">找不到</div>
         <p style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-style: italic; font-size: 1.1rem;
-          color: rgba(122,90,122,0.5); letter-spacing: 0.06em; margin: 0;
+          color: var(--text-faint); letter-spacing: 0.06em; margin: 0;
         ">No records found for "{{query}}"</p>
         <p style="
-          font-family: 'JF Openhuninn', sans-serif;
-          font-size: 0.78rem; color: rgba(184,160,184,0.6);
+          font-size: 0.78rem; color: var(--text-ghost);
           letter-spacing: 0.12em; margin: 12px 0 0;
         ">查無結果</p>
       </div>
@@ -419,13 +399,13 @@
             <!-- 熱門成員 -->
             @if (topMembers.length > 0) {
               <div>
-                <h3 style="font-family: 'JF Openhuninn', sans-serif; font-size: 0.85rem; font-weight: 600; color: rgba(122,90,122,0.7); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門成員</h3>
+                <h3 style="font-size: 0.85rem; font-weight: 600; color: rgba(122,90,122,0.7); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門成員</h3>
                 <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem;">
                   @for (entry of topMembers; track entry.id; let i = $index) {
                     <li>
                       <a [routerLink]="'/member/' + entry.id + '/'"
                          style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text-primary); font-size: 0.875rem;">
-                        <span style="color: rgba(122,90,122,0.45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
+                        <span style="color: var(--text-faint-45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
                         @if (entry.photo_url) {
                           <img loading="lazy" [src]="entry.photo_url" [alt]="entry.name"
                                style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
@@ -440,13 +420,13 @@
             <!-- 熱門團體 -->
             @if (topGroups.length > 0) {
               <div>
-                <h3 style="font-family: 'JF Openhuninn', sans-serif; font-size: 0.85rem; font-weight: 600; color: rgba(122,90,122,0.7); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門團體</h3>
+                <h3 style="font-size: 0.85rem; font-weight: 600; color: rgba(122,90,122,0.7); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門團體</h3>
                 <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem;">
                   @for (entry of topGroups; track entry.id; let i = $index) {
                     <li>
                       <a [routerLink]="'/group/' + entry.id + '/'"
                          style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text-primary); font-size: 0.875rem;">
-                        <span style="color: rgba(122,90,122,0.45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
+                        <span style="color: var(--text-faint-45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
                         @if (entry.photo_url) {
                           <img loading="lazy" [src]="entry.photo_url" [alt]="entry.name"
                                style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
@@ -475,7 +455,6 @@
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
                 <span style="font-size: 1rem;">🎂</span>
                 <span style="
-                  font-family: 'JF Openhuninn', sans-serif;
                   font-size: 0.68rem; letter-spacing: 0.35em;
                   text-transform: uppercase; color: #b04080;
                 ">近期生日</span>
@@ -524,7 +503,6 @@
           <div style="display: flex; align-items: center; gap: 16px; margin: 40px 0 24px;">
             <div style="height: 1px; width: 24px; background: rgba(200,80,144,0.5);"></div>
             <span style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.68rem; letter-spacing: 0.35em;
               text-transform: uppercase; color: #b04080;
               white-space: nowrap;
@@ -541,8 +519,8 @@
               padding: 64px 32px; text-align: center;
               border: 1px dashed rgba(232,121,160,0.2); border-radius: 3px;
             ">
-              <div style="font-family:'JF Openhuninn',sans-serif;font-size:2.5rem;color:rgba(232,121,160,0.12);margin-bottom:20px;line-height:1;">空</div>
-              <p style="font-family:'JF Openhuninn',sans-serif;font-style:italic;font-size:1.1rem;color:rgba(122,90,122,0.4);letter-spacing:0.08em;margin:0;">The archive awaits its first entry</p>
+              <div style="font-size:2.5rem;color:rgba(232,121,160,0.12);margin-bottom:20px;line-height:1;">空</div>
+              <p style="font-style:italic;font-size:1.1rem;color:rgba(122,90,122,0.4);letter-spacing:0.08em;margin:0;">The archive awaits its first entry</p>
             </div>
           } @else {
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
@@ -553,8 +531,7 @@
                     background: linear-gradient(135deg, rgba(232,121,160,0.18) 0%, rgba(124,108,242,0.12) 100%);
                     border: 1px solid var(--border-default);
                     display: flex; align-items: center; justify-content: center;
-                    font-family: 'JF Openhuninn', sans-serif;
-                    font-size: 1rem; font-weight: 500; color: rgba(232,121,160,0.75);
+                    font-size: 1rem; font-weight: 500; color: var(--text-pink);
                     overflow: hidden; position: relative;
                   ">
                     @if (member.photo_url) {
@@ -565,7 +542,6 @@
                   </div>
                   <div style="min-width: 0; flex: 1;">
                     <div style="
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.95rem; font-weight: 500; color: var(--text-primary);
                       line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                     ">
@@ -576,8 +552,7 @@
                     </div>
                     @if (member.name_hiragana || member.name_roman) {
                       <div style="
-                        font-family: 'JF Openhuninn', sans-serif;
-                        font-size: 0.78rem; color: rgba(122,90,122,0.5);
+                        font-size: 0.78rem; color: var(--text-faint);
                         letter-spacing: 0.03em; margin-top: 2px;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                       ">
@@ -586,7 +561,6 @@
                       </div>
                     }
                     <div style="
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.68rem; color: rgba(184,160,184,0.7);
                       letter-spacing: 0.08em; margin-top: 5px;
                     ">更新 {{formatDate(member.updated_at)}}</div>
@@ -616,7 +590,6 @@
           <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
             <div style="height: 1px; width: 24px; background: rgba(98,72,192,0.55);"></div>
             <span style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.68rem; letter-spacing: 0.35em;
               text-transform: uppercase; color: #5040a8;
               white-space: nowrap;
@@ -660,14 +633,12 @@
                 </div>
                 <div style="min-width: 0; flex: 1;">
                   <div style="
-                    font-family: 'JF Openhuninn', sans-serif;
                     font-size: 0.88rem; font-weight: 500; color: var(--text-primary);
                     line-height: 1.4; overflow: hidden;
                     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
                   ">{{group.name}}</div>
                   @if (getGroupLabel(group); as label) {
                     <div style="
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.74rem; color: #7a5080;
                       letter-spacing: 0.04em; margin-top: 3px;
                       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -677,14 +648,12 @@
                 <div style="flex-shrink: 0; text-align: right;">
                   @if (group.founded_at) {
                     <div style="
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.74rem; color: #6248c0;
                       letter-spacing: 0.05em; font-weight: 600;
                     ">{{group.founded_at | slice:0:4}}</div>
                   }
                   @if (activeGroupTab === 'disbanded' && group.disbanded_at) {
                     <div style="
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.72rem; color: #8a6890;
                       letter-spacing: 0.03em; margin-top: 2px;
                     ">→ {{group.disbanded_at | slice:0:4}}</div>
@@ -695,7 +664,7 @@
           </div>
 
           @if (displayedGroups.length === 0 && allGroups.length > 0) {
-            <div style="padding:40px;text-align:center;font-family:'JF Openhuninn',sans-serif;font-style:italic;font-size:1rem;color:#7a5080;">此分類暫無資料</div>
+            <div style="padding:40px;text-align:center;font-style:italic;font-size:1rem;color:#7a5080;">此分類暫無資料</div>
           }
         </section>
       }
@@ -708,7 +677,6 @@
           <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px; flex-wrap: wrap;">
             <div style="height: 1px; width: 24px; background: rgba(160,110,30,0.5); flex-shrink: 0;"></div>
             <span style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.68rem; letter-spacing: 0.35em;
               text-transform: uppercase; color: #8a6020;
               white-space: nowrap;
@@ -716,7 +684,6 @@
             <div style="flex: 1; min-width: 20px; height: 1px; background: linear-gradient(to right, rgba(160,110,30,0.25), transparent);"></div>
             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
               <span style="
-                font-family: 'JF Openhuninn', sans-serif;
                 font-size: 0.78rem; color: rgba(140,100,40,0.5);
                 font-style: italic;
               ">{{companySections.length}} 公司</span>
@@ -733,7 +700,6 @@
                 <!-- Company header -->
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; min-width: 0;">
                   <h3 style="
-                    font-family: 'JF Openhuninn', sans-serif;
                     font-size: 1rem; font-weight: 600;
                     color: #5a3a10; letter-spacing: 0.08em; margin: 0;
                     flex: 1; min-width: 0;
@@ -743,7 +709,6 @@
                     @if (section.companyId) {
                       <a [routerLink]="'/company/' + section.companyId + '/'" style="
                         display: inline-flex; align-items: center; gap: 4px;
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.65rem; letter-spacing: 0.1em;
                         color: rgba(124,108,242,0.8);
                         border: 1px solid rgba(124,108,242,0.3);
@@ -759,7 +724,6 @@
                       </a>
                     }
                     <span style="
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.72rem; color: rgba(140,100,40,0.5);
                       letter-spacing: 0.04em; white-space: nowrap;
                     ">
@@ -777,7 +741,6 @@
                         <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px;" [style.background]="group.disbanded_at ? '#c0a8c0' : (group.color || '#b07d2a')"></div>
                         <div style="min-width:0;">
                           <div style="
-                            font-family:'JF Openhuninn',sans-serif;
                             font-size:0.83rem;font-weight:500;
                             color: var(--text-primary); line-height:1.35;
                             overflow:hidden;display:-webkit-box;
@@ -785,7 +748,6 @@
                           ">{{group.name}}</div>
                           @if (group.founded_at) {
                             <div style="
-                              font-family:'JF Openhuninn',sans-serif;
                               font-size:0.7rem;color:rgba(140,100,40,0.55);
                               letter-spacing:0.04em;margin-top:3px;
                             ">
@@ -809,7 +771,7 @@
                         border:1px solid rgba(232,121,160,0.25);
                         background:rgba(232,121,160,0.05);
                         text-decoration:none;
-                        font-family:'JF Openhuninn',sans-serif;font-size:0.8rem;
+                       font-size:0.8rem;
                         color:var(--text-primary);transition:all 0.2s;
                       ">
                         @if (m.photo_url) {
@@ -839,14 +801,12 @@
           <!-- Section header -->
           <div style="display: flex; align-items: center; gap: 16px; margin: 40px 0 24px;">
             <span style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.68rem; letter-spacing: 0.35em;
               text-transform: uppercase; color: rgba(200,112,106,0.6);
               white-space: nowrap;
             ">SCHEDULE · 活動日程</span>
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(200,112,106,0.2), transparent);"></div>
             <span style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.6rem; letter-spacing: 0.15em;
               color: rgba(200,112,106,0.45);
               white-space: nowrap;
@@ -924,7 +884,6 @@
       font-size: 0.82rem; line-height: 1.9;
     ">
       <h2 style="
-        font-family: 'JF Openhuninn', sans-serif;
         font-size: 0.88rem; font-weight: 600;
         color: rgba(58,32,64,0.7); margin-bottom: 12px;
         letter-spacing: 0.04em;
@@ -942,7 +901,6 @@
 
       <!-- 地下偶像介紹 -->
       <h2 style="
-        font-family: 'JF Openhuninn', sans-serif;
         font-size: 0.88rem; font-weight: 600;
         color: rgba(58,32,64,0.7); margin-bottom: 12px;
         letter-spacing: 0.04em;
@@ -959,7 +917,6 @@
 
       <!-- 如何使用 -->
       <h2 style="
-        font-family: 'JF Openhuninn', sans-serif;
         font-size: 0.88rem; font-weight: 600;
         color: rgba(58,32,64,0.7); margin-bottom: 12px;
         letter-spacing: 0.04em;
@@ -998,7 +955,6 @@
         <div style="height: 1px; width: 48px; background: linear-gradient(to left, transparent, rgba(232,121,160,0.25));"></div>
       </div>
       <p style="
-        font-family: 'JF Openhuninn', sans-serif;
         font-style: italic; font-size: 0.78rem;
         color: rgba(184,160,184,0.5); letter-spacing: 0.15em;
         margin-bottom: 16px;

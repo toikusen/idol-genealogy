@@ -55,7 +55,6 @@ input::placeholder {
 }
 
 .nav-tab-tw {
-  font-family: 'JF Openhuninn', sans-serif;
   font-size: 1rem;
   letter-spacing: 0.18em;
   color: rgba(90,58,90,0.45);
@@ -64,7 +63,6 @@ input::placeholder {
 }
 
 .nav-tab-en {
-  font-family: 'JF Openhuninn', sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.22em;
   font-style: italic;
@@ -74,7 +72,6 @@ input::placeholder {
 }
 
 .nav-tab-count {
-  font-family: 'JF Openhuninn', sans-serif;
   font-size: 0.68rem;
   letter-spacing: 0.06em;
   color: rgba(150,120,150,0.35);
@@ -175,7 +172,6 @@ input::placeholder {
   background: rgba(255,248,230,0.7);
   border: 1px solid rgba(200,160,60,0.2);
   border-radius: 999px; text-decoration: none;
-  font-family: 'JF Openhuninn', sans-serif;
   font-size: 0.85rem; color: #8a6820;
   letter-spacing: 0.04em;
   transition: all 0.2s ease;
@@ -238,7 +234,6 @@ input::placeholder {
   padding: 4px 12px;
   border-radius: 999px;
   flex-shrink: 0;
-  font-family: 'JF Openhuninn', sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -287,7 +282,6 @@ input::placeholder {
   border-radius: 999px;
   border: 1px solid rgba(232,121,160,0.3);
   background: rgba(252,228,239,0.4);
-  font-family: 'JF Openhuninn', sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   color: #c05080;
@@ -301,7 +295,6 @@ input::placeholder {
   padding: 8px 20px;
   border: 1px solid rgba(124,108,242,0.35);
   border-radius: 2px;
-  font-family: 'JF Openhuninn', sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.25em;
   color: rgba(124,108,242,0.75);
@@ -317,7 +310,7 @@ input::placeholder {
 .group-tab {
   padding: 10px 20px; background: transparent; border: none;
   border-bottom: 2px solid transparent; margin-bottom: -1px;
-  cursor: pointer; font-family: 'JF Openhuninn', sans-serif;
+  cursor: pointer;
   font-size: 0.82rem; letter-spacing: 0.08em; color: #5a3a6a;
   transition: all 0.2s ease; white-space: nowrap;
 }
@@ -325,7 +318,6 @@ input::placeholder {
 .group-tab--active { color: #4030a8; border-bottom-color: #6248c0; }
 
 .tab-count {
-  font-family: 'JF Openhuninn', sans-serif;
   font-size: 0.75rem; color: #7060c0; margin-left: 4px;
 }
 .group-tab--active .tab-count { color: #4030a8; }

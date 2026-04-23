@@ -17,9 +17,8 @@
           animation: spin 0.8s linear infinite;
         "></div>
         <p style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-size: 0.75rem; letter-spacing: 0.3em;
-          color: rgba(184,160,184,0.6);
+          color: var(--text-ghost);
         ">載入中…</p>
       </div>
     }
@@ -32,19 +31,16 @@
         min-height: 60vh; gap: 16px; text-align: center;
       ">
         <div style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-size: 3rem; color: rgba(232,121,160,0.18); line-height: 1;
           margin-bottom: 8px;
         ">錯誤</div>
         <p style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-style: italic; font-size: 1.1rem;
           color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
         ">Could not load group data</p>
         <a routerLink="/" style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-size: 0.78rem; letter-spacing: 0.18em;
-          color: rgba(232,121,160,0.65);
+          color: var(--text-pink-65);
           text-decoration: none; margin-top: 8px;
           border-bottom: 1px solid rgba(232,121,160,0.25);
           padding-bottom: 2px;
@@ -60,19 +56,16 @@
         min-height: 60vh; gap: 16px; text-align: center;
       ">
         <div style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-size: 3rem; color: rgba(232,121,160,0.18); line-height: 1;
           margin-bottom: 8px;
         ">找不到此團體</div>
         <p style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-style: italic; font-size: 1.1rem;
           color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
         ">This group could not be found in the archive</p>
         <a routerLink="/" style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-size: 0.78rem; letter-spacing: 0.18em;
-          color: rgba(232,121,160,0.65);
+          color: var(--text-pink-65);
           text-decoration: none; margin-top: 8px;
           border-bottom: 1px solid rgba(232,121,160,0.25);
           padding-bottom: 2px;
@@ -129,16 +122,14 @@
               box-shadow: 0 0 8px rgba({{ hexToRgb(group.color) }}, 0.4);
             " [style.background]="group.color"></div>
             <span style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.62rem; letter-spacing: 0.38em;
-              text-transform: uppercase; color: rgba(122,90,122,0.4);
+              text-transform: uppercase; color: var(--text-faint-40);
             ">Group · 團體</span>
             <div style="flex: 1; height: 1px; background: rgba(232,121,160,0.1);"></div>
           </div>
 
           <!-- Group name -->
           <h1 style="
-            font-family: 'JF Openhuninn', sans-serif;
             font-size: clamp(2rem, 6vw, 3.5rem);
             font-weight: 300; line-height: 1.05;
             letter-spacing: 0.02em; color: var(--text-primary);
@@ -172,13 +163,11 @@
             @if (group.founded_at) {
               <div style="display: flex; align-items: center; gap: 7px;">
                 <span style="
-                  font-family: 'JF Openhuninn', sans-serif;
                   font-size: 0.62rem; letter-spacing: 0.25em;
-                  color: rgba(122,90,122,0.38); text-transform: uppercase;
+                  color: var(--text-faint-38); text-transform: uppercase;
                 ">成立</span>
                 <span style="
-                  font-family: 'JF Openhuninn', sans-serif;
-                  font-size: 0.95rem; color: rgba(122,90,122,0.6);
+                  font-size: 0.95rem; color: var(--text-faint-60);
                   letter-spacing: 0.05em;
                 ">{{ formatDateShort(group.founded_at) }}</span>
               </div>
@@ -187,13 +176,11 @@
               <div style="display: flex; align-items: center; gap: 7px;">
                 <div style="width: 16px; height: 1px; background: rgba(122,90,122,0.2);"></div>
                 <span style="
-                  font-family: 'JF Openhuninn', sans-serif;
                   font-size: 0.62rem; letter-spacing: 0.25em;
-                  color: rgba(122,90,122,0.38); text-transform: uppercase;
+                  color: var(--text-faint-38); text-transform: uppercase;
                 ">解散</span>
                 <span style="
-                  font-family: 'JF Openhuninn', sans-serif;
-                  font-size: 0.95rem; color: rgba(122,90,122,0.6);
+                  font-size: 0.95rem; color: var(--text-faint-60);
                   letter-spacing: 0.05em;
                 ">{{ formatDateShort(group.disbanded_at) }}</span>
               </div>
@@ -201,7 +188,6 @@
             @if (!group.disbanded_at && group.founded_at) {
               <div style="display: flex; align-items: center; gap: 7px;">
                 <span style="
-                  font-family: 'JF Openhuninn', sans-serif;
                   font-size: 0.65rem; letter-spacing: 0.2em;
                   color: rgba({{ hexToRgb(group.color) }},0.65);
                   padding: 2px 10px;
@@ -221,15 +207,13 @@
               </svg>
               @if (group.company_id) {
                 <a [routerLink]="'/company/' + group.company_id + '/'" style="
-                  font-family: 'JF Openhuninn', sans-serif;
                   font-size: 0.75rem; letter-spacing: 0.1em;
                   color: rgba(124,108,242,0.65); text-decoration: none;
                 ">{{ companyName || group.company || '所屬事務所' }}</a>
               } @else {
                 <span style="
-                  font-family: 'JF Openhuninn', sans-serif;
                   font-size: 0.75rem; letter-spacing: 0.1em;
-                  color: rgba(122,90,122,0.5);
+                  color: var(--text-faint);
                 ">{{ group.company }}</span>
               }
             </div>
@@ -290,8 +274,7 @@
               border-radius: 6px;
             ">
               <p style="
-                font-family: 'JF Openhuninn', sans-serif;
-                font-size: 0.75rem; color: rgba(122,90,122,0.6);
+                font-size: 0.75rem; color: var(--text-faint-60);
                 line-height: 1.7; white-space: pre-wrap;
               ">{{ group.notes }}</p>
             </div>
@@ -361,7 +344,6 @@
                   border: 2px solid rgba(255,255,255,0.9);
                   box-shadow: 0 2px 12px rgba(45,27,46,0.07);
                   display: flex; align-items: center; justify-content: center;
-                  font-family: 'JF Openhuninn', sans-serif;
                   font-size: 1.8rem; font-weight: 500;
                   color: rgba({{ hexToRgb(group.color) }},0.65);
                 ">{{ getInitial(selectedHistory) }}</div>
@@ -373,7 +355,6 @@
                   <div>
                     <!-- Name -->
                     <h2 style="
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 1.6rem; font-weight: 300;
                       color: var(--text-primary); margin: 0 0 2px;
                       letter-spacing: 0.02em; line-height: 1.2;
@@ -381,16 +362,14 @@
                     <!-- Show current name if name_at_time differs -->
                     @if (selectedHistory.name_at_time && selectedHistory.name_at_time !== (selectedHistory.member?.name || selectedHistory.member?.name_roman)) {
                       <p style="
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-style: italic; font-size: 0.88rem;
-                        color: rgba(122,90,122,0.45); margin: 0 0 12px;
+                        color: var(--text-faint-45); margin: 0 0 12px;
                         letter-spacing: 0.05em;
                       ">現名：{{ selectedHistory.member?.name || selectedHistory.member?.name_roman }}</p>
                     } @else if (!selectedHistory.name_at_time && selectedHistory.member?.name_roman) {
                       <p style="
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-style: italic; font-size: 0.88rem;
-                        color: rgba(122,90,122,0.45); margin: 0 0 12px;
+                        color: var(--text-faint-45); margin: 0 0 12px;
                         letter-spacing: 0.05em;
                       ">{{ selectedHistory.member?.name_roman }}</p>
                     }
@@ -419,13 +398,11 @@
                   <!-- Dates -->
                   <div style="display: flex; align-items: center; gap: 6px;">
                     <span style="
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.6rem; letter-spacing: 0.28em;
-                      text-transform: uppercase; color: rgba(122,90,122,0.38);
+                      text-transform: uppercase; color: var(--text-faint-38);
                     ">在籍</span>
                     <span style="
-                      font-family: 'JF Openhuninn', sans-serif;
-                      font-size: 0.85rem; color: rgba(122,90,122,0.6);
+                      font-size: 0.85rem; color: var(--text-faint-60);
                       letter-spacing: 0.04em;
                     ">
                       {{ formatDateShort(selectedHistory.joined_at) }}
@@ -441,13 +418,11 @@
                   @if (selectedHistory.role) {
                     <div style="display: flex; align-items: center; gap: 6px;">
                       <span style="
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.6rem; letter-spacing: 0.28em;
-                        text-transform: uppercase; color: rgba(122,90,122,0.38);
+                        text-transform: uppercase; color: var(--text-faint-38);
                       ">役職</span>
                       <span style="
-                        font-family: 'JF Openhuninn', sans-serif;
-                        font-size: 0.82rem; color: rgba(122,90,122,0.6);
+                        font-size: 0.82rem; color: var(--text-faint-60);
                         letter-spacing: 0.08em;
                       ">{{ selectedHistory.role }}</span>
                     </div>
@@ -457,7 +432,6 @@
                   @if (selectedHistory.status) {
                     <span style="
                       display: inline-flex; align-items: center;
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.62rem; letter-spacing: 0.18em;
                       padding: 2px 10px; border-radius: 2px;
                     "
@@ -476,13 +450,11 @@
                   @if (selectedHistory.member?.birthdate) {
                     <div style="display: flex; align-items: center; gap: 6px;">
                       <span style="
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.6rem; letter-spacing: 0.28em;
-                        text-transform: uppercase; color: rgba(122,90,122,0.38);
+                        text-transform: uppercase; color: var(--text-faint-38);
                       ">生年月日</span>
                       <span style="
-                        font-family: 'JF Openhuninn', sans-serif;
-                        font-size: 0.85rem; color: rgba(122,90,122,0.6);
+                        font-size: 0.85rem; color: var(--text-faint-60);
                         letter-spacing: 0.04em;
                       ">{{ formatDateLong(selectedHistory.member!.birthdate) }}</span>
                     </div>
@@ -492,7 +464,6 @@
                 <!-- Notes -->
                 @if (selectedHistory.notes) {
                   <p style="
-                    font-family: 'JF Openhuninn', sans-serif;
                     font-size: 0.8rem; line-height: 1.7;
                     color: rgba(122,90,122,0.55); font-style: italic;
                     margin-top: 12px;
@@ -506,7 +477,6 @@
                     [routerLink]="'/member/' + selectedHistory.member_id + '/'"
                     style="
                       display: inline-flex; align-items: center; gap: 6px;
-                      font-family: 'JF Openhuninn', sans-serif;
                       font-size: 0.72rem; letter-spacing: 0.2em;
                       text-decoration: none; padding: 6px 14px;
                       border-radius: 2px;
@@ -547,9 +517,8 @@
           <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
             <div style="height: 1px; width: 20px;" [style.background]="group.color + '66'"></div>
             <span style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.65rem; letter-spacing: 0.38em;
-              text-transform: uppercase; color: rgba(122,90,122,0.45);
+              text-transform: uppercase; color: var(--text-faint-45);
               white-space: nowrap;
             ">在籍期間</span>
             <div style="flex: 1; min-width: 20px; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.18), transparent);"></div>
@@ -566,7 +535,6 @@
                   <span style="
                     position: absolute;
                     left: {{ yr.leftPct }}%;
-                    font-family: 'JF Openhuninn', sans-serif;
                     font-size: 0.68rem; color: rgba(122,90,122,0.35);
                     letter-spacing: 0.05em;
                     transform: translateX(-50%);
@@ -583,7 +551,6 @@
                   style="
                     white-space: nowrap;
                     padding: 0 12px 0 4px; text-align: right;
-                    font-family: 'JF Openhuninn', sans-serif;
                     font-size: 0.75rem;
                     display: flex; align-items: center; justify-content: flex-end; gap: 2px;
                     cursor: pointer; border-radius: 4px 0 0 4px;
@@ -783,7 +750,7 @@
             <!-- 歌曲列表 -->
             @if (songs.length === 0 && !showAddSongForm) {
               <div class="py-12 text-center">
-                <p class="text-4xl text-gray-200 mb-3" style="font-family:'JF Openhuninn',sans-serif;">♪</p>
+                <p class="text-4xl text-gray-200 mb-3" style="">♪</p>
                 <p class="text-sm text-gray-400">尚無原創曲記錄</p>
                 @if (isLoggedIn) {
                   <p class="text-xs text-gray-300 mt-1">點擊上方「新增歌曲」來新增</p>
@@ -911,9 +878,8 @@
           <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
             <div style="height: 1px; width: 20px;" [style.background]="group.color + '66'"></div>
             <span style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.65rem; letter-spacing: 0.38em;
-              text-transform: uppercase; color: rgba(122,90,122,0.45);
+              text-transform: uppercase; color: var(--text-faint-45);
               white-space: nowrap;
             ">精選影片</span>
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.18), transparent);"></div>
@@ -978,7 +944,6 @@
                   @if (v.title) {
                     <div style="padding: 10px 14px 12px;">
                       <p style="
-                        font-family: 'JF Openhuninn', sans-serif;
                         font-size: 0.78rem; line-height: 1.5;
                         color: rgba(60,30,60,0.7);
                         margin: 0;
@@ -1003,9 +968,8 @@
           <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
             <div style="height: 1px; width: 20px; background: rgba(184,160,184,0.4);"></div>
             <span style="
-              font-family: 'JF Openhuninn', sans-serif;
               font-size: 0.65rem; letter-spacing: 0.38em;
-              text-transform: uppercase; color: rgba(122,90,122,0.38);
+              text-transform: uppercase; color: var(--text-faint-38);
               white-space: nowrap;
             ">其他人也看了</span>
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(184,160,184,0.2), transparent);"></div>
@@ -1032,7 +996,6 @@
                         <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 5px;">
                           <span style="width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;" [style.background]="g.color"></span>
                           <p style="
-                            font-family: 'JF Openhuninn', sans-serif;
                             font-size: 0.9rem; font-weight: 400;
                             color: var(--text-primary); margin: 0;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1042,7 +1005,6 @@
 
                         @if (g.name_jp) {
                           <p style="
-                            font-family: 'JF Openhuninn', sans-serif;
                             font-style: italic; font-size: 0.72rem;
                             color: rgba(122,90,122,0.42); margin: 0 0 5px;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1051,7 +1013,6 @@
 
                         @if (g.company) {
                           <p style="
-                            font-family: 'JF Openhuninn', sans-serif;
                             font-size: 0.6rem; letter-spacing: 0.1em;
                             color: rgba(122,90,122,0.35); margin: 0;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1138,9 +1099,9 @@
         <div style="display:flex;align-items:center;gap:14px;min-width:0;">
           <div style="width:3px;height:36px;flex-shrink:0;border-radius:0 2px 2px 0;background:linear-gradient(to bottom,rgba(124,108,242,0.55),rgba(180,170,255,0.2));"></div>
           @if (latestEditSummary) {
-            <span style="font-family:'JF Openhuninn',sans-serif;font-size:0.73rem;color:rgba(122,90,122,0.52);letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ latestEditSummary }}</span>
+            <span style="font-size:0.73rem;color:rgba(122,90,122,0.52);letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ latestEditSummary }}</span>
           } @else {
-            <span style="font-family:'JF Openhuninn',sans-serif;font-size:0.73rem;color:rgba(184,160,184,0.4);letter-spacing:0.04em;">尚無編輯紀錄</span>
+            <span style="font-size:0.73rem;color:rgba(184,160,184,0.4);letter-spacing:0.04em;">尚無編輯紀錄</span>
           }
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;padding-right:2px;">
@@ -1148,7 +1109,7 @@
             <button
               type="button"
               (click)="showEditHistory = true"
-              style="border:none;background:transparent;padding:5px 10px;border-radius:6px;font-family:'JF Openhuninn',sans-serif;font-size:0.71rem;color:rgba(124,108,242,0.72);cursor:pointer;letter-spacing:0.05em;transition:background 0.15s;white-space:nowrap;"
+              style="border:none;background:transparent;padding:5px 10px;border-radius:6px;font-size:0.71rem;color:rgba(124,108,242,0.72);cursor:pointer;letter-spacing:0.05em;transition:background 0.15s;white-space:nowrap;"
               onmouseenter="this.style.background='rgba(124,108,242,0.07)'"
               onmouseleave="this.style.background='transparent'"
             >編輯紀錄 →</button>
@@ -1156,7 +1117,7 @@
           <button
             type="button"
             (click)="showGroupProposalPanel = true"
-            style="border:none;background:rgba(124,108,242,0.07);padding:5px 12px;border-radius:6px;font-family:'JF Openhuninn',sans-serif;font-size:0.71rem;color:rgba(80,64,168,0.82);cursor:pointer;letter-spacing:0.05em;border:1px solid rgba(124,108,242,0.14);transition:background 0.15s;white-space:nowrap;"
+            style="border:none;background:rgba(124,108,242,0.07);padding:5px 12px;border-radius:6px;font-size:0.71rem;color:rgba(80,64,168,0.82);cursor:pointer;letter-spacing:0.05em;border:1px solid rgba(124,108,242,0.14);transition:background 0.15s;white-space:nowrap;"
             onmouseenter="this.style.background='rgba(124,108,242,0.13)'"
             onmouseleave="this.style.background='rgba(124,108,242,0.07)'"
           >補充資料 →</button>
@@ -1184,13 +1145,12 @@
           <div style="height: 1px; width: 40px; background: linear-gradient(to left, transparent, rgba(232,121,160,0.22));"></div>
         </div>
         <p style="
-          font-family: 'JF Openhuninn', sans-serif;
           font-style: italic; font-size: 0.75rem;
           color: rgba(184,160,184,0.45); letter-spacing: 0.15em;
           margin-bottom: 14px;
         ">偶像成員記録 · Idol Archive</p>
         <a routerLink="/privacy/" style="
-          font-size: 0.72rem; color: rgba(122,90,122,0.45);
+          font-size: 0.72rem; color: var(--text-faint-45);
           text-decoration: none; letter-spacing: 0.04em;
         ">隱私政策</a>
         <div style="text-align:center;margin-top:16px;">
@@ -1247,7 +1207,6 @@
 
       <!-- Member name -->
       <div style="
-        font-family: 'JF Openhuninn', sans-serif;
         font-size: 0.82rem;
         color: rgba(255, 238, 250, 0.93);
         letter-spacing: 0.06em;
@@ -1263,7 +1222,6 @@
 
       <!-- Label -->
       <div style="
-        font-family: 'JF Openhuninn', sans-serif;
         font-size: 0.56rem; letter-spacing: 0.32em;
         color: rgba(200,160,195,0.4); text-transform: uppercase;
         margin-bottom: 5px;
@@ -1272,7 +1230,6 @@
       <!-- Date range -->
       <div style="
         display: flex; align-items: center; gap: 8px;
-        font-family: 'JF Openhuninn', sans-serif;
         font-size: 0.73rem; letter-spacing: 0.03em;
         white-space: nowrap;
       ">

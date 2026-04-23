@@ -1,4 +1,4 @@
-<div style="max-width:680px;margin:0 auto;padding:40px 20px 80px;font-family:'JF Openhuninn',sans-serif;">
+<div style="max-width:680px;margin:0 auto;padding:40px 20px 80px;">
 
   <!-- Page header -->
   <div style="text-align:center;margin-bottom:36px;">
@@ -37,7 +37,7 @@
     </div>
 
     <!-- Progress line -->
-    <div style="text-align:center;font-size:0.72rem;color:rgba(122,90,122,0.5);margin-bottom:24px;font-family:'JF Openhuninn',sans-serif;font-style:italic;">
+    <div style="text-align:center;font-size:0.72rem;color:rgba(122,90,122,0.5);margin-bottom:24px;font-style:italic;">
       @if (nextBadgeInfo) {
         目前 {{ approvedCount }} 筆核准，距「{{ nextBadgeInfo.badge.name }}」還差 {{ nextBadgeInfo.remaining }} 筆
       } @else if (approvedCount >= 300) {
@@ -62,7 +62,7 @@
     <!-- Proposal list -->
     @if (proposals.length === 0) {
       <div style="text-align:center;padding:40px 0;color:rgba(122,90,122,0.4);font-size:0.85rem;">
-        <div style="font-size:2.5rem;margin-bottom:8px;font-family:'JF Openhuninn',sans-serif;">空</div>
+        <div style="font-size:2.5rem;margin-bottom:8px;">空</div>
         <div>尚無提案記錄</div>
         <div style="font-size:0.75rem;margin-top:6px;color:rgba(122,90,122,0.3);">
           瀏覽成員或團體頁面，點選「✏️ 提案修改」開始貢獻
@@ -78,7 +78,7 @@
             border:1px solid rgba(232,121,160,0.1);
             font-size:0.78rem;
           ">
-            <div style="color:rgba(122,90,122,0.4);white-space:nowrap;font-family:'JF Openhuninn',sans-serif;font-size:0.72rem;min-width:68px;">
+            <div style="color:rgba(122,90,122,0.4);white-space:nowrap;font-size:0.72rem;min-width:68px;">
               {{ formatDate(p.created_at) }}
             </div>
             <div style="color:rgba(122,90,122,0.6);white-space:nowrap;min-width:28px;">
@@ -104,7 +104,6 @@
         <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px;">
           <button (click)="goToPage(page - 1)" [disabled]="page === 1" style="
             padding:4px 12px;border-radius:8px;font-size:0.72rem;cursor:pointer;
-            font-family:'JF Openhuninn',sans-serif;
             background:rgba(255,255,255,0.7);border:1px solid rgba(232,121,160,0.2);
             color:rgba(122,90,122,0.7);transition:opacity 0.15s;
           " [style.opacity]="page === 1 ? '0.35' : '1'">‹ 上一頁</button>
@@ -115,7 +114,6 @@
 
           <button (click)="goToPage(page + 1)" [disabled]="page === totalPages" style="
             padding:4px 12px;border-radius:8px;font-size:0.72rem;cursor:pointer;
-            font-family:'JF Openhuninn',sans-serif;
             background:rgba(255,255,255,0.7);border:1px solid rgba(232,121,160,0.2);
             color:rgba(122,90,122,0.7);transition:opacity 0.15s;
           " [style.opacity]="page === totalPages ? '0.35' : '1'">下一頁 ›</button>
