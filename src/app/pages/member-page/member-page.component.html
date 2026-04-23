@@ -318,8 +318,8 @@
             (click)="showOverseasPanel = true"
             style="
               display:inline-flex;align-items:center;gap:4px;
-             font-size:0.65rem;letter-spacing:0.08em;
-              padding:4px 10px;border-radius:5px;border:1px solid rgba(122,90,122,0.2);
+              font-size:0.72rem;letter-spacing:0.06em;
+              padding:8px 12px;min-height:32px;border-radius:5px;border:1px solid rgba(122,90,122,0.2);
               background:transparent;color:rgba(122,90,122,0.5);cursor:pointer;
               transition:all 0.2s;white-space:nowrap;flex-shrink:0;
             "
@@ -389,15 +389,15 @@
             white-space: nowrap;
           ">原創曲</span>
           @if (memberSongs.length > 0) {
-            <span style="font-size:0.65rem;color:rgba(122,90,122,0.35);">({{ memberSongs.length }})</span>
+            <span style="font-size:0.65rem;color:var(--text-faint);">({{ memberSongs.length }})</span>
           }
           <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.22), transparent);"></div>
           @if (isLoggedIn && !showAddSongForm) {
             <button (click)="openAddSong()" type="button"
               style="
                 display:inline-flex;align-items:center;gap:4px;
-               font-size:0.65rem;letter-spacing:0.08em;
-                padding:4px 10px;border-radius:5px;border:1px solid rgba(122,90,122,0.2);
+                font-size:0.72rem;letter-spacing:0.06em;
+                padding:8px 12px;min-height:32px;border-radius:5px;border:1px solid rgba(122,90,122,0.2);
                 background:transparent;color:rgba(122,90,122,0.5);cursor:pointer;
                 transition:all 0.2s;white-space:nowrap;flex-shrink:0;
               ">+ 新增歌曲</button>
