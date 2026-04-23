@@ -1006,7 +1006,7 @@
                         @if (g.name_jp) {
                           <p style="
                             font-style: italic; font-size: 0.72rem;
-                            color: rgba(122,90,122,0.42); margin: 0 0 5px;
+                            color: var(--text-faint); margin: 0 0 5px;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                           ">{{ g.name }}</p>
                         }
@@ -1099,7 +1099,7 @@
         <div style="display:flex;align-items:center;gap:14px;min-width:0;">
           <div style="width:3px;height:36px;flex-shrink:0;border-radius:0 2px 2px 0;background:linear-gradient(to bottom,rgba(124,108,242,0.55),rgba(180,170,255,0.2));"></div>
           @if (latestEditSummary) {
-            <span style="font-size:0.73rem;color:rgba(122,90,122,0.52);letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ latestEditSummary }}</span>
+            <span style="font-size:0.73rem;color:var(--text-secondary);letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ latestEditSummary }}</span>
           } @else {
             <span style="font-size:0.73rem;color:rgba(184,160,184,0.4);letter-spacing:0.04em;">尚無編輯紀錄</span>
           }

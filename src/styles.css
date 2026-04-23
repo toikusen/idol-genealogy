@@ -51,9 +51,9 @@
   --text-faint-38: rgba(122, 90, 122, 0.38);
   --text-pink: rgba(232, 121, 160, 0.75);
   --text-pink-65: rgba(232, 121, 160, 0.65);
-  --text-link: #c2507a;
+  --text-link: #c04070;
   --text-ghost: rgba(184, 160, 184, 0.60);
-  --text-label: rgba(122, 90, 122, 0.78); /* functional uppercase labels — higher contrast than --text-faint */
+  --text-label: rgba(122, 90, 122, 0.92); /* functional uppercase labels — 4.85:1 contrast, passes WCAG AA */
 
   /* ── Section accent colors ── */
   --section-member: #b04080;
