@@ -719,47 +719,47 @@
                 <h4 class="text-sm font-medium text-gray-700 mb-4">{{ editingSong ? '編輯歌曲' : '新增歌曲' }}</h4>
                 <div class="grid gap-3">
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">歌曲名稱 <span class="text-red-400">*</span></label>
-                    <input type="text" [(ngModel)]="songFormData.title" placeholder="歌曲名稱"
+                    <label for="song-title" class="block text-xs text-gray-500 mb-1">歌曲名稱 <span class="text-red-400">*</span></label>
+                    <input id="song-title" type="text" [(ngModel)]="songFormData.title" placeholder="歌曲名稱"
                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
                   </div>
                   <div class="grid grid-cols-3 gap-3">
                     <div>
-                      <label class="block text-xs text-gray-500 mb-1">作詞</label>
-                      <input type="text" [(ngModel)]="songFormData.lyricist" placeholder="作詞者"
+                      <label for="song-lyricist" class="block text-xs text-gray-500 mb-1">作詞</label>
+                      <input id="song-lyricist" type="text" [(ngModel)]="songFormData.lyricist" placeholder="作詞者"
                         class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
                     </div>
                     <div>
-                      <label class="block text-xs text-gray-500 mb-1">作曲</label>
-                      <input type="text" [(ngModel)]="songFormData.composer" placeholder="作曲者"
+                      <label for="song-composer" class="block text-xs text-gray-500 mb-1">作曲</label>
+                      <input id="song-composer" type="text" [(ngModel)]="songFormData.composer" placeholder="作曲者"
                         class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
                     </div>
                     <div>
-                      <label class="block text-xs text-gray-500 mb-1">編曲</label>
-                      <input type="text" [(ngModel)]="songFormData.arranger" placeholder="編曲者"
+                      <label for="song-arranger" class="block text-xs text-gray-500 mb-1">編曲</label>
+                      <input id="song-arranger" type="text" [(ngModel)]="songFormData.arranger" placeholder="編曲者"
                         class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
                     </div>
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-xs text-gray-500 mb-1">發行日期</label>
-                      <input type="date" [(ngModel)]="songFormData.release_date"
+                      <label for="song-release-date" class="block text-xs text-gray-500 mb-1">發行日期</label>
+                      <input id="song-release-date" type="date" [(ngModel)]="songFormData.release_date"
                         class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
                     </div>
                     <div>
-                      <label class="block text-xs text-gray-500 mb-1">第幾首單曲 <span class="text-red-400">*</span></label>
-                      <input type="number" [(ngModel)]="songFormData.sort_order" min="1" placeholder="例：1 代表第 1 首單曲"
+                      <label for="song-sort-order" class="block text-xs text-gray-500 mb-1">第幾首單曲 <span class="text-red-400">*</span></label>
+                      <input id="song-sort-order" type="number" [(ngModel)]="songFormData.sort_order" min="1" placeholder="例：1 代表第 1 首單曲"
                         class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
                     </div>
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">YouTube 連結</label>
-                    <input type="url" [(ngModel)]="songFormData.youtube_url" placeholder="https://youtube.com/watch?v=..."
+                    <label for="song-youtube-url" class="block text-xs text-gray-500 mb-1">YouTube 連結</label>
+                    <input id="song-youtube-url" type="url" [(ngModel)]="songFormData.youtube_url" placeholder="https://youtube.com/watch?v=..."
                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">備注 / 資訊來源</label>
-                    <textarea [(ngModel)]="songFormData.notes" rows="2" placeholder="請附上資訊來源或其他備注…"
+                    <label for="song-notes" class="block text-xs text-gray-500 mb-1">備注 / 資訊來源</label>
+                    <textarea id="song-notes" [(ngModel)]="songFormData.notes" rows="2" placeholder="請附上資訊來源或其他備注…"
                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 resize-none"></textarea>
                   </div>
                 </div>
@@ -807,6 +807,7 @@
                     <!-- YouTube 縮圖 (若有) -->
                     @if (extractYouTubeThumbnail(song.youtube_url); as thumb) {
                       <a [href]="song.youtube_url" target="_blank" rel="noopener"
+                        [attr.aria-label]="'在 YouTube 播放：' + song.title"
                         class="flex-shrink-0 relative block rounded-lg overflow-hidden"
                         style="width:80px;height:54px;background:#000;">
                         <img [src]="thumb" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;opacity:0.9;"/>
