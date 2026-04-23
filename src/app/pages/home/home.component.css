@@ -232,7 +232,7 @@ input::placeholder {
   align-items: center;
   gap: 4px;
   padding: 4px 12px;
-  min-height: 36px;
+  min-height: 44px;
   border-radius: 999px;
   flex-shrink: 0;
   font-size: 0.72rem;
