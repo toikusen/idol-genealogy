@@ -66,8 +66,8 @@
   --section-event-muted: rgba(200, 112, 106, 0.20);
 
   /* ── Status colors ── */
-  --status-approved: #16a34a;
-  --status-pending: #ca8a04;
+  --status-approved: #15803d;
+  --status-pending: #a16207;
 
   /* ── Pink accent variants (for decorative elements) ── */
   --pink-glow-08: rgba(232, 121, 160, 0.08);
