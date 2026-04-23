@@ -1,5 +1,8 @@
 <a href="#main-content" class="skip-link">跳到主內容</a>
 
+<!-- Global ambient background — single instance across all pages -->
+<div class="global-ambient-bg" aria-hidden="true"></div>
+
 <router-outlet />
 
 @if ((session$ | async); as session) {
