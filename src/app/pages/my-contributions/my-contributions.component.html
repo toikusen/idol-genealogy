@@ -37,7 +37,7 @@
     </div>
 
     <!-- Progress line -->
-    <div style="text-align:center;font-size:0.72rem;color:rgba(122,90,122,0.5);margin-bottom:24px;font-style:italic;">
+    <div style="text-align:center;font-size:0.72rem;color:var(--text-secondary);margin-bottom:24px;font-style:italic;">
       @if (nextBadgeInfo) {
         目前 {{ approvedCount }} 筆核准，距「{{ nextBadgeInfo.badge.name }}」還差 {{ nextBadgeInfo.remaining }} 筆
       } @else if (approvedCount >= 300) {
@@ -78,7 +78,7 @@
             border:1px solid rgba(232,121,160,0.1);
             font-size:0.78rem;
           ">
-            <div style="color:rgba(122,90,122,0.4);white-space:nowrap;font-size:0.72rem;min-width:68px;">
+            <div style="color:var(--text-secondary);white-space:nowrap;font-size:0.72rem;min-width:68px;">
               {{ formatDate(p.created_at) }}
             </div>
             <div style="color:rgba(122,90,122,0.6);white-space:nowrap;min-width:28px;">
