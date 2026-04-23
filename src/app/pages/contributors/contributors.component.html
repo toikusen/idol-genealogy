@@ -2,14 +2,14 @@
 
   <!-- Page header -->
   <div style="text-align:center;margin-bottom:36px;">
-    <div style="font-size:0.62rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(122,90,122,0.45);margin-bottom:6px;">
+    <div style="font-size:0.62rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--text-faint-45);margin-bottom:6px;">
       CONTRIBUTORS · 貢獻者排行
     </div>
     <div style="height:1px;background:rgba(232,121,160,0.15);margin:0 auto;max-width:120px;"></div>
   </div>
 
   @if (loading) {
-    <div style="text-align:center;padding:60px 0;color:rgba(122,90,122,0.4);font-size:0.85rem;">
+    <div style="text-align:center;padding:60px 0;color:var(--text-faint-40);font-size:0.85rem;">
       載入中…
     </div>
   } @else if (error) {
@@ -17,7 +17,7 @@
       無法載入排行榜，請稍後再試
     </div>
   } @else if (leaderboard.length === 0) {
-    <div style="text-align:center;padding:60px 0;color:rgba(122,90,122,0.4);font-size:0.85rem;">
+    <div style="text-align:center;padding:60px 0;color:var(--text-faint-40);font-size:0.85rem;">
       尚無貢獻記錄
     </div>
   } @else {
@@ -47,7 +47,7 @@
                 <img [src]="b.image" [alt]="b.name" loading="lazy" style="width:70px;height:70px;object-fit:contain;display:block;margin:4px auto 0;">
               }
             </div>
-            <div style="font-size:0.72rem;color:rgba(122,90,122,0.55);">{{ top3[1].total }} 筆</div>
+            <div style="font-size:0.72rem;color:var(--text-faint-55);">{{ top3[1].total }} 筆</div>
             <div style="
               width:100%;height:44px;border-radius:4px 4px 0 0;
               background:linear-gradient(135deg,#c0c4cf,#9098a9);
@@ -78,7 +78,7 @@
               <img [src]="b.image" [alt]="b.name" loading="lazy" style="width:70px;height:70px;object-fit:contain;display:block;margin:4px auto 0;">
             }
           </div>
-          <div style="font-size:0.75rem;color:rgba(122,90,122,0.55);">{{ top3[0].total }} 筆</div>
+          <div style="font-size:0.75rem;color:var(--text-faint-55);">{{ top3[0].total }} 筆</div>
           <div style="
             width:100%;height:64px;border-radius:4px 4px 0 0;
             background:linear-gradient(135deg,#fde68a,#f59e0b);
@@ -108,7 +108,7 @@
                 <img [src]="b.image" [alt]="b.name" loading="lazy" style="width:70px;height:70px;object-fit:contain;display:block;margin:4px auto 0;">
               }
             </div>
-            <div style="font-size:0.7rem;color:rgba(122,90,122,0.55);">{{ top3[2].total }} 筆</div>
+            <div style="font-size:0.7rem;color:var(--text-faint-55);">{{ top3[2].total }} 筆</div>
             <div style="
               width:100%;height:30px;border-radius:4px 4px 0 0;
               background:linear-gradient(135deg,#c8956a,#a07040);
@@ -157,7 +157,7 @@
                   <img [src]="b.image" [alt]="b.name" loading="lazy" style="width:24px;height:24px;object-fit:contain;flex-shrink:0;">
                 }
               </div>
-              <div style="font-size:0.68rem;color:rgba(122,90,122,0.45);font-style:italic;margin-top:2px;">
+              <div style="font-size:0.68rem;color:var(--text-faint-45);font-style:italic;margin-top:2px;">
                 {{ getByTableLabel(entry.by_table) }}
               </div>
             </div>
@@ -173,7 +173,7 @@
             <!-- Count -->
             <div style="
              font-size:0.78rem;
-              color:rgba(122,90,122,0.5);letter-spacing:0.04em;white-space:nowrap;
+              color:var(--text-faint);letter-spacing:0.04em;white-space:nowrap;
             ">{{ entry.total }} 筆</div>
           </div>
         }
@@ -185,12 +185,12 @@
   <!-- Back link -->
   <div style="text-align:center;margin-top:48px;">
     <a routerLink="/guide/" style="
-      font-size:0.72rem;color:rgba(122,90,122,0.5);
+      font-size:0.72rem;color:var(--text-faint);
       text-decoration:none;letter-spacing:0.08em;
       display:block;margin-bottom:12px;
     ">貢獻者手冊</a>
     <a routerLink="/" style="
-      font-size:0.72rem;color:rgba(122,90,122,0.5);
+      font-size:0.72rem;color:var(--text-faint);
       text-decoration:none;letter-spacing:0.08em;
     ">← 返回首頁</a>
   </div>

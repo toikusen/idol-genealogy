@@ -18,7 +18,7 @@
     <!-- Error -->
     @if (!loading && error) {
       <div style="text-align:center;padding:80px 0;">
-        <p style="font-size:1.1rem;color:rgba(122,90,122,0.6);">載入失敗</p>
+        <p style="font-size:1.1rem;color:var(--text-faint-60);">載入失敗</p>
         <a routerLink="/" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 首頁</a>
       </div>
     }
@@ -26,7 +26,7 @@
     <!-- Not found -->
     @if (!loading && !error && company === null) {
       <div style="text-align:center;padding:80px 0;">
-        <p style="font-size:1.1rem;color:rgba(122,90,122,0.6);">找不到此事務所</p>
+        <p style="font-size:1.1rem;color:var(--text-faint-60);">找不到此事務所</p>
         <a routerLink="/" style="font-size:0.8rem;color:rgba(124,108,242,0.7);text-decoration:none;">← 首頁</a>
       </div>
     }
@@ -103,7 +103,7 @@
           <button
             (click)="copyLink()"
             class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full transition-colors"
-            [style]="linkCopied ? 'color:#059669;border:1px solid rgba(5,150,105,0.35);background:rgba(5,150,105,0.07);' : 'color:#7a5a7a;border:1px solid rgba(122,90,122,0.2);background:rgba(122,90,122,0.04);'"
+            [style]="linkCopied ? 'color:#059669;border:1px solid rgba(5,150,105,0.35);background:rgba(5,150,105,0.07);' : 'color:#7a5a7a;border:1px solid var(--mauve-20);background:var(--mauve-04);'"
           >
             @if (linkCopied) { ✓ 已複製 } @else {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -115,7 +115,7 @@
         <!-- Founded -->
         @if (company.founded_at) {
           <p style="
-            font-size:0.78rem;color:rgba(122,90,122,0.5);
+            font-size:0.78rem;color:var(--text-faint);
             letter-spacing:0.08em;margin:0 0 12px;
           ">{{ company.founded_at | slice:0:4 }}年成立</p>
         }
@@ -198,7 +198,7 @@
 
         <!-- No groups -->
         @if (activeGroups.length === 0 && disbandedGroups.length === 0) {
-          <p style="font-size:0.85rem;color:rgba(122,90,122,0.45);">目前無旗下團體</p>
+          <p style="font-size:0.85rem;color:var(--text-faint-45);">目前無旗下團體</p>
         }
 
         <!-- Active groups -->
@@ -245,7 +245,7 @@
                     display:inline-flex;align-items:center;gap:6px;
                     padding:6px 14px;border-radius:20px;
                     border:1px solid rgba(180,160,180,0.3);
-                    color:rgba(122,90,122,0.5);
+                    color:var(--text-faint);
                     background:rgba(180,160,180,0.06);
                     text-decoration:none;
                    font-size:0.82rem;
@@ -372,15 +372,15 @@
           <div style="height:1px;width:40px;background:linear-gradient(to left,transparent,rgba(124,108,242,0.2));"></div>
         </div>
         <p style="font-style:italic;font-size:0.75rem;color:rgba(184,160,184,0.45);letter-spacing:0.15em;margin-bottom:14px;">偶像成員記録 · Idol Archive</p>
-        <a routerLink="/privacy/" style="font-size:0.72rem;color:rgba(122,90,122,0.4);text-decoration:none;letter-spacing:0.04em;">隱私政策</a>
+        <a routerLink="/privacy/" style="font-size:0.72rem;color:var(--text-faint-40);text-decoration:none;letter-spacing:0.04em;">隱私政策</a>
         <div style="text-align:center;margin-top:16px;">
           <a routerLink="/guide/" style="
-            font-size:0.72rem;color:rgba(122,90,122,0.45);
+            font-size:0.72rem;color:var(--text-faint-45);
             text-decoration:none;letter-spacing:0.06em;
           ">貢獻者手冊</a>
           <span style="color:rgba(184,160,184,0.3);font-size:0.7rem;margin:0 6px;">·</span>
           <a routerLink="/contributors/" style="
-            font-size:0.72rem;color:rgba(122,90,122,0.45);
+            font-size:0.72rem;color:var(--text-faint-45);
             text-decoration:none;letter-spacing:0.06em;
           ">貢獻者排行榜 →</a>
         </div>

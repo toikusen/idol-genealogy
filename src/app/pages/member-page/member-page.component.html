@@ -36,7 +36,7 @@
         ">錯誤</div>
         <p style="
           font-style: italic; font-size: 1.1rem;
-          color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
+          color: var(--text-faint-55); letter-spacing: 0.06em;
         ">Could not load member data</p>
         <a routerLink="/" style="
           display: inline-flex; align-items: center; gap: 6px;
@@ -59,7 +59,7 @@
         ">找不到此成員</div>
         <p style="
           font-style: italic; font-size: 1.1rem;
-          color: rgba(122,90,122,0.55); letter-spacing: 0.06em;
+          color: var(--text-faint-55); letter-spacing: 0.06em;
         ">This member could not be found in the archive</p>
         <a routerLink="/" style="
           font-size: 0.78rem; letter-spacing: 0.18em;
@@ -151,7 +151,7 @@
               <button
                 (click)="copyLink()"
                 class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full transition-colors"
-                [style]="linkCopied ? 'color:#059669;border:1px solid rgba(5,150,105,0.35);background:rgba(5,150,105,0.07);' : 'color:#7a5a7a;border:1px solid rgba(122,90,122,0.2);background:rgba(122,90,122,0.04);'"
+                [style]="linkCopied ? 'color:#059669;border:1px solid rgba(5,150,105,0.35);background:rgba(5,150,105,0.07);' : 'color:#7a5a7a;border:1px solid var(--mauve-20);background:var(--mauve-04);'"
               >
                 @if (linkCopied) { ✓ 已複製 } @else {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -165,7 +165,7 @@
               @if (member.name_hiragana) {
                 <p style="
                   font-size: 0.92rem;
-                  color: rgba(122,90,122,0.58);
+                  color: var(--text-faint-60);
                   letter-spacing: 0.12em; margin: 0 0 6px;
                 ">{{ member.name_hiragana }}</p>
               }
@@ -195,7 +195,7 @@
                   flex-shrink: 0;
                 " [style.background]="member.color"></div>
                 <span style="
-                  font-size: 0.78rem; color: rgba(122,90,122,0.55);
+                  font-size: 0.78rem; color: var(--text-faint-55);
                   letter-spacing: 0.08em;
                 ">{{ member.color_name || member.color }}</span>
               </div>
@@ -214,7 +214,7 @@
                   <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
                 <span style="
-                  font-size: 0.78rem; color: rgba(122,90,122,0.55);
+                  font-size: 0.78rem; color: var(--text-faint-55);
                   letter-spacing: 0.1em;
                 ">{{ formatDate(member.birthdate) }}</span>
               </div>
@@ -283,7 +283,7 @@
             @if (member.notes) {
               <p style="
                 font-size: 0.82rem; line-height: 1.85;
-                color: rgba(122,90,122,0.58);
+                color: var(--text-faint-60);
                 margin-top: 16px; font-style: italic;
                 padding-left: 14px;
               ">{{ member.notes }}</p>
@@ -319,8 +319,8 @@
             style="
               display:inline-flex;align-items:center;gap:4px;
               font-size:0.72rem;letter-spacing:0.06em;
-              padding:8px 12px;min-height:32px;border-radius:5px;border:1px solid rgba(122,90,122,0.2);
-              background:transparent;color:rgba(122,90,122,0.5);cursor:pointer;
+              padding:8px 12px;min-height:32px;border-radius:5px;border:1px solid var(--mauve-20);
+              background:transparent;color:var(--text-faint);cursor:pointer;
               transition:all 0.2s;white-space:nowrap;flex-shrink:0;
             "
           >+ 新增經歷</button>
@@ -335,7 +335,7 @@
                 border: none; cursor: pointer; transition: all 0.2s;
               "
               [style.background]="historyView === 'timeline' ? 'rgba(232,121,160,0.12)' : 'transparent'"
-              [style.color]="historyView === 'timeline' ? 'rgba(194,80,122,0.85)' : 'rgba(122,90,122,0.45)'"
+              [style.color]="historyView === 'timeline' ? 'rgba(194,80,122,0.85)' : 'var(--text-faint-45)'"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="8" y1="6" x2="21" y2="6"/>
@@ -357,7 +357,7 @@
                 border: none; cursor: pointer; transition: all 0.2s;
               "
               [style.background]="historyView === 'career' ? 'rgba(232,121,160,0.12)' : 'transparent'"
-              [style.color]="historyView === 'career' ? 'rgba(194,80,122,0.85)' : 'rgba(122,90,122,0.45)'"
+              [style.color]="historyView === 'career' ? 'rgba(194,80,122,0.85)' : 'var(--text-faint-45)'"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="8" width="5" height="8" rx="1"/>
@@ -397,8 +397,8 @@
               style="
                 display:inline-flex;align-items:center;gap:4px;
                 font-size:0.72rem;letter-spacing:0.06em;
-                padding:8px 12px;min-height:32px;border-radius:5px;border:1px solid rgba(122,90,122,0.2);
-                background:transparent;color:rgba(122,90,122,0.5);cursor:pointer;
+                padding:8px 12px;min-height:32px;border-radius:5px;border:1px solid var(--mauve-20);
+                background:transparent;color:var(--text-faint);cursor:pointer;
                 transition:all 0.2s;white-space:nowrap;flex-shrink:0;
               ">+ 新增歌曲</button>
           }
@@ -665,12 +665,12 @@
         ">隱私政策</a>
         <div style="text-align:center;margin-top:16px;">
           <a routerLink="/guide/" style="
-            font-size:0.72rem;color:rgba(122,90,122,0.45);
+            font-size:0.72rem;color:var(--text-faint-45);
             text-decoration:none;letter-spacing:0.06em;
           ">貢獻者手冊</a>
           <span style="color:rgba(184,160,184,0.3);font-size:0.7rem;margin:0 6px;">·</span>
           <a routerLink="/contributors/" style="
-            font-size:0.72rem;color:rgba(122,90,122,0.45);
+            font-size:0.72rem;color:var(--text-faint-45);
             text-decoration:none;letter-spacing:0.06em;
           ">貢獻者排行榜 →</a>
         </div>

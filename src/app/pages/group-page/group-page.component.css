@@ -67,7 +67,7 @@
 .carousel-nav-btn:hover:not(:disabled) {
   background: rgba(255,255,255,0.97);
   border-color: rgba(184,160,184,0.65);
-  color: rgba(122,90,122,1);
+  color: var(--text-secondary);
 }
 .carousel-nav-btn:disabled {
   opacity: 0.22;

@@ -2,7 +2,7 @@
 
   <!-- Page header -->
   <div style="text-align:center;margin-bottom:36px;">
-    <div style="font-size:0.62rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(122,90,122,0.45);margin-bottom:6px;">
+    <div style="font-size:0.62rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--text-faint-45);margin-bottom:6px;">
       MY CONTRIBUTIONS · 我的貢獻
     </div>
     @if (displayName) {
@@ -12,7 +12,7 @@
   </div>
 
   @if (loading) {
-    <div style="text-align:center;padding:60px 0;color:rgba(122,90,122,0.4);font-size:0.85rem;">載入中…</div>
+    <div style="text-align:center;padding:60px 0;color:var(--text-faint-40);font-size:0.85rem;">載入中…</div>
   } @else if (error) {
     <div style="text-align:center;padding:60px 0;color:rgba(192,80,128,0.6);font-size:0.85rem;">載入失敗，請稍後再試</div>
   } @else {
@@ -28,7 +28,7 @@
             <img [src]="badge.image" [alt]="badge.name" loading="lazy" style="width:80px;height:80px;object-fit:contain;display:block;">
           </div>
           <div style="font-size:0.65rem;letter-spacing:0.04em;margin-top:2px;"
-               [style.color]="isBadgeUnlocked(badge) ? 'rgba(122,90,122,0.85)' : 'rgba(122,90,122,0.35)'">
+               [style.color]="isBadgeUnlocked(badge) ? 'var(--text-faint-85)' : 'var(--text-faint-35)'">
             {{ badge.name }}
           </div>
           <div style="font-size:0.72rem;color:var(--text-secondary);">{{ badge.threshold }}筆</div>
@@ -61,10 +61,10 @@
 
     <!-- Proposal list -->
     @if (proposals.length === 0) {
-      <div style="text-align:center;padding:40px 0;color:rgba(122,90,122,0.4);font-size:0.85rem;">
+      <div style="text-align:center;padding:40px 0;color:var(--text-faint-40);font-size:0.85rem;">
         <div style="font-size:2.5rem;margin-bottom:8px;">空</div>
         <div>尚無提案記錄</div>
-        <div style="font-size:0.75rem;margin-top:6px;color:rgba(122,90,122,0.3);">
+        <div style="font-size:0.75rem;margin-top:6px;color:var(--text-faint-30);">
           瀏覽成員或團體頁面，點選「✏️ 提案修改」開始貢獻
         </div>
       </div>
@@ -81,7 +81,7 @@
             <div style="color:var(--text-secondary);white-space:nowrap;font-size:0.72rem;min-width:68px;">
               {{ formatDate(p.created_at) }}
             </div>
-            <div style="color:rgba(122,90,122,0.6);white-space:nowrap;min-width:28px;">
+            <div style="color:var(--text-faint-60);white-space:nowrap;min-width:28px;">
               {{ TABLE_LABELS[p.table_name] || p.table_name }}
             </div>
             <span style="padding:1px 7px;border-radius:10px;font-size:0.65rem;white-space:nowrap;background:rgba(232,121,160,0.08);border:1px solid rgba(232,121,160,0.2);color:var(--section-member);">
@@ -105,17 +105,17 @@
           <button (click)="goToPage(page - 1)" [disabled]="page === 1" style="
             padding:4px 12px;border-radius:8px;font-size:0.72rem;cursor:pointer;
             background:rgba(255,255,255,0.7);border:1px solid rgba(232,121,160,0.2);
-            color:rgba(122,90,122,0.7);transition:opacity 0.15s;
+            color:var(--text-faint-70);transition:opacity 0.15s;
           " [style.opacity]="page === 1 ? '0.35' : '1'">‹ 上一頁</button>
 
-          <span style="font-size:0.72rem;color:rgba(122,90,122,0.5);letter-spacing:0.05em;">
+          <span style="font-size:0.72rem;color:var(--text-faint);letter-spacing:0.05em;">
             {{ page }} / {{ totalPages }}
           </span>
 
           <button (click)="goToPage(page + 1)" [disabled]="page === totalPages" style="
             padding:4px 12px;border-radius:8px;font-size:0.72rem;cursor:pointer;
             background:rgba(255,255,255,0.7);border:1px solid rgba(232,121,160,0.2);
-            color:rgba(122,90,122,0.7);transition:opacity 0.15s;
+            color:var(--text-faint-70);transition:opacity 0.15s;
           " [style.opacity]="page === totalPages ? '0.35' : '1'">下一頁 ›</button>
         </div>
       }
@@ -125,8 +125,8 @@
 
   <!-- Back links -->
   <div style="text-align:center;margin-top:48px;">
-    <a routerLink="/contributors/" style="font-size:0.72rem;color:rgba(122,90,122,0.5);text-decoration:none;letter-spacing:0.08em;display:block;margin-bottom:12px;">貢獻者排行榜</a>
-    <a routerLink="/" style="font-size:0.72rem;color:rgba(122,90,122,0.5);text-decoration:none;letter-spacing:0.08em;">← 返回首頁</a>
+    <a routerLink="/contributors/" style="font-size:0.72rem;color:var(--text-faint);text-decoration:none;letter-spacing:0.08em;display:block;margin-bottom:12px;">貢獻者排行榜</a>
+    <a routerLink="/" style="font-size:0.72rem;color:var(--text-faint);text-decoration:none;letter-spacing:0.08em;">← 返回首頁</a>
   </div>
 
 </div>

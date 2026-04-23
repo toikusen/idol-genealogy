@@ -44,16 +44,30 @@
   --text-heading: #3a2040;
   --text-secondary: #7a5a7a;
   --text-muted: #b8a0b8;
-  --text-faint: rgba(122, 90, 122, 0.50);
-  --text-faint-60: rgba(122, 90, 122, 0.60);
-  --text-faint-45: rgba(122, 90, 122, 0.45);
-  --text-faint-40: rgba(122, 90, 122, 0.40);
+  --text-faint-30: rgba(122, 90, 122, 0.30);
+  --text-faint-35: rgba(122, 90, 122, 0.35);
   --text-faint-38: rgba(122, 90, 122, 0.38);
+  --text-faint-40: rgba(122, 90, 122, 0.40);
+  --text-faint-45: rgba(122, 90, 122, 0.45);
+  --text-faint: rgba(122, 90, 122, 0.50);
+  --text-faint-55: rgba(122, 90, 122, 0.55);
+  --text-faint-60: rgba(122, 90, 122, 0.60);
+  --text-faint-65: rgba(122, 90, 122, 0.65);
+  --text-faint-70: rgba(122, 90, 122, 0.70);
+  --text-faint-75: rgba(122, 90, 122, 0.75);
+  --text-faint-85: rgba(122, 90, 122, 0.85);
+  --text-label: rgba(122, 90, 122, 0.92); /* 4.85:1 contrast, passes WCAG AA */
   --text-pink: rgba(232, 121, 160, 0.75);
   --text-pink-65: rgba(232, 121, 160, 0.65);
   --text-link: #c04070;
   --text-ghost: rgba(184, 160, 184, 0.60);
-  --text-label: rgba(122, 90, 122, 0.92); /* functional uppercase labels — 4.85:1 contrast, passes WCAG AA */
+
+  /* ── Mauve tints (non-text: borders, backgrounds) ── */
+  --mauve-04: rgba(122, 90, 122, 0.04);
+  --mauve-05: rgba(122, 90, 122, 0.05);
+  --mauve-07: rgba(122, 90, 122, 0.07);
+  --mauve-12: rgba(122, 90, 122, 0.12);
+  --mauve-20: rgba(122, 90, 122, 0.20);
 
   /* ── Section accent colors ── */
   --section-member: #b04080;

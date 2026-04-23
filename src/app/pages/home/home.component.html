@@ -25,7 +25,7 @@
       <p style="
         font-size: 1.25rem; font-weight: 300;
         font-style: italic; letter-spacing: 0.08em;
-        color: rgba(122,90,122,0.65); margin: 0 0 12px;
+        color: var(--text-faint-65); margin: 0 0 12px;
       ">台灣地下偶像資料庫</p>
 
     </header>
@@ -399,7 +399,7 @@
             <!-- 熱門成員 -->
             @if (topMembers.length > 0) {
               <div>
-                <h3 style="font-size: 0.85rem; font-weight: 600; color: rgba(122,90,122,0.7); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門成員</h3>
+                <h3 style="font-size: 0.85rem; font-weight: 600; color: var(--text-faint-70); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門成員</h3>
                 <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem;">
                   @for (entry of topMembers; track entry.id; let i = $index) {
                     <li>
@@ -420,7 +420,7 @@
             <!-- 熱門團體 -->
             @if (topGroups.length > 0) {
               <div>
-                <h3 style="font-size: 0.85rem; font-weight: 600; color: rgba(122,90,122,0.7); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門團體</h3>
+                <h3 style="font-size: 0.85rem; font-weight: 600; color: var(--text-faint-70); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.75rem;">熱門團體</h3>
                 <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem;">
                   @for (entry of topGroups; track entry.id; let i = $index) {
                     <li>
@@ -478,7 +478,7 @@
                         width:32px;height:32px;border-radius:50%;flex-shrink:0;
                         display:flex;align-items:center;justify-content:center;
                         font-size:0.75rem;font-weight:600;color:#fff;
-                        background: linear-gradient(135deg, rgba(232,121,160,0.7), rgba(122,90,122,0.5));
+                        background: linear-gradient(135deg, rgba(232,121,160,0.7), var(--text-faint));
                       ">{{ getInitial(entry.member) }}</div>
                     }
                     <div>
@@ -520,7 +520,7 @@
               border: 1px dashed rgba(232,121,160,0.2); border-radius: 3px;
             ">
               <div style="font-size:2.5rem;color:rgba(232,121,160,0.12);margin-bottom:20px;line-height:1;">空</div>
-              <p style="font-style:italic;font-size:1.1rem;color:rgba(122,90,122,0.4);letter-spacing:0.08em;margin:0;">The archive awaits its first entry</p>
+              <p style="font-style:italic;font-size:1.1rem;color:var(--text-faint-40);letter-spacing:0.08em;margin:0;">The archive awaits its first entry</p>
             </div>
           } @else {
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
@@ -879,7 +879,7 @@
     <section style="
       margin-top: 80px; padding: 40px 32px;
       border-top: 1px solid rgba(232,121,160,0.1);
-      color: rgba(122,90,122,0.65);
+      color: var(--text-faint-65);
       font-size: 0.82rem; line-height: 1.9;
     ">
       <h2 style="
@@ -895,7 +895,7 @@
       </p>
       <p style="margin-bottom: 24px;">
         無論是想查詢某位成員的團體歷史，還是想了解某個團體的成員組成變遷，都可以在這裡找到紀錄。
-        <a routerLink="/about/" style="color: rgba(122,90,122,0.65); text-decoration: underline; text-underline-offset: 3px;">了解更多關於本站</a>
+        <a routerLink="/about/" style="color: var(--text-faint-65); text-decoration: underline; text-underline-offset: 3px;">了解更多關於本站</a>
       </p>
 
       <!-- 地下偶像介紹 -->
@@ -925,7 +925,7 @@
       </p>
       <p>
         發現資料有誤或想補充新的資訊？任何人都可以透過頁面上的「提案修改」送出更新，經管理員審核後上線。詳見
-        <a routerLink="/guide/" style="color: rgba(122,90,122,0.65); text-decoration: underline; text-underline-offset: 3px;">貢獻者手冊</a>。
+        <a routerLink="/guide/" style="color: var(--text-faint-65); text-decoration: underline; text-underline-offset: 3px;">貢獻者手冊</a>。
       </p>
     </section>
 
