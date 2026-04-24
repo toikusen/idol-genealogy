@@ -1,3 +1,17 @@
+@media (prefers-color-scheme: dark) {
+  .user-pill {
+    background: rgba(28, 14, 30, 0.88) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35) !important;
+    border-color: rgba(232,121,160,0.18) !important;
+  }
+
+  .admin-pill {
+    background: rgba(28, 14, 30, 0.88) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4) !important;
+    border-color: rgba(232,121,160,0.22) !important;
+  }
+}
+
 .global-ambient-bg {
   position: fixed;
   inset: 0;
