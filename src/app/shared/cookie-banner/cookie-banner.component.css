@@ -15,6 +15,14 @@
   font-family: 'JF Openhuninn', sans-serif;
 }
 
+@media (prefers-color-scheme: dark) {
+  .cookie-banner {
+    background: var(--bg-surface);
+    border-color: var(--border-subtle);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40);
+  }
+}
+
 @media (max-width: 640px) {
   .cookie-banner {
     left: 12px;

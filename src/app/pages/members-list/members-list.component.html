@@ -31,12 +31,7 @@
       margin-bottom: 28px;
     ">
       <!-- Search -->
-      <div style="
-        display: flex; align-items: center; gap: 8px;
-        background: rgba(255,255,255,0.8);
-        border: 1px solid var(--border-default);
-        border-radius: 8px; padding: 0 14px;
-      ">
+      <div class="filter-search-box">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(232,121,160,0.55)" stroke-width="1.8" style="flex-shrink:0;">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
@@ -61,16 +56,10 @@
         <button
           type="button"
           (click)="groupDropdownOpen = !groupDropdownOpen"
+          class="filter-group-btn"
           aria-label="依團體篩選"
           [attr.aria-expanded]="groupDropdownOpen"
-          style="
-            width:100%; height:100%; display:flex; align-items:center; justify-content:space-between; gap:8px;
-            background:rgba(255,255,255,0.8);
-            border:1px solid rgba(232,121,160,0.18);
-            border-radius:8px; padding:11px 14px; min-height:44px;
-            font-size:0.9rem; cursor:pointer;
-          "
-          [style.color]="selectedGroupId ? '#2d1b2e' : 'var(--text-faint)'"
+          [style.color]="selectedGroupId ? 'var(--text-primary)' : 'var(--text-faint)'"
         >
           <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ selectedGroupName }}</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint-40)" stroke-width="2" style="flex-shrink:0;transition:transform 0.15s;"
@@ -87,15 +76,7 @@
             (click)="groupDropdownOpen = false"
           ></div>
 
-          <div style="
-            position:absolute; top:calc(100% + 4px); left:0; right:0;
-            background:white;
-            border:1px solid rgba(232,121,160,0.2);
-            border-radius:10px;
-            box-shadow:0 8px 24px rgba(45,27,46,0.1);
-            z-index:20; overflow:hidden;
-            min-width:200px;
-          ">
+          <div class="group-dropdown-panel">
             <!-- Search input inside dropdown -->
             <div style="padding:8px; border-bottom:1px solid rgba(232,121,160,0.1);">
               <div style="display:flex;align-items:center;gap:6px;background:rgba(232,121,160,0.05);border-radius:6px;padding:6px 10px;">
@@ -137,7 +118,8 @@
                 <button
                   type="button"
                   (click)="selectGroup(g.id)"
-                  class="group-option-btn"
+                  class="group-option-btn group-option-item"
+                  [class.group-option-item--selected]="g.id === selectedGroupId"
                   style="
                     padding:9px 14px;cursor:pointer;
                    font-size:0.85rem;
@@ -146,7 +128,6 @@
                     width:100%;text-align:left;border:none;
                   "
                   [style.background]="g.id === selectedGroupId ? 'rgba(232,121,160,0.08)' : ''"
-                  [style.color]="g.id === selectedGroupId ? '#c05080' : '#2d1b2e'"
                 >
                   <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;"
                     [style.background]="g.color || '#e879a0'"></span>
@@ -199,7 +180,6 @@
           <a [routerLink]="'/member/' + m.id + '/'" class="member-grid-card" style="
             display: flex; flex-direction: column; align-items: center;
             padding: 16px 10px 12px;
-            background: rgba(255,255,255,0.7);
             border: 1px solid rgba(232,121,160,0.1);
             border-radius: 12px;
             text-decoration: none;
@@ -270,28 +250,15 @@
           <button
             (click)="setPage(currentPage - 1)"
             [disabled]="currentPage === 1"
-            style="
-              padding: 7px 14px; border-radius: 8px;
-              border: 1px solid var(--border-medium);
-              background: rgba(255,255,255,0.7);
-              font-size: 0.82rem; color: #7a5a7a;
-              cursor: pointer; transition: all 0.15s;
-              disabled:opacity:0.35;
-            "
+            class="pagination-nav-btn"
             [style.opacity]="currentPage === 1 ? '0.35' : '1'"
           >← 上一頁</button>
 
           @for (p of pageNumbers; track p) {
             <button
               (click)="setPage(p)"
-              style="
-                width: 36px; height: 36px; border-radius: 8px;
-                border: 1px solid;
-                font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
-              "
-              [style.borderColor]="p === currentPage ? 'rgba(232,121,160,0.6)' : 'rgba(232,121,160,0.2)'"
-              [style.background]="p === currentPage ? 'rgba(232,121,160,0.12)' : 'rgba(255,255,255,0.7)'"
-              [style.color]="p === currentPage ? '#c05080' : '#7a5a7a'"
+              class="pagination-page-btn"
+              [class.pagination-page-btn--active]="p === currentPage"
               [style.fontWeight]="p === currentPage ? '600' : '400'"
             >{{ p }}</button>
           }
@@ -299,13 +266,7 @@
           <button
             (click)="setPage(currentPage + 1)"
             [disabled]="currentPage === totalPages"
-            style="
-              padding: 7px 14px; border-radius: 8px;
-              border: 1px solid var(--border-medium);
-              background: rgba(255,255,255,0.7);
-              font-size: 0.82rem; color: #7a5a7a;
-              cursor: pointer; transition: all 0.15s;
-            "
+            class="pagination-nav-btn"
             [style.opacity]="currentPage === totalPages ? '0.35' : '1'"
           >下一頁 →</button>
 
@@ -323,17 +284,3 @@
   </div>
 </div>
 
-<style>
-.member-grid-card:hover,
-.member-grid-card:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(45, 27, 46, 0.08);
-  border-color: rgba(232, 121, 160, 0.25) !important;
-}
-
-.group-option-btn:hover,
-.group-option-btn:focus-visible {
-  background: rgba(232, 121, 160, 0.06) !important;
-  outline: none;
-}
-</style>

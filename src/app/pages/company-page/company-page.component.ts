@@ -186,7 +186,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   }
 
   getGroupChipTextColor(): string {
-    return '#2d1b2e';
+    return 'var(--text-primary)';
   }
 
   getGroupChipBorderColor(hex: string | null | undefined): string {
@@ -197,7 +197,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
 
   getGroupChipBackground(hex: string | null | undefined): string {
     return this.isLightColor(hex)
-      ? 'rgba(255,255,255,0.92)'
+      ? 'var(--bg-surface)'
       : this.hexToRgba(hex, 0.1, this.defaultGroupChipColor);
   }
 

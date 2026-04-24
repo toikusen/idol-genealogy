@@ -9,6 +9,31 @@ import { buildCareerGraph, CareerNode } from '../graph-utils';
   selector: 'app-member-career-graph',
   standalone: true,
   imports: [CommonModule],
+  styles: [`
+    @media (prefers-color-scheme: dark) {
+      :host .bg-white {
+        background: var(--bg-card) !important;
+      }
+      :host .bg-gray-100 {
+        background: rgba(210, 175, 210, 0.12) !important;
+      }
+      :host .text-gray-800 {
+        color: var(--text-primary) !important;
+      }
+      :host .text-gray-600 {
+        color: var(--text-secondary) !important;
+      }
+      :host .text-gray-500 {
+        color: var(--text-faint-55) !important;
+      }
+      :host .border-gray-200 {
+        border-color: var(--border-subtle) !important;
+      }
+      :host .border-gray-300 {
+        border-color: var(--border-default) !important;
+      }
+    }
+  `],
   template: `
     @if (nodes.length === 0) {
       <p class="text-sm text-gray-400 text-center py-6">尚無經歷記錄</p>

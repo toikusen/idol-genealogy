@@ -32,6 +32,32 @@ interface MemberRow {
   standalone: true,
   imports: [CommonModule, RouterLink],
   styles: [`
+    :host {
+      --gcg-card-active:      #ffffff;
+      --gcg-card-past:        #f3f4f6;
+      --gcg-header-active:    #1f2937;
+      --gcg-header-past:      #9ca3af;
+      --gcg-text-active:      #374151;
+      --gcg-text-past:        #9ca3af;
+      --gcg-text-dim:         #d1d5db;
+      --gcg-border-solid:     #e5e7eb;
+      --gcg-border-dashed:    #d1d5db;
+      --gcg-arrow:            #d1d5db;
+    }
+    @media (prefers-color-scheme: dark) {
+      :host {
+        --gcg-card-active:   rgba(35, 18, 38, 0.85);
+        --gcg-card-past:     rgba(28, 12, 32, 0.65);
+        --gcg-header-active: rgba(18, 6, 24, 0.95);
+        --gcg-header-past:   rgba(30, 16, 36, 0.75);
+        --gcg-text-active:   rgba(240, 228, 242, 0.92);
+        --gcg-text-past:     rgba(210, 175, 210, 0.55);
+        --gcg-text-dim:      rgba(210, 175, 210, 0.35);
+        --gcg-border-solid:  rgba(232, 121, 160, 0.20);
+        --gcg-border-dashed: rgba(210, 175, 210, 0.22);
+        --gcg-arrow:         rgba(210, 175, 210, 0.38);
+      }
+    }
     .gcg-node-link {
       border-color: var(--gcg-border);
     }
@@ -40,6 +66,8 @@ interface MemberRow {
       border-color: var(--gcg-border-hover);
       outline: none;
     }
+    .gcg-arrow-line { stroke: var(--gcg-arrow); }
+    .gcg-arrow-head { fill: var(--gcg-arrow); }
   `],
   template: `
     @if (rows.length === 0) {
@@ -50,7 +78,7 @@ interface MemberRow {
       <svg style="position:absolute;width:0;height:0;overflow:hidden;">
         <defs>
           <marker [attr.id]="'gcg-' + instanceId" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L6,3 z" fill="#d1d5db"/>
+            <path class="gcg-arrow-head" d="M0,0 L0,6 L6,3 z"/>
           </marker>
         </defs>
       </svg>
@@ -75,18 +103,18 @@ interface MemberRow {
                     class="gcg-node-link"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
-                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.background]="cell.leftAt ? 'var(--gcg-card-past)' : 'var(--gcg-card-active)'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    [style.--gcg-border]="'#e5e7eb'"
+                    [style.--gcg-border]="'var(--gcg-border-solid)'"
                     [style.--gcg-border-hover]="'#f9a8d4'"
                     style="flex-shrink:0; border:1.5px solid var(--gcg-border); text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;">
-                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                    <div [style.background]="cell.leftAt ? 'var(--gcg-header-past)' : 'var(--gcg-header-active)'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>
                     <div style="padding:5px 8px;">
-                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
-                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
-                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                      <p [style.color]="cell.leftAt ? 'var(--gcg-text-past)' : 'var(--gcg-text-active)'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p [style.color]="'var(--gcg-text-past)'" style="font-size:9px; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p [style.color]="'var(--gcg-text-dim)'" style="font-size:9px; margin:1px 0 0;">:</p>
                     </div>
                   </a>
                 } @else if (!cell.externalCountry) {
@@ -95,18 +123,18 @@ interface MemberRow {
                     class="gcg-node-link"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
-                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.background]="cell.leftAt ? 'var(--gcg-card-past)' : 'var(--gcg-card-active)'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    [style.--gcg-border]="'#d1d5db'"
+                    [style.--gcg-border]="'var(--gcg-border-dashed)'"
                     [style.--gcg-border-hover]="'#f9a8d4'"
                     style="flex-shrink:0; border:1.5px dashed var(--gcg-border); text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;">
-                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                    <div [style.background]="cell.leftAt ? 'var(--gcg-header-past)' : 'var(--gcg-header-active)'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>
                     <div style="padding:5px 8px;">
-                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
-                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
-                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                      <p [style.color]="cell.leftAt ? 'var(--gcg-text-past)' : 'var(--gcg-text-active)'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p [style.color]="'var(--gcg-text-past)'" style="font-size:9px; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p [style.color]="'var(--gcg-text-dim)'" style="font-size:9px; margin:1px 0 0;">:</p>
                     </div>
                   </a>
                 } @else {
@@ -114,16 +142,16 @@ interface MemberRow {
                   <div
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
-                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.background]="cell.leftAt ? 'var(--gcg-card-past)' : 'var(--gcg-card-active)'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    style="flex-shrink:0; border:1.5px dashed #d1d5db; display:flex; flex-direction:column; align-self:center; cursor:default;">
-                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                    style="flex-shrink:0; border:1.5px dashed var(--gcg-border-dashed); display:flex; flex-direction:column; align-self:center; cursor:default;">
+                    <div [style.background]="cell.leftAt ? 'var(--gcg-header-past)' : 'var(--gcg-header-active)'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>
                     <div style="padding:5px 8px;">
-                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
-                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
-                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                      <p [style.color]="cell.leftAt ? 'var(--gcg-text-past)' : 'var(--gcg-text-active)'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p [style.color]="'var(--gcg-text-past)'" style="font-size:9px; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p [style.color]="'var(--gcg-text-dim)'" style="font-size:9px; margin:1px 0 0;">:</p>
                     </div>
                   </div>
                 }
@@ -131,7 +159,7 @@ interface MemberRow {
                 <div [style.width.px]="ARROW_W" style="flex-shrink:0; display:flex; align-items:center; justify-content:center;">
                   <svg [attr.width]="ARROW_W" height="20" style="display:block;">
                     <line x1="2" y1="10" [attr.x2]="ARROW_W - 6" y2="10"
-                      stroke="#d1d5db" stroke-width="1.5"
+                      class="gcg-arrow-line" stroke-width="1.5"
                       [attr.marker-end]="'url(#gcg-' + instanceId + ')'"/>
                   </svg>
                 </div>
@@ -142,7 +170,7 @@ interface MemberRow {
                 [style.min-width.px]="CENTER_W"
                 [style.max-width.px]="CENTER_W"
                 [ngStyle]="centerCellStyle(ri)"
-                [style.background]="row.current.leftAt ? '#f3f4f6' : '#fff'"
+                [style.background]="row.current.leftAt ? 'var(--gcg-card-past)' : 'var(--gcg-card-active)'"
                 style="flex-shrink:0;">
                 @if (ri === 0) {
                   <div style="background:#ec4899; padding:4px 10px; text-align:center;">
@@ -150,8 +178,8 @@ interface MemberRow {
                   </div>
                 }
                 <div style="padding:5px 10px;" [style.border-top]="ri > 0 ? '1px solid #fce7f3' : 'none'">
-                  <p [style.color]="row.current.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ row.current.memberName }}</p>
-                  <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ row.current.joinedAt }}{{ row.current.leftAt ? ' – ' + row.current.leftAt : ' –' }})</p>
+                  <p [style.color]="row.current.leftAt ? 'var(--gcg-text-past)' : 'var(--gcg-text-active)'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ row.current.memberName }}</p>
+                  <p [style.color]="'var(--gcg-text-past)'" style="font-size:9px; margin:2px 0 0; white-space:nowrap;">({{ row.current.joinedAt }}{{ row.current.leftAt ? ' – ' + row.current.leftAt : ' –' }})</p>
                 </div>
               </div>
 
@@ -161,7 +189,7 @@ interface MemberRow {
                 <div [style.width.px]="ARROW_W" style="flex-shrink:0; display:flex; align-items:center; justify-content:center;">
                   <svg [attr.width]="ARROW_W" height="20" style="display:block;">
                     <line x1="2" y1="10" [attr.x2]="ARROW_W - 6" y2="10"
-                      stroke="#d1d5db" stroke-width="1.5"
+                      class="gcg-arrow-line" stroke-width="1.5"
                       [attr.marker-end]="'url(#gcg-' + instanceId + ')'"/>
                   </svg>
                 </div>
@@ -172,18 +200,18 @@ interface MemberRow {
                     class="gcg-node-link"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
-                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.background]="cell.leftAt ? 'var(--gcg-card-past)' : 'var(--gcg-card-active)'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    [style.--gcg-border]="'#e5e7eb'"
+                    [style.--gcg-border]="'var(--gcg-border-solid)'"
                     [style.--gcg-border-hover]="'#f9a8d4'"
                     style="flex-shrink:0; border:1.5px solid var(--gcg-border); text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;">
-                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                    <div [style.background]="cell.leftAt ? 'var(--gcg-header-past)' : 'var(--gcg-header-active)'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>
                     <div style="padding:5px 8px;">
-                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
-                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
-                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                      <p [style.color]="cell.leftAt ? 'var(--gcg-text-past)' : 'var(--gcg-text-active)'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p [style.color]="'var(--gcg-text-past)'" style="font-size:9px; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p [style.color]="'var(--gcg-text-dim)'" style="font-size:9px; margin:1px 0 0;">:</p>
                     </div>
                   </a>
                 } @else if (!cell.externalCountry) {
@@ -192,18 +220,18 @@ interface MemberRow {
                     class="gcg-node-link"
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
-                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.background]="cell.leftAt ? 'var(--gcg-card-past)' : 'var(--gcg-card-active)'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    [style.--gcg-border]="'#d1d5db'"
+                    [style.--gcg-border]="'var(--gcg-border-dashed)'"
                     [style.--gcg-border-hover]="'#f9a8d4'"
                     style="flex-shrink:0; border:1.5px dashed var(--gcg-border); text-decoration:none; display:flex; flex-direction:column; align-self:center; transition: border-color 0.15s;">
-                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                    <div [style.background]="cell.leftAt ? 'var(--gcg-header-past)' : 'var(--gcg-header-active)'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>
                     <div style="padding:5px 8px;">
-                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
-                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
-                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                      <p [style.color]="cell.leftAt ? 'var(--gcg-text-past)' : 'var(--gcg-text-active)'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p [style.color]="'var(--gcg-text-past)'" style="font-size:9px; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p [style.color]="'var(--gcg-text-dim)'" style="font-size:9px; margin:1px 0 0;">:</p>
                     </div>
                   </a>
                 } @else {
@@ -211,16 +239,16 @@ interface MemberRow {
                   <div
                     [style.min-width.px]="CELL_W"
                     [style.max-width.px]="CELL_W"
-                    [style.background]="cell.leftAt ? '#f3f4f6' : '#fff'"
+                    [style.background]="cell.leftAt ? 'var(--gcg-card-past)' : 'var(--gcg-card-active)'"
                     [style.opacity]="cell.leftAt ? '0.75' : '1'"
-                    style="flex-shrink:0; border:1.5px dashed #d1d5db; display:flex; flex-direction:column; align-self:center; cursor:default;">
-                    <div [style.background]="cell.leftAt ? '#9ca3af' : '#1f2937'" style="padding:4px 8px;">
+                    style="flex-shrink:0; border:1.5px dashed var(--gcg-border-dashed); display:flex; flex-direction:column; align-self:center; cursor:default;">
+                    <div [style.background]="cell.leftAt ? 'var(--gcg-header-past)' : 'var(--gcg-header-active)'" style="padding:4px 8px;">
                       <span style="font-size:10px; color:#fff; font-weight:600; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.groupName }}</span>
                     </div>
                     <div style="padding:5px 8px;">
-                      <p [style.color]="cell.leftAt ? '#9ca3af' : '#374151'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
-                      <p style="font-size:9px; color:#9ca3af; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
-                      <p style="font-size:9px; color:#d1d5db; margin:1px 0 0;">:</p>
+                      <p [style.color]="cell.leftAt ? 'var(--gcg-text-past)' : 'var(--gcg-text-active)'" style="font-size:11px; font-weight:600; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ cell.memberName }}</p>
+                      <p [style.color]="'var(--gcg-text-past)'" style="font-size:9px; margin:2px 0 0; white-space:nowrap;">({{ cell.joinedAt }} – {{ cell.leftAt ?? '' }})</p>
+                      <p [style.color]="'var(--gcg-text-dim)'" style="font-size:9px; margin:1px 0 0;">:</p>
                     </div>
                   </div>
                 }

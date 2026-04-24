@@ -405,9 +405,9 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   nicknameChipStyle(color: string | null): Record<string, string> {
     const rgb = this.hexToRgb(color || '#e879a0');
     return {
-      'color': '#2d1b2e',
-      'background': `rgba(${rgb}, 0.1)`,
-      'border': `1px solid rgba(${rgb}, 0.3)`,
+      'color': 'var(--text-primary)',
+      'background': `rgba(${rgb}, 0.12)`,
+      'border': `1px solid rgba(${rgb}, 0.35)`,
     };
   }
 }

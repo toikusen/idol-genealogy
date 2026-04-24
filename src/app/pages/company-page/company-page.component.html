@@ -54,6 +54,7 @@
         <div style="position:absolute; bottom:-36px; left:24px;">
           @if (company.photo_url) {
             <img [src]="company.photo_url" [alt]="company.name" loading="lazy"
+              class="company-logo-border"
               style="
                 width: 80px; height: 80px; border-radius: 50%;
                 object-fit: cover;
@@ -61,7 +62,7 @@
                 box-shadow: 0 4px 16px rgba(45,27,46,0.15);
               "/>
           } @else {
-            <div [style.background]="company.color || '#7c6cf2'" style="
+            <div [style.background]="company.color || '#7c6cf2'" class="company-logo-border" style="
               width: 80px; height: 80px; border-radius: 50%;
               border: 3px solid white;
               box-shadow: 0 4px 16px rgba(45,27,46,0.15);
@@ -84,7 +85,7 @@
         </div>
 
         <!-- Name -->
-        <h1 style="
+        <h1 class="company-name" style="
           font-size:clamp(1.8rem,5vw,2.6rem);
           font-weight:400;letter-spacing:0.02em;
           color:#2d1b2e;margin:0 0 10px;
@@ -94,11 +95,11 @@
         <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
           <button
             (click)="showProposalPanel = true"
-            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors"
+            class="proposal-edit-btn"
           >✏️ 提案修改</button>
           <button
             (click)="showDeletePanel = true"
-            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 border border-gray-200 rounded-full hover:border-red-300 hover:text-red-400 transition-colors"
+            class="report-btn"
           >⚑ 回報問題</button>
           <button
             (click)="copyLink()"
@@ -122,7 +123,7 @@
 
         <!-- Description -->
         @if (company.description) {
-          <p style="
+          <p class="company-description" style="
             font-size:0.9rem;line-height:1.85;
             color:rgba(60,40,60,0.7);
             max-width:560px;margin:0 0 20px;
@@ -286,14 +287,15 @@
                 transition:all 0.2s;
               "
               [style.borderColor]="(m.color || '#e879a0') + '55'"
-              style="color:#2d1b2e;"
+              [style.color]="'var(--text-primary)'"
               [style.background]="(m.color || '#e879a0') + '10'"
               >
                 @if (m.photo_url) {
                   <img [src]="m.photo_url" [alt]="m.name" loading="lazy"
                     style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
                 } @else {
-                  <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;color:#2d1b2e;"
+                  <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;"
+                    [style.color]="'var(--text-primary)'"
                     [style.background]="safeColor(m.color) + '33'"
                   >{{ m.name.charAt(0) }}</div>
                 }
@@ -305,7 +307,7 @@
       }
 
       <!-- Attribution widget -->
-      <div style="
+      <div class="attribution-widget" style="
         margin:40px 0 20px;
         padding:13px 16px 13px 0;
         border-radius:10px;
@@ -340,6 +342,7 @@
           <button
             type="button"
             (click)="showProposalPanel = true"
+            class="attribution-btn-primary"
             style="border:none;background:rgba(124,108,242,0.07);padding:5px 12px;border-radius:6px;font-size:0.71rem;color:rgba(80,64,168,0.82);cursor:pointer;letter-spacing:0.05em;border:1px solid rgba(124,108,242,0.14);transition:background 0.15s;white-space:nowrap;"
             onmouseenter="this.style.background='rgba(124,108,242,0.13)'"
             onmouseleave="this.style.background='rgba(124,108,242,0.07)'"

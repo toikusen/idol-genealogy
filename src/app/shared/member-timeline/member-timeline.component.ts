@@ -13,13 +13,38 @@ interface TimelineSegment {
   selector: 'app-member-timeline',
   standalone: true,
   imports: [CommonModule, RouterLink],
+  styles: [`
+    .tl-card {
+      background: rgba(255, 255, 255, 0.80);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+    }
+    .tl-dot { border-color: rgba(255, 255, 255, 0.90); }
+    .tl-chip-muted {
+      background: rgba(200, 192, 200, 0.15);
+      color: #6b7280;
+    }
+    @media (prefers-color-scheme: dark) {
+      :host .tl-card {
+        background: var(--bg-card);
+        border-color: var(--border-subtle);
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+      }
+      :host .tl-dot {
+        border-color: rgba(255, 255, 255, 0.14);
+      }
+      :host .tl-chip-muted {
+        background: rgba(210, 175, 210, 0.10);
+        color: var(--text-faint-55);
+      }
+    }
+  `],
   template: `
     <div class="relative">
       @for (seg of segments; track seg.history.id) {
         <div class="flex gap-4 mb-5" [class.pl-16]="seg.lane === 1">
           <!-- Timeline connector -->
           <div class="flex flex-col items-center flex-shrink-0">
-            <div class="w-3 h-3 rounded-full border-2 border-white shadow-sm mt-1"
+            <div class="w-3 h-3 rounded-full border-2 tl-dot shadow-sm mt-1"
                  [style.background]="seg.history.group?.color || '#e879a0'"></div>
             <div class="flex-1 mt-1 border-l-2 min-h-[2rem]"
                  [style.borderLeftColor]="seg.history.group?.color || '#e4d4e4'"
@@ -27,7 +52,7 @@ interface TimelineSegment {
                  [class.border-dashed]="seg.concurrent"></div>
           </div>
           <!-- Card -->
-          <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm px-4 py-3 flex-1 border border-white hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 mb-1">
+          <div class="tl-card backdrop-blur-sm rounded-2xl shadow-sm px-4 py-3 flex-1 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 mb-1">
             <div class="flex items-start justify-between gap-3">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-1">
@@ -44,7 +69,7 @@ interface TimelineSegment {
                         }
                       </a>
                     } @else {
-                      <a class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500"
+                      <a class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full tl-chip-muted"
                          [routerLink]="'/group/' + seg.history.group_id + '/'"
                          style="text-decoration:none;">
                         {{ seg.history.group?.name || '—' }}
@@ -63,7 +88,7 @@ interface TimelineSegment {
                         }
                       </span>
                     } @else {
-                      <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                      <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full tl-chip-muted">
                         {{ seg.history.external_group_name || '—' }}
                         @if (seg.history.external_country) {
                           <span class="opacity-60">· {{ seg.history.external_country }}</span>

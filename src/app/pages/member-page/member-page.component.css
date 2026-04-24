@@ -167,6 +167,43 @@
   margin-bottom: 12px;
 }
 
+/* ── Dark mode ── */
+@media (prefers-color-scheme: dark) {
+  /* Portrait border — white ring too harsh on dark */
+  .member-portrait {
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  /* X/Twitter — black text invisible on dark */
+  .sns-link--x {
+    color: rgba(210, 175, 210, 0.82);
+    border-color: rgba(210, 175, 210, 0.22);
+    background: rgba(210, 175, 210, 0.05);
+  }
+  .sns-link--x:hover {
+    background: rgba(210, 175, 210, 0.10);
+    border-color: rgba(210, 175, 210, 0.38);
+  }
+
+  /* Proposal edit button — light pink washed out on dark */
+  .proposal-edit-btn {
+    background: rgba(232, 121, 160, 0.10);
+    border-color: rgba(232, 121, 160, 0.35);
+    color: #e879a0;
+  }
+  .proposal-edit-btn:hover {
+    background: rgba(232, 121, 160, 0.18);
+    border-color: rgba(232, 121, 160, 0.55);
+  }
+
+  /* Attribution widget — white box becomes gray slab */
+  .attribution-widget {
+    background: var(--bg-surface) !important;
+    border-color: rgba(232, 121, 160, 0.12) !important;
+    box-shadow: 0 2px 18px rgba(0, 0, 0, 0.25) !important;
+  }
+}
+
 /* Mobile: stack vertically */
 @media (max-width: 520px) {
   .member-hero-card {

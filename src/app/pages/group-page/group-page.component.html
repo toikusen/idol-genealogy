@@ -310,7 +310,7 @@
 
       <!-- ══ Selected member detail panel ══ -->
       @if (selectedHistory !== null) {
-        <div id="member-detail-panel" class="member-panel" style="
+        <div id="member-detail-panel" class="member-panel member-detail-panel" style="
           margin-bottom: 32px;
           background: rgba(255,255,255,0.95);
           border: 1px solid rgba(255,255,255,0.9);
@@ -330,6 +330,7 @@
                   [src]="selectedHistory.member!.photo_url!"
                   [alt]="selectedHistory.member?.name"
                   loading="lazy"
+                  class="gantt-avatar-border"
                   style="
                     width: 80px; height: 80px; border-radius: 50%;
                     object-fit: cover; flex-shrink: 0;
@@ -338,7 +339,7 @@
                   "
                 />
               } @else {
-                <div style="
+                <div class="gantt-avatar-border" style="
                   width: 80px; height: 80px; border-radius: 50%; flex-shrink: 0;
                   background: linear-gradient(135deg, rgba(232,121,160,0.15) 0%, rgba(124,108,242,0.1) 100%);
                   border: 2px solid rgba(255,255,255,0.9);
@@ -556,7 +557,7 @@
                     cursor: pointer; border-radius: 4px 0 0 4px;
                     transition: color 0.15s, background 0.15s;
                   "
-                  [style.color]="selectedHistory?.id === row.history.id ? group.color : 'rgba(60,30,60,0.65)'"
+                  [style.color]="selectedHistory?.id === row.history.id ? group.color : 'var(--text-secondary)'"
                   [style.background]="selectedHistory?.id === row.history.id ? 'rgba(' + hexToRgb(group.color) + ',0.06)' : 'transparent'"
                 >
                   {{ row.history.name_at_time || row.history.member?.name || row.history.member?.name_roman || '—' }}
@@ -896,7 +897,7 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;">
             @for (v of videos; track v.id) {
               @if (extractYouTubeId(v.url); as vid) {
-                <div style="
+                <div class="video-card" style="
                   border-radius: 4px; overflow: hidden;
                   background: rgba(255,255,255,0.7);
                   border: 1px solid rgba(255,255,255,0.85);
@@ -951,9 +952,9 @@
                   <!-- Title -->
                   @if (v.title) {
                     <div style="padding: 10px 14px 12px;">
-                      <p style="
+                      <p class="video-card-title" style="
                         font-size: 0.78rem; line-height: 1.5;
-                        color: rgba(60,30,60,0.7);
+                        color: var(--text-secondary);
                         margin: 0;
                         display: -webkit-box; -webkit-line-clamp: 2;
                         -webkit-box-orient: vertical; overflow: hidden;
@@ -1090,7 +1091,7 @@
       }
 
       <!-- Attribution widget -->
-      <div style="
+      <div class="attribution-widget" style="
         margin:40px 0 20px;
         padding:13px 16px 13px 0;
         border-radius:10px;
@@ -1125,6 +1126,7 @@
           <button
             type="button"
             (click)="showGroupProposalPanel = true"
+            class="attribution-btn-primary"
             style="border:none;background:rgba(124,108,242,0.07);padding:5px 12px;border-radius:6px;font-size:0.71rem;color:rgba(80,64,168,0.82);cursor:pointer;letter-spacing:0.05em;border:1px solid rgba(124,108,242,0.14);transition:background 0.15s;white-space:nowrap;"
             onmouseenter="this.style.background='rgba(124,108,242,0.13)'"
             onmouseleave="this.style.background='rgba(124,108,242,0.07)'"

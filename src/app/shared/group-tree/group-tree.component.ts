@@ -22,6 +22,32 @@ interface FlatGroup {
   selector: 'app-group-tree',
   standalone: true,
   imports: [CommonModule],
+  styles: [`
+    .gt-card {
+      background: rgba(255, 255, 255, 0.80);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+    }
+    .gt-ring { --tw-ring-color: rgba(255, 255, 255, 0.90); }
+    .gt-divider { background: #f3f4f6; }
+    @media (prefers-color-scheme: dark) {
+      :host .gt-card {
+        background: var(--bg-card);
+        border-color: var(--border-subtle);
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+      }
+      :host .gt-card:hover {
+        background: var(--bg-card-hover);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30);
+      }
+      :host .gt-ring {
+        --tw-ring-color: rgba(255, 255, 255, 0.14);
+      }
+      :host .gt-divider { background: var(--border-divider); }
+      :host .text-gray-800 { color: var(--text-primary) !important; }
+      :host .text-gray-500 { color: var(--text-secondary) !important; }
+      :host .text-gray-400 { color: var(--text-faint-55) !important; }
+    }
+  `],
   template: `
     <!-- No-team: split into active / former -->
     @if (teamNodes.length === 0 && (flatGroup.activeNodes.length > 0 || flatGroup.formerNodes.length > 0)) {
@@ -35,7 +61,7 @@ interface FlatGroup {
                     [style.background]="group?.color || '#e879a0'"></span>
               <h3 class="text-sm font-medium text-gray-500 uppercase tracking-widest"
                   style="font-family:'JF Openhuninn',sans-serif;letter-spacing:0.15em;">現役</h3>
-              <div class="flex-1 h-px bg-gray-100"></div>
+              <div class="flex-1 h-px gt-divider"></div>
               <span class="text-xs text-gray-400">{{ flatGroup.activeNodes.length }}</span>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -53,7 +79,7 @@ interface FlatGroup {
               <span class="w-2 h-2 rounded-full flex-shrink-0 bg-gray-300"></span>
               <h3 class="text-sm font-medium text-gray-400 uppercase tracking-widest"
                   style="font-family:'JF Openhuninn',sans-serif;letter-spacing:0.15em;">退役</h3>
-              <div class="flex-1 h-px bg-gray-100"></div>
+              <div class="flex-1 h-px gt-divider"></div>
               <span class="text-xs text-gray-400">{{ flatGroup.formerNodes.length }}</span>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -73,13 +99,13 @@ interface FlatGroup {
            class="block w-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
            (click)="selectMember.emit(node.history!)"
            [style.opacity]="dim ? '0.6' : '1'">
-        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white
-                    p-3 text-center hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+        <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm
+                    p-3 text-center hover:-translate-y-1 transition-all duration-200">
           @if (node.photo_url) {
             <img [src]="node.photo_url" [alt]="node.label"
-                 class="w-14 h-14 rounded-full object-cover mx-auto mb-2 ring-2 ring-white shadow-sm">
+                 class="w-14 h-14 rounded-full object-cover mx-auto mb-2 ring-2 gt-ring shadow-sm">
           } @else {
-            <div class="w-14 h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ring-2 ring-white shadow-sm"
+            <div class="w-14 h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ring-2 gt-ring shadow-sm"
                  [style.background]="(node.color || '#e879a0') + '22'"
                  [style.color]="node.color || '#e879a0'">
               {{ node.label[0] }}
@@ -106,7 +132,7 @@ interface FlatGroup {
                   style="font-family:'JF Openhuninn',sans-serif;letter-spacing:0.15em;">
                 {{ node.label }}
               </h3>
-              <div class="flex-1 h-px bg-gray-100"></div>
+              <div class="flex-1 h-px gt-divider"></div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               @for (child of node.children || []; track child.id) {
@@ -114,13 +140,13 @@ interface FlatGroup {
                      class="block w-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
                      (click)="selectMember.emit(child.history!)"
                      [style.opacity]="child.history?.left_at ? '0.65' : '1'">
-                  <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white
-                              p-3 text-center hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                  <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm
+                              p-3 text-center hover:-translate-y-1 transition-all duration-200">
                     @if (child.photo_url) {
                       <img [src]="child.photo_url" [alt]="child.label"
-                           class="w-14 h-14 rounded-full object-cover mx-auto mb-2 ring-2 ring-white shadow-sm">
+                           class="w-14 h-14 rounded-full object-cover mx-auto mb-2 ring-2 gt-ring shadow-sm">
                     } @else {
-                      <div class="w-14 h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ring-2 ring-white shadow-sm"
+                      <div class="w-14 h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ring-2 gt-ring shadow-sm"
                            [style.background]="(child.color || '#e879a0') + '22'"
                            [style.color]="child.color || '#e879a0'">
                         {{ child.label[0] }}

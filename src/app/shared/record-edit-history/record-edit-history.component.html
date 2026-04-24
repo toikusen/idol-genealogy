@@ -8,9 +8,9 @@
 <aside style="
   position:fixed;right:0;top:0;bottom:0;
   width:100%;max-width:26rem;
-  background:#fdf6fb;
-  border-left:1px solid rgba(232,121,160,0.15);
-  box-shadow:-8px 0 32px rgba(30,10,30,0.08);
+  background:var(--bg-page);
+  border-left:1px solid var(--border-subtle);
+  box-shadow:-8px 0 32px rgba(30,10,30,0.12);
   z-index:50;display:flex;flex-direction:column;
   font-family:'JF Openhuninn',sans-serif;
 ">
@@ -25,7 +25,7 @@
       <div style="font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-faint-45);">
         編輯記錄
       </div>
-      <div style="font-size:0.95rem;color:#2d1b2e;margin-top:3px;font-weight:500;">
+      <div style="font-size:0.95rem;color:var(--text-primary);margin-top:3px;font-weight:500;">
         {{ recordLabel }}
       </div>
     </div>
@@ -62,7 +62,7 @@
         ">
           <!-- Meta row -->
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-            <span style="font-size:0.8rem;color:#2d1b2e;font-weight:500;">
+            <span style="font-size:0.8rem;color:var(--text-primary);font-weight:500;">
               {{ p.submitter_name }}
             </span>
             <span style="font-size:0.72rem;color:var(--text-faint-45);">
@@ -133,7 +133,7 @@
                 <span style="color:var(--text-faint);">「{{ field.label }}」</span>
                 <span>{{ resolveFieldValue(field.key, field.oldValue) }}</span>
                 <span style="color:rgba(232,121,160,0.5);">→</span>
-                <span style="color:#2d1b2e;">{{ resolveFieldValue(field.key, field.newValue) }}</span>
+                <span style="color:var(--text-primary);">{{ resolveFieldValue(field.key, field.newValue) }}</span>
               </div>
             }
           }

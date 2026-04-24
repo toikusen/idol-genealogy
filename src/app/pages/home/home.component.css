@@ -341,3 +341,137 @@ input::placeholder {
     height: 400px !important;
   }
 }
+
+/* ── Dark mode overrides ── */
+@media (prefers-color-scheme: dark) {
+  /* Search box — remove the white inset glow */
+  .search-box {
+    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Nav tab inactive text — hardcoded dark values need flipping */
+  .nav-tab-tw   { color: rgba(210, 175, 210, 0.52); }
+  .nav-tab-en   { color: rgba(210, 175, 210, 0.34); }
+  .nav-tab-count { color: rgba(210, 175, 210, 0.28); }
+
+  .tab-members.tab-active .tab-icon     { color: #e879a0; }
+  .tab-members.tab-active .nav-tab-tw   { color: rgba(232, 121, 160, 0.92); }
+  .tab-members.tab-active .nav-tab-en   { color: rgba(232, 121, 160, 0.55); }
+  .tab-members.tab-active .nav-tab-count { color: rgba(232, 121, 160, 0.45); }
+
+  .tab-groups.tab-active .tab-icon     { color: #9080e0; }
+  .tab-groups.tab-active .nav-tab-tw   { color: rgba(144, 128, 224, 0.92); }
+  .tab-groups.tab-active .nav-tab-en   { color: rgba(144, 128, 224, 0.55); }
+  .tab-groups.tab-active .nav-tab-count { color: rgba(144, 128, 224, 0.45); }
+
+  .tab-companies.tab-active .tab-icon     { color: #d4a044; }
+  .tab-companies.tab-active .nav-tab-tw   { color: rgba(212, 160, 68, 0.92); }
+  .tab-companies.tab-active .nav-tab-en   { color: rgba(212, 160, 68, 0.55); }
+  .tab-companies.tab-active .nav-tab-count { color: rgba(212, 160, 68, 0.45); }
+
+  .tab-events.tab-active .tab-icon   { color: #d48070; }
+  .tab-events.tab-active .nav-tab-tw { color: rgba(212, 128, 112, 0.92); }
+  .tab-events.tab-active .nav-tab-en { color: rgba(212, 128, 112, 0.55); }
+
+  /* Recent member cards — white bg becomes ugly gray */
+  .recent-member-card {
+    background: var(--bg-card);
+    box-shadow: var(--shadow-xs);
+  }
+  .recent-member-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-default);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Group result card hover */
+  .group-result-card:hover {
+    background: var(--bg-card-hover);
+    border-color: rgba(124, 108, 242, 0.28);
+  }
+
+  /* Company result chips — light amber on dark */
+  .company-result-chip {
+    background: rgba(40, 28, 8, 0.70);
+    border-color: rgba(200, 160, 60, 0.22);
+    color: #d4a044;
+  }
+  .company-result-chip:hover {
+    background: rgba(60, 42, 12, 0.80);
+    border-color: rgba(200, 160, 60, 0.42);
+    box-shadow: 0 4px 12px rgba(180, 140, 40, 0.18);
+  }
+
+  /* Browse group card hover */
+  .browse-group-card:hover {
+    background: var(--bg-card-hover);
+    border-color: rgba(124, 108, 242, 0.28);
+    box-shadow: 0 4px 16px rgba(124, 108, 242, 0.12);
+  }
+
+  /* Company group card hover */
+  .company-group-card:hover {
+    background: rgba(40, 28, 8, 0.45);
+    border-color: rgba(180, 130, 40, 0.28);
+  }
+
+  /* Action chips — 提案新增成員/團體/公司 */
+  .home-action-chip--member {
+    background: rgba(232, 121, 160, 0.10);
+    border-color: rgba(232, 121, 160, 0.38);
+    color: #e879a0;
+  }
+  .home-action-chip--member:hover,
+  .home-action-chip--member:focus-visible {
+    background: rgba(232, 121, 160, 0.18);
+    border-color: rgba(232, 121, 160, 0.58);
+  }
+  .home-action-chip--group {
+    background: rgba(124, 108, 242, 0.10);
+    border-color: rgba(124, 108, 242, 0.38);
+    color: #9080e0;
+  }
+  .home-action-chip--group:hover,
+  .home-action-chip--group:focus-visible {
+    background: rgba(124, 108, 242, 0.18);
+    border-color: rgba(124, 108, 242, 0.55);
+  }
+  .home-action-chip--company {
+    background: rgba(200, 152, 58, 0.10);
+    border-color: rgba(200, 152, 58, 0.38);
+    color: #d4a044;
+  }
+  .home-action-chip--company:hover,
+  .home-action-chip--company:focus-visible {
+    background: rgba(200, 152, 58, 0.18);
+    border-color: rgba(200, 152, 58, 0.55);
+  }
+
+  /* Browse pill — 瀏覽全部成員 */
+  .home-browse-pill--member {
+    background: rgba(232, 121, 160, 0.08);
+    border-color: rgba(232, 121, 160, 0.32);
+    color: #e879a0;
+  }
+  .home-browse-pill--member:hover,
+  .home-browse-pill--member:focus-visible {
+    background: rgba(232, 121, 160, 0.16);
+    border-color: rgba(232, 121, 160, 0.52);
+  }
+
+  /* Group sub-tabs */
+  .group-tab          { color: rgba(210, 175, 210, 0.52); }
+  .group-tab:hover    { color: rgba(180, 155, 240, 0.82); }
+  .group-tab--active  { color: rgba(160, 140, 230, 0.92); border-bottom-color: #7c6cf2; }
+  .tab-count          { color: rgba(140, 120, 220, 0.65); }
+  .group-tab--active .tab-count { color: rgba(160, 140, 230, 0.78); }
+
+  /* No-results panel */
+  .no-results-panel { background: rgba(30, 15, 32, 0.55); }
+
+  /* Events calendar container */
+  .calendar-container { background: rgba(18, 8, 20, 0.90); }
+
+  /* Company section headings */
+  .company-section-heading { color: rgba(210, 175, 210, 0.80) !important; }
+}

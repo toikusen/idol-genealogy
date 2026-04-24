@@ -11,6 +11,18 @@ import { siteUrl } from '../../core/public-url.utils';
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './about.component.html',
+  styles: [`
+    @media (prefers-color-scheme: dark) {
+      :host .about-page {
+        background: linear-gradient(135deg, #160c18 0%, #1a0c20 50%, #160c18 100%) !important;
+      }
+      :host h1 { color: var(--text-primary) !important; }
+      :host h2 { color: var(--text-primary) !important; }
+      :host section { color: var(--text-faint-70) !important; }
+      :host strong { color: var(--text-secondary) !important; }
+      :host .team-member-name { color: var(--text-primary) !important; }
+    }
+  `],
 })
 export class AboutComponent implements OnInit {
   members: TeamMember[] = [];

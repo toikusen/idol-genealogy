@@ -32,7 +32,7 @@
 
     <!-- ══ SEARCH ══ -->
     <section aria-label="搜尋" style="margin-bottom: 28px;">
-      <div style="
+      <div class="search-box" style="
         background: var(--bg-surface);
         backdrop-filter: blur(16px) saturate(1.3);
         -webkit-backdrop-filter: blur(16px) saturate(1.3);
@@ -369,7 +369,7 @@
 
     <!-- ══ NO RESULTS STATE ══ -->
     @if (noResults) {
-      <div style="
+      <div class="no-results-panel" style="
         text-align: center; padding: 56px 32px;
         border: 1px solid rgba(232,121,160,0.12); border-radius: 3px;
         background: rgba(255,255,255,0.5); margin-bottom: 64px;
@@ -699,7 +699,7 @@
               <div>
                 <!-- Company header -->
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; min-width: 0;">
-                  <h3 style="
+                  <h3 class="company-section-heading" style="
                     font-size: 1rem; font-weight: 600;
                     color: #5a3a10; letter-spacing: 0.08em; margin: 0;
                     flex: 1; min-width: 0;
@@ -814,7 +814,7 @@
           </div>
 
           <!-- Calendar container -->
-          <div style="
+          <div class="calendar-container" style="
             border-radius: 16px;
             overflow: hidden;
             border: 1px solid rgba(200,112,106,0.15);
@@ -886,7 +886,7 @@
     ">
       <h2 style="
         font-size: 0.88rem; font-weight: 600;
-        color: rgba(58,32,64,0.7); margin-bottom: 12px;
+        color: var(--text-secondary); margin-bottom: 12px;
         letter-spacing: 0.04em;
       ">關於 Idol Maps</h2>
       <p style="margin-bottom: 10px;">
@@ -903,7 +903,7 @@
       <!-- 地下偶像介紹 -->
       <h2 style="
         font-size: 0.88rem; font-weight: 600;
-        color: rgba(58,32,64,0.7); margin-bottom: 12px;
+        color: var(--text-secondary); margin-bottom: 12px;
         letter-spacing: 0.04em;
       ">什麼是台灣地下偶像？</h2>
       <p style="margin-bottom: 10px;">
@@ -919,7 +919,7 @@
       <!-- 如何使用 -->
       <h2 style="
         font-size: 0.88rem; font-weight: 600;
-        color: rgba(58,32,64,0.7); margin-bottom: 12px;
+        color: var(--text-secondary); margin-bottom: 12px;
         letter-spacing: 0.04em;
       ">如何使用本站</h2>
       <p style="margin-bottom: 10px;">
