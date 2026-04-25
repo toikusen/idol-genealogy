@@ -707,19 +707,10 @@
                   ">{{section.name}}</h3>
                   <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                     @if (section.companyId) {
-                      <a [routerLink]="'/company/' + section.companyId + '/'" style="
-                        display: inline-flex; align-items: center; gap: 4px;
-                        font-size: 0.65rem; letter-spacing: 0.1em;
-                        color: rgba(124,108,242,0.8);
-                        border: 1px solid rgba(124,108,242,0.3);
-                        background: rgba(124,108,242,0.06);
-                        border-radius: 20px;
-                        padding: 2px 10px 2px 8px;
-                        text-decoration: none;
-                        transition: background 0.2s, border-color 0.2s;
-                        white-space: nowrap;
-                      ">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                      <a [routerLink]="'/company/' + section.companyId + '/'" class="company-page-link">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                          <path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M8 10v2M8 15v2M12 10v2M12 15v2M16 10v2M16 15v2"/>
+                        </svg>
                         公司頁面
                       </a>
                     }

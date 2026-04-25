@@ -24,8 +24,9 @@ input::placeholder {
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.25s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   position: relative;
+  touch-action: manipulation;
 }
 
 @media (max-width: 768px) {
@@ -50,15 +51,15 @@ input::placeholder {
 }
 
 .tab-icon {
-  transition: color 0.25s ease;
-  opacity: 0.45;
+  transition: color 0.2s ease, opacity 0.2s ease;
+  opacity: 0.58;
 }
 
 .nav-tab-tw {
   font-size: 1rem;
   letter-spacing: 0.18em;
-  color: rgba(90,58,90,0.45);
-  transition: color 0.25s ease;
+  color: rgba(90,58,90,0.68);
+  transition: color 0.2s ease;
   line-height: 1;
 }
 
@@ -66,61 +67,91 @@ input::placeholder {
   font-size: 0.65rem;
   letter-spacing: 0.22em;
   font-style: italic;
-  color: rgba(150,120,150,0.4);
+  color: rgba(150,120,150,0.55);
   transition: color 0.2s ease;
   text-transform: uppercase;
 }
 
 .nav-tab-count {
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  color: rgba(150,120,150,0.35);
-  transition: color 0.2s ease;
-  margin-top: 2px;
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+  color: rgba(130,100,130,0.6);
+  background: rgba(150,120,150,0.10);
+  padding: 1px 7px;
+  border-radius: 999px;
+  transition: color 0.2s ease, background 0.2s ease;
+  margin-top: 1px;
 }
 
 /* Members — rose */
-.tab-members:hover { background: rgba(232,121,160,0.04); }
+.tab-members:hover {
+  background: rgba(232,121,160,0.11);
+  border-bottom-color: rgba(232,121,160,0.45);
+  transform: translateY(-1px);
+}
+.tab-members:hover .tab-icon { opacity: 0.85; color: #d0608c; }
+.tab-members:hover .nav-tab-tw { color: rgba(192,80,128,0.85); }
+.tab-members:hover .nav-tab-count { background: rgba(232,121,160,0.16); color: rgba(192,80,128,0.7); }
 .tab-members.tab-active {
   border-bottom-color: #e879a0;
-  background: rgba(232,121,160,0.05);
+  background: rgba(232,121,160,0.10);
 }
 .tab-members.tab-active .tab-icon    { color: #d0608c; opacity: 1; }
 .tab-members.tab-active .nav-tab-tw  { color: #c05080; }
-.tab-members.tab-active .nav-tab-en  { color: rgba(192,80,128,0.55); }
-.tab-members.tab-active .nav-tab-count { color: rgba(192,80,128,0.45); }
+.tab-members.tab-active .nav-tab-en  { color: rgba(192,80,128,0.58); }
+.tab-members.tab-active .nav-tab-count { background: rgba(232,121,160,0.18); color: rgba(192,80,128,0.72); }
 
 /* Groups — indigo */
-.tab-groups:hover { background: rgba(98,72,192,0.04); }
+.tab-groups:hover {
+  background: rgba(98,72,192,0.11);
+  border-bottom-color: rgba(98,72,192,0.42);
+  transform: translateY(-1px);
+}
+.tab-groups:hover .tab-icon { opacity: 0.85; color: #5040a8; }
+.tab-groups:hover .nav-tab-tw { color: rgba(72,56,160,0.85); }
+.tab-groups:hover .nav-tab-count { background: rgba(98,72,192,0.15); color: rgba(72,56,160,0.72); }
 .tab-groups.tab-active {
   border-bottom-color: #6248c0;
-  background: rgba(98,72,192,0.05);
+  background: rgba(98,72,192,0.10);
 }
 .tab-groups.tab-active .tab-icon    { color: #5040a8; opacity: 1; }
 .tab-groups.tab-active .nav-tab-tw  { color: #4838a0; }
-.tab-groups.tab-active .nav-tab-en  { color: rgba(72,56,160,0.55); }
-.tab-groups.tab-active .nav-tab-count { color: rgba(72,56,160,0.45); }
+.tab-groups.tab-active .nav-tab-en  { color: rgba(72,56,160,0.58); }
+.tab-groups.tab-active .nav-tab-count { background: rgba(98,72,192,0.16); color: rgba(72,56,160,0.7); }
 
 /* Companies — amber */
-.tab-companies:hover { background: rgba(176,125,42,0.04); }
+.tab-companies:hover {
+  background: rgba(176,125,42,0.12);
+  border-bottom-color: rgba(176,125,42,0.48);
+  transform: translateY(-1px);
+}
+.tab-companies:hover .tab-icon { opacity: 0.88; color: #9a6820; }
+.tab-companies:hover .nav-tab-tw { color: rgba(138,94,24,0.88); }
+.tab-companies:hover .nav-tab-count { background: rgba(176,125,42,0.18); color: rgba(138,94,24,0.75); }
 .tab-companies.tab-active {
   border-bottom-color: #b07d2a;
-  background: rgba(176,125,42,0.05);
+  background: rgba(176,125,42,0.11);
 }
 .tab-companies.tab-active .tab-icon    { color: #9a6820; opacity: 1; }
 .tab-companies.tab-active .nav-tab-tw  { color: #8a5e18; }
-.tab-companies.tab-active .nav-tab-en  { color: rgba(138,94,24,0.55); }
-.tab-companies.tab-active .nav-tab-count { color: rgba(138,94,24,0.45); }
+.tab-companies.tab-active .nav-tab-en  { color: rgba(138,94,24,0.58); }
+.tab-companies.tab-active .nav-tab-count { background: rgba(176,125,42,0.20); color: rgba(138,94,24,0.75); }
 
 /* Events — coral */
-.tab-events:hover { background: rgba(200,112,106,0.04); }
+.tab-events:hover {
+  background: rgba(200,112,106,0.11);
+  border-bottom-color: rgba(200,112,106,0.42);
+  transform: translateY(-1px);
+}
+.tab-events:hover .tab-icon { opacity: 0.85; color: #b05e58; }
+.tab-events:hover .nav-tab-tw { color: rgba(160,78,72,0.85); }
 .tab-events.tab-active {
   border-bottom-color: #c8706a;
-  background: rgba(200,112,106,0.05);
+  background: rgba(200,112,106,0.10);
 }
 .tab-events.tab-active .tab-icon    { color: #b05e58; opacity: 1; }
 .tab-events.tab-active .nav-tab-tw  { color: #a04e48; }
-.tab-events.tab-active .nav-tab-en  { color: rgba(160,78,72,0.55); }
+.tab-events.tab-active .nav-tab-en  { color: rgba(160,78,72,0.58); }
 
 /* Tab content fade-in */
 .tab-content {
@@ -181,6 +212,49 @@ input::placeholder {
   border-color: rgba(200,160,60,0.4);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(180,140,40,0.12);
+}
+
+/* ── Company page link (inside companies panel) ── */
+.company-page-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: #8a6020;
+  border: 1px solid rgba(176,125,42,0.4);
+  background: rgba(255,248,220,0.65);
+  border-radius: 20px;
+  padding: 4px 12px 4px 9px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+.company-page-link:hover {
+  background: rgba(255,240,180,0.85);
+  border-color: rgba(176,125,42,0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(160,110,30,0.15);
+  color: #7a5015;
+}
+.company-page-link:focus-visible {
+  outline: 2px solid #b07d2a;
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .company-page-link {
+    color: #d4a044;
+    border-color: rgba(212,160,68,0.35);
+    background: rgba(60,42,10,0.55);
+  }
+  .company-page-link:hover {
+    background: rgba(80,55,12,0.75);
+    border-color: rgba(212,160,68,0.65);
+    box-shadow: 0 3px 10px rgba(180,130,30,0.20);
+    color: #e8b855;
+  }
 }
 
 /* ── Browse cards ── */
@@ -350,28 +424,40 @@ input::placeholder {
   }
 
   /* Nav tab inactive text — hardcoded dark values need flipping */
-  .nav-tab-tw   { color: rgba(210, 175, 210, 0.52); }
-  .nav-tab-en   { color: rgba(210, 175, 210, 0.34); }
-  .nav-tab-count { color: rgba(210, 175, 210, 0.28); }
+  .nav-tab-tw   { color: rgba(210, 175, 210, 0.65); }
+  .nav-tab-en   { color: rgba(210, 175, 210, 0.48); }
+  .nav-tab-count {
+    color: rgba(200, 170, 200, 0.62);
+    background: rgba(200, 170, 200, 0.12);
+  }
 
+  /* Members hover — dark */
+  .tab-members:hover .nav-tab-tw { color: rgba(232, 121, 160, 0.88); }
+  .tab-members:hover .nav-tab-count { background: rgba(232, 121, 160, 0.20); color: rgba(232, 121, 160, 0.75); }
   .tab-members.tab-active .tab-icon     { color: #e879a0; }
   .tab-members.tab-active .nav-tab-tw   { color: rgba(232, 121, 160, 0.92); }
-  .tab-members.tab-active .nav-tab-en   { color: rgba(232, 121, 160, 0.55); }
-  .tab-members.tab-active .nav-tab-count { color: rgba(232, 121, 160, 0.45); }
+  .tab-members.tab-active .nav-tab-en   { color: rgba(232, 121, 160, 0.58); }
+  .tab-members.tab-active .nav-tab-count { background: rgba(232, 121, 160, 0.22); color: rgba(232, 121, 160, 0.75); }
 
+  /* Groups hover — dark */
+  .tab-groups:hover .nav-tab-tw { color: rgba(144, 128, 224, 0.88); }
+  .tab-groups:hover .nav-tab-count { background: rgba(144, 128, 224, 0.20); color: rgba(144, 128, 224, 0.75); }
   .tab-groups.tab-active .tab-icon     { color: #9080e0; }
   .tab-groups.tab-active .nav-tab-tw   { color: rgba(144, 128, 224, 0.92); }
-  .tab-groups.tab-active .nav-tab-en   { color: rgba(144, 128, 224, 0.55); }
-  .tab-groups.tab-active .nav-tab-count { color: rgba(144, 128, 224, 0.45); }
+  .tab-groups.tab-active .nav-tab-en   { color: rgba(144, 128, 224, 0.58); }
+  .tab-groups.tab-active .nav-tab-count { background: rgba(144, 128, 224, 0.22); color: rgba(144, 128, 224, 0.75); }
 
+  /* Companies hover — dark */
+  .tab-companies:hover .nav-tab-tw { color: rgba(212, 160, 68, 0.88); }
+  .tab-companies:hover .nav-tab-count { background: rgba(212, 160, 68, 0.20); color: rgba(212, 160, 68, 0.78); }
   .tab-companies.tab-active .tab-icon     { color: #d4a044; }
   .tab-companies.tab-active .nav-tab-tw   { color: rgba(212, 160, 68, 0.92); }
-  .tab-companies.tab-active .nav-tab-en   { color: rgba(212, 160, 68, 0.55); }
-  .tab-companies.tab-active .nav-tab-count { color: rgba(212, 160, 68, 0.45); }
+  .tab-companies.tab-active .nav-tab-en   { color: rgba(212, 160, 68, 0.58); }
+  .tab-companies.tab-active .nav-tab-count { background: rgba(212, 160, 68, 0.22); color: rgba(212, 160, 68, 0.78); }
 
   .tab-events.tab-active .tab-icon   { color: #d48070; }
   .tab-events.tab-active .nav-tab-tw { color: rgba(212, 128, 112, 0.92); }
-  .tab-events.tab-active .nav-tab-en { color: rgba(212, 128, 112, 0.55); }
+  .tab-events.tab-active .nav-tab-en { color: rgba(212, 128, 112, 0.58); }
 
   /* Recent member cards — white bg becomes ugly gray */
   .recent-member-card {
