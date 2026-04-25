@@ -178,13 +178,6 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     return name.charAt(0).toUpperCase();
   }
 
-  getBannerStyle(company: Company): string {
-    if (company.color) {
-      return `background: ${company.color};`;
-    }
-    return 'background: linear-gradient(135deg, #1a1a2e 0%, #2d1b4e 100%);';
-  }
-
   getGroupChipTextColor(): string {
     return 'var(--text-primary)';
   }
