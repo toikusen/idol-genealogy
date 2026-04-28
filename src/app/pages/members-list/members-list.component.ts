@@ -43,7 +43,6 @@ export class MembersListComponent implements OnInit {
       '台灣地下偶像所有成員一覽。',
       siteUrl('/members')
     );
-    this.seo.setRobotsNoIndex(true);
     this.seo.setJsonLdGraph([
       {
         '@type': 'CollectionPage',
