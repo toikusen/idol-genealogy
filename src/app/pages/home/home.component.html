@@ -342,12 +342,12 @@
                       <div style="
                         font-size: 0.92rem; color: var(--text-primary); font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                      ">{{group.name_jp || group.name}}</div>
-                      @if (group.name_jp) {
+                      ">{{group.name}}</div>
+                      @if (getGroupLabel(group); as label) {
                         <div style="
-                          font-size: 0.78rem; color: var(--text-faint);
+                          font-size: 0.78rem; color: #7a5080;
                           letter-spacing: 0.04em;
-                        ">{{group.name}}</div>
+                        ">{{label}}</div>
                       }
                     </div>
                     @if (group.founded_at) {
