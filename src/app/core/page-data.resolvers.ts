@@ -225,8 +225,8 @@ export const companyPageResolver: ResolveFn<CompanyPageData> = async (route) => 
     return {
       id,
       company,
-      activeGroups: groups.filter(g => !g.disbanded_at),
-      disbandedGroups: groups.filter(g => !!g.disbanded_at),
+      activeGroups: groups.filter(g => !g.disbanded_at || new Date(g.disbanded_at) > new Date()),
+      disbandedGroups: groups.filter(g => !!g.disbanded_at && new Date(g.disbanded_at) <= new Date()),
       soloMembers,
       lastProposal: proposals[0] ?? null,
       error: false,
