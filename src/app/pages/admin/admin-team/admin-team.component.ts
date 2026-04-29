@@ -25,6 +25,7 @@ export class AdminTeamComponent implements OnInit {
   currentUserId: string | null = null;
   isSuperAdmin = false;
   isEditor = false;
+  currentUserRoleId: string | null = null;
 
   userRoles: UserRole[] = [];
   selectedRoleId = '';
@@ -41,7 +42,10 @@ export class AdminTeamComponent implements OnInit {
     this.isSuperAdmin = await this.adminRole.isSuperAdmin();
     const isAdmin = await this.adminRole.isAdmin();
     this.isEditor = !isAdmin;
-    if (!this.isEditor) {
+    if (this.isEditor) {
+      const role = await this.adminRole.getCurrentRole();
+      this.currentUserRoleId = role?.id ?? null;
+    } else {
       this.userRoles = await this.adminRole.getAll();
     }
     await this.load();
@@ -57,7 +61,9 @@ export class AdminTeamComponent implements OnInit {
   }
 
   canEdit(m: TeamMember): boolean {
-    return this.isSuperAdmin || m.user_id === this.currentUserId;
+    if (this.isSuperAdmin) return true;
+    if (this.isEditor) return !!this.currentUserRoleId && m.user_role_id === this.currentUserRoleId;
+    return m.user_id === this.currentUserId;
   }
 
   get availableRoles(): UserRole[] {
@@ -67,7 +73,12 @@ export class AdminTeamComponent implements OnInit {
 
   onRoleSelect() {
     const role = this.userRoles.find(r => r.id === this.selectedRoleId);
-    if (role) this.editing.name = role.display_name ?? role.email;
+    if (role) {
+      this.editing.name = role.display_name ?? role.email;
+      this.editing.user_role_id = role.id;
+    } else {
+      this.editing.user_role_id = undefined;
+    }
   }
 
   openCreate() {

@@ -97,6 +97,17 @@ export class AdminRoleService implements OnDestroy {
     return this._inflightIsAdmin;
   }
 
+  async getCurrentRole(): Promise<UserRole | null> {
+    const session = await this.supabase.getSessionOnce();
+    if (!session?.user?.email) return null;
+    const { data } = await this.supabase.client
+      .from('user_roles')
+      .select('*')
+      .eq('email', session.user.email)
+      .limit(1);
+    return data?.[0] ?? null;
+  }
+
   async getAll(): Promise<UserRole[]> {
     const { data, error } = await this.supabase.client
       .from('user_roles')

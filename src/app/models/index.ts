@@ -103,6 +103,7 @@ export interface TeamMember {
   instagram: string | null;
   x: string | null;
   user_id: string | null;
+  user_role_id: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
