@@ -294,7 +294,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                 @if (operation === 'UPDATE' && original('founded_at')) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('founded_at') }}</p>
                 }
-                <p class="text-xs text-gray-300 mt-0.5">例：2019 年 4 月成立 → 選 2019 / 04，日期不確定可留空</p>
+                <p class="text-xs text-gray-300 mt-0.5">填初登日（團體正式出道當天），非消息公布日；日期不確定可留空</p>
 
               <!-- Disbanded date dropdowns (groups: YYYY-MM-DD) -->
               } @else if (tableName === 'groups' && field === 'disbanded_at') {
@@ -499,7 +499,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                 @if (operation === 'UPDATE' && original('joined_at')) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('joined_at') }}</p>
                 }
-                <p class="text-xs text-gray-300 mt-0.5">加入年月，不確定日期可只選年月</p>
+                <p class="text-xs text-gray-300 mt-0.5">填初登日（正式出道當天），非消息公布日；不確定日期可只選年月</p>
 
               <!-- Left date dropdowns (history: YYYY-MM-DD) -->
               } @else if (tableName === 'history' && field === 'left_at') {
