@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TeamMemberService } from '../../../core/team-member.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { SupabaseService } from '../../../core/supabase.service';
-import { TeamMember } from '../../../models';
+import { TeamMember, UserRole } from '../../../models';
 import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 
 @Component({
@@ -26,6 +26,9 @@ export class AdminTeamComponent implements OnInit {
   isSuperAdmin = false;
   isEditor = false;
 
+  userRoles: UserRole[] = [];
+  selectedRoleId = '';
+
   constructor(
     private teamService: TeamMemberService,
     private adminRole: AdminRoleService,
@@ -38,6 +41,9 @@ export class AdminTeamComponent implements OnInit {
     this.isSuperAdmin = await this.adminRole.isSuperAdmin();
     const isAdmin = await this.adminRole.isAdmin();
     this.isEditor = !isAdmin;
+    if (!this.isEditor) {
+      this.userRoles = await this.adminRole.getAll();
+    }
     await this.load();
   }
 
@@ -54,8 +60,19 @@ export class AdminTeamComponent implements OnInit {
     return this.isSuperAdmin || m.user_id === this.currentUserId;
   }
 
+  get availableRoles(): UserRole[] {
+    const usedNames = new Set(this.members.map(m => m.name));
+    return this.userRoles.filter(r => !usedNames.has(r.display_name ?? r.email));
+  }
+
+  onRoleSelect() {
+    const role = this.userRoles.find(r => r.id === this.selectedRoleId);
+    if (role) this.editing.name = role.display_name ?? role.email;
+  }
+
   openCreate() {
     this.editing = { sort_order: 0, user_id: this.currentUserId };
+    this.selectedRoleId = '';
     this.isEdit = false;
     this.error = '';
     this.showModal = true;
