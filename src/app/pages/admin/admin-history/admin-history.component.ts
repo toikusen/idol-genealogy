@@ -34,12 +34,18 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   isAdmin = false;
   private _sub: Subscription;
 
+  readonly ROLE_OPTIONS = ['隊長', '副隊長', '隊員'];
+
   statusOptions = [
     { value: 'active', label: '正常在籍' },
     { value: 'concurrent', label: '兼任' },
     { value: 'transferred', label: '移籍' },
     { value: 'graduated', label: '畢業' },
   ];
+
+  selectRole(r: string): void {
+    this.editing.role = this.editing.role === r ? null : r;
+  }
 
   constructor(
     private historyService: HistoryService,

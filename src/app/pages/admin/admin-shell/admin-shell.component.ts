@@ -17,8 +17,10 @@ export class AdminShellComponent implements OnDestroy {
   isAdmin = false;
   pendingProposalCount = 0;
   drawerOpen = false;
+  currentUserName = '';
   private _sub: Subscription;
   private _navSub: Subscription;
+  private _authSub: Subscription;
 
   constructor(
     private supabase: SupabaseService,
@@ -30,6 +32,17 @@ export class AdminShellComponent implements OnDestroy {
       this.isAdmin = v;
       if (v) {
         this.pendingProposalCount = await this.proposalService.getPendingCount().catch(() => 0);
+      }
+    });
+
+    this._authSub = this.supabase.authState$.subscribe(async session => {
+      if (session?.user?.email) {
+        const email = session.user.email;
+        const roles = await this.adminRole.getAll().catch(() => []);
+        const match = roles.find(r => r.email === email);
+        this.currentUserName = match?.display_name || email.split('@')[0];
+      } else {
+        this.currentUserName = '';
       }
     });
 
@@ -47,6 +60,7 @@ export class AdminShellComponent implements OnDestroy {
     this.closeDrawer();
     this._sub.unsubscribe();
     this._navSub.unsubscribe();
+    this._authSub.unsubscribe();
   }
 
   toggleDrawer(): void {

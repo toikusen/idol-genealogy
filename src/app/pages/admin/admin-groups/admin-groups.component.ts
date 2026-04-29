@@ -25,6 +25,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   saving = false;
   error = '';
   isAdmin = false;
+  isEditor = false;
   private _sub: Subscription;
 
   fetchingIg = false;
@@ -48,7 +49,10 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     private companyService: CompanyService,
     private igPhoto: IgPhotoService
   ) {
-    this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
+    this._sub = this.adminRole.isAdmin$.subscribe(v => {
+      this.isAdmin = v;
+      this.isEditor = !v;
+    });
   }
 
   ngOnDestroy(): void { this._sub.unsubscribe(); }
@@ -188,7 +192,9 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   async save() {
     if (!this.editing.name?.trim()) { this.error = '團體名稱為必填'; return; }
-    this.editing.style = this.editingStyles.length > 0 ? this.editingStyles.join(',') : null;
+    if (!this.isEditor) {
+      this.editing.style = this.editingStyles.length > 0 ? this.editingStyles.join(',') : null;
+    }
     this.saving = true;
     try {
       if (this.isEdit && this.editing.id) {

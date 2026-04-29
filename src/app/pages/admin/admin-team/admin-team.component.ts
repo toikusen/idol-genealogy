@@ -24,6 +24,7 @@ export class AdminTeamComponent implements OnInit {
 
   currentUserId: string | null = null;
   isSuperAdmin = false;
+  isEditor = false;
 
   constructor(
     private teamService: TeamMemberService,
@@ -35,6 +36,8 @@ export class AdminTeamComponent implements OnInit {
     const session = await this.supabase.getSessionOnce();
     this.currentUserId = session?.user?.id ?? null;
     this.isSuperAdmin = await this.adminRole.isSuperAdmin();
+    const isAdmin = await this.adminRole.isAdmin();
+    this.isEditor = !isAdmin;
     await this.load();
   }
 
@@ -68,11 +71,13 @@ export class AdminTeamComponent implements OnInit {
   async save() {
     if (!this.editing.name?.trim()) { this.error = '名稱為必填'; return; }
     this.saving = true;
+    const payload = { ...this.editing };
+    if (this.isEditor) delete payload.sort_order;
     try {
       if (this.isEdit && this.editing.id) {
-        await this.teamService.update(this.editing.id, this.editing);
+        await this.teamService.update(this.editing.id, payload);
       } else {
-        await this.teamService.create(this.editing);
+        await this.teamService.create(payload);
       }
       this.showModal = false;
       await this.load();

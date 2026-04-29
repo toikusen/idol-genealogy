@@ -208,9 +208,18 @@
 
       <!-- role -->
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">角色 / 職位</label>
-        <input type="text" [(ngModel)]="editing.role" placeholder="隊長、福隊長…"
-          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"/>
+        <label class="block text-xs font-medium text-gray-600 mb-1">角色 / 職位<span class="font-normal text-gray-400 ml-1">（可選）</span></label>
+        <div class="flex flex-wrap gap-2">
+          @for (r of ROLE_OPTIONS; track r) {
+            <button
+              type="button"
+              (click)="selectRole(r)"
+              [class]="editing.role === r
+                ? 'px-3 py-1 rounded-full text-xs font-medium border border-pink-400 bg-pink-100 text-pink-700 transition-colors'
+                : 'px-3 py-1 rounded-full text-xs font-medium border border-gray-200 bg-white text-gray-500 hover:border-pink-300 hover:text-pink-500 transition-colors'"
+            >{{ r }}</button>
+          }
+        </div>
       </div>
 
       <!-- status -->
