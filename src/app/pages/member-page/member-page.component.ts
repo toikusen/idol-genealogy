@@ -163,7 +163,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       .filter(h => h.group || h.external_group_name)
       .sort((a, b) => (a.joined_at ?? '').localeCompare(b.joined_at ?? ''))
       .map(h => {
-        const gName = h.group?.name_jp ?? h.group?.name ?? h.external_group_name ?? '';
+        const gName = h.group?.name || h.external_group_name || '';
         const from = h.joined_at ? h.joined_at.slice(0, 4) : null;
         const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' ? '至今' : null);
         const range = from ? (to ? `${from}–${to}` : from) : '';
@@ -215,7 +215,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     };
     const groupsForSchema = pageData.histories
       .filter(h => h.group)
-      .map(h => ({ '@type': 'MusicGroup', name: h.group!.name_jp ?? h.group!.name }));
+      .map(h => ({ '@type': 'MusicGroup', name: h.group!.name }));
     if (groupsForSchema.length > 0) personSchema['memberOf'] = groupsForSchema;
 
     const breadcrumb = {

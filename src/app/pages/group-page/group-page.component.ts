@@ -209,7 +209,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const displayName = pageData.group.name_jp ?? pageData.group.name;
+    const displayName = pageData.group.name;
     const activeCount = pageData.histories.filter(h => h.status === 'active').length;
     const parts: string[] = [];
     if (pageData.group.founded_at) parts.push(`成立於 ${pageData.group.founded_at.slice(0, 4)} 年`);
