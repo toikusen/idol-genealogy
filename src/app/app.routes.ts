@@ -1,5 +1,6 @@
 import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
 import { adminGuard } from './core/admin.guard';
+import { staffGuard } from './core/staff.guard';
 import { companyPageResolver, groupPageResolver, memberPageResolver } from './core/page-data.resolvers';
 
 function handleMatcher(segments: UrlSegment[]): UrlMatchResult | null {
@@ -44,7 +45,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    canActivate: [adminGuard],
+    canActivate: [staffGuard],
     loadComponent: () => import('./pages/admin/admin-shell/admin-shell.component').then(m => m.AdminShellComponent),
     children: [
       { path: 'members', loadComponent: () => import('./pages/admin/admin-members/admin-members.component').then(m => m.AdminMembersComponent) },

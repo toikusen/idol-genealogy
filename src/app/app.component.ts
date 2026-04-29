@@ -18,6 +18,7 @@ import { ThemeService } from './core/theme.service';
 export class AppComponent {
   readonly session$;
   readonly isAdmin$;
+  readonly isStaff$;
   readonly showScrollTop = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -30,6 +31,7 @@ export class AppComponent {
   ) {
     this.session$ = supabase.authState$;
     this.isAdmin$ = adminRole.isAdmin$;
+    this.isStaff$ = adminRole.isStaff$;
 
     router.events.pipe(
       filter(e => e instanceof NavigationEnd),

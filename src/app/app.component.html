@@ -56,7 +56,7 @@
   }
 }
 
-@if ((isAdmin$ | async) && !isAdminRoute) {
+@if ((isStaff$ | async) && !isAdminRoute) {
   <a
     routerLink="/admin"
     class="admin-pill"

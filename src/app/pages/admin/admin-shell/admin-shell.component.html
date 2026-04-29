@@ -58,8 +58,8 @@
          class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors">
         歷史記錄
       </a>
-      @if (isAdmin) {
-        <div class="pt-2 mt-2 border-t border-gray-100">
+      <div class="pt-2 mt-2 border-t border-gray-100">
+        @if (isAdmin) {
           <a routerLink="/admin/audit-log" (click)="closeDrawer()" routerLinkActive="bg-purple-100 text-purple-700 font-medium"
              class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors">
             變更記錄
@@ -73,12 +73,12 @@
               </span>
             }
           </a>
-          <a routerLink="/admin/roles" (click)="closeDrawer()" routerLinkActive="bg-purple-100 text-purple-700 font-medium"
-             class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors">
-            角色管理
-          </a>
-        </div>
-      }
+        }
+        <a routerLink="/admin/roles" (click)="closeDrawer()" routerLinkActive="bg-purple-100 text-purple-700 font-medium"
+           class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors">
+          角色管理
+        </a>
+      </div>
     </nav>
 
     <!-- Bottom actions -->
@@ -142,9 +142,9 @@
         歷史記錄
       </a>
 
-      <!-- Admin-only links -->
-      @if (isAdmin) {
-        <div class="pt-2 mt-2 border-t border-gray-100">
+      <!-- Admin-only + shared links -->
+      <div class="pt-2 mt-2 border-t border-gray-100">
+        @if (isAdmin) {
           <a
             routerLink="/admin/audit-log"
             routerLinkActive="bg-purple-100 text-purple-700 font-medium"
@@ -164,15 +164,15 @@
               </span>
             }
           </a>
-          <a
-            routerLink="/admin/roles"
-            routerLinkActive="bg-purple-100 text-purple-700 font-medium"
-            class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
-          >
-            角色管理
-          </a>
-        </div>
-      }
+        }
+        <a
+          routerLink="/admin/roles"
+          routerLinkActive="bg-purple-100 text-purple-700 font-medium"
+          class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+        >
+          角色管理
+        </a>
+      </div>
     </nav>
 
     <!-- Bottom actions -->

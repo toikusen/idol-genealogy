@@ -7,6 +7,8 @@ import { UserRole } from '../models';
 export class AdminRoleService implements OnDestroy {
   private _isAdmin = new BehaviorSubject<boolean>(false);
   readonly isAdmin$ = this._isAdmin.asObservable();
+  private _isStaff = new BehaviorSubject<boolean>(false);
+  readonly isStaff$ = this._isStaff.asObservable();
   private _sub: Subscription;
   private _cachedUserId: string | null = null;
   private _cachedIsAdmin: boolean | null = null;
@@ -18,14 +20,23 @@ export class AdminRoleService implements OnDestroy {
         const userId = session.user.id;
         if (this._cachedUserId === userId && this._cachedIsAdmin !== null) {
           this._isAdmin.next(this._cachedIsAdmin);
+          this._isStaff.next(true);
           return;
         }
-        this.isAdmin().then(val => this._isAdmin.next(val));
+        this.isAdmin().then(val => {
+          this._isAdmin.next(val);
+          if (val) {
+            this._isStaff.next(true);
+          } else {
+            this.isStaff().then(s => this._isStaff.next(s));
+          }
+        });
       } else {
         this._cachedUserId = null;
         this._cachedIsAdmin = null;
         this._inflightIsAdmin = null;
         this._isAdmin.next(false);
+        this._isStaff.next(false);
       }
     });
   }
@@ -43,6 +54,20 @@ export class AdminRoleService implements OnDestroy {
       .select('id')
       .eq('email', session.user.email)
       .eq('role', 'superadmin')
+      .limit(1);
+    if (error || !data) return false;
+    return data.length > 0;
+  }
+
+  /** editor、admin、superadmin 皆可進入後台 */
+  async isStaff(): Promise<boolean> {
+    const session = await this.supabase.getSessionOnce();
+    if (!session?.user?.email) return false;
+    const { data, error } = await this.supabase.client
+      .from('user_roles')
+      .select('id')
+      .eq('email', session.user.email)
+      .in('role', ['editor', 'admin', 'superadmin'])
       .limit(1);
     if (error || !data) return false;
     return data.length > 0;
