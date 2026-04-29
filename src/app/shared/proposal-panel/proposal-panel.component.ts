@@ -264,8 +264,8 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                 }
                 <p class="text-xs text-gray-300 mt-0.5">只填確定的部分，不確定請留空</p>
 
-              <!-- Founded date dropdowns (groups: YYYY-MM-DD) -->
-              } @else if (tableName === 'groups' && field === 'founded_at') {
+              <!-- Founded date dropdowns (groups + companies: YYYY-MM-DD) -->
+              } @else if ((tableName === 'groups' || tableName === 'companies') && field === 'founded_at') {
                 <div class="flex items-center gap-2">
                   <select [(ngModel)]="foundedYear" name="foundedYear"
                     class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
@@ -781,6 +781,8 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
       'groups:photo_url': 'https://...',
       'companies:instagram': 'https://www.instagram.com/username/',
       'companies:facebook': 'https://www.facebook.com/username',
+      'companies:x': 'https://x.com/username',
+      'companies:youtube': 'https://www.youtube.com/@channel',
       'companies:website': 'https://example.com',
       'companies:photo_url': 'https://...',
     };
@@ -857,6 +859,11 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
       this.parseYMD(this.originalData?.['disbanded_at'], 'disbanded');
       this.companies = await this.companyService.getAll().catch(() => []);
       this.formData['company_id'] = this.originalData?.['company_id'] ?? '';
+    }
+
+    // Companies: parse founded_at
+    if (this.tableName === 'companies') {
+      this.parseYMD(this.originalData?.['founded_at'], 'founded');
     }
 
     // History: parse joined_at / left_at into year/month/day selectors
@@ -948,6 +955,9 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
     if (this.tableName === 'groups') {
       this.formData['founded_at'] = this.buildYMD(this.foundedYear, this.foundedMonth, this.foundedDay);
       this.formData['disbanded_at'] = this.buildYMD(this.disbandedYear, this.disbandedMonth, this.disbandedDay);
+    }
+    if (this.tableName === 'companies') {
+      this.formData['founded_at'] = this.buildYMD(this.foundedYear, this.foundedMonth, this.foundedDay);
     }
 
     // Combine joined_at/left_at selectors → YYYY-MM-DD

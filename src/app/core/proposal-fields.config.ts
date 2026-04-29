@@ -15,7 +15,7 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
     'external_group_name', 'external_country',
   ],
   companies: [
-    'name', 'description', 'website', 'instagram', 'facebook', 'photo_url',
+    'name', 'description', 'founded_at', 'website', 'instagram', 'facebook', 'x', 'youtube', 'photo_url',
   ],
 };
 
@@ -39,7 +39,7 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
     external_group_name: '海外團體/solo名稱', external_country: '國家／地區（非必填）',
   },
   companies: {
-    name: '公司名稱', description: '簡介', website: '官網',
-    instagram: 'Instagram', facebook: 'Facebook', photo_url: '頭像圖片',
+    name: '公司名稱', description: '簡介', founded_at: '成立日期', website: '官網',
+    instagram: 'Instagram', facebook: 'Facebook', x: 'X (Twitter)', youtube: 'YouTube', photo_url: '頭像圖片',
   },
 };
