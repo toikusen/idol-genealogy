@@ -5,6 +5,7 @@ import {
   isIndexable,
   isAdEligible,
   IndexabilitySignals,
+  MIN_AD_TEXT_LENGTH,
 } from './indexability.utils';
 
 const baseMember = {
@@ -37,9 +38,21 @@ describe('memberIndexabilitySignals', () => {
   });
 
   it('hasNotes treats whitespace-only notes as empty', () => {
-    expect(memberIndexabilitySignals({ ...baseMember, notes: 'some bio' }, 0).hasNotes).toBeTrue();
-    expect(memberIndexabilitySignals({ ...baseMember, notes: '' }, 0).hasNotes).toBeFalse();
-    expect(memberIndexabilitySignals({ ...baseMember, notes: '   \n  ' }, 0).hasNotes).toBeFalse();
+    const withNotes = memberIndexabilitySignals({ ...baseMember, notes: ' some bio ' }, 0);
+    expect(withNotes.hasNotes).toBeTrue();
+    expect(withNotes.noteLength).toBe(8);
+
+    const emptyNotes = memberIndexabilitySignals({ ...baseMember, notes: '' }, 0);
+    expect(emptyNotes.hasNotes).toBeFalse();
+    expect(emptyNotes.noteLength).toBe(0);
+
+    const whitespaceNotes = memberIndexabilitySignals({ ...baseMember, notes: '   \n  ' }, 0);
+    expect(whitespaceNotes.hasNotes).toBeFalse();
+    expect(whitespaceNotes.noteLength).toBe(0);
+
+    const placeholderNotes = memberIndexabilitySignals({ ...baseMember, notes: '測試' }, 0);
+    expect(placeholderNotes.hasNotes).toBeFalse();
+    expect(placeholderNotes.noteLength).toBe(0);
   });
 
   it('hasExternalLink is true when any social URL is present', () => {
@@ -137,6 +150,7 @@ const emptySignals: IndexabilitySignals = {
   hasHistory: false,
   hasPhoto: false,
   hasNotes: false,
+  noteLength: 0,
   hasExternalLink: false,
   hasRelation: false,
 };
@@ -158,17 +172,22 @@ describe('isIndexable', () => {
     expect(isIndexable({ ...emptySignals, hasNotes: true })).toBeFalse();
   });
 
-  it('returns false for history-only shells that do not have enough supporting depth', () => {
+  it('returns false for history-only pages missing photo or external link', () => {
     expect(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true })).toBeFalse();
     expect(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true })).toBeFalse();
     expect(isIndexable({ ...emptySignals, hasHistory: true, hasRelation: true })).toBeFalse();
+    expect(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasRelation: true })).toBeFalse();
+    expect(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true, hasRelation: true })).toBeFalse();
   });
 
-  it('returns true when prose exists with one support or history has both media and another support', () => {
-    expect(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasRelation: true })).toBeTrue();
+  it('returns true for history-only pages with photo AND external link', () => {
     expect(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasExternalLink: true })).toBeTrue();
+  });
+
+  it('returns true when notes exist with at least one support', () => {
     expect(isIndexable({ ...emptySignals, hasNotes: true, hasRelation: true })).toBeTrue();
     expect(isIndexable({ ...emptySignals, hasNotes: true, hasExternalLink: true })).toBeTrue();
+    expect(isIndexable({ ...emptySignals, hasNotes: true, hasPhoto: true })).toBeTrue();
   });
 });
 
@@ -177,30 +196,70 @@ describe('isAdEligible', () => {
     expect(isAdEligible(emptySignals)).toBeFalse();
   });
 
-  it('returns false when history is missing, even if other signals are rich', () => {
+  it('returns false when notes are missing even with rich evidence', () => {
     expect(isAdEligible({
-      hasHistory: false, hasPhoto: true, hasNotes: true, hasExternalLink: true, hasRelation: true,
+      hasHistory: true, hasPhoto: true, hasNotes: false, noteLength: 0, hasExternalLink: true, hasRelation: true,
     })).toBeFalse();
   });
 
-  it('returns false when history is present but rich editorial/media context is missing', () => {
-    expect(isAdEligible({ ...emptySignals, hasHistory: true })).toBeFalse();
-    expect(isAdEligible({ ...emptySignals, hasHistory: true, hasPhoto: true })).toBeFalse();
-    expect(isAdEligible({ ...emptySignals, hasHistory: true, hasRelation: true })).toBeFalse();
-    expect(isAdEligible({ ...emptySignals, hasHistory: true, hasPhoto: true, hasRelation: true })).toBeFalse();
+  it('returns false when history is missing, even if other signals are rich', () => {
+    expect(isAdEligible({
+      hasHistory: false, hasPhoto: true, hasNotes: true, noteLength: MIN_AD_TEXT_LENGTH, hasExternalLink: true, hasRelation: true,
+    })).toBeFalse();
   });
 
-  it('returns true when history is present and the page has real prose or photo+external context', () => {
-    expect(isAdEligible({ ...emptySignals, hasHistory: true, hasPhoto: true, hasExternalLink: true })).toBeTrue();
-    expect(isAdEligible({ ...emptySignals, hasHistory: true, hasNotes: true, hasRelation: true })).toBeTrue();
-    expect(isAdEligible({ ...emptySignals, hasHistory: true, hasNotes: true, hasPhoto: true })).toBeTrue();
+  it('returns false when notes are shorter than the ad text threshold', () => {
     expect(isAdEligible({
-      hasHistory: true, hasPhoto: true, hasNotes: true, hasExternalLink: true, hasRelation: true,
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH - 1,
+      hasPhoto: true,
+    })).toBeFalse();
+  });
+
+  it('returns false with substantial notes but no supporting signal', () => {
+    expect(isAdEligible({
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+    })).toBeFalse();
+  });
+
+  it('returns true with history, substantial notes and at least one supporting signal', () => {
+    expect(isAdEligible({
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+      hasPhoto: true,
+    })).toBeTrue();
+    expect(isAdEligible({
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+      hasExternalLink: true,
+    })).toBeTrue();
+    expect(isAdEligible({
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+      hasRelation: true,
     })).toBeTrue();
   });
 
   it('implies isIndexable: any ad-eligible signal set is also indexable', () => {
-    const rich = { hasHistory: true, hasPhoto: true, hasNotes: false, hasExternalLink: true, hasRelation: false };
+    const rich = {
+      hasHistory: true,
+      hasPhoto: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+      hasExternalLink: true,
+      hasRelation: false,
+    };
     expect(isAdEligible(rich)).toBeTrue();
     expect(isIndexable(rich)).toBeTrue();
   });

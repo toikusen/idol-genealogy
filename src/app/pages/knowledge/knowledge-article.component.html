@@ -1,0 +1,66 @@
+<main id="main-content" class="article-shell">
+  <div class="article-inner">
+    <a routerLink="/learn/" class="article-back">← 回資料閱讀指南</a>
+
+    @if (article; as item) {
+      <article class="article-layout">
+        <header class="article-header">
+          <p class="article-kicker">Idol Maps Guide</p>
+          <h1>{{ item.title }}</h1>
+          <p class="article-description">{{ item.description }}</p>
+          <div class="article-meta">
+            <span>Idol Maps 編輯部</span>
+            <span>{{ item.updatedAt }}</span>
+            <span>{{ item.readingMinutes }} 分鐘閱讀</span>
+          </div>
+        </header>
+
+        <section class="article-intro" aria-label="文章摘要">
+          @for (paragraph of item.intro; track paragraph) {
+            <p>{{ paragraph }}</p>
+          }
+        </section>
+
+        <aside class="article-points" aria-label="重點整理">
+          <h2>重點整理</h2>
+          <ul>
+            @for (point of item.keyPoints; track point) {
+              <li>{{ point }}</li>
+            }
+          </ul>
+        </aside>
+
+        <div class="article-body">
+          @for (section of item.sections; track section.heading) {
+            <section>
+              <h2>{{ section.heading }}</h2>
+              @for (paragraph of section.paragraphs; track paragraph) {
+                <p>{{ paragraph }}</p>
+              }
+            </section>
+          }
+        </div>
+
+        <app-ad-banner adSlot="4061570176"></app-ad-banner>
+
+        <nav class="article-related" aria-label="延伸閱讀">
+          <h2>延伸閱讀</h2>
+          <div class="article-related-grid">
+            @for (related of relatedArticles; track related.slug) {
+              <a [routerLink]="'/learn/' + related.slug + '/'" class="article-related-link">
+                <span>{{ related.readingMinutes }} 分鐘閱讀</span>
+                <strong>{{ related.title }}</strong>
+              </a>
+            }
+          </div>
+        </nav>
+      </article>
+    } @else {
+      <section class="article-missing">
+        <h1>找不到這篇文章</h1>
+        <p>這個資料閱讀指南頁面不存在，或網址已經變更。</p>
+        <a routerLink="/learn/">查看所有指南文章</a>
+      </section>
+    }
+  </div>
+</main>

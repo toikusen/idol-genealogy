@@ -1,12 +1,13 @@
 // src/app/pages/home/home.component.spec.ts
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HomeComponent } from './home.component';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
 import { Group, Member, Company } from '../../models';
+import { HomePageData } from '../../core/page-data.resolvers';
 
 const makeGroup = (overrides: Partial<Group> = {}): Group =>
   ({ id: 'g1', name: 'TestGroup', founded_at: '2020-01-01', disbanded_at: null, color: null, notes: null, company: null, company_id: null, photo_url: null, name_jp: null, updated_at: '2024-01-01' } as unknown as Group, { ...overrides } as Group);
@@ -49,7 +50,23 @@ describe('HomeComponent', () => {
     search: jasmine.createSpy().and.returnValue(Promise.resolve([])),
   });
 
-  async function setup(memberOverrides = {}, groupOverrides = {}, companyOverrides = {}) {
+  async function setup(
+    memberOverrides = {},
+    groupOverrides = {},
+    companyOverrides = {},
+    pageDataOverrides: Partial<HomePageData> = {},
+  ) {
+    const pageData: HomePageData = {
+      recentMembers: [],
+      memberCount: 0,
+      allGroups: [],
+      allCompanies: [],
+      topMembers: [],
+      topGroups: [],
+      upcomingBirthdays: [],
+      allSoloMembers: [],
+      ...pageDataOverrides,
+    };
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
       providers: [
@@ -57,6 +74,15 @@ describe('HomeComponent', () => {
         { provide: MemberService, useValue: { ...emptyMemberService(), ...memberOverrides } },
         { provide: GroupService, useValue: { ...emptyGroupService(), ...groupOverrides } },
         { provide: CompanyService, useValue: { ...emptyCompanyService(), ...companyOverrides } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              data: { pageData },
+              queryParamMap: { get: () => null },
+            },
+          },
+        },
         { provide: SeoService, useValue: { setPage: jasmine.createSpy(), setJsonLd: jasmine.createSpy() } },
       ],
     }).compileComponents();
@@ -67,7 +93,7 @@ describe('HomeComponent', () => {
   describe('member name display (Issue 1 — mixed ngIf)', () => {
     it('shows roman name secondary line only when name_roman exists', async () => {
       const m = member({ id: 'm1', name: 'Alice', name_roman: 'Alice Roman', name_hiragana: null });
-      await setup({ getRecent: jasmine.createSpy().and.returnValue(Promise.resolve([m])) });
+      await setup({}, {}, {}, { recentMembers: [m], memberCount: 1 });
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
       await fixture.whenStable();
@@ -78,7 +104,7 @@ describe('HomeComponent', () => {
 
     it('shows both hiragana and roman separated by ·', async () => {
       const m = member({ id: 'm1', name: 'Alice', name_roman: 'Alice Roman', name_hiragana: 'ありす' });
-      await setup({ getRecent: jasmine.createSpy().and.returnValue(Promise.resolve([m])) });
+      await setup({}, {}, {}, { recentMembers: [m], memberCount: 1 });
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
       await fixture.whenStable();
@@ -102,6 +128,8 @@ describe('HomeComponent', () => {
       await setup(
         {},
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([activeGroup, disbandedGroup, traineeGroup])), getTopByViews: jasmine.createSpy().and.returnValue(Promise.resolve([])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
+        {},
+        { allGroups: [activeGroup, disbandedGroup, traineeGroup] },
       );
       fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
@@ -131,6 +159,7 @@ describe('HomeComponent', () => {
         {},
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([g1, g2])), getTopByViews: jasmine.createSpy().and.returnValue(Promise.resolve([])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([co])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
+        { allGroups: [g1, g2], allCompanies: [co] },
       );
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
@@ -155,6 +184,7 @@ describe('HomeComponent', () => {
         {},
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([g1, g2])), getTopByViews: jasmine.createSpy().and.returnValue(Promise.resolve([])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([co])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
+        { allGroups: [g1, g2], allCompanies: [co] },
       );
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();

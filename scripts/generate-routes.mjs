@@ -19,10 +19,22 @@ const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'] ?? 'sb_publishable_Pt
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const KNOWLEDGE_ROUTES = [
+  '/learn/how-to-read-idol-history',
+  '/learn/member-group-company-relationships',
+  '/learn/data-source-and-correction',
+];
+
+function isTestName(value) {
+  if (typeof value !== 'string') return false;
+  const text = value.trim().toLowerCase();
+  return text === '測試帳號' || text === '測試用的團體' || text === '測試公司' || text === 'test';
+}
+
 async function run() {
   const { data: members, error: membersError } = await supabase
     .from('members')
-    .select('id, updated_at, notes, photo_url, instagram, facebook, x, maid_url, company_id');
+    .select('id, name, updated_at, notes, photo_url, instagram, facebook, x, maid_url, company_id');
   if (membersError) {
     console.error('Error fetching members:', membersError.message);
     process.exit(1);
@@ -30,7 +42,7 @@ async function run() {
 
   const { data: groups, error: groupsError } = await supabase
     .from('groups')
-    .select('id, updated_at, notes, photo_url, instagram, facebook, x, youtube, company_id');
+    .select('id, name, updated_at, notes, photo_url, instagram, facebook, x, youtube, company_id');
   if (groupsError) {
     console.error('Error fetching groups:', groupsError.message);
     process.exit(1);
@@ -45,36 +57,45 @@ async function run() {
   }
   const memberHistoryCount = new Map();
   const groupHistoryCount = new Map();
-  for (const h of histories) {
+  const publicMembers = members.filter(m => !isTestName(m.name));
+  const publicGroups = groups.filter(g => !isTestName(g.name));
+  const publicMemberIds = new Set(publicMembers.map(m => m.id));
+  const publicGroupIds = new Set(publicGroups.map(g => g.id));
+  const publicHistories = histories.filter(h =>
+    (!h.member_id || publicMemberIds.has(h.member_id)) &&
+    (!h.group_id || publicGroupIds.has(h.group_id))
+  );
+  for (const h of publicHistories) {
     if (h.member_id) memberHistoryCount.set(h.member_id, (memberHistoryCount.get(h.member_id) ?? 0) + 1);
     if (h.group_id) groupHistoryCount.set(h.group_id, (groupHistoryCount.get(h.group_id) ?? 0) + 1);
   }
 
   const { data: companies, error: companiesError } = await supabase
     .from('companies')
-    .select('id, updated_at, description, photo_url, instagram, facebook, x, youtube, website');
+    .select('id, name, updated_at, description, photo_url, instagram, facebook, x, youtube, website');
   if (companiesError) {
     console.error('Error fetching companies:', companiesError.message);
     process.exit(1);
   }
+  const publicCompanies = companies.filter(c => !isTestName(c.name));
 
   // Companies: affiliated entity count = groups + solo members (member with company_id and no history counts as solo).
   // Approximation: count any group or member with matching company_id.
   const companyAffiliationCount = new Map();
-  for (const g of groups) {
+  for (const g of publicGroups) {
     if (g.company_id) companyAffiliationCount.set(g.company_id, (companyAffiliationCount.get(g.company_id) ?? 0) + 1);
   }
-  for (const m of members) {
+  for (const m of publicMembers) {
     if (m.company_id) companyAffiliationCount.set(m.company_id, (companyAffiliationCount.get(m.company_id) ?? 0) + 1);
   }
 
-  const indexableMembers = members.filter(m =>
+  const indexableMembers = publicMembers.filter(m =>
     isIndexable(memberIndexabilitySignals(m, memberHistoryCount.get(m.id) ?? 0)),
   );
-  const indexableGroups = groups.filter(g =>
+  const indexableGroups = publicGroups.filter(g =>
     isIndexable(groupIndexabilitySignals(g, groupHistoryCount.get(g.id) ?? 0)),
   );
-  const indexableCompanies = companies.filter(c =>
+  const indexableCompanies = publicCompanies.filter(c =>
     isIndexable(companyIndexabilitySignals(c, companyAffiliationCount.get(c.id) ?? 0)),
   );
 
@@ -83,6 +104,8 @@ async function run() {
     '/members',
     '/contributors',
     '/guide',
+    '/learn',
+    ...KNOWLEDGE_ROUTES,
     '/about',
     '/contact',
     '/privacy',
@@ -97,9 +120,9 @@ async function run() {
   writeFileSync('prerender-routes.txt', routes.join('\n') + '\n', 'utf8');
   console.log(
     `prerender-routes.txt: ${routes.length} routes ` +
-    `(${indexableMembers.length}/${members.length} members, ` +
-    `${indexableGroups.length}/${groups.length} groups, ` +
-    `${indexableCompanies.length}/${companies.length} companies).`,
+    `(${indexableMembers.length}/${publicMembers.length} public members, ` +
+    `${indexableGroups.length}/${publicGroups.length} public groups, ` +
+    `${indexableCompanies.length}/${publicCompanies.length} public companies).`,
   );
 
   const buildDate = new Date().toISOString().slice(0, 10);
@@ -129,6 +152,18 @@ async function run() {
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`,
+    `  <url>
+    <loc>${SITE_URL}/learn</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`,
+    ...KNOWLEDGE_ROUTES.map(route => `  <url>
+    <loc>${SITE_URL}${route}</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>`),
     `  <url>
     <loc>${SITE_URL}/contact</loc>
     <lastmod>${buildDate}</lastmod>

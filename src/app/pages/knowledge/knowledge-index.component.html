@@ -1,0 +1,34 @@
+<main id="main-content" class="knowledge-shell">
+  <div class="knowledge-inner">
+    <a routerLink="/" class="knowledge-back">← 返回首頁</a>
+
+    <header class="knowledge-header">
+      <p class="knowledge-kicker">Archive Notes · 資料閱讀指南</p>
+      <h1>理解地下偶像資料的方法</h1>
+      <p>
+        Idol Maps 不只是名單列表，也是一份持續整理的活動紀錄。這裡收集資料閱讀、來源判斷與補正流程的說明，幫助讀者理解每一筆公開紀錄背後的脈絡。
+      </p>
+    </header>
+
+    <section class="knowledge-grid" aria-label="文章列表">
+      @for (article of articles; track article.slug) {
+        <a [routerLink]="'/learn/' + article.slug + '/'" class="knowledge-card">
+          <span class="knowledge-card-meta">{{ article.readingMinutes }} 分鐘閱讀 · {{ article.updatedAt }}</span>
+          <h2>{{ article.title }}</h2>
+          <p>{{ article.description }}</p>
+          <span class="knowledge-card-link">閱讀文章 →</span>
+        </a>
+      }
+    </section>
+
+    <section class="knowledge-note" aria-label="資料品質說明">
+      <h2>為什麼需要這些說明？</h2>
+      <p>
+        地下偶像資訊常散落在社群平台、活動公告與粉絲記憶中。當資料被整理成搜尋頁面時，讀者需要知道如何解讀時間軸、如何判斷來源，以及如何回報錯誤。這些文章就是本站的編輯脈絡，也是資料長期維護的基礎。
+      </p>
+      <p>
+        若你正在補資料，建議先閱讀資料來源與修正原則，再提交提案。清楚的來源與具體說明，會讓管理員更容易判斷，也能讓後來的讀者更信任這份紀錄。
+      </p>
+    </section>
+  </div>
+</main>

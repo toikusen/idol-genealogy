@@ -12,6 +12,7 @@ import {
   companyIndexabilitySignals,
   isIndexable,
   isAdEligible,
+  MIN_AD_TEXT_LENGTH,
 } from './indexability.mjs';
 
 const baseMember = {
@@ -38,9 +39,21 @@ describe('memberIndexabilitySignals', () => {
   });
 
   it('hasNotes ignores whitespace-only text', () => {
-    assert.equal(memberIndexabilitySignals({ ...baseMember, notes: 'bio' }, 0).hasNotes, true);
-    assert.equal(memberIndexabilitySignals({ ...baseMember, notes: '' }, 0).hasNotes, false);
-    assert.equal(memberIndexabilitySignals({ ...baseMember, notes: '  \n  ' }, 0).hasNotes, false);
+    const withNotes = memberIndexabilitySignals({ ...baseMember, notes: ' bio ' }, 0);
+    assert.equal(withNotes.hasNotes, true);
+    assert.equal(withNotes.noteLength, 3);
+
+    const emptyNotes = memberIndexabilitySignals({ ...baseMember, notes: '' }, 0);
+    assert.equal(emptyNotes.hasNotes, false);
+    assert.equal(emptyNotes.noteLength, 0);
+
+    const whitespaceNotes = memberIndexabilitySignals({ ...baseMember, notes: '  \n  ' }, 0);
+    assert.equal(whitespaceNotes.hasNotes, false);
+    assert.equal(whitespaceNotes.noteLength, 0);
+
+    const placeholderNotes = memberIndexabilitySignals({ ...baseMember, notes: '測試' }, 0);
+    assert.equal(placeholderNotes.hasNotes, false);
+    assert.equal(placeholderNotes.noteLength, 0);
   });
 
   it('hasExternalLink for any social URL', () => {
@@ -123,7 +136,7 @@ describe('companyIndexabilitySignals', () => {
 });
 
 const emptySignals = {
-  hasHistory: false, hasPhoto: false, hasNotes: false, hasExternalLink: false, hasRelation: false,
+  hasHistory: false, hasPhoto: false, hasNotes: false, noteLength: 0, hasExternalLink: false, hasRelation: false,
 };
 
 describe('isIndexable', () => {
@@ -143,17 +156,22 @@ describe('isIndexable', () => {
     assert.equal(isIndexable({ ...emptySignals, hasNotes: true }), false);
   });
 
-  it('returns false for history-only shells with fewer than 2 supporting signals', () => {
+  it('returns false for history-only pages missing photo or external link', () => {
     assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true }), false);
     assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true }), false);
     assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasRelation: true }), false);
+    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasRelation: true }), false);
+    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true, hasRelation: true }), false);
   });
 
-  it('returns true when prose exists with one support or history has both media and another support', () => {
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasRelation: true }), true);
+  it('returns true for history-only pages with photo AND external link', () => {
     assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasExternalLink: true }), true);
+  });
+
+  it('returns true when notes exist with at least one support', () => {
     assert.equal(isIndexable({ ...emptySignals, hasNotes: true, hasRelation: true }), true);
     assert.equal(isIndexable({ ...emptySignals, hasNotes: true, hasExternalLink: true }), true);
+    assert.equal(isIndexable({ ...emptySignals, hasNotes: true, hasPhoto: true }), true);
   });
 });
 
@@ -162,28 +180,70 @@ describe('isAdEligible', () => {
     assert.equal(isAdEligible(emptySignals), false);
   });
 
-  it('returns false when history is missing even if other signals are rich', () => {
+  it('returns false when notes are missing even with rich evidence', () => {
     assert.equal(isAdEligible({
-      hasHistory: false, hasPhoto: true, hasNotes: true, hasExternalLink: true, hasRelation: true,
+      hasHistory: true, hasPhoto: true, hasNotes: false, noteLength: 0, hasExternalLink: true, hasRelation: true,
     }), false);
   });
 
-  it('returns false with history but fewer than 2 supporting signals', () => {
-    assert.equal(isAdEligible({ ...emptySignals, hasHistory: true }), false);
-    assert.equal(isAdEligible({ ...emptySignals, hasHistory: true, hasPhoto: true }), false);
-    assert.equal(isAdEligible({ ...emptySignals, hasHistory: true, hasRelation: true }), false);
+  it('returns false when history is missing even if other signals are rich', () => {
+    assert.equal(isAdEligible({
+      hasHistory: false, hasPhoto: true, hasNotes: true, noteLength: MIN_AD_TEXT_LENGTH, hasExternalLink: true, hasRelation: true,
+    }), false);
   });
 
-  it('returns true with history and 2+ supporting signals', () => {
-    assert.equal(isAdEligible({ ...emptySignals, hasHistory: true, hasPhoto: true, hasExternalLink: true }), true);
-    assert.equal(isAdEligible({ ...emptySignals, hasHistory: true, hasNotes: true, hasRelation: true }), true);
+  it('returns false when notes are shorter than the ad text threshold', () => {
     assert.equal(isAdEligible({
-      hasHistory: true, hasPhoto: true, hasNotes: true, hasExternalLink: true, hasRelation: true,
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH - 1,
+      hasPhoto: true,
+    }), false);
+  });
+
+  it('returns false with substantial notes but no supporting signal', () => {
+    assert.equal(isAdEligible({
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+    }), false);
+  });
+
+  it('returns true with history, substantial notes and at least one supporting signal', () => {
+    assert.equal(isAdEligible({
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+      hasPhoto: true,
+    }), true);
+    assert.equal(isAdEligible({
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+      hasExternalLink: true,
+    }), true);
+    assert.equal(isAdEligible({
+      ...emptySignals,
+      hasHistory: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+      hasRelation: true,
     }), true);
   });
 
   it('any ad-eligible signal set is also indexable', () => {
-    const rich = { hasHistory: true, hasPhoto: true, hasNotes: false, hasExternalLink: true, hasRelation: false };
+    const rich = {
+      hasHistory: true,
+      hasPhoto: true,
+      hasNotes: true,
+      noteLength: MIN_AD_TEXT_LENGTH,
+      hasExternalLink: true,
+      hasRelation: false,
+    };
     assert.equal(isAdEligible(rich), true);
     assert.equal(isIndexable(rich), true);
   });

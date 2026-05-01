@@ -4,17 +4,30 @@
 // This file is imported by the pre-build script that generates
 // prerender-routes.txt and sitemap.xml, so it cannot depend on Angular.
 
+export const MIN_AD_TEXT_LENGTH = 80;
+
 /**
  * @typedef {Object} IndexabilitySignals
  * @property {boolean} hasHistory
  * @property {boolean} hasPhoto
  * @property {boolean} hasNotes
+ * @property {number} noteLength
  * @property {boolean} hasExternalLink
  * @property {boolean} hasRelation
  */
 
+function isPlaceholderText(value) {
+  if (typeof value !== 'string') return false;
+  const text = value.trim().toLowerCase();
+  return text === '測試' || text === 'test' || text === 'testing' || text === 'todo' || text === '待補' || text === '暫填';
+}
+
 function nonEmptyText(value) {
-  return typeof value === 'string' && value.trim().length > 0;
+  return typeof value === 'string' && value.trim().length > 0 && !isPlaceholderText(value);
+}
+
+function textLength(value) {
+  return nonEmptyText(value) ? value.trim().length : 0;
 }
 
 export function memberIndexabilitySignals(member, historyCount) {
@@ -22,6 +35,7 @@ export function memberIndexabilitySignals(member, historyCount) {
     hasHistory: historyCount >= 1,
     hasPhoto: !!member.photo_url,
     hasNotes: nonEmptyText(member.notes),
+    noteLength: textLength(member.notes),
     hasExternalLink: !!(member.instagram || member.facebook || member.x || member.maid_url),
     hasRelation: !!member.company_id,
   };
@@ -32,6 +46,7 @@ export function groupIndexabilitySignals(group, memberHistoryCount) {
     hasHistory: memberHistoryCount >= 1,
     hasPhoto: !!group.photo_url,
     hasNotes: nonEmptyText(group.notes),
+    noteLength: textLength(group.notes),
     hasExternalLink: !!(group.instagram || group.facebook || group.x || group.youtube),
     hasRelation: !!group.company_id,
   };
@@ -42,6 +57,7 @@ export function companyIndexabilitySignals(company, affiliatedEntityCount) {
     hasHistory: affiliatedEntityCount >= 1,
     hasPhoto: !!company.photo_url,
     hasNotes: nonEmptyText(company.description),
+    noteLength: textLength(company.description),
     hasExternalLink: !!(company.website || company.instagram || company.facebook || company.x || company.youtube),
     // Companies share hasHistory and hasRelation when affiliations exist; a
     // page still needs a second independent supporting signal (photo or link)
@@ -58,20 +74,14 @@ function supportingCount(s) {
   return n;
 }
 
-function qualityCount(s) {
-  return supportingCount(s) + (s.hasNotes ? 1 : 0);
-}
-
 export function isIndexable(s) {
   if (s.hasNotes) {
     return supportingCount(s) >= 1;
   }
-  if (!s.hasHistory) return false;
-  return supportingCount(s) >= 2 && (s.hasPhoto || s.hasExternalLink);
+  return s.hasHistory && s.hasPhoto && s.hasExternalLink;
 }
 
 export function isAdEligible(s) {
-  if (!s.hasHistory) return false;
-  const hasRichContext = s.hasNotes || (s.hasPhoto && s.hasExternalLink);
-  return hasRichContext && qualityCount(s) >= 2;
+  if (!s.hasHistory || !s.hasNotes || s.noteLength < MIN_AD_TEXT_LENGTH) return false;
+  return supportingCount(s) >= 1;
 }

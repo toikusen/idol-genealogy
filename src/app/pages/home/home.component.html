@@ -150,7 +150,7 @@
             </svg>
             <span class="nav-tab-tw">公司</span>
             <span class="nav-tab-en">Companies</span>
-            <span class="nav-tab-count">{{companySections.length}}</span>
+            <span class="nav-tab-count">{{allCompanies.length}}</span>
           </button>
 
           <!-- 活動 -->
@@ -445,9 +445,6 @@
       <!-- ── 成員 tab ── -->
       @if (activeTab === 'members') {
         <section id="panel-members" class="tab-content" role="tabpanel" aria-labelledby="tab-members">
-          @if (adEligible) {
-            <app-ad-banner adSlot="4061570176"></app-ad-banner>
-          }
 
           <!-- ══ UPCOMING BIRTHDAYS ══ -->
           @if (upcomingBirthdays.length > 0) {
@@ -686,7 +683,7 @@
               <span style="
                 font-size: 0.78rem; color: rgba(140,100,40,0.5);
                 font-style: italic;
-              ">{{companySections.length}} 公司</span>
+              ">{{allCompanies.length}} 公司</span>
               <button
                 (click)="showCompanyInsertPanel = true"
                 class="home-action-chip home-action-chip--company"
@@ -889,6 +886,9 @@
       <p style="margin-bottom: 24px;">
         無論是想查詢某位成員的團體歷史，還是想了解某個團體的成員組成變遷，都可以在這裡找到紀錄。
         <a routerLink="/about/" style="color: var(--text-link); text-decoration: underline; text-underline-offset: 3px;">了解更多關於本站</a>
+        ，或閱讀
+        <a routerLink="/learn/" style="color: var(--text-link); text-decoration: underline; text-underline-offset: 3px;">資料閱讀指南</a>
+        了解本站如何整理公開資料。
       </p>
 
       <!-- 地下偶像介紹 -->
@@ -977,6 +977,11 @@
           text-decoration: none; letter-spacing: 0.04em;
         ">貢獻者手冊</a>
         <span style="color: rgba(184,160,184,0.3); font-size: 0.7rem;">·</span>
+        <a routerLink="/learn/" style="
+          font-size: 0.75rem; color: var(--text-secondary);
+          text-decoration: none; letter-spacing: 0.04em;
+        ">資料閱讀指南</a>
+        <span style="color: rgba(184,160,184,0.3); font-size: 0.7rem;">·</span>
         <a routerLink="/contributors/" style="
           font-size: 0.75rem; color: var(--text-secondary);
           text-decoration: none; letter-spacing: 0.04em;
@@ -992,4 +997,3 @@
   </div>
 
 </div>
-

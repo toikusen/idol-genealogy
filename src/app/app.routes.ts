@@ -1,7 +1,13 @@
 import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
 import { adminGuard } from './core/admin.guard';
 import { staffGuard } from './core/staff.guard';
-import { companyPageResolver, groupPageResolver, memberPageResolver } from './core/page-data.resolvers';
+import {
+  companyPageResolver,
+  groupPageResolver,
+  homePageResolver,
+  memberPageResolver,
+  membersListResolver,
+} from './core/page-data.resolvers';
 
 function handleMatcher(segments: UrlSegment[]): UrlMatchResult | null {
   if (segments.length !== 1) return null;
@@ -18,10 +24,12 @@ function handleMatcher(segments: UrlSegment[]): UrlMatchResult | null {
 export const routes: Routes = [
   {
     path: '',
+    resolve: { pageData: homePageResolver },
     loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent)
   },
   {
     path: 'members',
+    resolve: { pageData: membersListResolver },
     loadComponent: () => import('./pages/members-list/members-list.component').then(m => m.MembersListComponent)
   },
   {
@@ -106,6 +114,16 @@ export const routes: Routes = [
     path: 'guide',
     loadComponent: () =>
       import('./pages/guide/guide.component').then(m => m.GuideComponent),
+  },
+  {
+    path: 'learn',
+    loadComponent: () =>
+      import('./pages/knowledge/knowledge-index.component').then(m => m.KnowledgeIndexComponent),
+  },
+  {
+    path: 'learn/:slug',
+    loadComponent: () =>
+      import('./pages/knowledge/knowledge-article.component').then(m => m.KnowledgeArticleComponent),
   },
   {
     path: 'my-contributions',

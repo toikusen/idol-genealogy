@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
 import { SeoService } from '../../core/seo.service';
 import { Member, Group } from '../../models';
 import { siteUrl } from '../../core/public-url.utils';
+import { MembersListPageData } from '../../core/page-data.resolvers';
 const PAGE_SIZE = 36;
 
 @Component({
@@ -35,6 +36,7 @@ export class MembersListComponent implements OnInit {
     private groupService: GroupService,
     private historyService: HistoryService,
     private seo: SeoService,
+    private route: ActivatedRoute,
   ) {}
 
   async ngOnInit() {
@@ -58,22 +60,39 @@ export class MembersListComponent implements OnInit {
         ],
       },
     ]);
+
+    const pageData = this.route.snapshot.data['pageData'] as MembersListPageData | undefined;
+    if (pageData && !pageData.error) {
+      this.applyPageData(pageData.members, pageData.groups, pageData.links);
+      this.loading = false;
+      return;
+    }
+
     try {
       const [members, groups, links] = await Promise.all([
         this.memberService.getAll(),
         this.groupService.getAll(),
         this.historyService.getMemberGroupLinks(),
       ]);
-      this.allMembers = [...members].sort((a, b) =>
-        (a.name_roman ?? a.name).localeCompare(b.name_roman ?? b.name, 'zh-TW')
-      );
-      this.allGroups = [...groups].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-      for (const { member_id, group_id } of links) {
-        if (!this.groupMemberIds.has(group_id)) this.groupMemberIds.set(group_id, new Set());
-        this.groupMemberIds.get(group_id)!.add(member_id);
-      }
+      this.applyPageData(members, groups, links);
     } finally {
       this.loading = false;
+    }
+  }
+
+  private applyPageData(
+    members: Member[],
+    groups: Group[],
+    links: { member_id: string; group_id: string }[],
+  ): void {
+    this.allMembers = [...members].sort((a, b) =>
+      (a.name_roman ?? a.name).localeCompare(b.name_roman ?? b.name, 'zh-TW')
+    );
+    this.allGroups = [...groups].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+    this.groupMemberIds.clear();
+    for (const { member_id, group_id } of links) {
+      if (!this.groupMemberIds.has(group_id)) this.groupMemberIds.set(group_id, new Set());
+      this.groupMemberIds.get(group_id)!.add(member_id);
     }
   }
 

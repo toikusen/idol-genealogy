@@ -7,15 +7,23 @@ import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { SeoService } from '../../core/seo.service';
 import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry } from '../../models';
-import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
+import { HomePageData } from '../../core/page-data.resolvers';
+import {
+  isPublicCompanyRecord,
+  isPublicGroupRecord,
+  isPublicMemberRecord,
+  sanitizePublicCompanyRecord,
+  sanitizePublicGroupRecord,
+  sanitizePublicMemberRecord,
+} from '../../core/public-record.utils';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AdBannerComponent, ProposalPanelComponent, SafeUrlPipe],
+  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
@@ -44,7 +52,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   activeGroups: Group[] = [];
   disbandedGroups: Group[] = [];
   traineeGroups: Group[] = [];
-  adEligible = false;
   companySections: { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] = [];
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -79,52 +86,36 @@ export class HomeComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Read resolver data (populated by homePageResolver during SSR & navigation)
+    const data = this.route.snapshot.data['pageData'] as HomePageData | undefined;
+    if (data) {
+      this.recentMembers = data.recentMembers;
+      this.memberCount = data.memberCount;
+      this.allGroups = data.allGroups;
+      this.allCompanies = data.allCompanies;
+      this.topMembers = data.topMembers;
+      this.topGroups = data.topGroups;
+      this.upcomingBirthdays = data.upcomingBirthdays;
+      this.allSoloMembers = data.allSoloMembers;
+
+      // Cache computed group/company views — only recomputed when source data changes
+      this.activeGroups = this.allGroups
+        .filter(g => !g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
+        .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+      this.disbandedGroups = this.allGroups
+        .filter(g => !!g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
+        .sort((a, b) => (b.disbanded_at ?? '').localeCompare(a.disbanded_at ?? ''));
+      this.traineeGroups = this.allGroups
+        .filter(g => g.notes?.includes('類型：研修・見習'))
+        .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+      this.companySections = this.buildCompanySections();
+    }
+
     // Read ?q= query param (used by Google SearchAction sitelinks)
     const q = this.route.snapshot.queryParamMap.get('q');
     if (q) {
       this.query = q;
       await this.search();
-    }
-
-    try {
-      const [recent, memberCount, groups, companies, topMembers, topGroups, birthdays, soloMembers] = await Promise.all([
-        this.memberService.getRecent(10),
-        this.memberService.getCount().catch(() => 0),
-        this.groupService.getAll(),
-        this.companyService.getAll(),
-        this.memberService.getTopByViews(5).catch((): MemberLeaderboardEntry[] => []),
-        this.groupService.getTopByViews(5).catch((): GroupLeaderboardEntry[] => []),
-        this.memberService.getUpcomingBirthdays(30).catch(() => []),
-        this.memberService.getSoloMembers().catch(() => []),
-      ]);
-      this.recentMembers = recent;
-      this.memberCount = memberCount;
-      this.allGroups = groups;
-      this.allCompanies = companies;
-      this.topMembers = topMembers;
-      this.topGroups = topGroups;
-      this.upcomingBirthdays = birthdays;
-      this.allSoloMembers = soloMembers;
-
-      // Cache computed group/company views — only recomputed when source data changes
-      this.activeGroups = groups
-        .filter(g => !g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
-        .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
-      this.disbandedGroups = groups
-        .filter(g => !!g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
-        .sort((a, b) => (b.disbanded_at ?? '').localeCompare(a.disbanded_at ?? ''));
-      this.traineeGroups = groups
-        .filter(g => g.notes?.includes('類型：研修・見習'))
-        .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
-      this.companySections = this.buildCompanySections();
-      this.adEligible =
-        this.recentMembers.length > 0 || this.allGroups.length > 0 || this.allCompanies.length > 0;
-    } catch {
-      this.recentMembers = [];
-      this.allGroups = [];
-      this.allCompanies = [];
-      this.topMembers = [];
-      this.topGroups = [];
     }
   }
 
@@ -149,12 +140,14 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.groupService.search(this.query),
         this.companyService.search(this.query),
       ]);
-      this.memberResults = members;
+      this.memberResults = members.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
       // Exclude alias hits whose member already appears in direct results
-      const directIds = new Set(members.map(m => m.id));
-      this.aliasResults = aliasHits.filter(r => !directIds.has(r.member.id));
-      this.groupResults = groups;
-      this.companyResults = companies;
+      const directIds = new Set(this.memberResults.map(m => m.id));
+      this.aliasResults = aliasHits
+        .filter(r => isPublicMemberRecord(r.member) && !directIds.has(r.member.id))
+        .map(r => ({ ...r, member: sanitizePublicMemberRecord(r.member) }));
+      this.groupResults = groups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
+      this.companyResults = companies.filter(isPublicCompanyRecord).map(sanitizePublicCompanyRecord);
     } catch {
       this.memberResults = [];
       this.aliasResults = [];
