@@ -110,6 +110,9 @@ interface TimelineSegment {
                   @if (seg.history.status === 'transferred') {
                     <span class="text-xs text-blue-400">移籍</span>
                   }
+                  @if (seg.history.status === 'support') {
+                    <span class="text-xs text-idol-mint">支援</span>
+                  }
                 </div>
                 @if (seg.history.name_at_time) {
                   <p class="text-xs mt-1" style="color: rgba(122,90,122,0.65);">
