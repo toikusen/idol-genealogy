@@ -71,12 +71,14 @@
                 [ngClass]="{
                   'bg-green-100 text-green-700':   h.status === 'active',
                   'bg-blue-100 text-blue-700':     h.status === 'concurrent',
+                  'bg-purple-100 text-purple-700': h.status === 'support',
                   'bg-orange-100 text-orange-700': h.status === 'transferred',
                   'bg-gray-100 text-gray-600':     h.status === 'graduated',
                   'bg-gray-50 text-gray-400':      !h.status
                 }">
                 {{ h.status === 'active' ? '正常在籍'
                  : h.status === 'concurrent' ? '兼任'
+                 : h.status === 'support' ? '支援'
                  : h.status === 'transferred' ? '移籍'
                  : h.status === 'graduated' ? '畢業'
                  : '—' }}
