@@ -5,7 +5,7 @@ import { TeamMember } from '../models';
 
 const mockMember: TeamMember = {
   id: 'tm-1', name: '小花', bio: '主編', photo_url: null,
-  instagram: null, x: null, user_id: 'user-1', sort_order: 0,
+  instagram: null, x: null, user_id: 'user-1', user_role_id: null, sort_order: 0,
   created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z'
 };
 
