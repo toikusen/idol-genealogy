@@ -29,6 +29,18 @@ export class AdBannerComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    // Inject the AdSense loader the first time an ad banner mounts. This keeps
+    // the script off pages without ad-eligible content (login, errors, thin
+    // pages) so reviewers don't see ads on low-value surfaces.
+    if (!document.querySelector('script[data-adsbygoogle-loader]')) {
+      const s = document.createElement('script');
+      s.async = true;
+      s.crossOrigin = 'anonymous';
+      s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8862517332076590';
+      s.setAttribute('data-adsbygoogle-loader', '');
+      document.head.appendChild(s);
+    }
+
     try {
       ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
     } catch (_) {}
