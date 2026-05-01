@@ -47,6 +47,13 @@ Thumbs.db
 # Superpowers local cache
 .superpowers/
 
+# Claude Code workspace metadata
+.claude/
+
+# Local scratch / preview files
+.impeccable.md
+theme-toggle-preview.html
+
 # Supabase local files
 supabase/.temp/
 supabase/member.html
