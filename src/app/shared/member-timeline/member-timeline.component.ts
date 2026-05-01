@@ -105,13 +105,13 @@ interface TimelineSegment {
                     <span class="text-xs text-idol-purple font-medium">兼任</span>
                   }
                   @if (seg.history.status === 'graduated') {
-                    <span class="text-xs text-gray-400">卒業</span>
+                    <span class="text-xs text-gray-400">畢業</span>
                   }
                   @if (seg.history.status === 'transferred') {
-                    <span class="text-xs text-blue-400">移籍</span>
+                    <span class="text-xs text-idol-purple font-medium">移籍</span>
                   }
                   @if (seg.history.status === 'support') {
-                    <span class="text-xs text-idol-mint">支援</span>
+                    <span class="text-xs text-idol-purple font-medium">支援</span>
                   }
                 </div>
                 @if (seg.history.name_at_time) {
