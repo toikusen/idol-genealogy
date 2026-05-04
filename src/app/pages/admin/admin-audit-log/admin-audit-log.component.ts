@@ -21,6 +21,8 @@ export class AdminAuditLogComponent implements OnInit {
   error = '';
   filterTable = '';
   filterOperation = '';
+  currentUserEmail = '';
+  isEditorOnly = false;
   expandedId: string | null = null;
   revertError: { [id: string]: string } = {};
   revertSuccess: { [id: string]: boolean } = {};
@@ -44,6 +46,10 @@ export class AdminAuditLogComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    const role = await this.adminRole.getCurrentRole();
+    this.currentUserEmail = role?.email ?? '';
+    this.isEditorOnly = role?.role === 'editor';
+
     const [roles, members, groups, companies] = await Promise.all([
       this.adminRole.getAll().catch(() => []),
       this.memberService.getAll().catch(() => []),

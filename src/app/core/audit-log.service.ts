@@ -1,10 +1,14 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { AdminRoleService } from './admin-role.service';
 import { AuditLog } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class AuditLogService {
-  constructor(private supabase: SupabaseService) {}
+  constructor(
+    private supabase: SupabaseService,
+    private adminRole: AdminRoleService,
+  ) {}
 
   private get db() { return this.supabase.client; }
 
@@ -19,7 +23,16 @@ export class AuditLogService {
     return data ?? [];
   }
 
+  async canRevertLog(log: AuditLog): Promise<boolean> {
+    const isAdmin = await this.adminRole.isAdmin();
+    if (isAdmin) return true;
+    const session = await this.supabase.getSessionOnce();
+    return log.user_email === session?.user?.email;
+  }
+
   async revert(log: AuditLog): Promise<void> {
+    const allowed = await this.canRevertLog(log);
+    if (!allowed) throw new Error('僅能還原自己的操作');
     let result: { error: any };
     if (log.operation === 'INSERT') {
       result = await this.db.from(log.table_name).delete().eq('id', log.record_id);

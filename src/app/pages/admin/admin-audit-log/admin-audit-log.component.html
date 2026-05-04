@@ -64,30 +64,32 @@
                 </span>
               </td>
               <td class="px-4 py-3 text-right" (click)="$event.stopPropagation()">
-                @if (revertSuccess[log.id]) {
-                  <span class="text-xs text-green-600">✓ 已還原</span>
-                } @else if (revertError[log.id]) {
-                  <span class="text-xs text-red-500" [title]="revertError[log.id]">還原失敗</span>
-                } @else if (showConfirm === log.id) {
-                  <div class="flex items-center gap-2 justify-end">
-                    <span class="text-xs text-gray-500">{{ revertActionLabel(log.operation) }}？</span>
-                    <button (click)="executeRevert(log)"
-                      class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
-                      確認
+                @if (!isEditorOnly || log.user_email === currentUserEmail) {
+                  @if (revertSuccess[log.id]) {
+                    <span class="text-xs text-green-600">✓ 已還原</span>
+                  } @else if (revertError[log.id]) {
+                    <span class="text-xs text-red-500" [title]="revertError[log.id]">還原失敗</span>
+                  } @else if (showConfirm === log.id) {
+                    <div class="flex items-center gap-2 justify-end">
+                      <span class="text-xs text-gray-500">{{ revertActionLabel(log.operation) }}？</span>
+                      <button (click)="executeRevert(log)"
+                        class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                        確認
+                      </button>
+                      <button (click)="cancelRevert()"
+                        class="px-2 py-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                        取消
+                      </button>
+                    </div>
+                  } @else {
+                    <button
+                      (click)="confirmRevert(log.id)"
+                      [disabled]="reverting[log.id]"
+                      class="px-3 py-1 text-xs border border-orange-300 text-orange-600 rounded hover:bg-orange-50 transition-colors disabled:opacity-40"
+                    >
+                      還原
                     </button>
-                    <button (click)="cancelRevert()"
-                      class="px-2 py-1 text-xs text-gray-400 hover:text-gray-600 transition-colors">
-                      取消
-                    </button>
-                  </div>
-                } @else {
-                  <button
-                    (click)="confirmRevert(log.id)"
-                    [disabled]="reverting[log.id]"
-                    class="px-3 py-1 text-xs border border-orange-300 text-orange-600 rounded hover:bg-orange-50 transition-colors disabled:opacity-40"
-                  >
-                    還原
-                  </button>
+                  }
                 }
               </td>
             </tr>

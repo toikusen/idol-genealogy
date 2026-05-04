@@ -63,11 +63,11 @@
            class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors">
           團隊管理
         </a>
+        <a routerLink="/admin/audit-log" (click)="closeDrawer()" routerLinkActive="bg-purple-100 text-purple-700 font-medium"
+           class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors">
+          變更記錄
+        </a>
         @if (isAdmin) {
-          <a routerLink="/admin/audit-log" (click)="closeDrawer()" routerLinkActive="bg-purple-100 text-purple-700 font-medium"
-             class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors">
-            變更記錄
-          </a>
           <a routerLink="/admin/proposals" (click)="closeDrawer()" routerLinkActive="bg-purple-100 text-purple-700 font-medium"
              class="flex items-center justify-between px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors">
             <span>提案審核</span>
@@ -154,14 +154,14 @@
         >
           團隊管理
         </a>
+        <a
+          routerLink="/admin/audit-log"
+          routerLinkActive="bg-purple-100 text-purple-700 font-medium"
+          class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+        >
+          變更記錄
+        </a>
         @if (isAdmin) {
-          <a
-            routerLink="/admin/audit-log"
-            routerLinkActive="bg-purple-100 text-purple-700 font-medium"
-            class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
-          >
-            變更記錄
-          </a>
           <a
             routerLink="/admin/proposals"
             routerLinkActive="bg-purple-100 text-purple-700 font-medium"

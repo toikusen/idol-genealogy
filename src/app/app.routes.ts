@@ -62,7 +62,6 @@ export const routes: Routes = [
       { path: 'history', loadComponent: () => import('./pages/admin/admin-history/admin-history.component').then(m => m.AdminHistoryComponent) },
       {
         path: 'audit-log',
-        canActivate: [adminGuard],
         loadComponent: () => import('./pages/admin/admin-audit-log/admin-audit-log.component').then(m => m.AdminAuditLogComponent)
       },
       {
