@@ -292,6 +292,17 @@
         />
       </div>
 
+      <!-- is_trainee -->
+      <div class="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="isTraineeCheckbox"
+          [(ngModel)]="editing.is_trainee"
+          class="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-400"
+        />
+        <label for="isTraineeCheckbox" class="text-xs font-medium text-gray-600">研修・見習</label>
+      </div>
+
       <!-- notes -->
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">備注</label>

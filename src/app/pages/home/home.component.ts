@@ -100,13 +100,13 @@ export class HomeComponent implements OnInit, OnDestroy {
 
       // Cache computed group/company views — only recomputed when source data changes
       this.activeGroups = this.allGroups
-        .filter(g => !g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
+        .filter(g => !g.disbanded_at && !g.is_trainee)
         .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
       this.disbandedGroups = this.allGroups
-        .filter(g => !!g.disbanded_at && !g.notes?.includes('類型：研修・見習'))
+        .filter(g => !!g.disbanded_at && !g.is_trainee)
         .sort((a, b) => (b.disbanded_at ?? '').localeCompare(a.disbanded_at ?? ''));
       this.traineeGroups = this.allGroups
-        .filter(g => g.notes?.includes('類型：研修・見習'))
+        .filter(g => g.is_trainee)
         .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
       this.companySections = this.buildCompanySections();
     }

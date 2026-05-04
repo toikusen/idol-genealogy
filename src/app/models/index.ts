@@ -31,6 +31,7 @@ export interface Group {
   founded_at: string | null;
   disbanded_at: string | null;
   notes: string | null;
+  is_trainee: boolean;
   style: string | null;
   instagram: string | null;
   facebook: string | null;

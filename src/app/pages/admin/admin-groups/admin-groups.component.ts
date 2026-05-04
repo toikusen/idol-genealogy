@@ -85,7 +85,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   }
 
   openCreate() {
-    this.editing = { color: '#e879a0' };
+    this.editing = { color: '#e879a0', is_trainee: false };
     this.editingStyles = [];
     this.isEdit = false;
     this.error = '';
