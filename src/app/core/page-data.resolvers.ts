@@ -325,7 +325,7 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
   return {
     recentMembers: [...publicMembers]
       .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))
-      .slice(0, 10),
+      .slice(0, 9),
     memberCount: publicMembers.length,
     allGroups: publicGroups,
     allCompanies: publicCompanies,
