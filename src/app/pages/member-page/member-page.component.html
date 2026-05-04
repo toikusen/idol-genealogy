@@ -700,7 +700,7 @@
     tableName="history"
     operation="INSERT"
     [originalData]="{ member_id: member.id }"
-    [groupMembers]="[{ id: member.id, name: member.name_roman || member.name }]"
+    [groupMembers]="[{ id: member.id, name: member.name }]"
     [requiredFields]="['group_id', 'joined_at']"
     [groups]="allGroupsList"
     (closed)="showOverseasPanel = false"

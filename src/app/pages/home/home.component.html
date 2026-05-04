@@ -253,9 +253,6 @@
                         font-size: 0.92rem; color: var(--text-primary); font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                       ">
-                        @if (member.emoji) {
-                          <span style="margin-right:4px;">{{ member.emoji }}</span>
-                        }
                         {{member.name}}
                       </div>
                       @if (member.name_hiragana || member.name_roman) {
@@ -291,9 +288,6 @@
                         font-size: 0.92rem; color: var(--text-primary); font-weight: 500;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                       ">
-                        @if (r.member.emoji) {
-                          <span style="margin-right:4px;">{{ r.member.emoji }}</span>
-                        }
                         {{r.member.name}}
                         <span style="color: rgba(232,121,160,0.7); font-size: 0.82rem;">({{r.alias}})</span>
                       </div>
