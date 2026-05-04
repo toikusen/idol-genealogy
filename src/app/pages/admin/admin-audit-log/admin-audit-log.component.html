@@ -98,6 +98,11 @@
             @if (expandedId === log.id) {
               <tr class="bg-gray-50">
                 <td colspan="6" class="px-6 py-4">
+                  @if (log.table_name === 'history' && getHistoryGroupLabel(log); as groupLabel) {
+                    <p class="text-xs font-medium text-gray-500 mb-3">
+                      所屬團體：<span class="text-gray-800">{{ groupLabel }}</span>
+                    </p>
+                  }
                   @let diffs = getDiff(log);
                   @if (diffs.length === 0) {
                     <span class="text-xs text-gray-400">無欄位差異</span>

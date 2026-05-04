@@ -543,6 +543,22 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('photo_url') }}</p>
                 }
 
+              <!-- name_at_time (history) -->
+              } @else if (tableName === 'history' && field === 'name_at_time') {
+                <input
+                  type="text"
+                  [(ngModel)]="formData['name_at_time']"
+                  name="name_at_time"
+                  [class]="fieldErrors['name_at_time']
+                    ? 'w-full border border-red-500 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-300'
+                    : 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300'"
+                  placeholder="例：山田花子（改名前的名字）"
+                />
+                <p class="text-xs text-gray-300 mt-0.5">與現在名稱相同時請直接留空，不可填入相同名稱</p>
+                @if (operation === 'UPDATE' && original('name_at_time')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('name_at_time') }}</p>
+                }
+
               <!-- Default: text input -->
               } @else {
                 <input
@@ -989,6 +1005,17 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
     if (Object.keys(proposed).length === 0) {
       this.error = '請至少填寫一個欄位';
       return;
+    }
+
+    // Validate name_at_time must differ from current member name
+    if (this.tableName === 'history' && proposed['name_at_time']) {
+      const memberId = proposed['member_id'] || this.originalData?.['member_id'];
+      const memberName = this.groupMembers.find(m => m.id === memberId)?.name?.trim();
+      if (memberName && proposed['name_at_time'].trim() === memberName) {
+        this.fieldErrors['name_at_time'] = '與現在名稱相同，請直接留空';
+        this.scrollToField('name_at_time');
+        return;
+      }
     }
 
     // Validate URL fields must start with https://

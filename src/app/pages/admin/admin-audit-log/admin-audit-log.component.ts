@@ -90,6 +90,26 @@ export class AdminAuditLogComponent implements OnInit {
     this.expandedId = this.expandedId === id ? null : id;
   }
 
+  private readonly systemFieldLabels: Record<string, string> = {
+    updated_at: '更新時間',
+    created_at: '建立時間',
+    is_approved: '已審核',
+  };
+
+  private getFieldLabel(tableName: string, field: string): string {
+    return FIELD_LABELS[tableName]?.[field]
+      ?? this.systemFieldLabels[field]
+      ?? field;
+  }
+
+  getHistoryGroupLabel(log: AuditLog): string | null {
+    if (log.table_name !== 'history') return null;
+    const src = log.new_data ?? log.old_data ?? {};
+    if (src['group_id']) return this.groupMap.get(src['group_id']) ?? src['group_id'];
+    if (src['external_group_name']) return src['external_group_name'];
+    return null;
+  }
+
   getDiff(log: AuditLog): { field: string; label: string; before: string; after: string }[] {
     if (!log.old_data && !log.new_data) return [];
     const fields = new Set([
@@ -103,7 +123,7 @@ export class AdminAuditLogComponent implements OnInit {
       if (JSON.stringify(before) !== JSON.stringify(after)) {
         diffs.push({
           field: f,
-          label: FIELD_LABELS[log.table_name]?.[f] ?? f,
+          label: this.getFieldLabel(log.table_name, f),
           before: this.resolveValue(f, before),
           after: this.resolveValue(f, after),
         });

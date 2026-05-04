@@ -6,7 +6,6 @@ import { HistoryService } from '../../../core/history.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
-import { normalizeHistoryNameAtTime } from '../../../core/history-name-at-time.utils';
 import { History, Member, Group, Team } from '../../../models';
 
 @Component({
@@ -32,6 +31,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   isEdit = false;
   saving = false;
   error = '';
+  nameAtTimeError = '';
   isAdmin = false;
   private _sub: Subscription;
 
@@ -136,12 +136,12 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   }
 
   openCreate() {
-    this.editing = {}; this.teams = []; this.isEdit = false; this.error = '';
+    this.editing = {}; this.teams = []; this.isEdit = false; this.error = ''; this.nameAtTimeError = '';
     this.memberSearch = ''; this.groupSearch = ''; this.isExternalRecord = false;
     this.showModal = true;
   }
   openEdit(h: History) {
-    this.editing = { ...h }; this.isEdit = true; this.error = '';
+    this.editing = { ...h }; this.isEdit = true; this.error = ''; this.nameAtTimeError = '';
     this.memberSearch = ''; this.groupSearch = '';
     this.isExternalRecord = !h.group_id && !!h.external_group_name;
     this.showModal = true;
@@ -159,9 +159,20 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
       this.editing.external_country = null;
     }
     if (!this.editing.joined_at) { this.error = '加入日期為必填'; return; }
+
+    const nameAtTime = this.editing.name_at_time?.trim();
+    if (nameAtTime) {
+      const currentMemberName = this.members.find(m => m.id === this.editing.member_id)?.name?.trim();
+      if (currentMemberName && nameAtTime === currentMemberName) {
+        this.nameAtTimeError = '與現在名稱相同，請直接留空';
+        return;
+      }
+    }
+    this.nameAtTimeError = '';
+
     const payload: Partial<History> = {
       ...this.editing,
-      name_at_time: this.normalizedNameAtTime(),
+      name_at_time: nameAtTime || null,
     };
     this.saving = true;
     try {
@@ -175,13 +186,6 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     } catch (e: any) {
       this.error = e.message || '儲存失敗';
     } finally { this.saving = false; }
-  }
-
-  private normalizedNameAtTime(): string | null {
-    const currentMemberName = this.members
-      .find(m => m.id === this.editing.member_id)
-      ?.name;
-    return normalizeHistoryNameAtTime(this.editing.name_at_time, currentMemberName);
   }
 
   async delete(h: History) {
