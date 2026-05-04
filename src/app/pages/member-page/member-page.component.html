@@ -125,36 +125,24 @@
           <!-- Info column -->
           <div class="member-info-col">
 
-            <!-- Primary name -->
-            <h1 style="
-              font-size: clamp(1.8rem, 5vw, 2.8rem);
-              font-weight: 300; line-height: 1.05;
-              letter-spacing: 0.03em; color: var(--text-primary);
-              margin: 0 0 10px;
-            ">
-              @if (member.emoji) {
-                <span style="margin-right: 10px;">{{ member.emoji }}</span>
-              }
-              {{ member.name }}
-            </h1>
-
-            <!-- Action buttons -->
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:2px;">
-              <button
-                (click)="showProposalPanel = true"
-                class="proposal-edit-btn"
-              >✏️ 提案修改</button>
-              <button
-                (click)="showDeletePanel = true"
-                class="report-btn"
-              >⚑ 回報問題</button>
+            <!-- Primary name + share link -->
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;">
+              <h1 style="
+                font-size: clamp(1.8rem, 5vw, 2.8rem);
+                font-weight: 300; line-height: 1.05;
+                letter-spacing: 0.03em; color: var(--text-primary);
+                margin: 0;
+              ">{{ member.name }}</h1>
               <button
                 (click)="copyLink()"
-                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full transition-colors"
-                [style]="linkCopied ? 'color:#059669;border:1px solid rgba(5,150,105,0.35);background:rgba(5,150,105,0.07);' : 'color:#7a5a7a;border:1px solid var(--mauve-20);background:var(--mauve-04);'"
+                class="share-link-btn"
+                [class.share-link-btn--copied]="linkCopied"
               >
-                @if (linkCopied) { ✓ 已複製 } @else {
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                @if (linkCopied) {
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  已複製
+                } @else {
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                   分享連結
                 }
               </button>
@@ -162,42 +150,37 @@
 
             <!-- Roman / phonetic name -->
             @if (member.name_hiragana || member.name_roman) {
-              @if (member.name_hiragana) {
-                <p style="
-                  font-size: 0.92rem;
-                  color: var(--text-faint-60);
-                  letter-spacing: 0.12em; margin: 0 0 6px;
-                ">{{ member.name_hiragana }}</p>
-              }
-              @if (member.name_roman) {
               <p style="
-                font-size: 1rem; font-style: italic;
-                color: var(--text-faint);
-                letter-spacing: 0.08em; margin: 0 0 10px;
-              ">{{ member.name_roman }}</p>
-              }
+                font-size: 0.9rem;
+                color: var(--text-faint-60);
+                letter-spacing: 0.1em; margin: 0 0 14px;
+              ">
+                @if (member.name_hiragana) {{{ member.name_hiragana }}}@if (member.name_hiragana && member.name_roman) {<span style="margin:0 6px;opacity:0.4;font-style:normal;">/</span>}@if (member.name_roman) {<em style="font-style:italic;">{{ member.name_roman }}</em>}
+              </p>
             }
 
-            <!-- Nickname chip -->
-            @if (member.nickname) {
-              <span [ngStyle]="nicknameChipStyle(member.color)" class="nickname-chip">
-                {{ member.nickname }}
-              </span>
-            }
-
-            <!-- Color -->
+            <!-- Color + Emoji symbol -->
             @if (member.color) {
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
                 <div style="
-                  width: 16px; height: 16px; border-radius: 50%;
+                  width: 15px; height: 15px; border-radius: 50%;
                   border: 2px solid rgba(255,255,255,0.9);
                   box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.12);
                   flex-shrink: 0;
                 " [style.background]="member.color"></div>
-                <span style="
-                  font-size: 0.78rem; color: var(--text-faint-55);
-                  letter-spacing: 0.08em;
-                ">{{ member.color_name || member.color }}</span>
+                <span style="font-size: 0.78rem; color: var(--text-faint-55); letter-spacing: 0.06em;">{{ member.color_name || member.color }}</span>
+                @if (member.emoji) {
+                  <span style="font-size:0.78rem;color:var(--text-faint-45);margin:0 2px;">/</span>
+                  <span style="font-size:0.85rem;">{{ member.emoji }}</span>
+                }
+              </div>
+            }
+
+            <!-- Nickname -->
+            @if (member.nickname) {
+              <div style="display:flex;align-items:center;gap:6px;margin-top:8px;margin-bottom:0;">
+                <span style="font-size:0.72rem;color:var(--text-faint-45);letter-spacing:0.08em;flex-shrink:0;">暱稱：</span>
+                <span style="font-size:0.78rem;color:var(--text-faint-55);letter-spacing:0.06em;">{{ member.nickname }}</span>
               </div>
             }
 
@@ -205,7 +188,7 @@
             @if (member.birthdate) {
               <div style="
                 display: flex; align-items: center; gap: 6px;
-                margin-top: 10px; margin-bottom: 0;
+                margin-top: 8px; margin-bottom: 0;
               ">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(232,121,160,0.5)" stroke-width="1.5">
                   <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -213,10 +196,8 @@
                   <line x1="8" y1="2" x2="8" y2="6"/>
                   <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
-                <span style="
-                  font-size: 0.78rem; color: var(--text-faint-55);
-                  letter-spacing: 0.1em;
-                ">{{ formatDate(member.birthdate) }}</span>
+                <span style="font-size:0.72rem;color:var(--text-faint-45);letter-spacing:0.08em;flex-shrink:0;">生日：</span>
+                <span style="font-size: 0.78rem; color: var(--text-faint-55); letter-spacing: 0.1em;">{{ formatDate(member.birthdate) }}</span>
               </div>
             }
 
@@ -239,31 +220,28 @@
               <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 16px;">
                 @if (snsUrls.instagram) {
                   <a [href]="snsUrls.instagram" target="_blank" rel="noopener noreferrer"
-                    class="sns-link sns-link--ig" title="Instagram">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    class="sns-link sns-link--ig sns-link--icon" title="Instagram">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                       <rect x="2" y="2" width="20" height="20" rx="5"/>
                       <circle cx="12" cy="12" r="4"/>
                       <circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none"/>
                     </svg>
-                    <span>Instagram</span>
                   </a>
                 }
                 @if (snsUrls.facebook) {
                   <a [href]="snsUrls.facebook" target="_blank" rel="noopener noreferrer"
-                    class="sns-link sns-link--fb" title="Facebook">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    class="sns-link sns-link--fb sns-link--icon" title="Facebook">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                       <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
                     </svg>
-                    <span>Facebook</span>
                   </a>
                 }
                 @if (snsUrls.x) {
                   <a [href]="snsUrls.x" target="_blank" rel="noopener noreferrer"
-                    class="sns-link sns-link--x" title="X">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    class="sns-link sns-link--x sns-link--icon" title="X">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
-                    <span>X</span>
                   </a>
                 }
                 @if (snsUrls.maid) {
@@ -278,6 +256,18 @@
                 }
               </div>
             }
+
+            <!-- Action buttons (after SNS) -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+              <button
+                (click)="showProposalPanel = true"
+                class="proposal-edit-btn"
+              >✏️ 提案修改</button>
+              <button
+                (click)="showDeletePanel = true"
+                class="report-btn"
+              >⚑ 回報問題</button>
+            </div>
 
             <!-- Notes -->
             @if (member.notes) {
