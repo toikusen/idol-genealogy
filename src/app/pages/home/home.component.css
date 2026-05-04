@@ -53,6 +53,7 @@ input::placeholder {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  padding-top: 6px;
   padding-bottom: 4px;
 }
 .birthday-scroll::-webkit-scrollbar { display: none; }
