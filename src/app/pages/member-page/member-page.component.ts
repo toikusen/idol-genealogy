@@ -165,7 +165,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       .map(h => {
         const gName = h.group?.name || h.external_group_name || '';
         const from = h.joined_at ? h.joined_at.slice(0, 4) : null;
-        const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' ? '至今' : null);
+        const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' || h.status === 'hiatus' ? '至今' : null);
         const range = from ? (to ? `${from}–${to}` : from) : '';
         return range ? `${gName}（${range}）` : gName;
       });

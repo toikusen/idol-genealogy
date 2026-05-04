@@ -40,6 +40,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     { value: 'active', label: '正常在籍' },
     { value: 'concurrent', label: '兼任' },
     { value: 'support', label: '支援' },
+    { value: 'hiatus', label: '活休' },
     { value: 'transferred', label: '移籍' },
     { value: 'graduated', label: '畢業' },
   ];
