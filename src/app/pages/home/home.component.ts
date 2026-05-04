@@ -99,11 +99,12 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.allSoloMembers = data.allSoloMembers;
 
       // Cache computed group/company views — only recomputed when source data changes
+      const today = new Date().toISOString().slice(0, 10);
       this.activeGroups = this.allGroups
-        .filter(g => !g.disbanded_at && !g.is_trainee)
+        .filter(g => (!g.disbanded_at || g.disbanded_at > today) && !g.is_trainee)
         .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
       this.disbandedGroups = this.allGroups
-        .filter(g => !!g.disbanded_at && !g.is_trainee)
+        .filter(g => !!g.disbanded_at && g.disbanded_at <= today && !g.is_trainee)
         .sort((a, b) => (b.disbanded_at ?? '').localeCompare(a.disbanded_at ?? ''));
       this.traineeGroups = this.allGroups
         .filter(g => g.is_trainee)
@@ -185,6 +186,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private buildCompanySections(): { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] {
+    const today = new Date().toISOString().slice(0, 10);
     const companyNameById = new Map(this.allCompanies.map(c => [c.id, c.name]));
     const companyIdByName = new Map(this.allCompanies.map(c => [c.name, c.id]));
     const map = new Map<string, Group[]>();
@@ -213,10 +215,10 @@ export class HomeComponent implements OnInit, OnDestroy {
       return {
         name,
         companyId,
-        groups: groups.sort((a, b) => (!a.disbanded_at ? -1 : !b.disbanded_at ? 1 : 0)),
+        groups: groups.sort((a, b) => (!a.disbanded_at || a.disbanded_at > today ? -1 : !b.disbanded_at || b.disbanded_at > today ? 1 : 0)),
         soloMembers,
-        activeCount: groups.filter(g => !g.disbanded_at).length,
-        disbandedCount: groups.filter(g => !!g.disbanded_at).length,
+        activeCount: groups.filter(g => !g.disbanded_at || g.disbanded_at > today).length,
+        disbandedCount: groups.filter(g => !!g.disbanded_at && g.disbanded_at <= today).length,
       };
     });
   }
