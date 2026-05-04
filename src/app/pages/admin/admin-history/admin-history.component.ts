@@ -6,6 +6,7 @@ import { HistoryService } from '../../../core/history.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
+import { normalizeHistoryNameAtTime } from '../../../core/history-name-at-time.utils';
 import { History, Member, Group, Team } from '../../../models';
 
 @Component({
@@ -158,18 +159,29 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
       this.editing.external_country = null;
     }
     if (!this.editing.joined_at) { this.error = '加入日期為必填'; return; }
+    const payload: Partial<History> = {
+      ...this.editing,
+      name_at_time: this.normalizedNameAtTime(),
+    };
     this.saving = true;
     try {
       if (this.isEdit && this.editing.id) {
-        await this.historyService.update(this.editing.id, this.editing);
+        await this.historyService.update(this.editing.id, payload);
       } else {
-        await this.historyService.create(this.editing);
+        await this.historyService.create(payload);
       }
       this.showModal = false;
       this.histories = await this.historyService.getAll();
     } catch (e: any) {
       this.error = e.message || '儲存失敗';
     } finally { this.saving = false; }
+  }
+
+  private normalizedNameAtTime(): string | null {
+    const currentMemberName = this.members
+      .find(m => m.id === this.editing.member_id)
+      ?.name;
+    return normalizeHistoryNameAtTime(this.editing.name_at_time, currentMemberName);
   }
 
   async delete(h: History) {

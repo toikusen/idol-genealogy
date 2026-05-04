@@ -127,7 +127,7 @@ interface TimelineSegment {
                       background: rgba(232,121,160,0.06);
                       font-size: 0.7rem;
                       letter-spacing: 0.04em;
-                    ">當時名義：{{ seg.history.name_at_time }}</span>
+                    ">當時名稱：{{ seg.history.name_at_time }}</span>
                   </p>
                 }
                 @if (seg.history.role) {

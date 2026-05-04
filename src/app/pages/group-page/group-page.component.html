@@ -368,18 +368,12 @@
                       letter-spacing: 0.02em; line-height: 1.2;
                     ">{{ selectedHistory.name_at_time || selectedHistory.member?.name || selectedHistory.member?.name_roman || '—' }}</h2>
                     <!-- Show current name if name_at_time differs -->
-                    @if (selectedHistory.name_at_time && selectedHistory.name_at_time !== (selectedHistory.member?.name || selectedHistory.member?.name_roman)) {
+                    @if (selectedHistory.name_at_time && selectedHistory.member?.name && selectedHistory.name_at_time !== selectedHistory.member?.name) {
                       <p style="
                         font-style: italic; font-size: 0.88rem;
                         color: var(--text-faint-45); margin: 0 0 12px;
                         letter-spacing: 0.05em;
-                      ">現名：{{ selectedHistory.member?.name || selectedHistory.member?.name_roman }}</p>
-                    } @else if (!selectedHistory.name_at_time && selectedHistory.member?.name_roman) {
-                      <p style="
-                        font-style: italic; font-size: 0.88rem;
-                        color: var(--text-faint-45); margin: 0 0 12px;
-                        letter-spacing: 0.05em;
-                      ">{{ selectedHistory.member?.name_roman }}</p>
+                      ">現在名稱：{{ selectedHistory.member?.name }}</p>
                     }
                   </div>
 
@@ -493,7 +487,7 @@
                       transition: all 0.2s;
                     "
                     [style.color]="safeColor(group.color)"
-                    [style.border]="'1px solid rgba(' + hexToRgb(group.color) + ',0.25)'"
+                    [style.border]="'1px solid rgba(' + hexToRgb(group.color) + ',0.35)'"
                     [style.background]="'rgba(' + hexToRgb(group.color) + ',0.06)'"
                     class="member-link"
                   >

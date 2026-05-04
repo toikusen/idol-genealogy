@@ -34,7 +34,7 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
     company_id: '所屬公司', photo_url: '頭像圖片',
   },
   history: {
-    member_id: '成員', group_id: '團體', name_at_time: '當時藝名', status: '狀態',
+    member_id: '成員', group_id: '團體', name_at_time: '當時名稱', status: '狀態',
     joined_at: '加入日期', left_at: '離開日期',
     external_group_name: '海外團體/solo名稱', external_country: '國家／地區（非必填）',
   },

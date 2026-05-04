@@ -7,6 +7,7 @@ import { ProposalService } from '../../../core/proposal.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../../core/proposal-fields.config';
+import { normalizeHistoryNameAtTime } from '../../../core/history-name-at-time.utils';
 import { Proposal } from '../../../models';
 
 @Component({
@@ -18,6 +19,7 @@ import { Proposal } from '../../../models';
 export class AdminProposalReviewComponent implements OnInit {
   proposal: Proposal | null = null;
   memberMap = new Map<string, string>();
+  currentMemberNameMap = new Map<string, string>();
   groupMap = new Map<string, string>();
   loading = true;
   error = '';
@@ -49,6 +51,7 @@ export class AdminProposalReviewComponent implements OnInit {
           ]);
           for (const m of members) {
             this.memberMap.set(m.id, m.name ?? m.name_roman ?? m.id);
+            this.currentMemberNameMap.set(m.id, m.name);
           }
           for (const g of groups) {
             this.groupMap.set(g.id, g.name_jp ?? g.name ?? g.id);
@@ -126,8 +129,9 @@ export class AdminProposalReviewComponent implements OnInit {
       // DELETE proposals: never pass editedData (proposed_data is just { reason } metadata)
       let reviewedData: Record<string, any> | undefined;
       if (this.proposal.operation !== 'DELETE') {
-        const hasEdits = JSON.stringify(this.editedData) !== JSON.stringify(this.proposal.proposed_data);
-        reviewedData = hasEdits ? this.editedData : undefined;
+        const normalizedData = this.normalizedHistoryData(this.editedData);
+        const hasEdits = JSON.stringify(normalizedData) !== JSON.stringify(this.proposal.proposed_data);
+        reviewedData = hasEdits ? normalizedData : undefined;
       }
       await this.proposalService.approve(this.proposal, reviewedData);
       this.router.navigate(['/admin/proposals']);
@@ -136,6 +140,22 @@ export class AdminProposalReviewComponent implements OnInit {
     } finally {
       this.saving = false;
     }
+  }
+
+  private normalizedHistoryData(data: Record<string, any>): Record<string, any> {
+    if (
+      this.proposal?.table_name !== 'history'
+      || !Object.prototype.hasOwnProperty.call(data, 'name_at_time')
+    ) {
+      return data;
+    }
+
+    const memberId = data['member_id'] ?? this.proposal.original_data?.['member_id'];
+    const currentMemberName = memberId ? this.currentMemberNameMap.get(memberId) : undefined;
+    return {
+      ...data,
+      name_at_time: normalizeHistoryNameAtTime(data['name_at_time'], currentMemberName),
+    };
   }
 
   async reject() {

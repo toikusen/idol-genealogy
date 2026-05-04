@@ -518,15 +518,20 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     return `${r},${g},${b}`;
   }
 
-  /** 若代表色過亮（如白色），改用深色替代，避免文字在淺背景上不可見 */
+  /** Darken light group colors to ensure readability on light surfaces (preserves hue) */
   safeColor(hex: string, fallback = '#7a5a7a'): string {
     const clean = hex.replace('#', '');
     if (clean.length < 6) return fallback;
-    const r = parseInt(clean.substring(0, 2), 16) / 255;
-    const g = parseInt(clean.substring(2, 4), 16) / 255;
-    const b = parseInt(clean.substring(4, 6), 16) / 255;
-    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-    return luminance > 0.75 ? fallback : hex;
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+    if (luma <= 140) return hex;
+    const scale = 120 / luma;
+    const dr = Math.round(r * scale);
+    const dg = Math.round(g * scale);
+    const db = Math.round(b * scale);
+    return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
   }
 
 }
