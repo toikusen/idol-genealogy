@@ -50,13 +50,20 @@
 
       <!-- Records table -->
       <div class="overflow-x-auto">
-      <table class="w-full text-sm">
+      <table class="w-full text-sm table-fixed">
+        <colgroup>
+          <col class="w-10"/>
+          <col/>
+          <col class="w-44"/>
+          <col class="w-24"/>
+          <col class="w-24"/>
+        </colgroup>
         <tbody class="divide-y divide-gray-50">
           <tr *ngFor="let h of group.records" class="hover:bg-gray-50 transition-colors">
-            <td class="px-4 py-2.5 w-6">
+            <td class="px-4 py-2.5">
               <span *ngIf="h.group?.color" class="inline-block w-2.5 h-2.5 rounded-full" [style.background-color]="h.group!.color"></span>
             </td>
-            <td class="py-2.5 pr-4 text-gray-700">
+            <td class="py-2.5 pr-4 text-gray-700 truncate">
               {{ h.group?.name || h.external_group_name || h.group_id }}
               <span *ngIf="h.external_country" class="ml-1 text-xs text-gray-400">（{{ h.external_country }}）</span>
               <span *ngIf="!h.group_id && h.external_country" class="ml-1 text-xs text-gray-400 border border-gray-200 rounded px-1">海外</span>
