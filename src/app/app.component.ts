@@ -1,7 +1,7 @@
 import { Component, inject, PLATFORM_ID, signal } from '@angular/core';
-import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, RouterLink, Router, NavigationEnd, NavigationStart, NavigationCancel, NavigationError } from '@angular/router';
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
-import { filter, fromEvent, map, distinctUntilChanged } from 'rxjs';
+import { fromEvent, map, distinctUntilChanged } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SupabaseService } from './core/supabase.service';
 import { AdminRoleService } from './core/admin-role.service';
@@ -20,6 +20,7 @@ export class AppComponent {
   readonly isAdmin$;
   readonly isStaff$;
   readonly showScrollTop = signal(false);
+  readonly isNavigating = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   constructor(
@@ -33,11 +34,15 @@ export class AppComponent {
     this.isAdmin$ = adminRole.isAdmin$;
     this.isStaff$ = adminRole.isStaff$;
 
-    router.events.pipe(
-      filter(e => e instanceof NavigationEnd),
-      takeUntilDestroyed(),
-    ).subscribe(e => {
-      analytics.trackPageView((e as NavigationEnd).urlAfterRedirects);
+    router.events.pipe(takeUntilDestroyed()).subscribe(e => {
+      if (e instanceof NavigationStart) {
+        this.isNavigating.set(true);
+      } else if (e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError) {
+        if (e instanceof NavigationEnd) {
+          analytics.trackPageView((e as NavigationEnd).urlAfterRedirects);
+        }
+        this.isNavigating.set(false);
+      }
     });
 
     if (this.isBrowser) {
