@@ -29,7 +29,7 @@ export class AdminAuditLogComponent implements OnInit {
   reverting: { [id: string]: boolean } = {};
   showConfirm: string | null = null;
 
-  tableOptions = ['members', 'groups', 'teams', 'history', 'member_songs', 'group_songs'];
+  tableOptions = ['members', 'groups', 'history', 'member_songs', 'group_songs'];
   operationOptions = ['INSERT', 'UPDATE', 'DELETE'];
 
   private userNameMap = new Map<string, string>();
@@ -181,7 +181,7 @@ export class AdminAuditLogComponent implements OnInit {
 
   tableLabel(t: string): string {
     return {
-      members: '成員', groups: '團體', history: '歷程', teams: '企劃', companies: '公司',
+      members: '成員', groups: '團體', history: '歷程', companies: '公司',
       member_songs: '成員原創曲', group_songs: '團體原創曲',
     }[t] ?? t;
   }
