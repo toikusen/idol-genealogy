@@ -15,75 +15,74 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
   standalone: true,
   imports: [CommonModule, FormsModule, PhotoUploadComponent],
   styles: [`
-    @media (prefers-color-scheme: dark) {
-      /* Panel container */
-      :host [role="dialog"] {
-        background: #160c18 !important;
-      }
-      /* Header */
-      :host .bg-pink-50 {
-        background: rgba(232, 121, 160, 0.08) !important;
-      }
-      /* Footer / submitter section */
-      :host .bg-gray-50 {
-        background: rgba(22, 10, 26, 0.80) !important;
-      }
-      /* DELETE review box */
-      :host .bg-red-50 {
-        background: rgba(220, 38, 38, 0.08) !important;
-      }
-      :host .border-red-100 {
-        border-color: rgba(220, 38, 38, 0.22) !important;
-      }
-      /* Error alert box */
-      :host .text-red-500.bg-red-50 {
-        background: rgba(220, 38, 38, 0.10) !important;
-      }
-      /* Borders */
-      :host .border-gray-100 {
-        border-color: rgba(210, 175, 210, 0.12) !important;
-      }
-      :host .border-gray-200 {
-        border-color: rgba(210, 175, 210, 0.18) !important;
-      }
-      /* Text */
-      :host .text-gray-800 { color: var(--text-primary) !important; }
-      :host .text-gray-700 { color: var(--text-secondary) !important; }
-      :host .text-gray-600 { color: var(--text-faint-70) !important; }
-      :host .text-gray-500 { color: var(--text-faint-55) !important; }
-      :host .text-gray-400 { color: var(--text-faint-45) !important; }
-      :host .text-gray-300 { color: var(--text-faint-35) !important; }
-      /* Form controls */
-      :host input:not([type="color"]):not([type="checkbox"]),
-      :host select,
-      :host textarea {
-        background: var(--bg-surface) !important;
-        border-color: var(--border-default) !important;
-        color: var(--text-primary) !important;
-      }
-      :host input:disabled,
-      :host select:disabled,
-      :host textarea:disabled {
-        background: rgba(30, 15, 32, 0.50) !important;
-        color: var(--text-faint-45) !important;
-        opacity: 1 !important;
-      }
-      :host input[type="color"] {
-        background: var(--bg-card) !important;
-        border-color: var(--border-subtle) !important;
-      }
-      /* select option text (browser-native) */
-      :host select option {
-        background: #160c18;
-        color: var(--text-primary);
-      }
+    :host-context([data-theme="dark"]) .panel-overlay {
+      background: rgba(12, 5, 22, 0.82) !important;
+    }
+    :host-context([data-theme="dark"]) [role="dialog"] {
+      background: var(--bg-surface) !important;
+      border-left: 1.5px solid rgba(232, 121, 160, 0.35) !important;
+      box-shadow:
+        -4px 0 48px rgba(0, 0, 0, 0.70),
+        -2px 0 20px rgba(232, 121, 160, 0.08) !important;
+    }
+    :host-context([data-theme="dark"]) .bg-white {
+      background: var(--bg-surface) !important;
+    }
+    :host-context([data-theme="dark"]) .bg-pink-50 {
+      background: rgba(232, 121, 160, 0.08) !important;
+    }
+    :host-context([data-theme="dark"]) .bg-gray-50 {
+      background: rgba(22, 10, 26, 0.80) !important;
+    }
+    :host-context([data-theme="dark"]) .bg-red-50 {
+      background: rgba(220, 38, 38, 0.08) !important;
+    }
+    :host-context([data-theme="dark"]) .border-red-100 {
+      border-color: rgba(220, 38, 38, 0.22) !important;
+    }
+    :host-context([data-theme="dark"]) .text-red-500.bg-red-50 {
+      background: rgba(220, 38, 38, 0.10) !important;
+    }
+    :host-context([data-theme="dark"]) .border-gray-100 {
+      border-color: rgba(210, 175, 210, 0.12) !important;
+    }
+    :host-context([data-theme="dark"]) .border-gray-200 {
+      border-color: rgba(210, 175, 210, 0.18) !important;
+    }
+    :host-context([data-theme="dark"]) .text-gray-800 { color: var(--text-primary) !important; }
+    :host-context([data-theme="dark"]) .text-gray-700 { color: var(--text-secondary) !important; }
+    :host-context([data-theme="dark"]) .text-gray-600 { color: var(--text-faint-70) !important; }
+    :host-context([data-theme="dark"]) .text-gray-500 { color: var(--text-faint-55) !important; }
+    :host-context([data-theme="dark"]) .text-gray-400 { color: var(--text-faint-45) !important; }
+    :host-context([data-theme="dark"]) .text-gray-300 { color: var(--text-faint-35) !important; }
+    :host-context([data-theme="dark"]) input:not([type="color"]):not([type="checkbox"]),
+    :host-context([data-theme="dark"]) select,
+    :host-context([data-theme="dark"]) textarea {
+      background: var(--bg-surface) !important;
+      border-color: var(--border-default) !important;
+      color: var(--text-primary) !important;
+    }
+    :host-context([data-theme="dark"]) input:disabled,
+    :host-context([data-theme="dark"]) select:disabled,
+    :host-context([data-theme="dark"]) textarea:disabled {
+      background: rgba(30, 15, 32, 0.50) !important;
+      color: var(--text-faint-45) !important;
+      opacity: 1 !important;
+    }
+    :host-context([data-theme="dark"]) input[type="color"] {
+      background: var(--bg-card) !important;
+      border-color: var(--border-subtle) !important;
+    }
+    :host-context([data-theme="dark"]) select option {
+      background: #160c18;
+      color: var(--text-primary);
     }
   `],
   template: `
     <!-- Overlay -->
     <button
       type="button"
-      class="fixed inset-0 bg-black/40 z-40 border-0 p-0 cursor-default"
+      class="panel-overlay fixed inset-0 bg-black/40 backdrop-blur-sm z-40 border-0 p-0 cursor-default"
       aria-label="關閉提案面板"
       (click)="close()"
     ></button>

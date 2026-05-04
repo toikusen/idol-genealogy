@@ -175,21 +175,19 @@
     transform: translateY(-1px);
   }
 
-  @media (prefers-color-scheme: dark) {
-    .login-bg { background: #160c18 !important; }
-    .login-card {
-      background: rgba(30, 15, 32, 0.92) !important;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 4px 16px rgba(232,121,160,0.08) !important;
-    }
-    .google-signin-btn {
-      background: rgba(35, 18, 38, 0.85) !important;
-      color: var(--text-primary) !important;
-      border-color: rgba(232,121,160,0.25) !important;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.30) !important;
-    }
-    .google-signin-btn:hover {
-      background: rgba(232,121,160,0.10) !important;
-      border-color: rgba(232,121,160,0.45) !important;
-    }
+  [data-theme="dark"] .login-bg { background: #160c18 !important; }
+  [data-theme="dark"] .login-card {
+    background: rgba(30, 15, 32, 0.92) !important;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 4px 16px rgba(232,121,160,0.08) !important;
+  }
+  [data-theme="dark"] .google-signin-btn {
+    background: rgba(35, 18, 38, 0.85) !important;
+    color: var(--text-primary) !important;
+    border-color: rgba(232,121,160,0.25) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.30) !important;
+  }
+  [data-theme="dark"] .google-signin-btn:hover {
+    background: rgba(232,121,160,0.10) !important;
+    border-color: rgba(232,121,160,0.45) !important;
   }
 </style>

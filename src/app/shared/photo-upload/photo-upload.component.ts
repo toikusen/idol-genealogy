@@ -20,37 +20,30 @@ const OUTPUT = 400;     // 輸出圖片尺寸 px
     multi: true,
   }],
   styles: [`
-    @media (prefers-color-scheme: dark) {
-      /* URL input */
-      :host input[type="url"] {
-        background: var(--bg-surface) !important;
-        border-color: var(--border-default) !important;
-        color: var(--text-primary) !important;
-      }
-      :host input[type="url"]::placeholder {
-        color: var(--text-faint-45);
-      }
-      /* Upload button */
-      :host .border-gray-200 {
-        border-color: var(--border-default) !important;
-      }
-      :host .bg-gray-50 {
-        background: var(--bg-card) !important;
-      }
-      /* Text */
-      :host .text-gray-400 { color: var(--text-faint-45) !important; }
-      :host .text-gray-500 { color: var(--text-faint-55) !important; }
-      :host .text-gray-800 { color: var(--text-primary) !important; }
-      /* Crop modal card */
-      :host .bg-white {
-        background: var(--bg-surface) !important;
-        border: 1px solid var(--border-subtle);
-      }
-      /* Crop modal cancel button */
-      :host button.border-gray-200 {
-        border-color: var(--border-default) !important;
-        color: var(--text-faint-55) !important;
-      }
+    :host-context([data-theme="dark"]) input[type="url"] {
+      background: var(--bg-surface) !important;
+      border-color: var(--border-default) !important;
+      color: var(--text-primary) !important;
+    }
+    :host-context([data-theme="dark"]) input[type="url"]::placeholder {
+      color: var(--text-faint-45);
+    }
+    :host-context([data-theme="dark"]) .border-gray-200 {
+      border-color: var(--border-default) !important;
+    }
+    :host-context([data-theme="dark"]) .bg-gray-50 {
+      background: var(--bg-card) !important;
+    }
+    :host-context([data-theme="dark"]) .text-gray-400 { color: var(--text-faint-45) !important; }
+    :host-context([data-theme="dark"]) .text-gray-500 { color: var(--text-faint-55) !important; }
+    :host-context([data-theme="dark"]) .text-gray-800 { color: var(--text-primary) !important; }
+    :host-context([data-theme="dark"]) .bg-white {
+      background: var(--bg-surface) !important;
+      border: 1px solid var(--border-subtle);
+    }
+    :host-context([data-theme="dark"]) button.border-gray-200 {
+      border-color: var(--border-default) !important;
+      color: var(--text-faint-55) !important;
     }
   `],
   template: `

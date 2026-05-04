@@ -345,7 +345,7 @@
                       ">{{group.name}}</div>
                       @if (getGroupLabel(group); as label) {
                         <div style="
-                          font-size: 0.78rem; color: #7a5080;
+                          font-size: 0.78rem; color: var(--text-secondary);
                           letter-spacing: 0.04em;
                         ">{{label}}</div>
                       }
@@ -372,7 +372,7 @@
       <div class="no-results-panel" style="
         text-align: center; padding: 56px 32px;
         border: 1px solid rgba(232,121,160,0.12); border-radius: 3px;
-        background: rgba(255,255,255,0.5); margin-bottom: 64px;
+        background: var(--bg-card); margin-bottom: 64px;
       ">
         <div style="
           font-size: 3rem; color: rgba(232,121,160,0.15); line-height: 1;
@@ -604,7 +604,7 @@
                   ">{{group.name}}</div>
                   @if (getGroupLabel(group); as label) {
                     <div style="
-                      font-size: 0.74rem; color: #7a5080;
+                      font-size: 0.74rem; color: var(--text-secondary);
                       letter-spacing: 0.04em; margin-top: 3px;
                       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                     ">{{label}}</div>
@@ -619,7 +619,7 @@
                   }
                   @if (activeGroupTab === 'disbanded' && group.disbanded_at) {
                     <div style="
-                      font-size: 0.72rem; color: #8a6890;
+                      font-size: 0.72rem; color: var(--text-secondary);
                       letter-spacing: 0.03em; margin-top: 2px;
                     ">→ {{group.disbanded_at | slice:0:4}}</div>
                   }
@@ -629,7 +629,7 @@
           </div>
 
           @if (displayedGroups.length === 0 && allGroups.length > 0) {
-            <div style="padding:40px;text-align:center;font-style:italic;font-size:1rem;color:#7a5080;">此分類暫無資料</div>
+            <div style="padding:40px;text-align:center;font-style:italic;font-size:1rem;color:var(--text-secondary);">此分類暫無資料</div>
           }
         </section>
       }

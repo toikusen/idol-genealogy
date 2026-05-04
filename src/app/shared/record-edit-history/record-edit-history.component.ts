@@ -13,12 +13,10 @@ import { formatRelativeTime } from '../../core/time.utils';
   imports: [],
   templateUrl: './record-edit-history.component.html',
   styles: [`
-    @media (prefers-color-scheme: dark) {
-      :host aside {
-        background: #160c18 !important;
-        border-left-color: rgba(232, 121, 160, 0.15) !important;
-        box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45) !important;
-      }
+    :host-context([data-theme="dark"]) aside {
+      background: var(--bg-page) !important;
+      border-left-color: rgba(232, 121, 160, 0.15) !important;
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45) !important;
     }
   `],
 })

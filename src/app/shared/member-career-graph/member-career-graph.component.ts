@@ -10,28 +10,26 @@ import { buildCareerGraph, CareerNode } from '../graph-utils';
   standalone: true,
   imports: [CommonModule],
   styles: [`
-    @media (prefers-color-scheme: dark) {
-      :host .bg-white {
-        background: var(--bg-card) !important;
-      }
-      :host .bg-gray-100 {
-        background: rgba(210, 175, 210, 0.12) !important;
-      }
-      :host .text-gray-800 {
-        color: var(--text-primary) !important;
-      }
-      :host .text-gray-600 {
-        color: var(--text-secondary) !important;
-      }
-      :host .text-gray-500 {
-        color: var(--text-faint-55) !important;
-      }
-      :host .border-gray-200 {
-        border-color: var(--border-subtle) !important;
-      }
-      :host .border-gray-300 {
-        border-color: var(--border-default) !important;
-      }
+    :host-context([data-theme="dark"]) .bg-white {
+      background: var(--bg-card) !important;
+    }
+    :host-context([data-theme="dark"]) .bg-gray-100 {
+      background: rgba(210, 175, 210, 0.12) !important;
+    }
+    :host-context([data-theme="dark"]) .text-gray-800 {
+      color: var(--text-primary) !important;
+    }
+    :host-context([data-theme="dark"]) .text-gray-600 {
+      color: var(--text-secondary) !important;
+    }
+    :host-context([data-theme="dark"]) .text-gray-500 {
+      color: var(--text-faint-55) !important;
+    }
+    :host-context([data-theme="dark"]) .border-gray-200 {
+      border-color: var(--border-subtle) !important;
+    }
+    :host-context([data-theme="dark"]) .border-gray-300 {
+      border-color: var(--border-default) !important;
     }
   `],
   template: `

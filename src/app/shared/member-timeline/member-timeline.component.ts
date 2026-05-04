@@ -15,28 +15,28 @@ interface TimelineSegment {
   imports: [CommonModule, RouterLink],
   styles: [`
     .tl-card {
-      background: rgba(255, 255, 255, 0.80);
-      border: 1px solid rgba(255, 255, 255, 0.85);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
     }
     .tl-dot { border-color: rgba(255, 255, 255, 0.90); }
     .tl-chip-muted {
       background: rgba(200, 192, 200, 0.15);
       color: #6b7280;
     }
-    @media (prefers-color-scheme: dark) {
-      :host .tl-card {
-        background: var(--bg-card);
-        border-color: var(--border-subtle);
-        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
-      }
-      :host .tl-dot {
-        border-color: rgba(255, 255, 255, 0.14);
-      }
-      :host .tl-chip-muted {
-        background: rgba(210, 175, 210, 0.10);
-        color: var(--text-faint-55);
-      }
+    :host-context([data-theme="dark"]) .tl-card {
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
     }
+    :host-context([data-theme="dark"]) .tl-dot {
+      border-color: rgba(255, 255, 255, 0.14);
+    }
+    :host-context([data-theme="dark"]) .tl-chip-muted {
+      background: rgba(210, 175, 210, 0.10);
+      color: var(--text-faint-55);
+    }
+    :host-context([data-theme="dark"]) .text-gray-500 { color: var(--text-faint-55) !important; }
+    :host-context([data-theme="dark"]) .text-gray-400 { color: var(--text-faint-45) !important; }
+    :host-context([data-theme="dark"]) .text-gray-300 { color: var(--text-faint-35) !important; }
+    :host-context([data-theme="dark"]) .border-gray-200 { border-color: var(--border-subtle) !important; }
   `],
   template: `
     <div class="relative">
@@ -81,7 +81,7 @@ interface TimelineSegment {
                   } @else {
                     @if (!seg.history.left_at) {
                       <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full"
-                            style="background:rgba(232,121,160,0.12);color:rgba(194,80,122,0.85);">
+                            style="background:rgba(232,121,160,0.12);color:var(--text-link);">
                         {{ seg.history.external_group_name || '—' }}
                         @if (seg.history.external_country) {
                           <span class="opacity-60">· {{ seg.history.external_country }}</span>
@@ -115,7 +115,7 @@ interface TimelineSegment {
                   }
                 </div>
                 @if (seg.history.name_at_time) {
-                  <p class="text-xs mt-1" style="color: rgba(122,90,122,0.65);">
+                  <p class="text-xs mt-1" style="color: var(--text-faint-65);">
                     <span style="
                       display: inline-block;
                       padding: 1px 7px;

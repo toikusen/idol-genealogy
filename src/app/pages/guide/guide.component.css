@@ -138,22 +138,17 @@
   letter-spacing: 0.04em;
 }
 
-@media (prefers-color-scheme: dark) {
-  .guide-good-source-list {
-    color: #9ed3a6;
-  }
-
-  .guide-danger-title {
-    color: #f08a8a;
-  }
-
-  .guide-danger-list {
-    color: #d2a2a2;
-  }
-
-  .guide-warning-muted {
-    color: var(--text-faint-40);
-  }
+:host-context([data-theme="dark"]) .guide-good-source-list {
+  color: #9ed3a6;
+}
+:host-context([data-theme="dark"]) .guide-danger-title {
+  color: #f08a8a;
+}
+:host-context([data-theme="dark"]) .guide-danger-list {
+  color: #d2a2a2;
+}
+:host-context([data-theme="dark"]) .guide-warning-muted {
+  color: var(--text-faint-40);
 }
 
 @media (max-width: 720px) {

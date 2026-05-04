@@ -4,8 +4,8 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 999;
-  background: #fff;
-  border: 1px solid rgba(232,121,160,0.25);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: 12px;
   padding: 20px 24px;
   max-width: 26rem;
@@ -15,12 +15,8 @@
   font-family: 'JF Openhuninn', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  .cookie-banner {
-    background: var(--bg-surface);
-    border-color: var(--border-subtle);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40);
-  }
+:host-context([data-theme="dark"]) .cookie-banner {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40);
 }
 
 @media (max-width: 640px) {

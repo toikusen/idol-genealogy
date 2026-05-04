@@ -246,78 +246,68 @@ div:hover > .video-overlay {
 }
 
 /* ── Dark mode ── */
-@media (prefers-color-scheme: dark) {
-  /* Proposal edit button */
-  .proposal-edit-btn {
-    background: rgba(232, 121, 160, 0.10);
-    border-color: rgba(232, 121, 160, 0.35);
-    color: #e879a0;
-  }
-  .proposal-edit-btn:hover {
-    background: rgba(232, 121, 160, 0.18);
-    border-color: rgba(232, 121, 160, 0.55);
-  }
+:host-context([data-theme="dark"]) .proposal-edit-btn {
+  background: rgba(232, 121, 160, 0.10);
+  border-color: rgba(232, 121, 160, 0.35);
+  color: #e879a0;
+}
+:host-context([data-theme="dark"]) .proposal-edit-btn:hover {
+  background: rgba(232, 121, 160, 0.18);
+  border-color: rgba(232, 121, 160, 0.55);
+}
 
-  /* Group header card — white bg + white border */
-  .group-header {
-    background: var(--bg-surface) !important;
-    border-color: var(--border-subtle) !important;
-    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.30) !important;
-  }
+:host-context([data-theme="dark"]) .group-header {
+  border-color: var(--border-subtle) !important;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.30) !important;
+}
 
-  /* Selected member detail panel */
-  .member-detail-panel {
-    background: var(--bg-surface) !important;
-    border-color: var(--border-subtle) !important;
-    box-shadow: var(--shadow-md) !important;
-  }
+:host-context([data-theme="dark"]) .member-detail-panel {
+  border-color: var(--border-subtle) !important;
+  box-shadow: var(--shadow-md) !important;
+}
 
-  /* Carousel nav buttons — white circle on dark */
-  .carousel-nav-btn {
-    background: var(--bg-surface);
-    border-color: rgba(184, 160, 184, 0.28);
-    color: var(--text-secondary);
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.30);
-  }
-  .carousel-nav-btn:hover:not(:disabled) {
-    background: var(--bg-card-hover);
-    border-color: rgba(184, 160, 184, 0.50);
-    color: var(--text-primary);
-  }
+:host-context([data-theme="dark"]) .carousel-nav-btn {
+  background: var(--bg-surface);
+  border-color: rgba(184, 160, 184, 0.28);
+  color: var(--text-secondary);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.30);
+}
+:host-context([data-theme="dark"]) .carousel-nav-btn:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: rgba(184, 160, 184, 0.50);
+  color: var(--text-primary);
+}
 
-  /* Similar group cards — white border */
-  .similar-card {
-    border-color: var(--border-subtle);
-    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.20);
-  }
+:host-context([data-theme="dark"]) .similar-card {
+  border-color: var(--border-subtle);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.20);
+}
 
-  /* Video cards */
-  .video-card {
-    background: var(--bg-card) !important;
-    border-color: var(--border-subtle) !important;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22) !important;
-  }
-  .video-card-title {
-    color: var(--text-faint-70) !important;
-  }
+:host-context([data-theme="dark"]) .video-card {
+  border-color: var(--border-subtle) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22) !important;
+}
+:host-context([data-theme="dark"]) .video-card-title {
+  color: var(--text-faint-70) !important;
+}
 
-  /* Gantt: member avatar border */
-  .gantt-avatar-border {
-    border-color: rgba(255, 255, 255, 0.14) !important;
-  }
+:host-context([data-theme="dark"]) .gantt-avatar-border {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
 
-  /* Attribution widget */
-  .attribution-widget {
-    background: var(--bg-surface) !important;
-    border-color: rgba(124, 108, 242, 0.14) !important;
-    box-shadow: 0 2px 18px rgba(0, 0, 0, 0.25) !important;
-  }
-  .attribution-btn-primary {
-    color: rgba(160, 140, 230, 0.88) !important;
-    background: rgba(124, 108, 242, 0.10) !important;
-    border-color: rgba(124, 108, 242, 0.22) !important;
-  }
-  .attribution-btn-primary:hover {
-    background: rgba(124, 108, 242, 0.18) !important;
-  }
+:host-context([data-theme="dark"]) .group-portrait-ring {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+:host-context([data-theme="dark"]) .attribution-widget {
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+:host-context([data-theme="dark"]) .attribution-btn-primary {
+  color: rgba(160, 140, 230, 0.88) !important;
+  background: rgba(124, 108, 242, 0.10) !important;
+  border-color: rgba(124, 108, 242, 0.22) !important;
+}
+:host-context([data-theme="dark"]) .attribution-btn-primary:hover {
+  background: rgba(124, 108, 242, 0.18) !important;
 }

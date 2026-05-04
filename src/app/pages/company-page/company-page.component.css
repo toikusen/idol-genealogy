@@ -60,55 +60,46 @@
 .sns-link--web:hover { background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.45); }
 
 /* ── Dark mode ── */
-@media (prefers-color-scheme: dark) {
-  /* X/Twitter — black text invisible on dark */
-  .sns-link--x {
-    color: rgba(210, 175, 210, 0.82);
-    border-color: rgba(210, 175, 210, 0.22);
-    background: rgba(210, 175, 210, 0.05);
-  }
-  .sns-link--x:hover {
-    background: rgba(210, 175, 210, 0.10);
-    border-color: rgba(210, 175, 210, 0.38);
-  }
+:host-context([data-theme="dark"]) .sns-link--x {
+  color: rgba(210, 175, 210, 0.82);
+  border-color: rgba(210, 175, 210, 0.22);
+  background: rgba(210, 175, 210, 0.05);
+}
+:host-context([data-theme="dark"]) .sns-link--x:hover {
+  background: rgba(210, 175, 210, 0.10);
+  border-color: rgba(210, 175, 210, 0.38);
+}
 
-  /* Company logo/avatar border */
-  .company-logo-border {
-    border-color: rgba(255, 255, 255, 0.14) !important;
-  }
+:host-context([data-theme="dark"]) .company-logo-border {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
 
-  /* Company name h1 hardcoded to dark value */
-  .company-name {
-    color: var(--text-primary) !important;
-  }
+:host-context([data-theme="dark"]) .company-name {
+  color: var(--text-primary) !important;
+}
 
-  /* Description text hardcoded dark color */
-  .company-description {
-    color: var(--text-faint-70) !important;
-  }
+:host-context([data-theme="dark"]) .company-description {
+  color: var(--text-faint-70) !important;
+}
 
-  /* Proposal / report buttons */
-  .proposal-edit-btn {
-    background: rgba(232, 121, 160, 0.10);
-    border-color: rgba(232, 121, 160, 0.38);
-    color: #e879a0;
-  }
-  .proposal-edit-btn:hover {
-    background: rgba(232, 121, 160, 0.18);
-    border-color: rgba(232, 121, 160, 0.55);
-  }
+:host-context([data-theme="dark"]) .proposal-edit-btn {
+  background: rgba(232, 121, 160, 0.10);
+  border-color: rgba(232, 121, 160, 0.38);
+  color: #e879a0;
+}
+:host-context([data-theme="dark"]) .proposal-edit-btn:hover {
+  background: rgba(232, 121, 160, 0.18);
+  border-color: rgba(232, 121, 160, 0.55);
+}
 
-  /* Attribution widget */
-  .attribution-widget {
-    background: var(--bg-surface) !important;
-    border-color: rgba(124, 108, 242, 0.14) !important;
-    box-shadow: 0 2px 18px rgba(0, 0, 0, 0.25) !important;
-  }
-  .attribution-btn-primary {
-    color: rgba(160, 140, 230, 0.88) !important;
-    background: rgba(124, 108, 242, 0.10) !important;
-    border-color: rgba(124, 108, 242, 0.22) !important;
-  }
+:host-context([data-theme="dark"]) .attribution-widget {
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+:host-context([data-theme="dark"]) .attribution-btn-primary {
+  color: rgba(160, 140, 230, 0.88) !important;
+  background: rgba(124, 108, 242, 0.10) !important;
+  border-color: rgba(124, 108, 242, 0.22) !important;
 }
 
 @media (max-width: 520px) {

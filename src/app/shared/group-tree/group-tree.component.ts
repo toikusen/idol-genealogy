@@ -24,29 +24,24 @@ interface FlatGroup {
   imports: [CommonModule],
   styles: [`
     .gt-card {
-      background: rgba(255, 255, 255, 0.80);
-      border: 1px solid rgba(255, 255, 255, 0.85);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
     }
     .gt-ring { --tw-ring-color: rgba(255, 255, 255, 0.90); }
-    .gt-divider { background: #f3f4f6; }
-    @media (prefers-color-scheme: dark) {
-      :host .gt-card {
-        background: var(--bg-card);
-        border-color: var(--border-subtle);
-        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
-      }
-      :host .gt-card:hover {
-        background: var(--bg-card-hover);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30);
-      }
-      :host .gt-ring {
-        --tw-ring-color: rgba(255, 255, 255, 0.14);
-      }
-      :host .gt-divider { background: var(--border-divider); }
-      :host .text-gray-800 { color: var(--text-primary) !important; }
-      :host .text-gray-500 { color: var(--text-secondary) !important; }
-      :host .text-gray-400 { color: var(--text-faint-55) !important; }
+    .gt-divider { background: var(--border-subtle); }
+    :host-context([data-theme="dark"]) .gt-card {
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
     }
+    :host-context([data-theme="dark"]) .gt-card:hover {
+      background: var(--bg-card-hover);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30);
+    }
+    :host-context([data-theme="dark"]) .gt-ring {
+      --tw-ring-color: rgba(255, 255, 255, 0.14);
+    }
+    :host-context([data-theme="dark"]) .text-gray-800 { color: var(--text-primary) !important; }
+    :host-context([data-theme="dark"]) .text-gray-500 { color: var(--text-secondary) !important; }
+    :host-context([data-theme="dark"]) .text-gray-400 { color: var(--text-faint-55) !important; }
   `],
   template: `
     <!-- No-team: split into active / former -->

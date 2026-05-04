@@ -325,7 +325,7 @@
                 border: none; cursor: pointer; transition: all 0.2s;
               "
               [style.background]="historyView === 'timeline' ? 'rgba(232,121,160,0.12)' : 'transparent'"
-              [style.color]="historyView === 'timeline' ? 'rgba(194,80,122,0.85)' : 'var(--text-faint-45)'"
+              [style.color]="historyView === 'timeline' ? 'var(--text-link)' : 'var(--text-faint-45)'"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="8" y1="6" x2="21" y2="6"/>
@@ -347,7 +347,7 @@
                 border: none; cursor: pointer; transition: all 0.2s;
               "
               [style.background]="historyView === 'career' ? 'rgba(232,121,160,0.12)' : 'transparent'"
-              [style.color]="historyView === 'career' ? 'rgba(194,80,122,0.85)' : 'var(--text-faint-45)'"
+              [style.color]="historyView === 'career' ? 'var(--text-link)' : 'var(--text-faint-45)'"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="8" width="5" height="8" rx="1"/>
@@ -579,9 +579,9 @@
         margin:40px 0 20px;
         padding:13px 16px 13px 0;
         border-radius:10px;
-        background:rgba(255,255,255,0.92);
-        border:1px solid rgba(232,121,160,0.11);
-        box-shadow:0 2px 18px rgba(45,27,46,0.05);
+        background:var(--bg-surface);
+        border:1px solid var(--border-subtle);
+        box-shadow:var(--shadow-sm);
         display:flex;
         align-items:center;
         justify-content:space-between;

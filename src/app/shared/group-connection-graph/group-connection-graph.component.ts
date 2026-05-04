@@ -44,19 +44,17 @@ interface MemberRow {
       --gcg-border-dashed:    #d1d5db;
       --gcg-arrow:            #d1d5db;
     }
-    @media (prefers-color-scheme: dark) {
-      :host {
-        --gcg-card-active:   rgba(35, 18, 38, 0.85);
-        --gcg-card-past:     rgba(28, 12, 32, 0.65);
-        --gcg-header-active: rgba(18, 6, 24, 0.95);
-        --gcg-header-past:   rgba(30, 16, 36, 0.75);
-        --gcg-text-active:   rgba(240, 228, 242, 0.92);
-        --gcg-text-past:     rgba(210, 175, 210, 0.55);
-        --gcg-text-dim:      rgba(210, 175, 210, 0.35);
-        --gcg-border-solid:  rgba(232, 121, 160, 0.20);
-        --gcg-border-dashed: rgba(210, 175, 210, 0.22);
-        --gcg-arrow:         rgba(210, 175, 210, 0.38);
-      }
+    :host-context([data-theme="dark"]) {
+      --gcg-card-active:   rgba(35, 18, 38, 0.85);
+      --gcg-card-past:     rgba(28, 12, 32, 0.65);
+      --gcg-header-active: rgba(18, 6, 24, 0.95);
+      --gcg-header-past:   rgba(30, 16, 36, 0.75);
+      --gcg-text-active:   rgba(240, 228, 242, 0.92);
+      --gcg-text-past:     rgba(210, 175, 210, 0.55);
+      --gcg-text-dim:      rgba(210, 175, 210, 0.35);
+      --gcg-border-solid:  rgba(232, 121, 160, 0.20);
+      --gcg-border-dashed: rgba(210, 175, 210, 0.22);
+      --gcg-arrow:         rgba(210, 175, 210, 0.38);
     }
     .gcg-node-link {
       border-color: var(--gcg-border);

@@ -91,10 +91,10 @@
         position: relative; overflow: hidden;
         padding: 36px 36px 32px;
         margin-bottom: 40px;
-        background: rgba(255,255,255,0.92);
+        background: var(--bg-surface);
         border-radius: 4px;
-        border: 1px solid rgba(255,255,255,0.85);
-        box-shadow: 0 2px 24px rgba(45,27,46,0.05);
+        border: 1px solid var(--border-subtle);
+        box-shadow: var(--shadow-sm);
       ">
         <!-- Color accent bar at top -->
         <div style="
@@ -156,7 +156,7 @@
             <button
               (click)="copyLink()"
               class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full transition-colors"
-              [style]="linkCopied ? 'color:#059669;border:1px solid rgba(5,150,105,0.35);background:rgba(5,150,105,0.07);' : 'color:#7a5a7a;border:1px solid var(--mauve-20);background:var(--mauve-04);'"
+              [style]="linkCopied ? 'color:#059669;border:1px solid rgba(5,150,105,0.35);background:rgba(5,150,105,0.07);' : 'color:var(--text-faint-55);border:1px solid var(--mauve-20);background:var(--mauve-04);'"
             >
               @if (linkCopied) { ✓ 已複製 } @else {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -291,7 +291,7 @@
           <!-- Right: group photo — portrait card, like a press/promo shot -->
           @if (group.photo_url) {
             <div style="flex-shrink: 0; align-self: flex-start; margin-top: 4px;">
-              <div style="
+              <div class="group-portrait-ring" style="
                 width: 140px; height: 140px;
                 border-radius: 50%;
                 overflow: hidden;
@@ -319,10 +319,10 @@
       @if (selectedHistory !== null) {
         <div id="member-detail-panel" class="member-panel member-detail-panel" style="
           margin-bottom: 32px;
-          background: rgba(255,255,255,0.95);
-          border: 1px solid rgba(255,255,255,0.9);
+          background: var(--bg-surface);
+          border: 1px solid var(--border-subtle);
           border-radius: 4px;
-          box-shadow: 0 4px 32px rgba(45,27,46,0.07), 0 1px 0 rgba(255,255,255,0.9) inset;
+          box-shadow: var(--shadow-md), var(--shadow-inset-top);
           overflow: hidden;
         ">
           <!-- Accent bar using group color -->
@@ -907,9 +907,9 @@
               @if (extractYouTubeId(v.url); as vid) {
                 <div class="video-card" style="
                   border-radius: 4px; overflow: hidden;
-                  background: rgba(255,255,255,0.7);
-                  border: 1px solid rgba(255,255,255,0.85);
-                  box-shadow: 0 2px 12px rgba(45,27,46,0.05);
+                  background: var(--bg-card);
+                  border: 1px solid var(--border-subtle);
+                  box-shadow: var(--shadow-sm);
                 ">
 
                   <!-- Thumbnail / player -->
@@ -1103,9 +1103,9 @@
         margin:40px 0 20px;
         padding:13px 16px 13px 0;
         border-radius:10px;
-        background:rgba(255,255,255,0.92);
-        border:1px solid rgba(124,108,242,0.11);
-        box-shadow:0 2px 18px rgba(45,27,46,0.05);
+        background:var(--bg-surface);
+        border:1px solid var(--border-subtle);
+        box-shadow:var(--shadow-sm);
         display:flex;
         align-items:center;
         justify-content:space-between;
