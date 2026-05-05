@@ -248,31 +248,22 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
 export const membersListResolver: ResolveFn<MembersListPageData> = async () => {
   const memberService = inject(MemberService);
   const groupService = inject(GroupService);
-  const historyService = inject(HistoryService);
 
   try {
-    const [members, groups, links] = await Promise.all([
+    const [members, groups] = await Promise.all([
       memberService.getAll(),
       groupService.getAll(),
-      historyService.getMemberGroupLinks(),
     ]);
     const publicMembers = members.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
     const publicGroups = groups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
-    const publicMemberIds = new Set(publicMembers.map(member => member.id));
-    const publicGroupIds = new Set(publicGroups.map(group => group.id));
 
     return {
       members: publicMembers,
       groups: publicGroups,
-      links: links.filter(link => publicMemberIds.has(link.member_id) && publicGroupIds.has(link.group_id)),
+      links: [],
       error: false,
     };
   } catch {
-    return {
-      members: [],
-      groups: [],
-      links: [],
-      error: true,
-    };
+    return { members: [], groups: [], links: [], error: true };
   }
 };
