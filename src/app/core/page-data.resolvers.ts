@@ -15,7 +15,6 @@ import {
 } from '../models';
 import { CompanyService } from './company.service';
 import { GroupService } from './group.service';
-import { GroupSongService } from './group-song.service';
 import { HistoryService } from './history.service';
 import { MemberService } from './member.service';
 import { ProposalService } from './proposal.service';
@@ -139,19 +138,14 @@ export const memberPageResolver: ResolveFn<MemberPageData> = async (route) => {
 export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
   const groupService = inject(GroupService);
   const historyService = inject(HistoryService);
-  const memberService = inject(MemberService);
-  const companyService = inject(CompanyService);
-  const proposalService = inject(ProposalService);
-  const groupSongService = inject(GroupSongService);
 
   const id = route.paramMap.get('id') ?? '';
 
   try {
-    const [rawGroup, teams, histories, videos] = await Promise.all([
+    const [rawGroup, teams, histories] = await Promise.all([
       groupService.getById(id),
       groupService.getTeamsByGroup(id),
       historyService.getByGroup(id),
-      groupService.getVideosByGroup(id),
     ]);
     const group = rawGroup && isPublicGroupRecord(rawGroup)
       ? sanitizePublicGroupRecord(rawGroup)
@@ -159,66 +153,25 @@ export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
 
     if (!group) {
       return {
-        id,
-        group: null,
-        companyName: null,
-        teams,
-        histories,
-        allMemberHistories: [],
-        videos,
-        similarGroups: [],
-        allMembers: [],
-        lastProposal: null,
-        songs: [],
-        error: false,
+        id, group: null, companyName: null, teams, histories,
+        allMemberHistories: [], videos: [], similarGroups: [],
+        allMembers: [], lastProposal: null, songs: [], error: false,
       };
     }
 
     const publicHistories = histories.filter(h => !h.member || isPublicMemberRecord(h.member));
-    const memberIds = [...new Set(publicHistories.map(h => h.member_id).filter((memberId): memberId is string => !!memberId))];
-
-    const [company, proposals, allMemberHistories, allMembers, similarGroups, songs] = await Promise.all([
-      group.company_id ? companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
-      proposalService.getApprovedByRecord('groups', id).catch(() => []),
-      historyService.getByMembers(memberIds).catch(() => []),
-      memberService.getAll().catch(() => []),
-      group.style ? groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
-      groupSongService.getByGroup(id).catch(() => []),
-    ]);
 
     return {
-      id,
-      group,
-      companyName: company?.name ?? null,
-      teams,
+      id, group, companyName: null, teams,
       histories: publicHistories,
-      allMemberHistories: allMemberHistories.filter(h =>
-        (!h.member || isPublicMemberRecord(h.member)) && (!h.group || isPublicGroupRecord(h.group))
-      ),
-      videos,
-      similarGroups: similarGroups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord),
-      allMembers: allMembers
-        .filter(isPublicMemberRecord)
-        .map(m => ({ id: m.id, name: m.name ?? m.name_roman ?? m.id }))
-        .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW')),
-      lastProposal: proposals[0] ?? null,
-      songs,
-      error: false,
+      allMemberHistories: [], videos: [], similarGroups: [],
+      allMembers: [], lastProposal: null, songs: [], error: false,
     };
   } catch {
     return {
-      id,
-      group: null,
-      companyName: null,
-      teams: [],
-      histories: [],
-      allMemberHistories: [],
-      videos: [],
-      similarGroups: [],
-      allMembers: [],
-      lastProposal: null,
-      songs: [],
-      error: true,
+      id, group: null, companyName: null, teams: [], histories: [],
+      allMemberHistories: [], videos: [], similarGroups: [],
+      allMembers: [], lastProposal: null, songs: [], error: true,
     };
   }
 };

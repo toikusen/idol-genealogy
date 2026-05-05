@@ -24,6 +24,16 @@ import { groupPath, siteUrl } from '../../core/public-url.utils';
 import { GroupPageData } from '../../core/page-data.resolvers';
 import { groupIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
+import { GroupService } from '../../core/group.service';
+import { HistoryService } from '../../core/history.service';
+import { MemberService } from '../../core/member.service';
+import { CompanyService } from '../../core/company.service';
+import {
+  isPublicCompanyRecord,
+  isPublicGroupRecord,
+  isPublicMemberRecord,
+  sanitizePublicGroupRecord,
+} from '../../core/public-record.utils';
 
 interface GanttRow {
   history: History;
@@ -70,6 +80,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   // Songs tab
   songs: GroupSong[] = [];
   songsLoading = false;
+  deferredLoading = false;
   isLoggedIn = false;
   isAdmin = false;
   currentUserId: string | null = null;
@@ -134,6 +145,10 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private groupSongService: GroupSongService,
     private supabaseAuth: SupabaseService,
     private adminRole: AdminRoleService,
+    private groupService: GroupService,
+    private historyService: HistoryService,
+    private memberService: MemberService,
+    private companyService: CompanyService,
   ) {}
 
   @HostListener('window:resize')
@@ -160,7 +175,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     });
     this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
     this._routeSub = this.route.data.subscribe(({ pageData }) => {
-      this.applyPageData(pageData as GroupPageData);
+      const data = pageData as GroupPageData;
+      this.applyPageData(data);
+      if (data.group && !data.error) {
+        this.loadDeferredData(data.id, data.group);
+      }
     });
     this.route.queryParams.subscribe(params => {
       if (params['propose'] === 'true') {
@@ -170,6 +189,44 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() { this._routeSub?.unsubscribe(); }
+
+  private async loadDeferredData(id: string, group: import('../../models').Group): Promise<void> {
+    this.deferredLoading = true;
+    try {
+      const publicHistories = this.histories;
+      const memberIds = [...new Set(
+        publicHistories.map(h => h.member_id).filter((mid): mid is string => !!mid)
+      )];
+
+      const [company, proposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
+        group.company_id ? this.companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
+        this.proposalService.getApprovedByRecord('groups', id).catch(() => []),
+        this.historyService.getByMembers(memberIds).catch(() => []),
+        this.memberService.getAll().catch(() => []),
+        group.style ? this.groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
+        this.groupSongService.getByGroup(id).catch(() => []),
+        this.groupService.getVideosByGroup(id).catch(() => []),
+      ]);
+
+      if (!this._routeSub?.closed) {
+        const publicCompany = company && isPublicCompanyRecord(company) ? company : null;
+        this.companyName = publicCompany?.name ?? null;
+        this.lastProposal = proposals[0] ?? null;
+        this.allMemberHistories = allMemberHistories.filter(h =>
+          (!h.member || isPublicMemberRecord(h.member)) && (!h.group || isPublicGroupRecord(h.group))
+        );
+        this.allMembers = allMembers
+          .filter(isPublicMemberRecord)
+          .map(m => ({ id: m.id, name: m.name ?? m.name_roman ?? m.id }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+        this.similarGroups = similarGroups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
+        this.songs = songs;
+        this.videos = videos;
+      }
+    } finally {
+      this.deferredLoading = false;
+    }
+  }
 
   private applyPageData(pageData: GroupPageData) {
     this.loading = false;
