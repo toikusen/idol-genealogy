@@ -766,7 +766,7 @@
             }
 
             <!-- 歌曲列表 -->
-            @if (songs.length === 0 && !showAddSongForm) {
+            @if (songs.length === 0 && !showAddSongForm && !deferredLoading) {
               <div class="py-12 text-center">
                 <p class="text-4xl mb-3" style="color:var(--text-faint-30);">♪</p>
                 <p class="text-sm" style="color:var(--text-faint-55);">尚無原創曲記錄</p>
