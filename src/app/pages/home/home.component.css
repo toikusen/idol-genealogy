@@ -313,7 +313,7 @@ input::placeholder {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 2px; text-decoration: none;
-  transition: all 0.25s ease;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
 }
 .member-result-card:hover {
   background: var(--bg-card-hover);
@@ -327,7 +327,7 @@ input::placeholder {
   background: var(--bg-card);
   border: 1px solid rgba(124,108,242,0.1);
   border-radius: 2px; text-decoration: none;
-  transition: all 0.25s ease;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
 }
 .group-result-card:hover {
   background: rgba(240,244,255,0.65);
@@ -343,7 +343,7 @@ input::placeholder {
   border-radius: 999px; text-decoration: none;
   font-size: 0.85rem; color: #8a6820;
   letter-spacing: 0.04em;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .company-result-chip:hover {
   background: rgba(255,240,190,0.8);
@@ -399,7 +399,10 @@ input::placeholder {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle); border-radius: 3px;
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   box-shadow: 0 1px 8px rgba(45,27,46,0.03);
 }
 .recent-member-card:hover {
@@ -413,7 +416,7 @@ input::placeholder {
   display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
   background: var(--bg-card);
   border: 1px solid rgba(124,108,242,0.1); border-radius: 2px;
-  text-decoration: none; transition: all 0.2s ease;
+  text-decoration: none; transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .browse-group-card:hover {
   background: rgba(240,244,255,0.7);
@@ -426,7 +429,7 @@ input::placeholder {
   display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px;
   background: var(--bg-card);
   border: 1px solid rgba(180,130,40,0.1); border-radius: 2px;
-  text-decoration: none; transition: all 0.2s ease;
+  text-decoration: none; transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .company-group-card:hover {
   background: rgba(255,248,230,0.7);
@@ -523,7 +526,7 @@ input::placeholder {
   border-bottom: 2px solid transparent; margin-bottom: -1px;
   cursor: pointer;
   font-size: 0.82rem; letter-spacing: 0.08em; color: #5a3a6a;
-  transition: all 0.2s ease; white-space: nowrap;
+  transition: color 0.2s ease, border-color 0.2s ease; white-space: nowrap;
 }
 .group-tab:hover { color: #5040b8; }
 .group-tab:focus-visible {
