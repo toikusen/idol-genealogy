@@ -67,14 +67,14 @@ export class WantedComponent implements OnInit {
     this.seo.setRobotsNoIndex(true);
 
     try {
-      const [members, groups, companies, links] = await Promise.all([
+      const [members, groups, companies, memberIdsWithHistory, links] = await Promise.all([
         this.memberService.getAll(),
         this.groupService.getAll(),
         this.companyService.getAll(),
+        this.historyService.getMemberIdsWithHistory(),
         this.historyService.getMemberGroupLinks(),
       ]);
 
-      const memberIdsWithHistory = new Set(links.map(l => l.member_id));
       const groupIdsWithMembers = new Set(links.filter(l => l.group_id).map(l => l.group_id));
       const companyIdsWithGroups = new Set(groups.filter(g => g.company_id).map(g => g.company_id));
 

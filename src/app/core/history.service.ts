@@ -54,12 +54,19 @@ export class HistoryService {
     if (error) throw error;
   }
 
-  /** Lightweight: only member_id + group_id pairs, for building filter maps */
+  /** Lightweight: only member_id + group_id pairs (group history only), for building group filter maps */
   async getMemberGroupLinks(): Promise<{ member_id: string; group_id: string }[]> {
     const { data, error } = await this.db
       .from('history').select('member_id, group_id').not('group_id', 'is', null);
     if (error) throw error;
     return (data ?? []) as { member_id: string; group_id: string }[];
+  }
+
+  /** Lightweight: distinct member IDs that have any history record (including solo) */
+  async getMemberIdsWithHistory(): Promise<Set<string>> {
+    const { data, error } = await this.db.from('history').select('member_id');
+    if (error) throw error;
+    return new Set((data ?? []).map((r: { member_id: string }) => r.member_id));
   }
 
   /** Get all history records for a list of member IDs (cross-group lookup) */
