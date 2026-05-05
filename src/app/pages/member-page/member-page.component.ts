@@ -145,12 +145,14 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         this.proposalService.getApprovedByRecord('members', memberId).catch(() => []),
         this.memberSongService.getByMember(memberId).catch(() => []),
       ]);
-      this.allGroupsList = groups
-        .filter(isPublicGroupRecord)
-        .map(g => ({ id: g.id, name: g.name }))
-        .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-      this.lastProposal = proposals[0] ?? null;
-      this.memberSongs = songs;
+      if (!this.routeDataSub?.closed) {
+        this.allGroupsList = groups
+          .filter(isPublicGroupRecord)
+          .map(g => ({ id: g.id, name: g.name }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+        this.lastProposal = proposals[0] ?? null;
+        this.memberSongs = songs;
+      }
     } finally {
       this.deferredLoading = false;
     }
