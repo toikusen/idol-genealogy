@@ -93,22 +93,30 @@ describe('HomeComponent', () => {
   describe('member name display (Issue 1 — mixed ngIf)', () => {
     it('shows roman name secondary line only when name_roman exists', async () => {
       const m = member({ id: 'm1', name: 'Alice', name_roman: 'Alice Roman', name_hiragana: null });
-      await setup({}, {}, {}, { recentMembers: [m], memberCount: 1 });
+      await setup({ search: jasmine.createSpy().and.returnValue(Promise.resolve([m])), searchByAlias: jasmine.createSpy().and.returnValue(Promise.resolve([])) });
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
       await fixture.whenStable();
+
+      fixture.componentInstance.query = 'Alice';
+      await fixture.componentInstance.search();
       fixture.detectChanges();
+
       const compiled: HTMLElement = fixture.nativeElement;
       expect(compiled.textContent).toContain('Alice Roman');
     });
 
     it('shows both hiragana and roman separated by ·', async () => {
       const m = member({ id: 'm1', name: 'Alice', name_roman: 'Alice Roman', name_hiragana: 'ありす' });
-      await setup({}, {}, {}, { recentMembers: [m], memberCount: 1 });
+      await setup({ search: jasmine.createSpy().and.returnValue(Promise.resolve([m])), searchByAlias: jasmine.createSpy().and.returnValue(Promise.resolve([])) });
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
       await fixture.whenStable();
+
+      fixture.componentInstance.query = 'Alice';
+      await fixture.componentInstance.search();
       fixture.detectChanges();
+
       const compiled: HTMLElement = fixture.nativeElement;
       expect(compiled.textContent).toContain('·');
       expect(compiled.textContent).toContain('Alice Roman');
@@ -118,9 +126,9 @@ describe('HomeComponent', () => {
   // ── Issue 2: computed properties cached after init ───────────────────────
 
   describe('activeGroups / disbandedGroups / traineeGroups (Issue 2 — getter caching)', () => {
-    const activeGroup = group({ id: 'g-active', name: 'Active', disbanded_at: null, notes: null });
-    const disbandedGroup = group({ id: 'g-dis', name: 'Disbanded', disbanded_at: '2022-06-01', notes: null });
-    const traineeGroup = group({ id: 'g-trainee', name: 'Trainee', disbanded_at: null, notes: '類型：研修・見習' });
+    const activeGroup = group({ id: 'g-active', name: 'Active', disbanded_at: null, notes: null, is_trainee: false });
+    const disbandedGroup = group({ id: 'g-dis', name: 'Disbanded', disbanded_at: '2022-06-01', notes: null, is_trainee: false });
+    const traineeGroup = group({ id: 'g-trainee', name: 'Trainee', disbanded_at: null, is_trainee: true });
 
     let fixture: ReturnType<typeof TestBed.createComponent<HomeComponent>>;
 
