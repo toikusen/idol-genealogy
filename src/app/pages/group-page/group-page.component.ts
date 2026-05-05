@@ -131,6 +131,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   tooltipX = 0;
   tooltipY = 0;
   private _routeSub?: Subscription;
+  private currentLoadId: string | null = null;
 
   private getCarouselVisibleCount(): number {
     return typeof window !== 'undefined' && window.innerWidth >= 768 ? 5 : 2;
@@ -191,6 +192,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   ngOnDestroy() { this._routeSub?.unsubscribe(); }
 
   private async loadDeferredData(id: string, group: import('../../models').Group): Promise<void> {
+    this.currentLoadId = id;
     this.deferredLoading = true;
     try {
       const publicHistories = this.histories;
@@ -208,7 +210,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         this.groupService.getVideosByGroup(id).catch(() => []),
       ]);
 
-      if (!this._routeSub?.closed) {
+      if (this.currentLoadId === id && !this._routeSub?.closed) {
         const publicCompany = company && isPublicCompanyRecord(company) ? company : null;
         this.companyName = publicCompany?.name ?? null;
         this.lastProposal = proposals[0] ?? null;
@@ -224,7 +226,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         this.videos = videos;
       }
     } finally {
-      this.deferredLoading = false;
+      if (this.currentLoadId === id) {
+        this.deferredLoading = false;
+      }
     }
   }
 
