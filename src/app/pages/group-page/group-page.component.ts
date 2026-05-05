@@ -201,7 +201,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       )];
 
       const [company, proposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
-        group.company_id ? this.companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
+        (!this.companyName && group.company_id) ? this.companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
         this.proposalService.getApprovedByRecord('groups', id).catch(() => []),
         this.historyService.getByMembers(memberIds).catch(() => []),
         this.memberService.getAll().catch(() => []),
@@ -212,7 +212,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
       if (this.currentLoadId === id && !this._routeSub?.closed) {
         const publicCompany = company && isPublicCompanyRecord(company) ? company : null;
-        this.companyName = publicCompany?.name ?? null;
+        if (publicCompany?.name) this.companyName = publicCompany.name;
         this.lastProposal = proposals[0] ?? null;
         this.allMemberHistories = allMemberHistories.filter(h =>
           (!h.member || isPublicMemberRecord(h.member)) && (!h.group || isPublicGroupRecord(h.group))

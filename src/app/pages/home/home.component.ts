@@ -55,8 +55,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   companySections: { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] = [];
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
-  private isDestroyed = false;
-
   constructor(
     private memberService: MemberService,
     private groupService: GroupService,
@@ -178,7 +176,6 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.searchTimer) clearTimeout(this.searchTimer);
-    this.isDestroyed = true;
   }
 
   get displayedGroups(): Group[] {

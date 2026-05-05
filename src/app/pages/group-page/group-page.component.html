@@ -672,6 +672,9 @@
         }
         @if (activeTab === 'connections') {
           <section id="group-panel-connections" role="tabpanel" aria-labelledby="group-tab-connections" class="group-tab-panel">
+            @if (deferredLoading) {
+              <p style="color:var(--text-faint-55);padding:1rem 0;">載入中…</p>
+            }
             <app-group-connection-graph
               [groupHistories]="histories"
               [allMemberHistories]="allMemberHistories"
