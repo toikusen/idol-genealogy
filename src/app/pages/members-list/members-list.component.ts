@@ -72,7 +72,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
           this.applyPageData(pageData.members, pageData.groups, links);
           this.linksLoaded = true;
         }
-      }).catch(() => { this.linksLoaded = true; });
+      }).catch(() => { if (!this.isDestroyed) this.linksLoaded = true; });
       return;
     }
 
@@ -86,6 +86,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
       this.linksLoaded = true;
     } finally {
       this.loading = false;
+      this.linksLoaded = true;
     }
   }
 
