@@ -31,17 +31,7 @@ export class AuditLogService {
   }
 
   async revert(log: AuditLog): Promise<void> {
-    const allowed = await this.canRevertLog(log);
-    if (!allowed) throw new Error('僅能還原自己的操作');
-    let result: { error: any };
-    if (log.operation === 'INSERT') {
-      result = await this.db.from(log.table_name).delete().eq('id', log.record_id);
-    } else if (log.operation === 'UPDATE') {
-      result = await this.db.from(log.table_name).update(log.old_data!).eq('id', log.record_id);
-    } else {
-      // DELETE → re-insert old_data
-      result = await this.db.from(log.table_name).insert(log.old_data!);
-    }
-    if (result.error) throw new Error(result.error.message ?? '還原失敗');
+    const { error } = await this.db.rpc('revert_audit_log', { p_log_id: log.id });
+    if (error) throw new Error(error.message ?? '還原失敗');
   }
 }
