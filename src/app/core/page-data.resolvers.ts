@@ -17,7 +17,6 @@ import { CompanyService } from './company.service';
 import { GroupService } from './group.service';
 import { HistoryService } from './history.service';
 import { MemberService } from './member.service';
-import { ProposalService } from './proposal.service';
 import {
   isPublicCompanyRecord,
   isPublicGroupRecord,
@@ -178,16 +177,14 @@ export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
 
 export const companyPageResolver: ResolveFn<CompanyPageData> = async (route) => {
   const companyService = inject(CompanyService);
-  const proposalService = inject(ProposalService);
 
   const id = route.paramMap.get('id') ?? '';
 
   try {
-    const [rawCompany, groups, soloMembers, proposals] = await Promise.all([
+    const [rawCompany, groups, soloMembers] = await Promise.all([
       companyService.getById(id),
       companyService.getGroupsByCompany(id),
       companyService.getMembersByCompany(id),
-      proposalService.getApprovedByRecord('companies', id).catch(() => []),
     ]);
     const company = rawCompany && isPublicCompanyRecord(rawCompany)
       ? sanitizePublicCompanyRecord(rawCompany)
@@ -195,13 +192,8 @@ export const companyPageResolver: ResolveFn<CompanyPageData> = async (route) => 
 
     if (!company) {
       return {
-        id,
-        company: null,
-        activeGroups: [],
-        disbandedGroups: [],
-        soloMembers: [],
-        lastProposal: null,
-        error: false,
+        id, company: null, activeGroups: [], disbandedGroups: [],
+        soloMembers: [], lastProposal: null, error: false,
       };
     }
 
@@ -209,23 +201,17 @@ export const companyPageResolver: ResolveFn<CompanyPageData> = async (route) => 
     const publicSoloMembers = soloMembers.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
 
     return {
-      id,
-      company,
+      id, company,
       activeGroups: publicGroups.filter(g => !g.disbanded_at || new Date(g.disbanded_at) > new Date()),
       disbandedGroups: publicGroups.filter(g => !!g.disbanded_at && new Date(g.disbanded_at) <= new Date()),
       soloMembers: publicSoloMembers,
-      lastProposal: proposals[0] ?? null,
+      lastProposal: null,
       error: false,
     };
   } catch {
     return {
-      id,
-      company: null,
-      activeGroups: [],
-      disbandedGroups: [],
-      soloMembers: [],
-      lastProposal: null,
-      error: true,
+      id, company: null, activeGroups: [], disbandedGroups: [],
+      soloMembers: [], lastProposal: null, error: true,
     };
   }
 };
