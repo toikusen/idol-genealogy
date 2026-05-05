@@ -18,7 +18,6 @@ import { GroupService } from './group.service';
 import { GroupSongService } from './group-song.service';
 import { HistoryService } from './history.service';
 import { MemberService } from './member.service';
-import { MemberSongService } from './member-song.service';
 import { ProposalService } from './proposal.service';
 import {
   isPublicCompanyRecord,
@@ -88,10 +87,7 @@ export interface CompanyPageData {
 export const memberPageResolver: ResolveFn<MemberPageData> = async (route) => {
   const memberService = inject(MemberService);
   const historyService = inject(HistoryService);
-  const groupService = inject(GroupService);
   const companyService = inject(CompanyService);
-  const proposalService = inject(ProposalService);
-  const memberSongService = inject(MemberSongService);
 
   const requestedId = route.paramMap.get('id');
   const requestedHandle = route.paramMap.get('handle');
@@ -108,56 +104,34 @@ export const memberPageResolver: ResolveFn<MemberPageData> = async (route) => {
 
     if (!member) {
       return {
-        requestedId,
-        requestedHandle,
-        member: null,
-        histories: [],
-        companyName: null,
-        companyId: null,
-        allGroupsList: [],
-        lastProposal: null,
-        memberSongs: [],
-        error: false,
+        requestedId, requestedHandle,
+        member: null, histories: [], companyName: null, companyId: null,
+        allGroupsList: [], lastProposal: null, memberSongs: [], error: false,
       };
     }
 
-    const [histories, groups, company, proposals, memberSongs] = await Promise.all([
+    const [histories, company] = await Promise.all([
       historyService.getByMember(member.id),
-      groupService.getAll().catch(() => []),
       member.company_id ? companyService.getById(member.company_id).catch(() => null) : Promise.resolve(null),
-      proposalService.getApprovedByRecord('members', member.id).catch(() => []),
-      memberSongService.getByMember(member.id).catch(() => []),
     ]);
     const publicHistories = histories.filter(h => !h.group || isPublicGroupRecord(h.group));
     const publicCompany = company && isPublicCompanyRecord(company) ? company : null;
 
     return {
-      requestedId,
-      requestedHandle,
-      member,
+      requestedId, requestedHandle, member,
       histories: publicHistories,
       companyName: publicCompany?.name ?? null,
       companyId: publicCompany ? member.company_id : null,
-      allGroupsList: groups
-        .filter(isPublicGroupRecord)
-        .map(g => ({ id: g.id, name: g.name }))
-        .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW')),
-      lastProposal: proposals[0] ?? null,
-      memberSongs,
+      allGroupsList: [],
+      lastProposal: null,
+      memberSongs: [],
       error: false,
     };
   } catch {
     return {
-      requestedId,
-      requestedHandle,
-      member: null,
-      histories: [],
-      companyName: null,
-      companyId: null,
-      allGroupsList: [],
-      lastProposal: null,
-      memberSongs: [],
-      error: true,
+      requestedId, requestedHandle, member: null, histories: [],
+      companyName: null, companyId: null,
+      allGroupsList: [], lastProposal: null, memberSongs: [], error: true,
     };
   }
 };

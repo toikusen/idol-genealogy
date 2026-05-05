@@ -14,8 +14,10 @@ import { ProposalService } from '../../core/proposal.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
+import { GroupService } from '../../core/group.service';
 import { MemberSongService } from '../../core/member-song.service';
 import { SupabaseService } from '../../core/supabase.service';
+import { isPublicGroupRecord } from '../../core/public-record.utils';
 import { AdminRoleService } from '../../core/admin-role.service';
 import { FormsModule } from '@angular/forms';
 import { memberPath, siteUrl } from '../../core/public-url.utils';
@@ -34,6 +36,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   member: Member | null = null;
   histories: History[] = [];
   loading = true;
+  deferredLoading = false;
   error = false;
   historyView: 'timeline' | 'career' = 'timeline';
   showProposalPanel = false;
@@ -107,6 +110,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     private memberSongService: MemberSongService,
     private supabaseAuth: SupabaseService,
     private adminRole: AdminRoleService,
+    private groupService: GroupService,
   ) {}
 
   async ngOnInit() {
@@ -116,7 +120,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     });
     this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
     this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
-      this.applyPageData(pageData as MemberPageData);
+      const data = pageData as MemberPageData;
+      this.applyPageData(data);
+      if (data.member && !data.error) {
+        this.loadDeferredData(data.member.id);
+      }
     });
     this.route.queryParams.subscribe(params => {
       if (params['propose'] === 'true') {
@@ -127,6 +135,25 @@ export class MemberPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.routeDataSub?.unsubscribe();
+  }
+
+  private async loadDeferredData(memberId: string): Promise<void> {
+    this.deferredLoading = true;
+    try {
+      const [groups, proposals, songs] = await Promise.all([
+        this.groupService.getAll().catch(() => []),
+        this.proposalService.getApprovedByRecord('members', memberId).catch(() => []),
+        this.memberSongService.getByMember(memberId).catch(() => []),
+      ]);
+      this.allGroupsList = groups
+        .filter(isPublicGroupRecord)
+        .map(g => ({ id: g.id, name: g.name }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+      this.lastProposal = proposals[0] ?? null;
+      this.memberSongs = songs;
+    } finally {
+      this.deferredLoading = false;
+    }
   }
 
   private applyPageData(pageData: MemberPageData) {
