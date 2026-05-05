@@ -5,6 +5,17 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# ── HTML pages: always revalidate (SSR/pre-rendered pages update on deploy) ──
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 # ── Security headers (all routes) ──
 [[headers]]
   for = "/*"
