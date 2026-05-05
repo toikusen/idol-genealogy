@@ -110,6 +110,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         .filter(g => g.is_trainee)
         .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
       this.companySections = this.buildCompanySections();
+      this.loadDeferredData();
     }
 
     // Read ?q= query param (used by Google SearchAction sitelinks)
@@ -118,6 +119,20 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.query = q;
       await this.search();
     }
+  }
+
+  private async loadDeferredData(): Promise<void> {
+    const [topMembers, topGroups, upcomingBirthdays, allSoloMembers] = await Promise.all([
+      this.memberService.getTopByViews(5).catch(() => [] as MemberLeaderboardEntry[]),
+      this.groupService.getTopByViews(5).catch(() => [] as GroupLeaderboardEntry[]),
+      this.memberService.getUpcomingBirthdays(30).catch(() => [] as { member: Member; daysUntil: number }[]),
+      this.memberService.getSoloMembers().catch(() => [] as Member[]),
+    ]);
+    this.topMembers = topMembers.filter(isPublicMemberRecord);
+    this.topGroups = topGroups.filter(isPublicGroupRecord);
+    this.upcomingBirthdays = upcomingBirthdays.filter(entry => isPublicMemberRecord(entry.member));
+    this.allSoloMembers = allSoloMembers.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
+    this.companySections = this.buildCompanySections();
   }
 
   onQueryChange() {
