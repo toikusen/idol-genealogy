@@ -31,6 +31,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
   currentPage = 1;
   groupDropdownOpen = false;
   groupSearch = '';
+  linksLoaded = false;
 
   constructor(
     private memberService: MemberService,
@@ -66,12 +67,12 @@ export class MembersListComponent implements OnInit, OnDestroy {
     if (pageData && !pageData.error) {
       this.applyPageData(pageData.members, pageData.groups, pageData.links);
       this.loading = false;
-      // Load group-member links in background (enables group filter after render)
       this.historyService.getMemberGroupLinks().then(links => {
         if (!this.isDestroyed) {
           this.applyPageData(pageData.members, pageData.groups, links);
+          this.linksLoaded = true;
         }
-      }).catch(() => {});
+      }).catch(() => { this.linksLoaded = true; });
       return;
     }
 
@@ -82,6 +83,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
         this.historyService.getMemberGroupLinks(),
       ]);
       this.applyPageData(members, groups, links);
+      this.linksLoaded = true;
     } finally {
       this.loading = false;
     }

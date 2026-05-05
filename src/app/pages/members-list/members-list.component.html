@@ -55,13 +55,16 @@
         <!-- Trigger button -->
         <button
           type="button"
-          (click)="groupDropdownOpen = !groupDropdownOpen"
+          (click)="linksLoaded && (groupDropdownOpen = !groupDropdownOpen)"
           class="filter-group-btn"
           aria-label="依團體篩選"
           [attr.aria-expanded]="groupDropdownOpen"
+          [disabled]="!linksLoaded"
+          [style.opacity]="!linksLoaded ? '0.5' : '1'"
+          [style.cursor]="!linksLoaded ? 'not-allowed' : 'pointer'"
           [style.color]="selectedGroupId ? 'var(--text-primary)' : 'var(--text-faint)'"
         >
-          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ selectedGroupName }}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ linksLoaded ? selectedGroupName : '載入中…' }}</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint-40)" stroke-width="2" style="flex-shrink:0;transition:transform 0.15s;"
             [style.transform]="groupDropdownOpen ? 'rotate(180deg)' : 'rotate(0)'">
             <path d="M6 9l6 6 6-6"/>
