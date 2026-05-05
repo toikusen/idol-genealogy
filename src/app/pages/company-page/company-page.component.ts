@@ -46,6 +46,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     website: string | null;
   } = { instagram: null, facebook: null, x: null, youtube: null, website: null };
   private routeDataSub?: Subscription;
+  private currentLoadId: string | null = null;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -173,14 +174,17 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   }
 
   private async loadDeferredData(id: string): Promise<void> {
+    this.currentLoadId = id;
     this.deferredLoading = true;
     try {
       const proposals = await this.proposalService.getApprovedByRecord('companies', id).catch(() => []);
-      if (!this.routeDataSub?.closed) {
+      if (this.currentLoadId === id && !this.routeDataSub?.closed) {
         this.lastProposal = proposals[0] ?? null;
       }
     } finally {
-      this.deferredLoading = false;
+      if (this.currentLoadId === id) {
+        this.deferredLoading = false;
+      }
     }
   }
 
