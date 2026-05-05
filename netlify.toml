@@ -5,13 +5,56 @@
 [build.environment]
   NODE_VERSION = "20"
 
-[[headers]]
-  for = "/sitemap.xml"
-  [headers.values]
-    Content-Type = "application/xml; charset=UTF-8"
-
+# ── Security headers (all routes) ──
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
+
+# ── Sitemap ──
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml; charset=UTF-8"
+
+# ── Angular hashed JS bundles: 1 year immutable ──
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ── Angular hashed CSS: 1 year immutable ──
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ── Fonts: 1 year immutable ──
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ── Badge images: 30 days ──
+[[headers]]
+  for = "/badges/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+# ── Static PNG/ICO: 30 days ──
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "/*.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+# ── WebP images: 30 days ──
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
