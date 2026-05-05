@@ -226,10 +226,14 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
   const groupService = inject(GroupService);
   const companyService = inject(CompanyService);
 
-  const [allMembers, allGroups, allCompanies] = await Promise.all([
+  const [allMembers, allGroups, allCompanies, topMembers, topGroups, upcomingBirthdays, allSoloMembers] = await Promise.all([
     memberService.getAll().catch(() => [] as Member[]),
     groupService.getAll().catch(() => [] as Group[]),
     companyService.getAll().catch(() => [] as Company[]),
+    memberService.getTopByViews(5).catch(() => [] as MemberLeaderboardEntry[]),
+    groupService.getTopByViews(5).catch(() => [] as GroupLeaderboardEntry[]),
+    memberService.getUpcomingBirthdays(30).catch(() => [] as { member: Member; daysUntil: number }[]),
+    memberService.getSoloMembers().catch(() => [] as Member[]),
   ]);
 
   const publicMembers = allMembers.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
@@ -243,10 +247,10 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
     memberCount: publicMembers.length,
     allGroups: publicGroups,
     allCompanies: publicCompanies,
-    topMembers: [],
-    topGroups: [],
-    upcomingBirthdays: [],
-    allSoloMembers: [],
+    topMembers: topMembers.filter(isPublicMemberRecord),
+    topGroups: topGroups.filter(isPublicGroupRecord),
+    upcomingBirthdays: upcomingBirthdays.filter(entry => isPublicMemberRecord(entry.member)),
+    allSoloMembers: allSoloMembers.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord),
   };
 };
 
