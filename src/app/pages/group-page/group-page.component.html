@@ -672,6 +672,9 @@
         }
         @if (activeTab === 'connections') {
           <section id="group-panel-connections" role="tabpanel" aria-labelledby="group-tab-connections" class="group-tab-panel">
+            @if (deferredLoading) {
+              <p style="color:var(--text-faint-55);padding:1rem 0;">載入中…</p>
+            }
             <app-group-connection-graph
               [groupHistories]="histories"
               [allMemberHistories]="allMemberHistories"
@@ -766,7 +769,7 @@
             }
 
             <!-- 歌曲列表 -->
-            @if (songs.length === 0 && !showAddSongForm) {
+            @if (songs.length === 0 && !showAddSongForm && !deferredLoading) {
               <div class="py-12 text-center">
                 <p class="text-4xl mb-3" style="color:var(--text-faint-30);">♪</p>
                 <p class="text-sm" style="color:var(--text-faint-55);">尚無原創曲記錄</p>

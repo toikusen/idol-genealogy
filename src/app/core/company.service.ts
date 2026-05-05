@@ -8,6 +8,7 @@ export class CompanyService {
   private get db() { return this.supabase.client; }
   private _allCache: Company[] | null = null;
   private _allPromise: Promise<Company[]> | null = null;
+  private _byIdCache = new Map<string, Company | null>();
 
   constructor(private supabase: SupabaseService) {}
 
@@ -25,7 +26,10 @@ export class CompanyService {
     return this._allPromise;
   }
 
-  invalidateCache() { this._allCache = null; }
+  invalidateCache() {
+    this._allCache = null;
+    this._byIdCache.clear();
+  }
 
   // Used by admin table to show group count per company
   async getGroupCounts(): Promise<Record<string, number>> {
@@ -48,12 +52,17 @@ export class CompanyService {
   }
 
   async getById(id: string): Promise<Company | null> {
+    if (this._byIdCache.has(id)) return this._byIdCache.get(id)!;
     const { data, error } = await this.db
       .from('companies').select('*').eq('id', id).single();
     if (error) {
-      if (isNotFoundError(error)) return null;
+      if (isNotFoundError(error)) {
+        this._byIdCache.set(id, null);
+        return null;
+      }
       throw error;
     }
+    this._byIdCache.set(id, data);
     return data;
   }
 

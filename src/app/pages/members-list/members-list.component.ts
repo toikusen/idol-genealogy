@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -18,11 +18,12 @@ const PAGE_SIZE = 36;
   templateUrl: './members-list.component.html',
   styleUrl: './members-list.component.css',
 })
-export class MembersListComponent implements OnInit {
+export class MembersListComponent implements OnInit, OnDestroy {
   allMembers: Member[] = [];
   allGroups: Group[] = [];
   /** group_id → Set of member_ids */
   private groupMemberIds = new Map<string, Set<string>>();
+  private isDestroyed = false;
   loading = true;
 
   searchQuery = '';
@@ -30,6 +31,8 @@ export class MembersListComponent implements OnInit {
   currentPage = 1;
   groupDropdownOpen = false;
   groupSearch = '';
+  linksLoaded = false;
+  linksError = false;
 
   constructor(
     private memberService: MemberService,
@@ -65,19 +68,25 @@ export class MembersListComponent implements OnInit {
     if (pageData && !pageData.error) {
       this.applyPageData(pageData.members, pageData.groups, pageData.links);
       this.loading = false;
+      void this.loadGroupLinks(pageData.members, pageData.groups);
       return;
     }
 
     try {
-      const [members, groups, links] = await Promise.all([
+      const [members, groups] = await Promise.all([
         this.memberService.getAll(),
         this.groupService.getAll(),
-        this.historyService.getMemberGroupLinks(),
       ]);
-      this.applyPageData(members, groups, links);
+      if (this.isDestroyed) return;
+      this.applyPageData(members, groups, []);
+      void this.loadGroupLinks(members, groups);
     } finally {
       this.loading = false;
     }
+  }
+
+  ngOnDestroy() {
+    this.isDestroyed = true;
   }
 
   private applyPageData(
@@ -96,6 +105,25 @@ export class MembersListComponent implements OnInit {
     }
   }
 
+  private async loadGroupLinks(members: Member[], groups: Group[]): Promise<void> {
+    this.linksLoaded = false;
+    this.linksError = false;
+    try {
+      const links = await this.historyService.getMemberGroupLinks();
+      if (this.isDestroyed) return;
+      this.applyPageData(members, groups, links);
+      this.linksLoaded = true;
+    } catch {
+      if (this.isDestroyed) return;
+      this.linksLoaded = false;
+      this.linksError = true;
+      this.groupDropdownOpen = false;
+      this.selectedGroupId = '';
+      this.groupSearch = '';
+      this.onFilterChange();
+    }
+  }
+
   get filteredMembers(): Member[] {
     const q = this.searchQuery.trim().toLowerCase();
     const groupSet = this.selectedGroupId ? this.groupMemberIds.get(this.selectedGroupId) : null;
@@ -106,7 +134,7 @@ export class MembersListComponent implements OnInit {
         (m.name_roman ?? '').toLowerCase().includes(q) ||
         (m.nickname ?? '').toLowerCase().includes(q) ||
         (m.emoji ?? '').includes(q);
-      const matchGroup = !groupSet || groupSet.has(m.id);
+      const matchGroup = !this.selectedGroupId || (this.linksLoaded && !!groupSet && groupSet.has(m.id));
       return matchSearch && matchGroup;
     });
   }
@@ -147,6 +175,12 @@ export class MembersListComponent implements OnInit {
   get selectedGroupName(): string {
     if (!this.selectedGroupId) return '全部團體';
     return this.allGroups.find(g => g.id === this.selectedGroupId)?.name ?? '全部團體';
+  }
+
+  get groupFilterLabel(): string {
+    if (this.linksError) return '團體篩選暫不可用';
+    if (!this.linksLoaded) return '載入中…';
+    return this.selectedGroupName;
   }
 
   selectGroup(id: string) {

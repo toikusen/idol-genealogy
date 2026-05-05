@@ -11,13 +11,11 @@ const baseMember: Member = {
 
 describe('getMemberCompleteness', () => {
   it('returns score 0 and all core missing when all fields null', () => {
-    const result = getMemberCompleteness(baseMember);
+    const result = getMemberCompleteness(baseMember, false);
     expect(result.score).toBe(0);
     expect(result.isComplete).toBeFalse();
-    expect(result.missingCoreLabels).toContain('頭像');
-    expect(result.missingCoreLabels).toContain('生日');
-    expect(result.missingCoreLabels).toContain('英文/拼音名');
     expect(result.missingCoreLabels).toContain('社群帳號');
+    expect(result.missingCoreLabels).toContain('歷程記錄');
   });
 
   it('returns isComplete true when all core fields present', () => {
@@ -55,7 +53,7 @@ const baseGroup: Group = {
   id: '1', name: '測試團', name_jp: null, photo_url: null, color: '#fff',
   company: null, company_id: null, founded_at: null, disbanded_at: null,
   notes: null, style: null, instagram: null, facebook: null, x: null,
-  youtube: null, updated_at: '', created_at: '',
+  youtube: null, is_trainee: false, updated_at: '', created_at: '',
 };
 
 describe('getGroupCompleteness', () => {
@@ -75,10 +73,10 @@ describe('getGroupCompleteness', () => {
   });
 
   it('returns partial score proportional to filled fields', () => {
-    // 6 tracked fields: photo_url, founded_at, hasSocial, name_jp, style, disbanded_at
-    // fill 2 of 6 → 33%
+    // 7 tracked fields: photo_url, founded_at, hasSocial, hasMembers (core x4) + name_jp, style, disbanded_at (optional x3)
+    // fill 3 of 7: photo_url + founded_at + hasMembers(default true) → 43%
     const g: Group = { ...baseGroup, photo_url: 'url', founded_at: '2020-01-01' };
-    expect(getGroupCompleteness(g).score).toBe(Math.round(2 / 6 * 100));
+    expect(getGroupCompleteness(g).score).toBe(Math.round(3 / 7 * 100));
   });
 });
 

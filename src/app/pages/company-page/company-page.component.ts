@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { SeoService } from '../../core/seo.service';
+import { ProposalService } from '../../core/proposal.service';
 import { Company, Group, Member, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
@@ -32,6 +33,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   soloMembers: Member[] = [];
   loading = true;
   error = false;
+  deferredLoading = false;
   lastProposal: Proposal | null = null;
   showEditHistory = false;
   linkCopied = false;
@@ -44,6 +46,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     website: string | null;
   } = { instagram: null, facebook: null, x: null, youtube: null, website: null };
   private routeDataSub?: Subscription;
+  private currentLoadId: string | null = null;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -78,6 +81,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private seo: SeoService,
+    private proposalService: ProposalService,
   ) {}
 
   ngOnDestroy() {
@@ -87,7 +91,11 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
-      this.applyPageData(pageData as CompanyPageData);
+      const data = pageData as CompanyPageData;
+      this.applyPageData(data);
+      if (data.company && !data.error) {
+        this.loadDeferredData(data.id);
+      }
     });
     this.route.queryParams.subscribe(params => {
       if (params['propose'] === 'true') {
@@ -163,6 +171,21 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     };
 
     this.seo.setJsonLdGraph([orgSchema, breadcrumb]);
+  }
+
+  private async loadDeferredData(id: string): Promise<void> {
+    this.currentLoadId = id;
+    this.deferredLoading = true;
+    try {
+      const proposals = await this.proposalService.getApprovedByRecord('companies', id).catch(() => []);
+      if (this.currentLoadId === id && !this.routeDataSub?.closed) {
+        this.lastProposal = proposals[0] ?? null;
+      }
+    } finally {
+      if (this.currentLoadId === id) {
+        this.deferredLoading = false;
+      }
+    }
   }
 
   copyLink() {

@@ -107,3 +107,39 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
   color: rgba(210, 175, 210, 0.65);
 }
+
+/* ── Navigation progress bar ── */
+.nav-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.nav-progress--active {
+  opacity: 1;
+}
+
+.nav-progress__bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #e879a0, #7c6cf2, #e879a0);
+  background-size: 200% 100%;
+  transform: translateX(-100%);
+}
+
+.nav-progress--active .nav-progress__bar {
+  animation: nav-progress-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes nav-progress-sweep {
+  0%   { transform: translateX(-100%); }
+  60%  { transform: translateX(20%); }
+  100% { transform: translateX(100%); }
+}

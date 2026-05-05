@@ -9,6 +9,7 @@ export class MemberService {
   private get db() { return this.supabase.client; }
   private _allCache: Member[] | null = null;
   private _allPromise: Promise<Member[]> | null = null;
+  private _byIdCache = new Map<string, Member | null>();
 
   constructor(private supabase: SupabaseService) {}
 
@@ -52,15 +53,20 @@ export class MemberService {
   }
 
   async getById(id: string): Promise<Member | null> {
+    if (this._byIdCache.has(id)) return this._byIdCache.get(id)!;
     const { data, error } = await this.db
       .from('members')
       .select('*')
       .eq('id', id)
       .single();
     if (error) {
-      if (isNotFoundError(error)) return null;
+      if (isNotFoundError(error)) {
+        this._byIdCache.set(id, null);
+        return null;
+      }
       throw error;
     }
+    this._byIdCache.set(id, data);
     return data;
   }
 
@@ -92,7 +98,10 @@ export class MemberService {
   }
 
   /** Call after create/update/delete to force next getAll() to re-fetch */
-  invalidateCache() { this._allCache = null; }
+  invalidateCache() {
+    this._allCache = null;
+    this._byIdCache.clear();
+  }
 
   async getUpcomingBirthdays(withinDays = 30): Promise<{ member: Member; daysUntil: number }[]> {
     const { data, error } = await this.db

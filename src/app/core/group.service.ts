@@ -9,7 +9,7 @@ export class GroupService {
   private get db() { return this.supabase.client; }
   private _allCache: Group[] | null = null;
   private _allPromise: Promise<Group[]> | null = null;
-
+  private _byIdCache = new Map<string, Group | null>();
 
   constructor(private supabase: SupabaseService) {}
 
@@ -27,7 +27,10 @@ export class GroupService {
     return this._allPromise;
   }
 
-  invalidateCache() { this._allCache = null; }
+  invalidateCache() {
+    this._allCache = null;
+    this._byIdCache.clear();
+  }
 
   async search(query: string): Promise<Group[]> {
     const safe = query.replace(/[%_\\]/g, c => `\\${c}`);
@@ -53,12 +56,17 @@ export class GroupService {
   }
 
   async getById(id: string): Promise<Group | null> {
+    if (this._byIdCache.has(id)) return this._byIdCache.get(id)!;
     const { data, error } = await this.db
       .from('groups').select('*').eq('id', id).single();
     if (error) {
-      if (isNotFoundError(error)) return null;
+      if (isNotFoundError(error)) {
+        this._byIdCache.set(id, null);
+        return null;
+      }
       throw error;
     }
+    this._byIdCache.set(id, data);
     return data;
   }
 

@@ -466,7 +466,7 @@
         }
 
         <!-- 歌曲列表 -->
-        @if (memberSongs.length === 0 && !showAddSongForm) {
+        @if (memberSongs.length === 0 && !showAddSongForm && !deferredLoading) {
           <div class="py-8 text-center">
             <p class="text-sm" style="color:var(--text-faint-55);">尚無原創曲記錄</p>
             @if (!isLoggedIn) {

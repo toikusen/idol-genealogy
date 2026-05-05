@@ -55,7 +55,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   companySections: { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] = [];
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
-
   constructor(
     private memberService: MemberService,
     private groupService: GroupService,

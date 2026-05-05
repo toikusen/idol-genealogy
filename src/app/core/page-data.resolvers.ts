@@ -15,11 +15,8 @@ import {
 } from '../models';
 import { CompanyService } from './company.service';
 import { GroupService } from './group.service';
-import { GroupSongService } from './group-song.service';
 import { HistoryService } from './history.service';
 import { MemberService } from './member.service';
-import { MemberSongService } from './member-song.service';
-import { ProposalService } from './proposal.service';
 import {
   isPublicCompanyRecord,
   isPublicGroupRecord,
@@ -88,10 +85,7 @@ export interface CompanyPageData {
 export const memberPageResolver: ResolveFn<MemberPageData> = async (route) => {
   const memberService = inject(MemberService);
   const historyService = inject(HistoryService);
-  const groupService = inject(GroupService);
   const companyService = inject(CompanyService);
-  const proposalService = inject(ProposalService);
-  const memberSongService = inject(MemberSongService);
 
   const requestedId = route.paramMap.get('id');
   const requestedHandle = route.paramMap.get('handle');
@@ -108,56 +102,34 @@ export const memberPageResolver: ResolveFn<MemberPageData> = async (route) => {
 
     if (!member) {
       return {
-        requestedId,
-        requestedHandle,
-        member: null,
-        histories: [],
-        companyName: null,
-        companyId: null,
-        allGroupsList: [],
-        lastProposal: null,
-        memberSongs: [],
-        error: false,
+        requestedId, requestedHandle,
+        member: null, histories: [], companyName: null, companyId: null,
+        allGroupsList: [], lastProposal: null, memberSongs: [], error: false,
       };
     }
 
-    const [histories, groups, company, proposals, memberSongs] = await Promise.all([
+    const [histories, company] = await Promise.all([
       historyService.getByMember(member.id),
-      groupService.getAll().catch(() => []),
       member.company_id ? companyService.getById(member.company_id).catch(() => null) : Promise.resolve(null),
-      proposalService.getApprovedByRecord('members', member.id).catch(() => []),
-      memberSongService.getByMember(member.id).catch(() => []),
     ]);
     const publicHistories = histories.filter(h => !h.group || isPublicGroupRecord(h.group));
     const publicCompany = company && isPublicCompanyRecord(company) ? company : null;
 
     return {
-      requestedId,
-      requestedHandle,
-      member,
+      requestedId, requestedHandle, member,
       histories: publicHistories,
       companyName: publicCompany?.name ?? null,
       companyId: publicCompany ? member.company_id : null,
-      allGroupsList: groups
-        .filter(isPublicGroupRecord)
-        .map(g => ({ id: g.id, name: g.name }))
-        .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW')),
-      lastProposal: proposals[0] ?? null,
-      memberSongs,
+      allGroupsList: [],
+      lastProposal: null,
+      memberSongs: [],
       error: false,
     };
   } catch {
     return {
-      requestedId,
-      requestedHandle,
-      member: null,
-      histories: [],
-      companyName: null,
-      companyId: null,
-      allGroupsList: [],
-      lastProposal: null,
-      memberSongs: [],
-      error: true,
+      requestedId, requestedHandle, member: null, histories: [],
+      companyName: null, companyId: null,
+      allGroupsList: [], lastProposal: null, memberSongs: [], error: true,
     };
   }
 };
@@ -165,19 +137,15 @@ export const memberPageResolver: ResolveFn<MemberPageData> = async (route) => {
 export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
   const groupService = inject(GroupService);
   const historyService = inject(HistoryService);
-  const memberService = inject(MemberService);
   const companyService = inject(CompanyService);
-  const proposalService = inject(ProposalService);
-  const groupSongService = inject(GroupSongService);
 
   const id = route.paramMap.get('id') ?? '';
 
   try {
-    const [rawGroup, teams, histories, videos] = await Promise.all([
+    const [rawGroup, teams, histories] = await Promise.all([
       groupService.getById(id),
       groupService.getTeamsByGroup(id),
       historyService.getByGroup(id),
-      groupService.getVideosByGroup(id),
     ]);
     const group = rawGroup && isPublicGroupRecord(rawGroup)
       ? sanitizePublicGroupRecord(rawGroup)
@@ -185,82 +153,43 @@ export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
 
     if (!group) {
       return {
-        id,
-        group: null,
-        companyName: null,
-        teams,
-        histories,
-        allMemberHistories: [],
-        videos,
-        similarGroups: [],
-        allMembers: [],
-        lastProposal: null,
-        songs: [],
-        error: false,
+        id, group: null, companyName: null, teams, histories,
+        allMemberHistories: [], videos: [], similarGroups: [],
+        allMembers: [], lastProposal: null, songs: [], error: false,
       };
     }
 
     const publicHistories = histories.filter(h => !h.member || isPublicMemberRecord(h.member));
-    const memberIds = [...new Set(publicHistories.map(h => h.member_id).filter((memberId): memberId is string => !!memberId))];
-
-    const [company, proposals, allMemberHistories, allMembers, similarGroups, songs] = await Promise.all([
-      group.company_id ? companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
-      proposalService.getApprovedByRecord('groups', id).catch(() => []),
-      historyService.getByMembers(memberIds).catch(() => []),
-      memberService.getAll().catch(() => []),
-      group.style ? groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
-      groupSongService.getByGroup(id).catch(() => []),
-    ]);
+    const rawCompany = group.company_id
+      ? await companyService.getById(group.company_id).catch(() => null)
+      : null;
+    const companyName = rawCompany && isPublicCompanyRecord(rawCompany) ? rawCompany.name : null;
 
     return {
-      id,
-      group,
-      companyName: company?.name ?? null,
-      teams,
+      id, group, companyName, teams,
       histories: publicHistories,
-      allMemberHistories: allMemberHistories.filter(h =>
-        (!h.member || isPublicMemberRecord(h.member)) && (!h.group || isPublicGroupRecord(h.group))
-      ),
-      videos,
-      similarGroups: similarGroups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord),
-      allMembers: allMembers
-        .filter(isPublicMemberRecord)
-        .map(m => ({ id: m.id, name: m.name ?? m.name_roman ?? m.id }))
-        .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW')),
-      lastProposal: proposals[0] ?? null,
-      songs,
-      error: false,
+      allMemberHistories: [], videos: [], similarGroups: [],
+      allMembers: [], lastProposal: null, songs: [], error: false,
     };
   } catch {
     return {
-      id,
-      group: null,
-      companyName: null,
-      teams: [],
-      histories: [],
-      allMemberHistories: [],
-      videos: [],
-      similarGroups: [],
-      allMembers: [],
-      lastProposal: null,
-      songs: [],
-      error: true,
+      id, group: null, companyName: null, teams: [], histories: [],
+      allMemberHistories: [], videos: [], similarGroups: [],
+      allMembers: [], lastProposal: null, songs: [], error: true,
     };
   }
 };
 
 export const companyPageResolver: ResolveFn<CompanyPageData> = async (route) => {
   const companyService = inject(CompanyService);
-  const proposalService = inject(ProposalService);
 
   const id = route.paramMap.get('id') ?? '';
 
   try {
-    const [rawCompany, groups, soloMembers, proposals] = await Promise.all([
+    const [rawCompany, groups, soloMembers] = await Promise.all([
       companyService.getById(id),
       companyService.getGroupsByCompany(id),
       companyService.getMembersByCompany(id),
-      proposalService.getApprovedByRecord('companies', id).catch(() => []),
     ]);
     const company = rawCompany && isPublicCompanyRecord(rawCompany)
       ? sanitizePublicCompanyRecord(rawCompany)
@@ -268,13 +197,8 @@ export const companyPageResolver: ResolveFn<CompanyPageData> = async (route) => 
 
     if (!company) {
       return {
-        id,
-        company: null,
-        activeGroups: [],
-        disbandedGroups: [],
-        soloMembers: [],
-        lastProposal: null,
-        error: false,
+        id, company: null, activeGroups: [], disbandedGroups: [],
+        soloMembers: [], lastProposal: null, error: false,
       };
     }
 
@@ -282,23 +206,17 @@ export const companyPageResolver: ResolveFn<CompanyPageData> = async (route) => 
     const publicSoloMembers = soloMembers.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
 
     return {
-      id,
-      company,
+      id, company,
       activeGroups: publicGroups.filter(g => !g.disbanded_at || new Date(g.disbanded_at) > new Date()),
       disbandedGroups: publicGroups.filter(g => !!g.disbanded_at && new Date(g.disbanded_at) <= new Date()),
       soloMembers: publicSoloMembers,
-      lastProposal: proposals[0] ?? null,
+      lastProposal: null,
       error: false,
     };
   } catch {
     return {
-      id,
-      company: null,
-      activeGroups: [],
-      disbandedGroups: [],
-      soloMembers: [],
-      lastProposal: null,
-      error: true,
+      id, company: null, activeGroups: [], disbandedGroups: [],
+      soloMembers: [], lastProposal: null, error: true,
     };
   }
 };
@@ -339,31 +257,22 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
 export const membersListResolver: ResolveFn<MembersListPageData> = async () => {
   const memberService = inject(MemberService);
   const groupService = inject(GroupService);
-  const historyService = inject(HistoryService);
 
   try {
-    const [members, groups, links] = await Promise.all([
+    const [members, groups] = await Promise.all([
       memberService.getAll(),
       groupService.getAll(),
-      historyService.getMemberGroupLinks(),
     ]);
     const publicMembers = members.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
     const publicGroups = groups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
-    const publicMemberIds = new Set(publicMembers.map(member => member.id));
-    const publicGroupIds = new Set(publicGroups.map(group => group.id));
 
     return {
       members: publicMembers,
       groups: publicGroups,
-      links: links.filter(link => publicMemberIds.has(link.member_id) && publicGroupIds.has(link.group_id)),
+      links: [],
       error: false,
     };
   } catch {
-    return {
-      members: [],
-      groups: [],
-      links: [],
-      error: true,
-    };
+    return { members: [], groups: [], links: [], error: true };
   }
 };
