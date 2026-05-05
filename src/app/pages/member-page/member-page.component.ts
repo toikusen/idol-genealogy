@@ -71,6 +71,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   songReportError = '';
   songReportDone = false;
   private routeDataSub?: Subscription;
+  private currentLoadId: string | null = null;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -138,6 +139,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   }
 
   private async loadDeferredData(memberId: string): Promise<void> {
+    this.currentLoadId = memberId;
     this.deferredLoading = true;
     try {
       const [groups, proposals, songs] = await Promise.all([
@@ -145,7 +147,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         this.proposalService.getApprovedByRecord('members', memberId).catch(() => []),
         this.memberSongService.getByMember(memberId).catch(() => []),
       ]);
-      if (!this.routeDataSub?.closed) {
+      if (this.currentLoadId === memberId && !this.routeDataSub?.closed) {
         this.allGroupsList = groups
           .filter(isPublicGroupRecord)
           .map(g => ({ id: g.id, name: g.name }))
@@ -154,7 +156,9 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         this.memberSongs = songs;
       }
     } finally {
-      this.deferredLoading = false;
+      if (this.currentLoadId === memberId) {
+        this.deferredLoading = false;
+      }
     }
   }
 
