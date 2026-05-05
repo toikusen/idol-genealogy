@@ -137,6 +137,7 @@ export const memberPageResolver: ResolveFn<MemberPageData> = async (route) => {
 export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
   const groupService = inject(GroupService);
   const historyService = inject(HistoryService);
+  const companyService = inject(CompanyService);
 
   const id = route.paramMap.get('id') ?? '';
 
@@ -159,9 +160,13 @@ export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
     }
 
     const publicHistories = histories.filter(h => !h.member || isPublicMemberRecord(h.member));
+    const rawCompany = group.company_id
+      ? await companyService.getById(group.company_id).catch(() => null)
+      : null;
+    const companyName = rawCompany && isPublicCompanyRecord(rawCompany) ? rawCompany.name : null;
 
     return {
-      id, group, companyName: null, teams,
+      id, group, companyName, teams,
       histories: publicHistories,
       allMemberHistories: [], videos: [], similarGroups: [],
       allMembers: [], lastProposal: null, songs: [], error: false,
