@@ -83,7 +83,6 @@ export class MembersListComponent implements OnInit, OnDestroy {
         this.historyService.getMemberGroupLinks(),
       ]);
       this.applyPageData(members, groups, links);
-      this.linksLoaded = true;
     } finally {
       this.loading = false;
       this.linksLoaded = true;
