@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -18,11 +18,12 @@ const PAGE_SIZE = 36;
   templateUrl: './members-list.component.html',
   styleUrl: './members-list.component.css',
 })
-export class MembersListComponent implements OnInit {
+export class MembersListComponent implements OnInit, OnDestroy {
   allMembers: Member[] = [];
   allGroups: Group[] = [];
   /** group_id → Set of member_ids */
   private groupMemberIds = new Map<string, Set<string>>();
+  private isDestroyed = false;
   loading = true;
 
   searchQuery = '';
@@ -67,7 +68,9 @@ export class MembersListComponent implements OnInit {
       this.loading = false;
       // Load group-member links in background (enables group filter after render)
       this.historyService.getMemberGroupLinks().then(links => {
-        this.applyPageData(pageData.members, pageData.groups, links);
+        if (!this.isDestroyed) {
+          this.applyPageData(pageData.members, pageData.groups, links);
+        }
       }).catch(() => {});
       return;
     }
@@ -82,6 +85,10 @@ export class MembersListComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  ngOnDestroy() {
+    this.isDestroyed = true;
   }
 
   private applyPageData(

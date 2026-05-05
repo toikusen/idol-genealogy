@@ -55,6 +55,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   companySections: { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] = [];
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private isDestroyed = false;
 
   constructor(
     private memberService: MemberService,
@@ -128,6 +129,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.memberService.getUpcomingBirthdays(30).catch(() => [] as { member: Member; daysUntil: number }[]),
       this.memberService.getSoloMembers().catch(() => [] as Member[]),
     ]);
+    if (this.isDestroyed) return;
     this.topMembers = topMembers.filter(isPublicMemberRecord);
     this.topGroups = topGroups.filter(isPublicGroupRecord);
     this.upcomingBirthdays = upcomingBirthdays.filter(entry => isPublicMemberRecord(entry.member));
@@ -192,6 +194,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.isDestroyed = true;
   }
 
   get displayedGroups(): Group[] {
