@@ -176,7 +176,15 @@ export class AdminAuditLogComponent implements OnInit {
     if (field === 'member_id') return this.memberMap.get(value) ?? value;
     if (field === 'group_id') return this.groupMap.get(value) ?? value;
     if (field === 'company_id') return this.companyMap.get(value) ?? value;
+    if (field.endsWith('_at') && typeof value === 'string') return this.formatLocalTime(value);
     return String(value);
+  }
+
+  private formatLocalTime(iso: string): string {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
   }
 
   tableLabel(t: string): string {
