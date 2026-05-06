@@ -158,6 +158,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
       this.editing.external_group_name = null;
       this.editing.external_country = null;
     }
+    if (!this.editing.status) { this.error = '狀態為必填'; return; }
     if (!this.editing.joined_at) { this.error = '加入日期為必填'; return; }
 
     const nameAtTime = this.editing.name_at_time?.trim();
