@@ -311,7 +311,7 @@
               font-size:0.72rem;letter-spacing:0.06em;
               padding:8px 12px;min-height:32px;border-radius:5px;border:1px solid var(--mauve-20);
               background:transparent;color:var(--text-faint);cursor:pointer;
-              transition:all 0.2s;white-space:nowrap;flex-shrink:0;
+              transition:background 0.2s,border-color 0.2s,color 0.2s;white-space:nowrap;flex-shrink:0;
             "
           >+ 新增經歷</button>
           <!-- View toggle -->
@@ -322,7 +322,7 @@
                 display: flex; align-items: center; gap: 4px;
                 padding: 10px 12px; min-height: 36px;
                 font-size: 0.72rem; letter-spacing: 0.08em;
-                border: none; cursor: pointer; transition: all 0.2s;
+                border: none; cursor: pointer; transition: background 0.2s, color 0.2s;
               "
               [style.background]="historyView === 'timeline' ? 'rgba(232,121,160,0.12)' : 'transparent'"
               [style.color]="historyView === 'timeline' ? 'var(--text-link)' : 'var(--text-faint-45)'"
@@ -344,7 +344,7 @@
                 display: flex; align-items: center; gap: 4px;
                 padding: 10px 12px; min-height: 36px;
                 font-size: 0.72rem; letter-spacing: 0.08em;
-                border: none; cursor: pointer; transition: all 0.2s;
+                border: none; cursor: pointer; transition: background 0.2s, color 0.2s;
               "
               [style.background]="historyView === 'career' ? 'rgba(232,121,160,0.12)' : 'transparent'"
               [style.color]="historyView === 'career' ? 'var(--text-link)' : 'var(--text-faint-45)'"
@@ -389,7 +389,7 @@
                 font-size:0.72rem;letter-spacing:0.06em;
                 padding:8px 12px;min-height:32px;border-radius:5px;border:1px solid var(--mauve-20);
                 background:transparent;color:var(--text-faint);cursor:pointer;
-                transition:all 0.2s;white-space:nowrap;flex-shrink:0;
+                transition:background 0.2s,border-color 0.2s,color 0.2s;white-space:nowrap;flex-shrink:0;
               ">+ 新增歌曲</button>
           }
         </div>

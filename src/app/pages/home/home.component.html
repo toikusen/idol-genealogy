@@ -736,7 +736,7 @@
                         background:rgba(232,121,160,0.05);
                         text-decoration:none;
                        font-size:0.8rem;
-                        color:var(--text-primary);transition:all 0.2s;
+                        color:var(--text-primary);transition:background 0.2s,border-color 0.2s,color 0.2s;
                       ">
                         @if (m.photo_url) {
                           <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
