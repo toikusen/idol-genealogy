@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MemberService } from '../../../core/member.service';
 import { CompanyService } from '../../../core/company.service';
@@ -77,6 +78,7 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     private memberService: MemberService,
     private companyService: CompanyService,
     private adminRole: AdminRoleService,
+    private route: ActivatedRoute,
     private supabase: SupabaseService,
     private igPhoto: IgPhotoService
   ) {
@@ -88,6 +90,11 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     await this.load();
     this.companyService.getAll().then(c => { this.allCompanies = c; }).catch(() => {});
+    const editId = this.route.snapshot.queryParamMap.get('editId');
+    if (editId) {
+      const m = this.members.find(m => m.id === editId);
+      if (m) this.openEdit(m);
+    }
   }
 
   get filteredMembers(): Member[] {

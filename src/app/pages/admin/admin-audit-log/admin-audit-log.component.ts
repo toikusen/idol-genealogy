@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuditLogService } from '../../../core/audit-log.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { MemberService } from '../../../core/member.service';
@@ -43,6 +44,7 @@ export class AdminAuditLogComponent implements OnInit {
     private memberService: MemberService,
     private groupService: GroupService,
     private companyService: CompanyService,
+    private router: Router,
   ) {}
 
   async ngOnInit() {
@@ -234,6 +236,35 @@ export class AdminAuditLogComponent implements OnInit {
       UPDATE: 'bg-blue-100 text-blue-700',
       DELETE: 'bg-red-100 text-red-700'
     }[op] ?? 'bg-gray-100 text-gray-600';
+  }
+
+  editRecord(log: AuditLog): void {
+    const id = log.record_id;
+    const src = log.new_data ?? log.old_data ?? {};
+    switch (log.table_name) {
+      case 'members':
+        this.router.navigate(['/admin/members'], { queryParams: { editId: id } });
+        break;
+      case 'groups':
+        this.router.navigate(['/admin/groups'], { queryParams: { editId: id } });
+        break;
+      case 'history':
+        this.router.navigate(['/admin/history'], { queryParams: { editId: id } });
+        break;
+      case 'companies':
+        this.router.navigate(['/admin/companies'], { queryParams: { editId: id } });
+        break;
+      case 'member_songs': {
+        const memberId = src['member_id'];
+        if (memberId) this.router.navigate(['/member', memberId], { queryParams: { editSongId: id } });
+        break;
+      }
+      case 'group_songs': {
+        const groupId = src['group_id'];
+        if (groupId) this.router.navigate(['/group', groupId], { queryParams: { editSongId: id } });
+        break;
+      }
+    }
   }
 
   revertActionLabel(op: string): string {

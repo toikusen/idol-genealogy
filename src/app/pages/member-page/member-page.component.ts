@@ -63,6 +63,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   showAddSongForm = false;
   editingSong: MemberSong | null = null;
   songFormData: Partial<MemberSong> = {};
+  private pendingEditSongId: string | null = null;
   songSaving = false;
   songError = '';
   reportingSong: MemberSong | null = null;
@@ -132,6 +133,9 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       if (params['propose'] === 'true') {
         this.showProposalPanel = true;
       }
+      if (params['editSongId']) {
+        this.pendingEditSongId = params['editSongId'];
+      }
     });
   }
 
@@ -155,6 +159,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
         this.lastProposal = proposals[0] ?? null;
         this.memberSongs = songs;
+        if (this.pendingEditSongId) {
+          const song = this.memberSongs.find(s => s.id === this.pendingEditSongId);
+          if (song) this.openEditSong(song);
+          this.pendingEditSongId = null;
+        }
       }
     } finally {
       if (this.currentLoadId === memberId) {

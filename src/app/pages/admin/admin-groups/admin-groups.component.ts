@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { GroupService } from '../../../core/group.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
@@ -47,7 +48,8 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     private groupService: GroupService,
     private adminRole: AdminRoleService,
     private companyService: CompanyService,
-    private igPhoto: IgPhotoService
+    private igPhoto: IgPhotoService,
+    private route: ActivatedRoute,
   ) {
     this._sub = this.adminRole.isAdmin$.subscribe(v => {
       this.isAdmin = v;
@@ -57,7 +59,14 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void { this._sub.unsubscribe(); }
 
-  async ngOnInit() { await this.load(); }
+  async ngOnInit() {
+    await this.load();
+    const editId = this.route.snapshot.queryParamMap.get('editId');
+    if (editId) {
+      const g = this.groups.find(g => g.id === editId);
+      if (g) await this.openEdit(g);
+    }
+  }
 
   get filteredGroups(): Group[] {
     const q = this.searchQuery.trim().toLowerCase();

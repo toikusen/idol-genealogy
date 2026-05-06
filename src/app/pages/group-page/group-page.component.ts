@@ -88,6 +88,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   showAddSongForm = false;
   editingSong: GroupSong | null = null;
   songFormData: Partial<GroupSong> = {};
+  private pendingEditSongId: string | null = null;
   songSaving = false;
   songError = '';
   reportingSong: GroupSong | null = null;
@@ -187,6 +188,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       if (params['propose'] === 'true') {
         this.showGroupProposalPanel = true;
       }
+      if (params['editSongId']) {
+        this.pendingEditSongId = params['editSongId'];
+      }
     });
   }
 
@@ -225,6 +229,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         this.similarGroups = similarGroups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
         this.songs = songs;
         this.videos = videos;
+        if (this.pendingEditSongId) {
+          const song = this.songs.find(s => s.id === this.pendingEditSongId);
+          if (song) this.openEditSong(song);
+          this.pendingEditSongId = null;
+        }
       }
     } finally {
       if (this.currentLoadId === id) {

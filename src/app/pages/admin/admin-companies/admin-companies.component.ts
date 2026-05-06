@@ -2,6 +2,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CompanyService } from '../../../core/company.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
@@ -32,14 +33,22 @@ export class AdminCompaniesComponent implements OnInit, OnDestroy {
   constructor(
     private companyService: CompanyService,
     private adminRole: AdminRoleService,
-    private igPhoto: IgPhotoService
+    private igPhoto: IgPhotoService,
+    private route: ActivatedRoute,
   ) {
     this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
   }
 
   ngOnDestroy() { this._sub.unsubscribe(); }
 
-  async ngOnInit() { await this.load(); }
+  async ngOnInit() {
+    await this.load();
+    const editId = this.route.snapshot.queryParamMap.get('editId');
+    if (editId) {
+      const c = this.companies.find(c => c.id === editId);
+      if (c) this.openEdit(c);
+    }
+  }
 
   async load() {
     this.loading = true;

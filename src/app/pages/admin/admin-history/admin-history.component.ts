@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { HistoryService } from '../../../core/history.service';
 import { MemberService } from '../../../core/member.service';
@@ -54,7 +55,8 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     private historyService: HistoryService,
     private memberService: MemberService,
     private groupService: GroupService,
-    private adminRole: AdminRoleService
+    private adminRole: AdminRoleService,
+    private route: ActivatedRoute,
   ) {
     this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
   }
@@ -71,6 +73,11 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
       this.histories = histories;
       this.members = members;
       this.groups = groups;
+      const editId = this.route.snapshot.queryParamMap.get('editId');
+      if (editId) {
+        const h = this.histories.find(h => h.id === editId);
+        if (h) this.openEdit(h);
+      }
     } catch (e: any) {
       this.error = e.message || '載入失敗';
     } finally {
