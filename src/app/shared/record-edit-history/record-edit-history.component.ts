@@ -6,11 +6,12 @@ import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
+import { SupabaseImgPipe } from '../supabase-img.pipe';
 
 @Component({
   selector: 'app-record-edit-history',
   standalone: true,
-  imports: [],
+  imports: [SupabaseImgPipe],
   templateUrl: './record-edit-history.component.html',
   styles: [`
     :host-context([data-theme="dark"]) aside {

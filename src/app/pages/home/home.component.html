@@ -95,7 +95,7 @@
           <!-- 成員 -->
           <button
             id="tab-members"
-            (click)="activeTab = 'members'"
+            (click)="setTab('members')"
             class="nav-tab tab-members"
             [class.tab-active]="activeTab === 'members'"
             role="tab"
@@ -115,7 +115,7 @@
           <!-- 団体 -->
           <button
             id="tab-groups"
-            (click)="activeTab = 'groups'"
+            (click)="setTab('groups')"
             class="nav-tab tab-groups"
             [class.tab-active]="activeTab === 'groups'"
             role="tab"
@@ -137,7 +137,7 @@
           <!-- 公司 -->
           <button
             id="tab-companies"
-            (click)="activeTab = 'companies'"
+            (click)="setTab('companies')"
             class="nav-tab tab-companies"
             [class.tab-active]="activeTab === 'companies'"
             role="tab"
@@ -156,7 +156,7 @@
           <!-- 活動 -->
           <button
             id="tab-events"
-            (click)="activeTab = 'events'"
+            (click)="setTab('events')"
             class="nav-tab tab-events"
             [class.tab-active]="activeTab === 'events'"
             role="tab"
@@ -205,7 +205,7 @@
                 <a [routerLink]="'/company/' + company.id + '/'" class="company-result-chip">
                   @if (company.photo_url) {
                     <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                         [src]="company.photo_url" [alt]="company.name" width="18" height="18"
+                         [src]="company.photo_url | supabaseImg:36" [alt]="company.name" width="18" height="18"
                          style="width:18px;height:18px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
                   } @else {
                     <span style="
@@ -245,7 +245,7 @@
                     ">
                       @if (member.photo_url) {
                         <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                             [src]="member.photo_url" [alt]="member.name" width="36" height="36"
+                             [src]="member.photo_url | supabaseImg:72" [alt]="member.name" width="36" height="36"
                              style="width: 100%; height: 100%; object-fit: cover;"/>
                       } @else {
                         {{getInitial(member)}}
@@ -282,7 +282,7 @@
                     ">
                       @if (r.member.photo_url) {
                         <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                             [src]="r.member.photo_url" [alt]="r.member.name" width="36" height="36"
+                             [src]="r.member.photo_url | supabaseImg:72" [alt]="r.member.name" width="36" height="36"
                              style="width: 100%; height: 100%; object-fit: cover;"/>
                       } @else {
                         {{getInitial(r.member)}}
@@ -333,7 +333,7 @@
                     ">
                       @if (group.photo_url) {
                         <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                             [src]="group.photo_url" [alt]="group.name" width="36" height="36"
+                             [src]="group.photo_url | supabaseImg:72" [alt]="group.name" width="36" height="36"
                              style="width:100%;height:100%;object-fit:cover;">
                       } @else {
                         <div style="width: 12px; height: 12px; border-radius: 50%;" [style.background]="group.color || '#7c6cf2'"></div>
@@ -409,7 +409,7 @@
                         <span style="color: var(--text-faint-45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
                         @if (entry.photo_url) {
                           <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                               [src]="entry.photo_url" [alt]="entry.name" width="64" height="64"
+                               [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="64" height="64"
                                class="popular-rank-img" style="border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
                         }
                         <span class="popular-rank-name">{{ entry.name }}</span>
@@ -431,7 +431,7 @@
                         <span style="color: var(--text-faint-45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
                         @if (entry.photo_url) {
                           <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                               [src]="entry.photo_url" [alt]="entry.name" width="64" height="64"
+                               [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="64" height="64"
                                class="popular-rank-img" style="border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
                         }
                         <span class="popular-rank-name">{{ entry.name }}</span>
@@ -466,7 +466,7 @@
                     <div class="birthday-avatar" [class.birthday-avatar--today]="entry.daysUntil === 0">
                       @if (entry.member.photo_url) {
                         <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                             [src]="entry.member.photo_url" [alt]="entry.member.name" width="64" height="64"/>
+                             [src]="entry.member.photo_url | supabaseImg:128" [alt]="entry.member.name" width="64" height="64"/>
                       } @else {
                         {{ getInitial(entry.member) }}
                       }
@@ -520,7 +520,7 @@
                   ">
                     @if (member.photo_url) {
                       <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                           [src]="member.photo_url" [alt]="member.name" width="56" height="56"
+                           [src]="member.photo_url | supabaseImg:112" [alt]="member.name" width="56" height="56"
                            style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
                     } @else {
                       {{getInitial(member)}}
@@ -598,7 +598,7 @@
                 ">
                   @if (group.photo_url) {
                     <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                         [src]="group.photo_url" [alt]="group.name" width="36" height="36"
+                         [src]="group.photo_url | supabaseImg:72" [alt]="group.name" width="36" height="36"
                          style="width:100%;height:100%;object-fit:cover;">
                   } @else {
                     <div style="width:12px;height:12px;border-radius:50%;" [style.background]="group.color || '#7c6cf2'"></div>
@@ -740,7 +740,7 @@
                       ">
                         @if (m.photo_url) {
                           <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
-                               [src]="m.photo_url" [alt]="m.name" width="20" height="20"
+                               [src]="m.photo_url | supabaseImg:40" [alt]="m.name" width="20" height="20"
                                style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
                         } @else {
                           <div style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;flex-shrink:0;"

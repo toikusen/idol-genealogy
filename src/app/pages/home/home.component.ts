@@ -9,6 +9,7 @@ import { SeoService } from '../../core/seo.service';
 import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
+import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 import { HomePageData } from '../../core/page-data.resolvers';
 import {
@@ -23,7 +24,7 @@ import {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe],
+  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
@@ -47,6 +48,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   topMembers: MemberLeaderboardEntry[] = [];
   topGroups: GroupLeaderboardEntry[] = [];
   activeTab: 'members' | 'groups' | 'companies' | 'events' = 'members';
+  private soloMembersLoaded = false;
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
 
   activeGroups: Group[] = [];
@@ -108,6 +110,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.traineeGroups = this.allGroups
         .filter(g => g.is_trainee)
         .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+      // Build company sections from groups (solo members lazy-loaded on tab click)
       this.companySections = this.buildCompanySections();
     }
 
@@ -116,6 +119,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (q) {
       this.query = q;
       await this.search();
+    }
+  }
+
+  async setTab(tab: 'members' | 'groups' | 'companies' | 'events') {
+    this.activeTab = tab;
+    if (tab === 'companies' && !this.soloMembersLoaded) {
+      this.soloMembersLoaded = true;
+      const raw = await this.memberService.getSoloMembers().catch(() => [] as Member[]);
+      this.allSoloMembers = raw.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
+      this.companySections = this.buildCompanySections();
     }
   }
 

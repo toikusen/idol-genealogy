@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { History, Team, Group } from '../../models';
+import { SupabaseImgPipe } from '../supabase-img.pipe';
 
 interface TreeNode {
   type: 'team' | 'member';
@@ -21,7 +22,7 @@ interface FlatGroup {
 @Component({
   selector: 'app-group-tree',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SupabaseImgPipe],
   styles: [`
     .gt-card {
       background: var(--bg-card);
@@ -97,7 +98,7 @@ interface FlatGroup {
         <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm
                     p-3 text-center hover:-translate-y-1 transition-all duration-200">
           @if (node.photo_url) {
-            <img [src]="node.photo_url" [alt]="node.label"
+            <img [src]="node.photo_url | supabaseImg:112" [alt]="node.label"
                  class="w-14 h-14 rounded-full object-cover mx-auto mb-2 ring-2 gt-ring shadow-sm">
           } @else {
             <div class="w-14 h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ring-2 gt-ring shadow-sm"
@@ -138,7 +139,7 @@ interface FlatGroup {
                   <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm
                               p-3 text-center hover:-translate-y-1 transition-all duration-200">
                     @if (child.photo_url) {
-                      <img [src]="child.photo_url" [alt]="child.label"
+                      <img [src]="child.photo_url | supabaseImg:112" [alt]="child.label"
                            class="w-14 h-14 rounded-full object-cover mx-auto mb-2 ring-2 gt-ring shadow-sm">
                     } @else {
                       <div class="w-14 h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ring-2 gt-ring shadow-sm"

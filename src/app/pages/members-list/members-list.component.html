@@ -192,7 +192,7 @@
           ">
             <!-- Avatar -->
             @if (m.photo_url) {
-              <img [src]="m.photo_url" [alt]="m.name" loading="lazy" style="
+              <img [src]="m.photo_url | supabaseImg:128" [alt]="m.name" loading="lazy" style="
                 width: 64px; height: 64px; border-radius: 50%;
                 object-fit: cover; flex-shrink: 0;
                 box-shadow: 0 2px 8px rgba(45,27,46,0.12);

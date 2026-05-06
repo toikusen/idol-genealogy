@@ -52,7 +52,7 @@
                class="block w-10 h-10 rounded-full border-2 overflow-hidden flex-shrink-0 transition-transform hover:scale-110"
                [class]="borderClass(entry.completeness.score)">
               @if (entry.member.photo_url) {
-                <img [src]="entry.member.photo_url" [alt]="entry.member.name" class="w-full h-full object-cover" loading="lazy">
+                <img [src]="entry.member.photo_url | supabaseImg:80" [alt]="entry.member.name" class="w-full h-full object-cover" loading="lazy">
               } @else {
                 <div class="w-full h-full flex items-center justify-center text-xs font-bold"
                      style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">
@@ -68,7 +68,7 @@
                class="block w-10 h-10 rounded-full border-2 overflow-hidden flex-shrink-0 transition-transform hover:scale-110"
                [class]="borderClass(entry.completeness.score)">
               @if (entry.group.photo_url) {
-                <img [src]="entry.group.photo_url" [alt]="entry.group.name" class="w-full h-full object-cover" loading="lazy">
+                <img [src]="entry.group.photo_url | supabaseImg:80" [alt]="entry.group.name" class="w-full h-full object-cover" loading="lazy">
               } @else {
                 <div class="w-full h-full flex items-center justify-center text-xs font-bold"
                      style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">
@@ -122,7 +122,7 @@
                  class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
                  [class]="borderClass(entry.completeness.score)">
                 @if (entry.member.photo_url) {
-                  <img [src]="entry.member.photo_url" [alt]="entry.member.name" class="w-full h-full object-cover" loading="lazy">
+                  <img [src]="entry.member.photo_url | supabaseImg:80" [alt]="entry.member.name" class="w-full h-full object-cover" loading="lazy">
                 } @else {
                   <div class="w-full h-full flex items-center justify-center font-bold"
                        style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">
@@ -176,7 +176,7 @@
                  class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
                  [class]="borderClass(entry.completeness.score)">
                 @if (entry.group.photo_url) {
-                  <img [src]="entry.group.photo_url" [alt]="entry.group.name" class="w-full h-full object-cover" loading="lazy">
+                  <img [src]="entry.group.photo_url | supabaseImg:80" [alt]="entry.group.name" class="w-full h-full object-cover" loading="lazy">
                 } @else {
                   <div class="w-full h-full flex items-center justify-center font-bold"
                        style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">
@@ -230,7 +230,7 @@
                  class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
                  [class]="borderClass(entry.completeness.score)">
                 @if (entry.company.photo_url) {
-                  <img [src]="entry.company.photo_url" [alt]="entry.company.name" class="w-full h-full object-cover" loading="lazy">
+                  <img [src]="entry.company.photo_url | supabaseImg:80" [alt]="entry.company.name" class="w-full h-full object-cover" loading="lazy">
                 } @else {
                   <div class="w-full h-full flex items-center justify-center font-bold"
                        style="background: rgba(124,108,242,0.1); color: rgba(124,108,242,0.7);">

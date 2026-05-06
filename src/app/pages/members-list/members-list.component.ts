@@ -9,12 +9,13 @@ import { SeoService } from '../../core/seo.service';
 import { Member, Group } from '../../models';
 import { siteUrl } from '../../core/public-url.utils';
 import { MembersListPageData } from '../../core/page-data.resolvers';
+import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 const PAGE_SIZE = 36;
 
 @Component({
   selector: 'app-members-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SupabaseImgPipe],
   templateUrl: './members-list.component.html',
   styleUrl: './members-list.component.css',
 })

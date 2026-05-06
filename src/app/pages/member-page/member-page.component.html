@@ -108,7 +108,7 @@
             <div style="position: relative; display: inline-block;">
               @if (member.photo_url) {
                 <img
-                  [src]="member.photo_url"
+                  [src]="member.photo_url | supabaseImg:320"
                   [alt]="member.name"
                   class="member-portrait"
                   loading="lazy"

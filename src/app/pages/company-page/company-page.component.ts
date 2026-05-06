@@ -15,11 +15,12 @@ import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
 import { companyIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
 import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
+import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 
 @Component({
   selector: 'app-company-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, AdBannerComponent],
+  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, AdBannerComponent, SupabaseImgPipe],
   templateUrl: './company-page.component.html',
   styleUrl: './company-page.component.css',
 })

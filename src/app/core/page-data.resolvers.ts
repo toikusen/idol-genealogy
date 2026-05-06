@@ -226,31 +226,28 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
   const groupService = inject(GroupService);
   const companyService = inject(CompanyService);
 
-  const [allMembers, allGroups, allCompanies, topMembers, topGroups, upcomingBirthdays, allSoloMembers] = await Promise.all([
-    memberService.getAll().catch(() => [] as Member[]),
+  const [recentMembers, memberCount, allGroups, allCompanies, topMembers, topGroups, upcomingBirthdays] = await Promise.all([
+    memberService.getRecent(9).catch(() => [] as Member[]),
+    memberService.getCount().catch(() => 0),
     groupService.getAll().catch(() => [] as Group[]),
     companyService.getAll().catch(() => [] as Company[]),
     memberService.getTopByViews(5).catch(() => [] as MemberLeaderboardEntry[]),
     groupService.getTopByViews(5).catch(() => [] as GroupLeaderboardEntry[]),
     memberService.getUpcomingBirthdays(30).catch(() => [] as { member: Member; daysUntil: number }[]),
-    memberService.getSoloMembers().catch(() => [] as Member[]),
   ]);
 
-  const publicMembers = allMembers.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
   const publicGroups = allGroups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
   const publicCompanies = allCompanies.filter(isPublicCompanyRecord).map(sanitizePublicCompanyRecord);
 
   return {
-    recentMembers: [...publicMembers]
-      .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))
-      .slice(0, 9),
-    memberCount: publicMembers.length,
+    recentMembers: recentMembers.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord),
+    memberCount,
     allGroups: publicGroups,
     allCompanies: publicCompanies,
     topMembers: topMembers.filter(isPublicMemberRecord),
     topGroups: topGroups.filter(isPublicGroupRecord),
     upcomingBirthdays: upcomingBirthdays.filter(entry => isPublicMemberRecord(entry.member)),
-    allSoloMembers: allSoloMembers.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord),
+    allSoloMembers: [],
   };
 };
 

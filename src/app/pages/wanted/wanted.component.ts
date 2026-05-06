@@ -31,10 +31,12 @@ export interface WantedCompany {
   completeness: CompletenessResult;
 }
 
+import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
+
 @Component({
   selector: 'app-wanted',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, SupabaseImgPipe],
   templateUrl: './wanted.component.html',
 })
 export class WantedComponent implements OnInit {

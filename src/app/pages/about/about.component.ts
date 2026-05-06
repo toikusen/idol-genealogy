@@ -5,11 +5,12 @@ import { TeamMemberService } from '../../core/team-member.service';
 import { SeoService } from '../../core/seo.service';
 import { TeamMember } from '../../models';
 import { siteUrl } from '../../core/public-url.utils';
+import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 
 @Component({
   selector: 'app-about',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, SupabaseImgPipe],
   templateUrl: './about.component.html',
 })
 export class AboutComponent implements OnInit {

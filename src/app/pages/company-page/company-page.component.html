@@ -46,7 +46,7 @@
       <!-- ══ Logo + Name ══ -->
       <div style="margin-top: 28px; display:flex; align-items:center; gap:18px;">
         @if (company.photo_url) {
-          <img [src]="company.photo_url" [alt]="company.name" loading="lazy"
+          <img [src]="company.photo_url | supabaseImg:144" [alt]="company.name" loading="lazy"
             class="company-logo-border"
             style="
               width: 72px; height: 72px; border-radius: 50%;
@@ -279,7 +279,7 @@
               [style.background]="(m.color || '#e879a0') + '10'"
               >
                 @if (m.photo_url) {
-                  <img [src]="m.photo_url" [alt]="m.name" loading="lazy"
+                  <img [src]="m.photo_url | supabaseImg:44" [alt]="m.name" loading="lazy"
                     style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
                 } @else {
                   <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;"
