@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { AuditLogService } from './audit-log.service';
 import { SupabaseService } from './supabase.service';
+import { AdminRoleService } from './admin-role.service';
 import { AuditLog } from '../models';
 
 function makeLog(overrides: Partial<AuditLog> = {}): AuditLog {
@@ -14,22 +15,33 @@ function makeLog(overrides: Partial<AuditLog> = {}): AuditLog {
     old_data: { name: 'Old Name' },
     new_data: { name: 'New Name' },
     created_at: '2026-01-01T00:00:00Z',
-    ...overrides
+    ...overrides,
   };
 }
 
 describe('AuditLogService', () => {
   let service: AuditLogService;
   let dbSpy: jasmine.SpyObj<any>;
+  let adminRoleSpy: jasmine.SpyObj<AdminRoleService>;
+  let supabaseSpy: { client: jasmine.SpyObj<any>; getSessionOnce: jasmine.Spy };
 
   beforeEach(() => {
-    dbSpy = { from: jasmine.createSpy('from') };
+    dbSpy = {
+      from: jasmine.createSpy('from'),
+      rpc: jasmine.createSpy('rpc'),
+    };
+    adminRoleSpy = jasmine.createSpyObj<AdminRoleService>('AdminRoleService', ['isAdmin']);
+    supabaseSpy = {
+      client: dbSpy,
+      getSessionOnce: jasmine.createSpy('getSessionOnce'),
+    };
 
     TestBed.configureTestingModule({
       providers: [
         AuditLogService,
-        { provide: SupabaseService, useValue: { client: dbSpy } }
-      ]
+        { provide: SupabaseService, useValue: supabaseSpy },
+        { provide: AdminRoleService, useValue: adminRoleSpy },
+      ],
     });
     service = TestBed.inject(AuditLogService);
   });
@@ -39,111 +51,92 @@ describe('AuditLogService', () => {
     const chain = {
       select: jasmine.createSpy().and.returnValue({
         order: jasmine.createSpy().and.returnValue({
-          limit: jasmine.createSpy().and.returnValue(Promise.resolve({ data: logs, error: null }))
-        })
-      })
+          limit: jasmine.createSpy().and.returnValue(Promise.resolve({ data: logs, error: null })),
+        }),
+      }),
     };
     dbSpy.from.and.returnValue(chain);
     const result = await service.getAll();
     expect(result).toEqual(logs);
   });
 
-  it('getAll() applies table_name filter when provided', async () => {
-    const eqSpy = jasmine.createSpy('eq').and.returnValue({
-      order: jasmine.createSpy().and.returnValue({
-        limit: jasmine.createSpy().and.returnValue(Promise.resolve({ data: [], error: null }))
-      })
-    });
-    const chain = {
-      select: jasmine.createSpy().and.returnValue({ eq: eqSpy })
-    };
-    dbSpy.from.and.returnValue(chain);
-    await service.getAll({ table_name: 'members' });
-    expect(eqSpy).toHaveBeenCalledWith('table_name', 'members');
-  });
-
-  it('revert() calls update with old_data for UPDATE operation', async () => {
-    const log = makeLog({ operation: 'UPDATE', old_data: { name: 'Old' }, record_id: 'rec-1' });
-    const eqSpy = jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }));
-    const updateChain = { eq: eqSpy };
-    const chain = {
-      update: jasmine.createSpy().and.returnValue(updateChain),
-      delete: jasmine.createSpy(),
-      insert: jasmine.createSpy(),
-    };
-    dbSpy.from.and.returnValue(chain);
-    await service.revert(log);
-    expect(chain.update).toHaveBeenCalledWith(log.old_data);
-    expect(eqSpy).toHaveBeenCalledWith('id', 'rec-1');
-  });
-
-  it('revert() calls delete for INSERT operation', async () => {
-    const log = makeLog({ operation: 'INSERT', record_id: 'rec-2' });
-    const eqSpy = jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }));
-    const chain = {
-      delete: jasmine.createSpy().and.returnValue({ eq: eqSpy }),
-      update: jasmine.createSpy(),
-      insert: jasmine.createSpy(),
-    };
-    dbSpy.from.and.returnValue(chain);
-    await service.revert(log);
-    expect(chain.delete).toHaveBeenCalled();
-    expect(eqSpy).toHaveBeenCalledWith('id', 'rec-2');
-  });
-
-  it('revert() calls insert with old_data for DELETE operation', async () => {
-    const log = makeLog({ operation: 'DELETE', old_data: { id: 'rec-3', name: 'Gone' } });
-    const chain = {
-      insert: jasmine.createSpy().and.returnValue(Promise.resolve({ error: null })),
-      delete: jasmine.createSpy(),
-      update: jasmine.createSpy(),
-    };
-    dbSpy.from.and.returnValue(chain);
-    await service.revert(log);
-    expect(chain.insert).toHaveBeenCalledWith(log.old_data);
-  });
-
-  it('revert() throws when Supabase returns an error', async () => {
-    const log = makeLog({ operation: 'UPDATE' });
-    const eqSpy = jasmine.createSpy('eq').and.returnValue(
-      Promise.resolve({ error: { message: 'FK violation' } })
-    );
-    const chain = {
-      update: jasmine.createSpy().and.returnValue({ eq: eqSpy }),
-      delete: jasmine.createSpy(),
-      insert: jasmine.createSpy(),
-    };
-    dbSpy.from.and.returnValue(chain);
-    await expectAsync(service.revert(log)).toBeRejectedWithError('FK violation');
-  });
-
-  it('getAll() applies operation filter when provided', async () => {
-    const eqSpy = jasmine.createSpy('eq').and.returnValue({
-      order: jasmine.createSpy().and.returnValue({
-        limit: jasmine.createSpy().and.returnValue(Promise.resolve({ data: [], error: null }))
-      })
-    });
-    const chain = {
-      select: jasmine.createSpy().and.returnValue({ eq: eqSpy })
-    };
-    dbSpy.from.and.returnValue(chain);
-    await service.getAll({ operation: 'INSERT' });
-    expect(eqSpy).toHaveBeenCalledWith('operation', 'INSERT');
-  });
-
   it('getAll() applies both table_name and operation filters when both provided', async () => {
     const eqOperationSpy = jasmine.createSpy('eqOperation').and.returnValue({
       order: jasmine.createSpy().and.returnValue({
-        limit: jasmine.createSpy().and.returnValue(Promise.resolve({ data: [], error: null }))
-      })
+        limit: jasmine.createSpy().and.returnValue(Promise.resolve({ data: [], error: null })),
+      }),
     });
     const eqTableSpy = jasmine.createSpy('eqTable').and.returnValue({ eq: eqOperationSpy });
     const chain = {
-      select: jasmine.createSpy().and.returnValue({ eq: eqTableSpy })
+      select: jasmine.createSpy().and.returnValue({ eq: eqTableSpy }),
     };
     dbSpy.from.and.returnValue(chain);
-    await service.getAll({ table_name: 'members', operation: 'UPDATE' });
+    await service.getAll({ table_name: 'members', operation: 'INSERT' });
     expect(eqTableSpy).toHaveBeenCalledWith('table_name', 'members');
-    expect(eqOperationSpy).toHaveBeenCalledWith('operation', 'UPDATE');
+    expect(eqOperationSpy).toHaveBeenCalledWith('operation', 'INSERT');
+  });
+
+  it('canRevertLog() allows admins', async () => {
+    adminRoleSpy.isAdmin.and.resolveTo(true);
+    await expectAsync(service.canRevertLog(makeLog())).toBeResolvedTo(true);
+    expect(supabaseSpy.getSessionOnce).not.toHaveBeenCalled();
+  });
+
+  it('canRevertLog() allows the log owner for non-admin users', async () => {
+    adminRoleSpy.isAdmin.and.resolveTo(false);
+    supabaseSpy.getSessionOnce.and.resolveTo({ user: { email: 'a@b.com' } });
+    await expectAsync(service.canRevertLog(makeLog())).toBeResolvedTo(true);
+  });
+
+  it('revert() calls the revert_audit_log RPC', async () => {
+    dbSpy.rpc.and.resolveTo({ error: null });
+    await service.revert(makeLog({ id: 'log-123' }));
+    expect(dbSpy.rpc).toHaveBeenCalledWith('revert_audit_log', { p_log_id: 'log-123' });
+  });
+
+  it('revert() throws when the RPC returns an error', async () => {
+    dbSpy.rpc.and.resolveTo({ error: { message: 'FK violation' } });
+    await expectAsync(service.revert(makeLog())).toBeRejectedWithError('FK violation');
+  });
+
+  it('getRecord() reads an editable table by id', async () => {
+    const record = { id: 'rec-1', name: 'Current Name' };
+    const maybeSingleSpy = jasmine.createSpy('maybeSingle').and.resolveTo({ data: record, error: null });
+    const eqSpy = jasmine.createSpy('eq').and.returnValue({ maybeSingle: maybeSingleSpy });
+    const chain = {
+      select: jasmine.createSpy().and.returnValue({ eq: eqSpy }),
+    };
+    dbSpy.from.and.returnValue(chain);
+
+    const result = await service.getRecord('members', 'rec-1');
+
+    expect(dbSpy.from).toHaveBeenCalledWith('members');
+    expect(chain.select).toHaveBeenCalledWith('*');
+    expect(eqSpy).toHaveBeenCalledWith('id', 'rec-1');
+    expect(result).toEqual(record);
+  });
+
+  it('updateRecord() only sends whitelisted fields', async () => {
+    const eqSpy = jasmine.createSpy('eq').and.resolveTo({ error: null });
+    const chain = {
+      update: jasmine.createSpy().and.returnValue({ eq: eqSpy }),
+    };
+    dbSpy.from.and.returnValue(chain);
+
+    await service.updateRecord('members', 'rec-1', {
+      name: 'Corrected',
+      updated_at: 'should-not-pass',
+      admin_only: 'nope',
+    });
+
+    expect(dbSpy.from).toHaveBeenCalledWith('members');
+    expect(chain.update).toHaveBeenCalledWith({ name: 'Corrected' });
+    expect(eqSpy).toHaveBeenCalledWith('id', 'rec-1');
+  });
+
+  it('updateRecord() rejects unsupported tables', async () => {
+    await expectAsync(
+      service.updateRecord('user_roles', 'role-1', { role: 'admin' })
+    ).toBeRejectedWithError('此資料表不支援在變更記錄中編輯');
   });
 });

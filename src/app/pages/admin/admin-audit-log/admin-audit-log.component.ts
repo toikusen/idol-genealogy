@@ -1,19 +1,43 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { AuditLogService } from '../../../core/audit-log.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { CompanyService } from '../../../core/company.service';
 import { FIELD_LABELS } from '../../../core/proposal-fields.config';
-import { AuditLog } from '../../../models';
+import { AuditLog, Company, Group, Member, Team } from '../../../models';
+import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
+import { SupabaseImgPipe } from '../../../shared/supabase-img.pipe';
+
+type AuditEditFieldType = 'text' | 'textarea' | 'date' | 'url' | 'number' | 'select' | 'checkbox';
+
+interface AuditEditField {
+  key: string;
+  type: AuditEditFieldType;
+  required?: boolean;
+  placeholder?: string;
+}
+
+interface AuditEditOption {
+  value: any;
+  label: string;
+}
+
+interface AuditDiff {
+  field: string;
+  label: string;
+  before: string;
+  after: string;
+  beforeValue: any;
+  afterValue: any;
+}
 
 @Component({
   selector: 'app-admin-audit-log',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PhotoUploadComponent, SupabaseImgPipe],
   templateUrl: './admin-audit-log.component.html',
 })
 export class AdminAuditLogComponent implements OnInit {
@@ -29,14 +53,158 @@ export class AdminAuditLogComponent implements OnInit {
   revertSuccess: { [id: string]: boolean } = {};
   reverting: { [id: string]: boolean } = {};
   showConfirm: string | null = null;
+  editLog: AuditLog | null = null;
+  editForm: Record<string, any> = {};
+  private editOriginal: Record<string, any> = {};
+  editLoading = false;
+  editSaving = false;
+  editError = '';
+  editSuccess: { [id: string]: boolean } = {};
+  showAllEditFields = false;
+  editTeams: Team[] = [];
 
-  tableOptions = ['members', 'groups', 'history', 'member_songs', 'group_songs'];
+  tableOptions = ['members', 'groups', 'history', 'companies', 'member_songs', 'group_songs'];
   operationOptions = ['INSERT', 'UPDATE', 'DELETE'];
+
+  members: Member[] = [];
+  groups: Group[] = [];
+  companies: Company[] = [];
 
   private userNameMap = new Map<string, string>();
   private memberMap = new Map<string, string>();
   private groupMap = new Map<string, string>();
   private companyMap = new Map<string, string>();
+
+  private readonly editFields: Record<string, AuditEditField[]> = {
+    members: [
+      { key: 'name', type: 'text', required: true },
+      { key: 'name_hiragana', type: 'text' },
+      { key: 'name_roman', type: 'text' },
+      { key: 'emoji', type: 'text' },
+      { key: 'nickname', type: 'text' },
+      { key: 'birthdate', type: 'text', placeholder: 'MM-DD' },
+      { key: 'color', type: 'text', placeholder: '#e879a0' },
+      { key: 'color_name', type: 'text' },
+      { key: 'photo_url', type: 'url' },
+      { key: 'instagram', type: 'url' },
+      { key: 'facebook', type: 'url' },
+      { key: 'x', type: 'url' },
+      { key: 'maid_url', type: 'url' },
+      { key: 'company_id', type: 'select' },
+      { key: 'no_sns', type: 'checkbox' },
+      { key: 'notes', type: 'textarea' },
+    ],
+    groups: [
+      { key: 'name', type: 'text', required: true },
+      { key: 'name_jp', type: 'text' },
+      { key: 'photo_url', type: 'url' },
+      { key: 'company_id', type: 'select' },
+      { key: 'company', type: 'text' },
+      { key: 'color', type: 'text', placeholder: '#7c6cf2' },
+      { key: 'founded_at', type: 'date' },
+      { key: 'disbanded_at', type: 'date' },
+      { key: 'instagram', type: 'url' },
+      { key: 'facebook', type: 'url' },
+      { key: 'x', type: 'url' },
+      { key: 'youtube', type: 'url' },
+      { key: 'is_trainee', type: 'checkbox' },
+      { key: 'style', type: 'text' },
+      { key: 'notes', type: 'textarea' },
+    ],
+    history: [
+      { key: 'member_id', type: 'select', required: true },
+      { key: 'group_id', type: 'select' },
+      { key: 'team_id', type: 'select' },
+      { key: 'external_group_name', type: 'text' },
+      { key: 'external_country', type: 'text' },
+      { key: 'name_at_time', type: 'text' },
+      { key: 'role', type: 'text' },
+      { key: 'status', type: 'select', required: true },
+      { key: 'joined_at', type: 'date', required: true },
+      { key: 'left_at', type: 'date' },
+      { key: 'notes', type: 'textarea' },
+    ],
+    companies: [
+      { key: 'name', type: 'text', required: true },
+      { key: 'photo_url', type: 'url' },
+      { key: 'color', type: 'text', placeholder: '#7c6cf2' },
+      { key: 'description', type: 'textarea' },
+      { key: 'website', type: 'url' },
+      { key: 'instagram', type: 'url' },
+      { key: 'facebook', type: 'url' },
+      { key: 'x', type: 'url' },
+      { key: 'youtube', type: 'url' },
+      { key: 'founded_at', type: 'date' },
+    ],
+    member_songs: [
+      { key: 'title', type: 'text', required: true },
+      { key: 'release_date', type: 'date' },
+      { key: 'youtube_url', type: 'url' },
+      { key: 'composer', type: 'text' },
+      { key: 'lyricist', type: 'text' },
+      { key: 'arranger', type: 'text' },
+      { key: 'sort_order', type: 'number' },
+      { key: 'notes', type: 'textarea' },
+    ],
+    group_songs: [
+      { key: 'title', type: 'text', required: true },
+      { key: 'release_date', type: 'date' },
+      { key: 'youtube_url', type: 'url' },
+      { key: 'composer', type: 'text' },
+      { key: 'lyricist', type: 'text' },
+      { key: 'arranger', type: 'text' },
+      { key: 'sort_order', type: 'number' },
+      { key: 'notes', type: 'textarea' },
+    ],
+  };
+
+  private readonly extraFieldLabels: Record<string, Record<string, string>> = {
+    members: {
+      company_id: '所屬公司',
+      no_sns: '確認無社群帳號',
+      notes: '備注',
+    },
+    groups: {
+      company: '自定義公司名稱',
+      is_trainee: '研修・見習',
+      style: '風格',
+      notes: '備注',
+    },
+    history: {
+      team_id: '隊伍',
+      role: '角色 / 職位',
+      notes: '備注',
+    },
+    member_songs: {
+      title: '曲名',
+      release_date: '發行日期',
+      youtube_url: 'YouTube',
+      composer: '作曲',
+      lyricist: '作詞',
+      arranger: '編曲',
+      sort_order: '排序',
+      notes: '備注',
+    },
+    group_songs: {
+      title: '曲名',
+      release_date: '發行日期',
+      youtube_url: 'YouTube',
+      composer: '作曲',
+      lyricist: '作詞',
+      arranger: '編曲',
+      sort_order: '排序',
+      notes: '備注',
+    },
+  };
+
+  readonly historyStatusOptions: AuditEditOption[] = [
+    { value: 'active', label: '正常在籍' },
+    { value: 'concurrent', label: '兼任' },
+    { value: 'support', label: '支援' },
+    { value: 'hiatus', label: '活休' },
+    { value: 'transferred', label: '移籍' },
+    { value: 'graduated', label: '畢業' },
+  ];
 
   constructor(
     private auditLog: AuditLogService,
@@ -44,7 +212,6 @@ export class AdminAuditLogComponent implements OnInit {
     private memberService: MemberService,
     private groupService: GroupService,
     private companyService: CompanyService,
-    private router: Router,
   ) {}
 
   async ngOnInit() {
@@ -52,12 +219,24 @@ export class AdminAuditLogComponent implements OnInit {
     this.currentUserEmail = role?.email ?? '';
     this.isEditorOnly = role?.role === 'editor';
 
+    await this.loadLookupData();
+    await this.load();
+  }
+
+  private async loadLookupData() {
     const [roles, members, groups, companies] = await Promise.all([
       this.adminRole.getAll().catch(() => []),
       this.memberService.getAll().catch(() => []),
       this.groupService.getAll().catch(() => []),
       this.companyService.getAll().catch(() => []),
     ]);
+    this.members = members;
+    this.groups = groups;
+    this.companies = companies;
+    this.userNameMap.clear();
+    this.memberMap.clear();
+    this.groupMap.clear();
+    this.companyMap.clear();
     for (const r of roles) {
       if (r.display_name) this.userNameMap.set(r.email, r.display_name);
     }
@@ -70,7 +249,6 @@ export class AdminAuditLogComponent implements OnInit {
     for (const c of companies) {
       this.companyMap.set(c.id, c.name ?? c.id);
     }
-    await this.load();
   }
 
   async load() {
@@ -100,6 +278,7 @@ export class AdminAuditLogComponent implements OnInit {
 
   private getFieldLabel(tableName: string, field: string): string {
     return FIELD_LABELS[tableName]?.[field]
+      ?? this.extraFieldLabels[tableName]?.[field]
       ?? this.systemFieldLabels[field]
       ?? field;
   }
@@ -112,13 +291,13 @@ export class AdminAuditLogComponent implements OnInit {
     return null;
   }
 
-  getDiff(log: AuditLog): { field: string; label: string; before: string; after: string }[] {
+  getDiff(log: AuditLog): AuditDiff[] {
     if (!log.old_data && !log.new_data) return [];
     const fields = new Set([
       ...Object.keys(log.old_data ?? {}),
       ...Object.keys(log.new_data ?? {})
     ]);
-    const diffs: { field: string; label: string; before: string; after: string }[] = [];
+    const diffs: AuditDiff[] = [];
     for (const f of fields) {
       const before = log.old_data?.[f] ?? null;
       const after = log.new_data?.[f] ?? null;
@@ -128,6 +307,8 @@ export class AdminAuditLogComponent implements OnInit {
           label: this.getFieldLabel(log.table_name, f),
           before: this.resolveValue(f, before),
           after: this.resolveValue(f, after),
+          beforeValue: before,
+          afterValue: after,
         });
       }
     }
@@ -238,33 +419,255 @@ export class AdminAuditLogComponent implements OnInit {
     }[op] ?? 'bg-gray-100 text-gray-600';
   }
 
-  editRecord(log: AuditLog): void {
-    const id = log.record_id;
-    const src = log.new_data ?? log.old_data ?? {};
-    switch (log.table_name) {
-      case 'members':
-        this.router.navigate(['/admin/members'], { queryParams: { editId: id } });
-        break;
-      case 'groups':
-        this.router.navigate(['/admin/groups'], { queryParams: { editId: id } });
-        break;
-      case 'history':
-        this.router.navigate(['/admin/history'], { queryParams: { editId: id } });
-        break;
-      case 'companies':
-        this.router.navigate(['/admin/companies'], { queryParams: { editId: id } });
-        break;
-      case 'member_songs': {
-        const memberId = src['member_id'];
-        if (memberId) this.router.navigate(['/member', memberId], { queryParams: { editSongId: id } });
-        break;
+  canEditRecord(log: AuditLog): boolean {
+    return log.operation !== 'DELETE' && !!this.editFields[log.table_name];
+  }
+
+  isPhotoField(field: string): boolean {
+    return field === 'photo_url';
+  }
+
+  photoUploadFolder(tableName: string): 'members' | 'groups' | 'companies' {
+    if (tableName === 'groups') return 'groups';
+    if (tableName === 'companies') return 'companies';
+    return 'members';
+  }
+
+  async openEditRecord(log: AuditLog): Promise<void> {
+    this.editLog = log;
+    this.editForm = {};
+    this.editOriginal = {};
+    this.editError = '';
+    this.editLoading = true;
+    this.editSaving = false;
+    this.showAllEditFields = false;
+    this.editTeams = [];
+    try {
+      const currentRecord = await this.auditLog.getRecord(log.table_name, log.record_id);
+      if (!currentRecord) {
+        throw new Error('找不到目前資料，可能已被刪除或還原');
       }
-      case 'group_songs': {
-        const groupId = src['group_id'];
-        if (groupId) this.router.navigate(['/group', groupId], { queryParams: { editSongId: id } });
-        break;
+      const prepared = this.prepareEditForm(log.table_name, currentRecord);
+      this.editOriginal = { ...prepared };
+      this.editForm = { ...prepared };
+      if (log.table_name === 'history') {
+        await this.loadEditTeams(this.editForm['group_id']);
+      }
+    } catch (e: any) {
+      this.editError = e.message || '讀取資料失敗';
+    } finally {
+      this.editLoading = false;
+    }
+  }
+
+  closeEditRecord(force = false): void {
+    if (this.editSaving && !force) return;
+    this.editLog = null;
+    this.editForm = {};
+    this.editOriginal = {};
+    this.editError = '';
+    this.editTeams = [];
+  }
+
+  get visibleEditFields(): AuditEditField[] {
+    if (!this.editLog) return [];
+    const fields = this.getEditFields(this.editLog.table_name);
+    if (this.showAllEditFields) return fields;
+    const changed = this.getChangedFieldSet(this.editLog);
+    const changedFields = fields.filter(f => changed.has(f.key));
+    return changedFields.length > 0 ? changedFields : fields;
+  }
+
+  get hasHiddenEditFields(): boolean {
+    if (!this.editLog || this.showAllEditFields) return false;
+    return this.visibleEditFields.length < this.getEditFields(this.editLog.table_name).length;
+  }
+
+  editFieldLabel(field: AuditEditField): string {
+    return this.editLog ? this.getFieldLabel(this.editLog.table_name, field.key) : field.key;
+  }
+
+  editFieldOptions(field: AuditEditField): AuditEditOption[] {
+    switch (field.key) {
+      case 'member_id':
+        return this.members.map(m => ({ value: m.id, label: m.name || m.name_roman || m.id }));
+      case 'group_id':
+        return [
+          { value: null, label: '— 無 —' },
+          ...this.groups.map(g => ({ value: g.id, label: g.name_jp || g.name || g.id })),
+        ];
+      case 'team_id':
+        return [
+          { value: null, label: '— 不指定 —' },
+          ...this.editTeams.map(t => ({ value: t.id, label: t.name })),
+        ];
+      case 'company_id':
+        return [
+          { value: null, label: '— 無 —' },
+          ...this.companies.map(c => ({ value: c.id, label: c.name || c.id })),
+        ];
+      case 'status':
+        return this.historyStatusOptions;
+      default:
+        return [];
+    }
+  }
+
+  async onEditFieldChange(fieldKey: string): Promise<void> {
+    if (this.editLog?.table_name !== 'history' || fieldKey !== 'group_id') return;
+    await this.loadEditTeams(this.editForm['group_id']);
+    if (!this.editTeams.some(t => t.id === this.editForm['team_id'])) {
+      this.editForm['team_id'] = null;
+    }
+  }
+
+  async saveEditRecord(): Promise<void> {
+    if (!this.editLog) return;
+    this.editError = '';
+    const validationError = this.validateEditForm();
+    if (validationError) {
+      this.editError = validationError;
+      return;
+    }
+    const payload = this.buildEditPayload();
+    if (Object.keys(payload).length === 0) {
+      this.editError = '沒有變更內容';
+      return;
+    }
+
+    this.editSaving = true;
+    try {
+      const logId = this.editLog.id;
+      await this.auditLog.updateRecord(this.editLog.table_name, this.editLog.record_id, payload);
+      this.invalidateLookupCache(this.editLog.table_name);
+      this.editSuccess[logId] = true;
+      setTimeout(() => { this.editSuccess[logId] = false; }, 3000);
+      this.closeEditRecord(true);
+      await this.loadLookupData();
+      await this.load();
+    } catch (e: any) {
+      this.editError = e.message || '儲存失敗';
+    } finally {
+      this.editSaving = false;
+    }
+  }
+
+  private getEditFields(tableName: string): AuditEditField[] {
+    return this.editFields[tableName] ?? [];
+  }
+
+  private prepareEditForm(tableName: string, record: Record<string, any>): Record<string, any> {
+    const form: Record<string, any> = {};
+    for (const field of this.getEditFields(tableName)) {
+      const value = record[field.key];
+      form[field.key] = field.type === 'checkbox' ? !!value : (value ?? '');
+    }
+    return form;
+  }
+
+  private getChangedFieldSet(log: AuditLog): Set<string> {
+    const fields = new Set([
+      ...Object.keys(log.old_data ?? {}),
+      ...Object.keys(log.new_data ?? {}),
+    ]);
+    for (const field of [...fields]) {
+      const before = log.old_data?.[field] ?? null;
+      const after = log.new_data?.[field] ?? null;
+      if (JSON.stringify(before) === JSON.stringify(after)) fields.delete(field);
+    }
+    return fields;
+  }
+
+  private buildEditPayload(): Record<string, any> {
+    if (!this.editLog) return {};
+    const payload: Record<string, any> = {};
+    for (const field of this.getEditFields(this.editLog.table_name)) {
+      const next = this.normalizeEditValue(field, this.editForm[field.key]);
+      const prev = this.normalizeEditValue(field, this.editOriginal[field.key]);
+      if (JSON.stringify(next) !== JSON.stringify(prev)) {
+        payload[field.key] = next;
       }
     }
+    if (this.editLog.table_name === 'history') {
+      this.applyHistoryGroupConsistency(payload);
+    }
+    return payload;
+  }
+
+  private validateEditForm(): string {
+    if (!this.editLog) return '';
+    for (const field of this.getEditFields(this.editLog.table_name)) {
+      if (!field.required) continue;
+      const value = this.normalizeEditValue(field, this.editForm[field.key]);
+      if (value == null || value === '') {
+        return `${this.getFieldLabel(this.editLog.table_name, field.key)}為必填`;
+      }
+    }
+    if (this.editLog.table_name === 'history') {
+      const groupId = this.normalizeEditValue({ key: 'group_id', type: 'select' }, this.editForm['group_id']);
+      const externalGroupName = this.normalizeEditValue(
+        { key: 'external_group_name', type: 'text' },
+        this.editForm['external_group_name']
+      );
+      if (!groupId && !externalGroupName) {
+        return '請選擇團體，或填寫海外團體/solo名稱';
+      }
+    }
+    return '';
+  }
+
+  private normalizeEditValue(field: AuditEditField, value: any): any {
+    if (field.type === 'checkbox') return !!value;
+    if (field.type === 'number') {
+      if (value == null || value === '') return null;
+      const n = Number(value);
+      return Number.isFinite(n) ? n : value;
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed === '' ? null : trimmed;
+    }
+    return value ?? null;
+  }
+
+  private applyHistoryGroupConsistency(payload: Record<string, any>): void {
+    const groupId = this.normalizeEditValue({ key: 'group_id', type: 'select' }, this.editForm['group_id']);
+    const externalGroupName = this.normalizeEditValue(
+      { key: 'external_group_name', type: 'text' },
+      this.editForm['external_group_name']
+    );
+    if (groupId) {
+      this.addPayloadIfChanged(payload, 'external_group_name', null);
+      this.addPayloadIfChanged(payload, 'external_country', null);
+    } else if (externalGroupName) {
+      this.addPayloadIfChanged(payload, 'group_id', null);
+      this.addPayloadIfChanged(payload, 'team_id', null);
+    }
+  }
+
+  private addPayloadIfChanged(payload: Record<string, any>, fieldKey: string, next: any): void {
+    const field = this.editLog
+      ? this.getEditFields(this.editLog.table_name).find(f => f.key === fieldKey)
+      : null;
+    if (!field) return;
+    const prev = this.normalizeEditValue(field, this.editOriginal[fieldKey]);
+    if (JSON.stringify(next) !== JSON.stringify(prev)) {
+      payload[fieldKey] = next;
+    }
+  }
+
+  private async loadEditTeams(groupId: string | null): Promise<void> {
+    if (!groupId) {
+      this.editTeams = [];
+      return;
+    }
+    this.editTeams = await this.groupService.getTeamsByGroup(groupId).catch(() => []);
+  }
+
+  private invalidateLookupCache(tableName: string): void {
+    if (tableName === 'members') this.memberService.invalidateCache();
+    if (tableName === 'groups') this.groupService.invalidateCache();
+    if (tableName === 'companies') this.companyService.invalidateCache();
   }
 
   revertActionLabel(op: string): string {
