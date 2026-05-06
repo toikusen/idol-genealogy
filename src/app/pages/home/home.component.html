@@ -131,7 +131,7 @@
             </svg>
             <span class="nav-tab-tw">團體</span>
             <span class="nav-tab-en">Groups</span>
-            <span class="nav-tab-count">{{allGroups.length}}</span>
+            <span class="nav-tab-count">{{groupCount}}</span>
           </button>
 
           <!-- 公司 -->
@@ -150,7 +150,7 @@
             </svg>
             <span class="nav-tab-tw">公司</span>
             <span class="nav-tab-en">Companies</span>
-            <span class="nav-tab-count">{{allCompanies.length}}</span>
+            <span class="nav-tab-count">{{companyCount}}</span>
           </button>
 
           <!-- 活動 -->
@@ -204,7 +204,7 @@
               @for (company of companyResults; track company.id; let i = $index) {
                 <a [routerLink]="'/company/' + company.id + '/'" class="company-result-chip">
                   @if (company.photo_url) {
-                    <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                    <img loading="lazy"
                          [src]="company.photo_url | supabaseImg:36" [alt]="company.name" width="18" height="18"
                          style="width:18px;height:18px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
                   } @else {
@@ -244,7 +244,7 @@
                       overflow: hidden;
                     ">
                       @if (member.photo_url) {
-                        <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                        <img loading="lazy"
                              [src]="member.photo_url | supabaseImg:72" [alt]="member.name" width="36" height="36"
                              style="width: 100%; height: 100%; object-fit: cover;"/>
                       } @else {
@@ -281,7 +281,7 @@
                       overflow: hidden;
                     ">
                       @if (r.member.photo_url) {
-                        <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                        <img loading="lazy"
                              [src]="r.member.photo_url | supabaseImg:72" [alt]="r.member.name" width="36" height="36"
                              style="width: 100%; height: 100%; object-fit: cover;"/>
                       } @else {
@@ -332,7 +332,7 @@
                       overflow: hidden;
                     ">
                       @if (group.photo_url) {
-                        <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                        <img loading="lazy"
                              [src]="group.photo_url | supabaseImg:72" [alt]="group.name" width="36" height="36"
                              style="width:100%;height:100%;object-fit:cover;">
                       } @else {
@@ -408,7 +408,7 @@
                          style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text-primary); font-size: 0.875rem;">
                         <span style="color: var(--text-faint-45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
                         @if (entry.photo_url) {
-                          <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                          <img loading="lazy"
                                [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="64" height="64"
                                class="popular-rank-img" style="border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
                         }
@@ -430,7 +430,7 @@
                          style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text-primary); font-size: 0.875rem;">
                         <span style="color: var(--text-faint-45); width: 1.2rem; text-align: right; flex-shrink: 0; font-size: 0.75rem;">{{ i + 1 }}.</span>
                         @if (entry.photo_url) {
-                          <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                          <img loading="lazy"
                                [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="64" height="64"
                                class="popular-rank-img" style="border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
                         }
@@ -465,7 +465,7 @@
                   <a [routerLink]="'/member/' + entry.member.id + '/'" class="birthday-card">
                     <div class="birthday-avatar" [class.birthday-avatar--today]="entry.daysUntil === 0">
                       @if (entry.member.photo_url) {
-                        <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                        <img loading="lazy"
                              [src]="entry.member.photo_url | supabaseImg:128" [alt]="entry.member.name" width="64" height="64"/>
                       } @else {
                         {{ getInitial(entry.member) }}
@@ -519,7 +519,7 @@
                     overflow: hidden; position: relative;
                   ">
                     @if (member.photo_url) {
-                      <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                      <img loading="lazy"
                            [src]="member.photo_url | supabaseImg:112" [alt]="member.name" width="56" height="56"
                            style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
                     } @else {
@@ -597,7 +597,7 @@
                   overflow: hidden;
                 ">
                   @if (group.photo_url) {
-                    <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                    <img loading="lazy"
                          [src]="group.photo_url | supabaseImg:72" [alt]="group.name" width="36" height="36"
                          style="width:100%;height:100%;object-fit:cover;">
                   } @else {
@@ -636,7 +636,9 @@
             }
           </div>
 
-          @if (displayedGroups.length === 0 && allGroups.length > 0) {
+          @if (browseCatalogLoading) {
+            <div style="padding:40px;text-align:center;font-style:italic;font-size:1rem;color:var(--text-secondary);">載入中…</div>
+          } @else if (displayedGroups.length === 0 && allGroups.length > 0) {
             <div style="padding:40px;text-align:center;font-style:italic;font-size:1rem;color:var(--text-secondary);">此分類暫無資料</div>
           }
         </section>
@@ -659,7 +661,7 @@
               <span style="
                 font-size: 0.78rem; color: rgba(140,100,40,0.5);
                 font-style: italic;
-              ">{{allCompanies.length}} 公司</span>
+              ">{{companyCount}} 公司</span>
               <button
                 (click)="showCompanyInsertPanel = true"
                 class="home-action-chip home-action-chip--company"
@@ -739,7 +741,7 @@
                         color:var(--text-primary);transition:background 0.2s,border-color 0.2s,color 0.2s;
                       ">
                         @if (m.photo_url) {
-                          <img [attr.loading]="i < 3 ? null : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null"
+                          <img loading="lazy"
                                [src]="m.photo_url | supabaseImg:40" [alt]="m.name" width="20" height="20"
                                style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>
                         } @else {
@@ -811,35 +813,41 @@
     }
 
     <!-- ══ Proposal panels ══ -->
-    @if (showMemberInsertPanel) {
-      <app-proposal-panel
-        tableName="members"
-        operation="INSERT"
-        [recordId]="null"
-        [originalData]="{}"
-        [requiredFields]="['name']"
-        (closed)="showMemberInsertPanel = false"
-      />
+    @defer (when showMemberInsertPanel) {
+      @if (showMemberInsertPanel) {
+        <app-proposal-panel
+          tableName="members"
+          operation="INSERT"
+          [recordId]="null"
+          [originalData]="{}"
+          [requiredFields]="['name']"
+          (closed)="showMemberInsertPanel = false"
+        />
+      }
     }
-    @if (showGroupInsertPanel) {
-      <app-proposal-panel
-        tableName="groups"
-        operation="INSERT"
-        [recordId]="null"
-        [originalData]="{}"
-        [requiredFields]="['name', 'founded_at']"
-        (closed)="showGroupInsertPanel = false"
-      />
+    @defer (when showGroupInsertPanel) {
+      @if (showGroupInsertPanel) {
+        <app-proposal-panel
+          tableName="groups"
+          operation="INSERT"
+          [recordId]="null"
+          [originalData]="{}"
+          [requiredFields]="['name', 'founded_at']"
+          (closed)="showGroupInsertPanel = false"
+        />
+      }
     }
-    @if (showCompanyInsertPanel) {
-      <app-proposal-panel
-        tableName="companies"
-        operation="INSERT"
-        [recordId]="null"
-        [originalData]="{}"
-        [requiredFields]="['name']"
-        (closed)="showCompanyInsertPanel = false"
-      />
+    @defer (when showCompanyInsertPanel) {
+      @if (showCompanyInsertPanel) {
+        <app-proposal-panel
+          tableName="companies"
+          operation="INSERT"
+          [recordId]="null"
+          [originalData]="{}"
+          [requiredFields]="['name']"
+          (closed)="showCompanyInsertPanel = false"
+        />
+      }
     }
 
     <!-- ══ SITE INTRO (SEO + context for new visitors) ══ -->
@@ -855,7 +863,7 @@
         letter-spacing: 0.04em;
       ">關於 Idol Maps</h2>
       <p style="margin-bottom: 10px;">
-        Idol Maps 是專為台灣地下偶像生態設計的開放資料庫，目前收錄 {{ memberCount }} 位成員、{{ allGroups.length }} 個團體與 {{ allCompanies.length }} 間公司的資料。
+        Idol Maps 是專為台灣地下偶像生態設計的開放資料庫，目前收錄 {{ memberCount }} 位成員、{{ groupCount }} 個團體與 {{ companyCount }} 間公司的資料。
       </p>
       <p style="margin-bottom: 10px;">
         每位成員的頁面記錄了完整的活動履歷，包含跨團體、跨公司的歷史脈絡，讓散落在各社群平台的資訊得以被系統性地保存。資料由社群成員提案貢獻，並經管理員審核後上線。

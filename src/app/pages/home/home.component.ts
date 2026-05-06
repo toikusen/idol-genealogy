@@ -41,6 +41,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   searching = false;
 
   memberCount = 0;
+  groupCount = 0;
+  companyCount = 0;
   upcomingBirthdays: { member: Member; daysUntil: number }[] = [];
   allGroups: Group[] = [];
   allCompanies: Company[] = [];
@@ -57,6 +59,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   companySections: { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] = [];
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private browseCatalogLoaded = false;
+  private browseCatalogPromise: Promise<void> | null = null;
+  browseCatalogLoading = false;
   constructor(
     private memberService: MemberService,
     private groupService: GroupService,
@@ -92,26 +97,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (data) {
       this.recentMembers = data.recentMembers;
       this.memberCount = data.memberCount;
-      this.allGroups = data.allGroups;
-      this.allCompanies = data.allCompanies;
+      this.groupCount = data.groupCount;
+      this.companyCount = data.companyCount;
       this.topMembers = data.topMembers;
       this.topGroups = data.topGroups;
       this.upcomingBirthdays = data.upcomingBirthdays;
-      this.allSoloMembers = data.allSoloMembers;
-
-      // Cache computed group/company views — only recomputed when source data changes
-      const today = new Date().toISOString().slice(0, 10);
-      this.activeGroups = this.allGroups
-        .filter(g => (!g.disbanded_at || g.disbanded_at > today) && !g.is_trainee)
-        .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
-      this.disbandedGroups = this.allGroups
-        .filter(g => !!g.disbanded_at && g.disbanded_at <= today && !g.is_trainee)
-        .sort((a, b) => (b.disbanded_at ?? '').localeCompare(a.disbanded_at ?? ''));
-      this.traineeGroups = this.allGroups
-        .filter(g => g.is_trainee)
-        .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
-      // Build company sections from groups (solo members lazy-loaded on tab click)
-      this.companySections = this.buildCompanySections();
     }
 
     // Read ?q= query param (used by Google SearchAction sitelinks)
@@ -124,12 +114,53 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   async setTab(tab: 'members' | 'groups' | 'companies' | 'events') {
     this.activeTab = tab;
+    if (tab === 'groups' || tab === 'companies') {
+      await this.ensureBrowseCatalog();
+    }
     if (tab === 'companies' && !this.soloMembersLoaded) {
       this.soloMembersLoaded = true;
       const raw = await this.memberService.getSoloMembers().catch(() => [] as Member[]);
       this.allSoloMembers = raw.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
       this.companySections = this.buildCompanySections();
     }
+  }
+
+  private async ensureBrowseCatalog(): Promise<void> {
+    if (this.browseCatalogLoaded) return;
+    if (this.browseCatalogPromise) return this.browseCatalogPromise;
+    this.browseCatalogLoading = true;
+    this.browseCatalogPromise = (async () => {
+      try {
+        const [groups, companies] = await Promise.all([
+          this.groupService.getAll().catch(() => [] as Group[]),
+          this.companyService.getAll().catch(() => [] as Company[]),
+        ]);
+        this.allGroups = groups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
+        this.allCompanies = companies.filter(isPublicCompanyRecord).map(sanitizePublicCompanyRecord);
+        this.groupCount = this.allGroups.length || this.groupCount;
+        this.companyCount = this.allCompanies.length || this.companyCount;
+        this.cacheBrowseViews();
+        this.browseCatalogLoaded = true;
+      } finally {
+        this.browseCatalogLoading = false;
+        this.browseCatalogPromise = null;
+      }
+    })();
+    return this.browseCatalogPromise;
+  }
+
+  private cacheBrowseViews(): void {
+    const today = new Date().toISOString().slice(0, 10);
+    this.activeGroups = this.allGroups
+      .filter(g => (!g.disbanded_at || g.disbanded_at > today) && !g.is_trainee)
+      .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+    this.disbandedGroups = this.allGroups
+      .filter(g => !!g.disbanded_at && g.disbanded_at <= today && !g.is_trainee)
+      .sort((a, b) => (b.disbanded_at ?? '').localeCompare(a.disbanded_at ?? ''));
+    this.traineeGroups = this.allGroups
+      .filter(g => g.is_trainee)
+      .sort((a, b) => (b.founded_at ?? '').localeCompare(a.founded_at ?? ''));
+    this.companySections = this.buildCompanySections();
   }
 
   onQueryChange() {

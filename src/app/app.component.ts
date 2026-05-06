@@ -1,10 +1,10 @@
-import { Component, inject, PLATFORM_ID, signal } from '@angular/core';
+import { Component, DestroyRef, inject, Injector, PLATFORM_ID, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, NavigationEnd, NavigationStart, NavigationCancel, NavigationError } from '@angular/router';
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
-import { fromEvent, map, distinctUntilChanged } from 'rxjs';
+import { BehaviorSubject, fromEvent, map, distinctUntilChanged } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { SupabaseService } from './core/supabase.service';
-import { AdminRoleService } from './core/admin-role.service';
+import type { Session } from '@supabase/supabase-js';
+import type { SupabaseService } from './core/supabase.service';
 import { AnalyticsService } from './core/analytics.service';
 import { CookieBannerComponent } from './shared/cookie-banner/cookie-banner.component';
 import { ThemeService } from './core/theme.service';
@@ -16,24 +16,25 @@ import { ThemeService } from './core/theme.service';
   styleUrl: './app.component.css',
 })
 export class AppComponent {
-  readonly session$;
-  readonly isAdmin$;
-  readonly isStaff$;
+  private readonly sessionSubject = new BehaviorSubject<Session | null>(null);
+  private readonly isAdminSubject = new BehaviorSubject(false);
+  private readonly isStaffSubject = new BehaviorSubject(false);
+  readonly session$ = this.sessionSubject.asObservable();
+  readonly isAdmin$ = this.isAdminSubject.asObservable();
+  readonly isStaff$ = this.isStaffSubject.asObservable();
   readonly showScrollTop = signal(false);
   readonly isNavigating = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
+  private authChromePromise: Promise<void> | null = null;
+  private supabase: SupabaseService | null = null;
 
   constructor(
-    private supabase: SupabaseService,
     readonly router: Router,
-    adminRole: AdminRoleService,
     analytics: AnalyticsService,
     readonly themeService: ThemeService,
   ) {
-    this.session$ = supabase.authState$;
-    this.isAdmin$ = adminRole.isAdmin$;
-    this.isStaff$ = adminRole.isStaff$;
-
     router.events.pipe(takeUntilDestroyed()).subscribe(e => {
       if (e instanceof NavigationStart) {
         this.isNavigating.set(true);
@@ -51,6 +52,8 @@ export class AppComponent {
         map(() => window.scrollY > 300),
         distinctUntilChanged(),
       ).subscribe(show => this.showScrollTop.set(show));
+
+      this.scheduleAuthChromeLoad();
     }
   }
 
@@ -59,10 +62,56 @@ export class AppComponent {
   }
 
   signOut() {
-    this.supabase.signOut().then(() => this.router.navigate(['/']));
+    this.loadAuthChrome().then(() => {
+      this.supabase?.signOut().then(() => this.router.navigate(['/']));
+    });
   }
 
   scrollToTop(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  private scheduleAuthChromeLoad(): void {
+    const scheduleIdle = () => {
+      const win = window as Window & {
+        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      };
+      window.setTimeout(() => {
+        if (win.requestIdleCallback) {
+          win.requestIdleCallback(() => void this.loadAuthChrome(), { timeout: 6000 });
+          return;
+        }
+        void this.loadAuthChrome();
+      }, 4500);
+    };
+
+    if (document.readyState === 'complete') {
+      scheduleIdle();
+      return;
+    }
+    window.addEventListener('load', scheduleIdle, { once: true });
+  }
+
+  private loadAuthChrome(): Promise<void> {
+    if (!this.isBrowser) return Promise.resolve();
+    if (this.authChromePromise) return this.authChromePromise;
+
+    this.authChromePromise = Promise.all([
+      import('./core/supabase.service'),
+      import('./core/admin-role.service'),
+    ]).then(([{ SupabaseService }, { AdminRoleService }]) => {
+      const supabase = this.injector.get(SupabaseService);
+      const adminRole = this.injector.get(AdminRoleService);
+      this.supabase = supabase;
+
+      supabase.authState$.pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(session => this.sessionSubject.next(session));
+      adminRole.isAdmin$.pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(isAdmin => this.isAdminSubject.next(isAdmin));
+      adminRole.isStaff$.pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(isStaff => this.isStaffSubject.next(isStaff));
+    });
+
+    return this.authChromePromise;
   }
 }

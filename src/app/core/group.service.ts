@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Group, GroupVideo, Team, GroupLeaderboardEntry } from '../models';
 import { kanaVariants } from './japanese.utils';
+import { isPublicGroupRecord } from './public-record.utils';
 import { isNotFoundError } from './supabase.utils';
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +26,22 @@ export class GroupService {
       return this._allCache!;
     });
     return this._allPromise;
+  }
+
+  async getCount(): Promise<number> {
+    const { count, error } = await this.db
+      .from('groups')
+      .select('*', { count: 'exact', head: true });
+    if (error) throw error;
+    return count ?? 0;
+  }
+
+  async getPublicCount(): Promise<number> {
+    const { data, error } = await this.db
+      .from('groups')
+      .select('name,name_jp');
+    if (error) throw error;
+    return (data ?? []).filter(isPublicGroupRecord).length;
   }
 
   invalidateCache() {

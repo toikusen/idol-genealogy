@@ -59,12 +59,11 @@ describe('HomeComponent', () => {
     const pageData: HomePageData = {
       recentMembers: [],
       memberCount: 0,
-      allGroups: [],
-      allCompanies: [],
+      groupCount: 0,
+      companyCount: 0,
       topMembers: [],
       topGroups: [],
       upcomingBirthdays: [],
-      allSoloMembers: [],
       ...pageDataOverrides,
     };
     await TestBed.configureTestingModule({
@@ -137,11 +136,12 @@ describe('HomeComponent', () => {
         {},
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([activeGroup, disbandedGroup, traineeGroup])), getTopByViews: jasmine.createSpy().and.returnValue(Promise.resolve([])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
         {},
-        { allGroups: [activeGroup, disbandedGroup, traineeGroup] },
+        { groupCount: 3 },
       );
       fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
       await fixture.whenStable();
+      await fixture.componentInstance.setTab('groups');
       fixture.detectChanges();
     });
 
@@ -167,11 +167,12 @@ describe('HomeComponent', () => {
         {},
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([g1, g2])), getTopByViews: jasmine.createSpy().and.returnValue(Promise.resolve([])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([co])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
-        { allGroups: [g1, g2], allCompanies: [co] },
+        { groupCount: 2, companyCount: 1 },
       );
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
       await fixture.whenStable();
+      await fixture.componentInstance.setTab('companies');
       fixture.detectChanges();
 
       const { companySections } = fixture.componentInstance;
@@ -192,11 +193,12 @@ describe('HomeComponent', () => {
         {},
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([g1, g2])), getTopByViews: jasmine.createSpy().and.returnValue(Promise.resolve([])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
         { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([co])), search: jasmine.createSpy().and.returnValue(Promise.resolve([])) },
-        { allGroups: [g1, g2], allCompanies: [co] },
+        { groupCount: 2, companyCount: 1 },
       );
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
       await fixture.whenStable();
+      await fixture.componentInstance.setTab('companies');
       fixture.detectChanges();
 
       const sections = fixture.componentInstance.companySections;

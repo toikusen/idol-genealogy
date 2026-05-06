@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Company, Group, Member } from '../models';
+import { isPublicCompanyRecord } from './public-record.utils';
 import { isNotFoundError } from './supabase.utils';
 
 @Injectable({ providedIn: 'root' })
@@ -24,6 +25,22 @@ export class CompanyService {
       return this._allCache!;
     });
     return this._allPromise;
+  }
+
+  async getCount(): Promise<number> {
+    const { count, error } = await this.db
+      .from('companies')
+      .select('*', { count: 'exact', head: true });
+    if (error) throw error;
+    return count ?? 0;
+  }
+
+  async getPublicCount(): Promise<number> {
+    const { data, error } = await this.db
+      .from('companies')
+      .select('name');
+    if (error) throw error;
+    return (data ?? []).filter(isPublicCompanyRecord).length;
   }
 
   invalidateCache() {

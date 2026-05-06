@@ -1,13 +1,45 @@
-import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
-import { adminGuard } from './core/admin.guard';
-import { staffGuard } from './core/staff.guard';
-import {
-  companyPageResolver,
-  groupPageResolver,
-  homePageResolver,
-  memberPageResolver,
-  membersListResolver,
-} from './core/page-data.resolvers';
+import { inject, Injector, runInInjectionContext } from '@angular/core';
+import { CanActivateFn, ResolveFn, Routes, UrlMatchResult, UrlSegment } from '@angular/router';
+
+function lazyResolver<T>(loadResolver: () => Promise<ResolveFn<T>>): ResolveFn<T> {
+  return (route, state) => {
+    const injector = inject(Injector);
+    return loadResolver().then(resolve =>
+      runInInjectionContext(injector, () => resolve(route, state))
+    ) as ReturnType<ResolveFn<T>>;
+  };
+}
+
+function lazyGuard(loadGuard: () => Promise<CanActivateFn>): CanActivateFn {
+  return (route, state) => {
+    const injector = inject(Injector);
+    return loadGuard().then(guard =>
+      runInInjectionContext(injector, () => guard(route, state))
+    ) as ReturnType<CanActivateFn>;
+  };
+}
+
+const homePageResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.homePageResolver)
+);
+const membersListResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.membersListResolver)
+);
+const memberPageResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.memberPageResolver)
+);
+const groupPageResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.groupPageResolver)
+);
+const companyPageResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.companyPageResolver)
+);
+const staffGuard = lazyGuard(() =>
+  import('./core/staff.guard').then(m => m.staffGuard)
+);
+const adminGuard = lazyGuard(() =>
+  import('./core/admin.guard').then(m => m.adminGuard)
+);
 
 function handleMatcher(segments: UrlSegment[]): UrlMatchResult | null {
   if (segments.length !== 1) return null;

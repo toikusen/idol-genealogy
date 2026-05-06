@@ -34,33 +34,12 @@
   <!-- Font preload: local WOFF2 (highest priority, prevents FOUT) -->
   <link rel="preload" href="/fonts/jf-openhuninn-2.1.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Preconnect to Google Fonts origins -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <!-- Google Fonts: non-blocking load via preload with onload -->
-  <link rel="preload"
-        href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;700&display=swap"
-        as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
-  <noscript>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;700&display=swap">
-  </noscript>
-
   <!-- Preconnect to Supabase storage (member/group photos) -->
   <link rel="preconnect" href="https://ziiagdrrytyrmzoeegjk.supabase.co" crossorigin>
   <link rel="canonical" href="https://idolmaps.com/">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
   <link rel="apple-touch-icon" href="/favicon-192.png">
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MHSKDZ2NZF"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-MHSKDZ2NZF', { send_page_view: false });
-  </script>
 </head>
 <body>
   <app-root></app-root>

@@ -29,12 +29,11 @@ import {
 export interface HomePageData {
   recentMembers: Member[];
   memberCount: number;
-  allGroups: Group[];
-  allCompanies: Company[];
+  groupCount: number;
+  companyCount: number;
   topMembers: MemberLeaderboardEntry[];
   topGroups: GroupLeaderboardEntry[];
   upcomingBirthdays: { member: Member; daysUntil: number }[];
-  allSoloMembers: Member[];
 }
 
 export interface MembersListPageData {
@@ -226,28 +225,24 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
   const groupService = inject(GroupService);
   const companyService = inject(CompanyService);
 
-  const [recentMembers, memberCount, allGroups, allCompanies, topMembers, topGroups, upcomingBirthdays] = await Promise.all([
+  const [recentMembers, memberCount, groupCount, companyCount, topMembers, topGroups, upcomingBirthdays] = await Promise.all([
     memberService.getRecent(9).catch(() => [] as Member[]),
     memberService.getCount().catch(() => 0),
-    groupService.getAll().catch(() => [] as Group[]),
-    companyService.getAll().catch(() => [] as Company[]),
+    groupService.getPublicCount().catch(() => 0),
+    companyService.getPublicCount().catch(() => 0),
     memberService.getTopByViews(5).catch(() => [] as MemberLeaderboardEntry[]),
     groupService.getTopByViews(5).catch(() => [] as GroupLeaderboardEntry[]),
     memberService.getUpcomingBirthdays(30).catch(() => [] as { member: Member; daysUntil: number }[]),
   ]);
 
-  const publicGroups = allGroups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
-  const publicCompanies = allCompanies.filter(isPublicCompanyRecord).map(sanitizePublicCompanyRecord);
-
   return {
     recentMembers: recentMembers.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord),
     memberCount,
-    allGroups: publicGroups,
-    allCompanies: publicCompanies,
+    groupCount,
+    companyCount,
     topMembers: topMembers.filter(isPublicMemberRecord),
     topGroups: topGroups.filter(isPublicGroupRecord),
     upcomingBirthdays: upcomingBirthdays.filter(entry => isPublicMemberRecord(entry.member)),
-    allSoloMembers: [],
   };
 };
 
