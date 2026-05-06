@@ -9,6 +9,11 @@ export class SupabaseImgPipe implements PipeTransform {
     if (!url) return url;
     const idx = url.indexOf(OBJECT_PATH);
     if (idx === -1) return url;
-    return url.slice(0, idx) + RENDER_PATH + url.slice(idx + OBJECT_PATH.length) + `?width=${width}&quality=${quality}`;
+    const params = new URLSearchParams({
+      width: String(width),
+      quality: String(quality),
+      resize: 'contain',
+    });
+    return url.slice(0, idx) + RENDER_PATH + url.slice(idx + OBJECT_PATH.length) + `?${params.toString()}`;
   }
 }
