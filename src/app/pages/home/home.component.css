@@ -1,6 +1,6 @@
 input::placeholder {
   color: var(--text-muted);
-  font-family: 'JF Openhuninn', sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* ── Popular ranking grid ── */
@@ -19,6 +19,19 @@ input::placeholder {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.popular-section,
+.tab-content {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
+}
+
+@media (max-width: 768px) {
+  .search-box {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
 @media (max-width: 540px) {

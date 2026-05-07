@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, NgZone, OnInit, OnDestroy, PLATFORM_ID, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { MemberService } from '../../core/member.service';
@@ -11,7 +11,7 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
-import { HomePageData } from '../../core/page-data.resolvers';
+import type { HomePageData } from '../../core/page-data.resolvers';
 import {
   isPublicCompanyRecord,
   isPublicGroupRecord,
@@ -52,6 +52,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   activeTab: 'members' | 'groups' | 'companies' | 'events' = 'members';
   private soloMembersLoaded = false;
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly ngZone = inject(NgZone);
+  private deferredHomeSectionsLoaded = false;
+  private deferredHomeSectionsPromise: Promise<void> | null = null;
+  private deferredHomeSectionsTimer: number | null = null;
+  private deferredHomeSectionsIdleId: number | null = null;
+  private destroyed = false;
 
   activeGroups: Group[] = [];
   disbandedGroups: Group[] = [];
@@ -110,6 +117,58 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.query = q;
       await this.search();
     }
+
+    this.scheduleDeferredHomeSections();
+  }
+
+  private scheduleDeferredHomeSections(): void {
+    if (!this.isBrowser) return;
+    this.ngZone.runOutsideAngular(() => {
+      this.deferredHomeSectionsTimer = window.setTimeout(() => {
+        this.deferredHomeSectionsTimer = null;
+        if (this.destroyed) return;
+        const win = window as Window & {
+          requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+        };
+        const load = () => {
+          if (!this.destroyed) {
+            this.ngZone.run(() => void this.loadDeferredHomeSections());
+          }
+        };
+        if (win.requestIdleCallback) {
+          this.deferredHomeSectionsIdleId = win.requestIdleCallback(load, { timeout: 5000 });
+          return;
+        }
+        load();
+      }, 2500);
+    });
+  }
+
+  private async loadDeferredHomeSections(): Promise<void> {
+    if (this.destroyed) return;
+    if (this.deferredHomeSectionsLoaded) return;
+    if (this.deferredHomeSectionsPromise) return this.deferredHomeSectionsPromise;
+
+    this.deferredHomeSectionsPromise = (async () => {
+      try {
+        const [topMembers, topGroups, upcomingBirthdays] = await Promise.all([
+          this.memberService.getTopByViews(5).catch(() => [] as MemberLeaderboardEntry[]),
+          this.groupService.getTopByViews(5).catch(() => [] as GroupLeaderboardEntry[]),
+          this.memberService.getUpcomingBirthdays(30).catch(() => [] as { member: Member; daysUntil: number }[]),
+        ]);
+        if (this.destroyed) return;
+        this.topMembers = topMembers.filter(isPublicMemberRecord);
+        this.topGroups = topGroups.filter(isPublicGroupRecord);
+        this.upcomingBirthdays = upcomingBirthdays
+          .filter(entry => isPublicMemberRecord(entry.member))
+          .map(entry => ({ ...entry, member: sanitizePublicMemberRecord(entry.member) }));
+        this.deferredHomeSectionsLoaded = true;
+      } finally {
+        this.deferredHomeSectionsPromise = null;
+      }
+    })();
+
+    return this.deferredHomeSectionsPromise;
   }
 
   async setTab(tab: 'members' | 'groups' | 'companies' | 'events') {
@@ -219,7 +278,19 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.destroyed = true;
     if (this.searchTimer) clearTimeout(this.searchTimer);
+    if (this.deferredHomeSectionsTimer !== null) {
+      clearTimeout(this.deferredHomeSectionsTimer);
+      this.deferredHomeSectionsTimer = null;
+    }
+    const win = typeof window !== 'undefined'
+      ? window as Window & { cancelIdleCallback?: (handle: number) => void }
+      : null;
+    if (this.deferredHomeSectionsIdleId !== null && win?.cancelIdleCallback) {
+      win.cancelIdleCallback(this.deferredHomeSectionsIdleId);
+      this.deferredHomeSectionsIdleId = null;
+    }
   }
 
   get displayedGroups(): Group[] {

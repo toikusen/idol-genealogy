@@ -106,7 +106,7 @@ export class MemberService {
   async getUpcomingBirthdays(withinDays = 30): Promise<{ member: Member; daysUntil: number }[]> {
     const { data, error } = await this.db
       .from('members')
-      .select('*')
+      .select('id,name,name_hiragana,name_roman,photo_url,color,birthdate,notes,updated_at')
       .not('birthdate', 'is', null);
     if (error) throw error;
 
@@ -120,7 +120,8 @@ export class MemberService {
     const today = new Date();
     const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const results: { member: Member; daysUntil: number }[] = [];
-    for (const member of data ?? []) {
+    const members = (data ?? []) as unknown as Member[];
+    for (const member of members) {
       if (!activeMemberIds.has(member.id)) continue;
       const days = this.calcDaysUntilBirthday(member.birthdate!, todayMidnight);
       if (days !== null && days <= withinDays) {
@@ -160,11 +161,11 @@ export class MemberService {
   async getRecent(limit = 10): Promise<Member[]> {
     const { data, error } = await this.db
       .from('members')
-      .select('*')
+      .select('id,name,name_hiragana,name_roman,photo_url,color,notes,updated_at')
       .order('updated_at', { ascending: false })
       .limit(limit);
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []) as unknown as Member[];
   }
 
   async create(member: Partial<Member>): Promise<void> {
