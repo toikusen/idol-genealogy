@@ -54,6 +54,10 @@
          class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors">
         歷史記錄
       </a>
+      <a routerLink="/admin/songs" (click)="closeDrawer()" routerLinkActive="bg-pink-100 text-pink-700 font-medium"
+         class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors">
+        原創曲管理
+      </a>
       <div class="pt-2 mt-2 border-t border-gray-100">
         <a routerLink="/admin/roles" (click)="closeDrawer()" routerLinkActive="bg-purple-100 text-purple-700 font-medium"
            class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors">
@@ -136,6 +140,13 @@
         class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
       >
         歷史記錄
+      </a>
+      <a
+        routerLink="/admin/songs"
+        routerLinkActive="bg-pink-100 text-pink-700 font-medium"
+        class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+      >
+        原創曲管理
       </a>
 
       <!-- 管理功能 -->

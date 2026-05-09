@@ -1,0 +1,302 @@
+<div class="p-4 md:p-8">
+  <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-800">原創曲管理</h1>
+      <p class="mt-1 text-xs text-gray-400">{{ tabTitle }} · {{ activeCount }} 首</p>
+    </div>
+    <button
+      type="button"
+      (click)="openCreate()"
+      class="self-start md:self-auto px-4 py-2 bg-purple-500 text-white text-sm rounded-md hover:bg-purple-600 transition-colors"
+    >
+      + 新增原創曲
+    </button>
+  </div>
+
+  <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div class="inline-flex w-fit rounded-md border border-gray-200 bg-white p-1 shadow-sm">
+      <button
+        type="button"
+        (click)="switchTab('member')"
+        [class]="activeTab === 'member'
+          ? 'px-3 py-1.5 rounded text-sm bg-pink-100 text-pink-700 font-medium transition-colors'
+          : 'px-3 py-1.5 rounded text-sm text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors'"
+      >
+        成員原創曲
+      </button>
+      <button
+        type="button"
+        (click)="switchTab('group')"
+        [class]="activeTab === 'group'
+          ? 'px-3 py-1.5 rounded text-sm bg-purple-100 text-purple-700 font-medium transition-colors'
+          : 'px-3 py-1.5 rounded text-sm text-gray-500 hover:text-purple-600 hover:bg-purple-50 transition-colors'"
+      >
+        團體原創曲
+      </button>
+    </div>
+
+    <div *ngIf="!loading" class="flex flex-col gap-2 lg:flex-row lg:items-center">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="搜尋歌曲、歸屬或創作者…"
+        class="w-full sm:w-72 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+      />
+      <input
+        type="text"
+        [(ngModel)]="ownerOptionQuery"
+        [placeholder]="'搜尋' + (activeTab === 'member' ? '成員' : '團體') + '選單…'"
+        class="w-full sm:w-52 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+      />
+      <select
+        [(ngModel)]="ownerFilterId"
+        class="w-full sm:w-56 border border-gray-200 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-300"
+      >
+        <option value="">全部{{ activeTab === 'member' ? '成員' : '團體' }}</option>
+        <option *ngFor="let owner of displayedOwnerOptions; trackBy: trackOwner" [value]="owner.id">{{ owner.name }}</option>
+      </select>
+    </div>
+  </div>
+
+  <p *ngIf="error" class="mb-4 rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-600">{{ error }}</p>
+
+  <div *ngIf="loading" class="text-center py-16 text-gray-400">載入中…</div>
+
+  <div *ngIf="!loading && displayedRows.length === 0" class="text-center py-16 text-gray-400">
+    {{ searchQuery || ownerFilterId ? '查無結果' : '尚無原創曲資料' }}
+  </div>
+
+  <div *ngIf="!loading && displayedRows.length > 0" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-56">歌曲</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-48">歸屬</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">排序</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">發行日期</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-60">創作資訊</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">YouTube</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">更新時間</th>
+            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let row of displayedRows; trackBy: trackRow" class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3">
+              <p class="font-medium text-gray-800 leading-snug">{{ row.title }}</p>
+              <p *ngIf="row.notes" class="mt-1 text-xs text-gray-400 max-w-xs truncate">{{ row.notes }}</p>
+            </td>
+            <td class="px-4 py-3">
+              <a [routerLink]="row.ownerLink" class="inline-flex items-center gap-2 rounded-md pr-2 hover:bg-gray-100 transition-colors">
+                <img
+                  *ngIf="row.ownerPhotoUrl"
+                  [src]="row.ownerPhotoUrl"
+                  [alt]="row.ownerName"
+                  class="w-8 h-8 rounded-full object-cover"
+                />
+                <span
+                  *ngIf="!row.ownerPhotoUrl"
+                  class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium text-white"
+                  [style.background]="row.ownerColor || '#7c6cf2'"
+                >
+                  {{ row.ownerInitial }}
+                </span>
+                <span class="min-w-0">
+                  <span class="block text-gray-700 font-medium truncate max-w-40">{{ row.ownerName }}</span>
+                  <span *ngIf="row.ownerSubname" class="block text-xs text-gray-400 truncate max-w-40">{{ row.ownerSubname }}</span>
+                </span>
+              </a>
+            </td>
+            <td class="px-4 py-3 text-gray-500">第 {{ row.sort_order }} 首</td>
+            <td class="px-4 py-3 text-gray-500">{{ row.releaseDateLabel }}</td>
+            <td class="px-4 py-3 text-gray-500">
+              <div class="flex flex-col gap-0.5">
+                <span *ngIf="row.lyricist">作詞：{{ row.lyricist }}</span>
+                <span *ngIf="row.composer">作曲：{{ row.composer }}</span>
+                <span *ngIf="row.arranger">編曲：{{ row.arranger }}</span>
+                <span *ngIf="!row.lyricist && !row.composer && !row.arranger">—</span>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <a
+                *ngIf="row.youtube_url as youtubeUrl"
+                [href]="youtubeUrl"
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 transition-colors"
+              >
+                開啟
+              </a>
+              <span *ngIf="!row.youtube_url" class="text-gray-400">—</span>
+            </td>
+            <td class="px-4 py-3 text-gray-500">{{ row.updatedAtLabel }}</td>
+            <td class="px-4 py-3 text-right space-x-2">
+              <button
+                type="button"
+                (click)="openEdit(row)"
+                class="text-xs px-2 py-1 rounded text-purple-600 hover:bg-purple-50 transition-colors"
+              >
+                編輯
+              </button>
+              <button
+                type="button"
+                (click)="delete(row)"
+                class="text-xs px-2 py-1 rounded text-red-500 hover:bg-red-50 transition-colors"
+              >
+                刪除
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-semibold text-gray-800">
+        {{ editingRow ? '編輯原創曲' : '新增原創曲' }}
+      </h2>
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1"
+        aria-label="關閉"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">
+          {{ activeTab === 'member' ? '成員' : '團體' }} <span class="text-red-400">*</span>
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="formOwnerOptionQuery"
+          [disabled]="!!editingRow"
+          [placeholder]="'搜尋' + (activeTab === 'member' ? '成員' : '團體') + '…'"
+          class="mb-2 w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 disabled:bg-gray-50 disabled:text-gray-500"
+        />
+        <select
+          [(ngModel)]="draft.ownerId"
+          (ngModelChange)="onOwnerChange($event)"
+          [disabled]="!!editingRow"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 disabled:bg-gray-50 disabled:text-gray-500"
+        >
+          <option value="">請選擇{{ activeTab === 'member' ? '成員' : '團體' }}</option>
+          <option *ngFor="let owner of displayedFormOwnerOptions; trackBy: trackOwner" [value]="owner.id">
+            {{ owner.name }}{{ owner.subname ? ' / ' + owner.subname : '' }}
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">歌曲名稱 <span class="text-red-400">*</span></label>
+        <input
+          type="text"
+          [(ngModel)]="draft.title"
+          placeholder="歌曲名稱"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">作詞</label>
+          <input
+            type="text"
+            [(ngModel)]="draft.lyricist"
+            placeholder="作詞者"
+            class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">作曲</label>
+          <input
+            type="text"
+            [(ngModel)]="draft.composer"
+            placeholder="作曲者"
+            class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">編曲</label>
+          <input
+            type="text"
+            [(ngModel)]="draft.arranger"
+            placeholder="編曲者"
+            class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">發行日期</label>
+          <input
+            type="date"
+            [(ngModel)]="draft.release_date"
+            class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">第幾首單曲 <span class="text-red-400">*</span></label>
+          <input
+            type="number"
+            [(ngModel)]="draft.sort_order"
+            min="1"
+            class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">YouTube 連結</label>
+        <input
+          type="url"
+          [(ngModel)]="draft.youtube_url"
+          placeholder="https://youtube.com/watch?v=..."
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">備注 / 資訊來源</label>
+        <textarea
+          [(ngModel)]="draft.notes"
+          rows="3"
+          placeholder="請附上資訊來源或其他備注…"
+          class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"
+        ></textarea>
+      </div>
+
+      <p *ngIf="formError" class="text-xs text-red-500">{{ formError }}</p>
+    </div>
+
+    <div class="flex justify-end gap-3 mt-6">
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+      >
+        取消
+      </button>
+      <button
+        type="button"
+        (click)="save()"
+        [disabled]="saving"
+        class="px-4 py-2 bg-purple-500 text-white text-sm rounded-md hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        {{ saving ? '儲存中…' : '儲存' }}
+      </button>
+    </div>
+  </div>
+</div>
