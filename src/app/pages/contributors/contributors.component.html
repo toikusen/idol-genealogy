@@ -38,7 +38,7 @@
             <div style="text-align:center;">
               <div style="font-size:0.75rem;color:var(--text-primary);font-weight:500;">
                 @if (top3[1].submitter_id === currentUserId) {
-                  <a routerLink="/my-contributions/" style="color:inherit;text-decoration:none;">{{ top3[1].submitter_name }}</a>
+                  <a routerLink="/my-contributions" style="color:inherit;text-decoration:none;">{{ top3[1].submitter_name }}</a>
                 } @else {
                   {{ top3[1].submitter_name }}
                 }
@@ -69,7 +69,7 @@
           <div style="text-align:center;">
             <div style="font-size:0.8rem;color:var(--text-primary);font-weight:500;">
               @if (top3[0].submitter_id === currentUserId) {
-                <a routerLink="/my-contributions/" style="color:inherit;text-decoration:none;">{{ top3[0].submitter_name }}</a>
+                <a routerLink="/my-contributions" style="color:inherit;text-decoration:none;">{{ top3[0].submitter_name }}</a>
               } @else {
                 {{ top3[0].submitter_name }}
               }
@@ -99,7 +99,7 @@
             <div style="text-align:center;">
               <div style="font-size:0.72rem;color:var(--text-primary);font-weight:500;">
                 @if (top3[2].submitter_id === currentUserId) {
-                  <a routerLink="/my-contributions/" style="color:inherit;text-decoration:none;">{{ top3[2].submitter_name }}</a>
+                  <a routerLink="/my-contributions" style="color:inherit;text-decoration:none;">{{ top3[2].submitter_name }}</a>
                 } @else {
                   {{ top3[2].submitter_name }}
                 }
@@ -148,7 +148,7 @@
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-size:0.82rem;color:var(--text-primary);">
                   @if (entry.submitter_id === currentUserId) {
-                    <a routerLink="/my-contributions/" style="color:inherit;text-decoration:none;">{{ entry.submitter_name }}</a>
+                    <a routerLink="/my-contributions" style="color:inherit;text-decoration:none;">{{ entry.submitter_name }}</a>
                   } @else {
                     {{ entry.submitter_name }}
                   }
@@ -184,7 +184,7 @@
 
   <!-- Back link -->
   <div style="text-align:center;margin-top:48px;">
-    <a routerLink="/guide/" style="
+    <a routerLink="/guide" style="
       font-size:0.72rem;color:var(--text-faint);
       text-decoration:none;letter-spacing:0.08em;
       display:block;margin-bottom:12px;

@@ -1,1 +1,20 @@
+# Prevent Netlify's Pretty URLs from 301-redirecting prerendered directory pages.
+# Angular SSR outputs member/{uuid}/index.html but the sitemap uses /member/{uuid}
+# (no trailing slash). Without these rewrites, Netlify would 301-redirect every
+# sitemap URL to its trailing-slash counterpart, causing GSC "page with redirect".
+/member/:id  /member/:id/  200
+/group/:id   /group/:id/   200
+/company/:id /company/:id/ 200
+/learn/:slug /learn/:slug/ 200
+/members     /members/     200
+/about       /about/       200
+/guide       /guide/       200
+/learn       /learn/       200
+/contact     /contact/     200
+/privacy     /privacy/     200
+/terms       /terms/       200
+/contributors /contributors/ 200
+/wanted      /wanted/      200
+
+# SPA fallback for all other routes
 /* /index.html 200

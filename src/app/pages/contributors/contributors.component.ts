@@ -30,7 +30,6 @@ export class ContributorsComponent implements OnInit {
       '查看 Idol Maps 社群貢獻者排行榜與徽章進度。',
       siteUrl('/contributors'),
     );
-    this.seo.setRobotsNoIndex(true);
     const session = await this.supabase.getSessionOnce();
     this.currentUserId = session?.user?.id ?? null;
 

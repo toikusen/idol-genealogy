@@ -3,8 +3,6 @@ Allow: /
 Disallow: /admin
 Disallow: /@
 Disallow: /my-contributions
-Disallow: /wanted
-Disallow: /contributors
 Disallow: /login
 
 Sitemap: https://idolmaps.com/sitemap.xml

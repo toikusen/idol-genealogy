@@ -12,7 +12,7 @@
 
     <section class="knowledge-grid" aria-label="文章列表">
       @for (article of articles; track article.slug) {
-        <a [routerLink]="'/learn/' + article.slug + '/'" class="knowledge-card">
+        <a [routerLink]="'/learn/' + article.slug" class="knowledge-card">
           <span class="knowledge-card-meta">{{ article.readingMinutes }} 分鐘閱讀 · {{ article.updatedAt }}</span>
           <h2>{{ article.title }}</h2>
           <p>{{ article.description }}</p>

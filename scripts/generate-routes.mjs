@@ -103,6 +103,7 @@ async function run() {
     '/',
     '/members',
     '/contributors',
+    '/wanted',
     '/guide',
     '/learn',
     ...KNOWLEDGE_ROUTES,
@@ -144,6 +145,12 @@ async function run() {
     <loc>${SITE_URL}/about</loc>
     <lastmod>${buildDate}</lastmod>
     <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>`,
+    `  <url>
+    <loc>${SITE_URL}/wanted</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>`,
     `  <url>

@@ -66,7 +66,6 @@ export class WantedComponent implements OnInit {
       '查看哪些成員、團體、公司缺少資料，並幫助補充完整。',
       siteUrl('/wanted'),
     );
-    this.seo.setRobotsNoIndex(true);
 
     try {
       const [members, groups, companies, memberIdsWithHistory, links] = await Promise.all([

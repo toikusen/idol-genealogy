@@ -1,6 +1,6 @@
 <main id="main-content" class="article-shell">
   <div class="article-inner">
-    <a routerLink="/learn/" class="article-back">← 回資料閱讀指南</a>
+    <a routerLink="/learn" class="article-back">← 回資料閱讀指南</a>
 
     @if (article; as item) {
       <article class="article-layout">
@@ -47,7 +47,7 @@
           <h2>延伸閱讀</h2>
           <div class="article-related-grid">
             @for (related of relatedArticles; track related.slug) {
-              <a [routerLink]="'/learn/' + related.slug + '/'" class="article-related-link">
+              <a [routerLink]="'/learn/' + related.slug" class="article-related-link">
                 <span>{{ related.readingMinutes }} 分鐘閱讀</span>
                 <strong>{{ related.title }}</strong>
               </a>
@@ -59,7 +59,7 @@
       <section class="article-missing">
         <h1>找不到這篇文章</h1>
         <p>這個資料閱讀指南頁面不存在，或網址已經變更。</p>
-        <a routerLink="/learn/">查看所有指南文章</a>
+        <a routerLink="/learn">查看所有指南文章</a>
       </section>
     }
   </div>
