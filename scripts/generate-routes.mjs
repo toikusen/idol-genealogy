@@ -148,6 +148,12 @@ async function run() {
     <priority>0.5</priority>
   </url>`,
     `  <url>
+    <loc>${SITE_URL}/contributors</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>`,
+    `  <url>
     <loc>${SITE_URL}/wanted</loc>
     <lastmod>${buildDate}</lastmod>
     <changefreq>weekly</changefreq>
