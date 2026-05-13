@@ -5,8 +5,9 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
+import { VenueService } from '../../core/venue.service';
 import { SeoService } from '../../core/seo.service';
-import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry } from '../../models';
+import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry, Venue } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
@@ -43,17 +44,23 @@ export class HomeComponent implements OnInit, OnDestroy {
   memberCount = 0;
   groupCount = 0;
   companyCount = 0;
+  venueCount = 0;
+  venues: Venue[] = [];
+  venuesLoaded = false;
+  venuesLoading = false;
+  expandedVenueIds = new Set<string>();
   upcomingBirthdays: { member: Member; daysUntil: number }[] = [];
   allGroups: Group[] = [];
   allCompanies: Company[] = [];
   allSoloMembers: Member[] = [];
   topMembers: MemberLeaderboardEntry[] = [];
   topGroups: GroupLeaderboardEntry[] = [];
-  activeTab: 'members' | 'groups' | 'companies' | 'events' = 'members';
+  activeTab: 'members' | 'groups' | 'companies' | 'events' | 'venues' = 'members';
   private soloMembersLoaded = false;
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly ngZone = inject(NgZone);
+  private readonly venueService = inject(VenueService);
   private deferredHomeSectionsLoaded = false;
   private deferredHomeSectionsPromise: Promise<void> | null = null;
   private deferredHomeSectionsTimer: number | null = null;
@@ -106,6 +113,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.memberCount = data.memberCount;
       this.groupCount = data.groupCount;
       this.companyCount = data.companyCount;
+      this.venueService.getCount().then(c => this.venueCount = c);
       this.topMembers = data.topMembers;
       this.topGroups = data.topGroups;
       this.upcomingBirthdays = data.upcomingBirthdays;
@@ -171,7 +179,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.deferredHomeSectionsPromise;
   }
 
-  async setTab(tab: 'members' | 'groups' | 'companies' | 'events') {
+  async setTab(tab: 'members' | 'groups' | 'companies' | 'events' | 'venues') {
     this.activeTab = tab;
     if (tab === 'groups' || tab === 'companies') {
       await this.ensureBrowseCatalog();
@@ -181,6 +189,15 @@ export class HomeComponent implements OnInit, OnDestroy {
       const raw = await this.memberService.getSoloMembers().catch(() => [] as Member[]);
       this.allSoloMembers = raw.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
       this.companySections = this.buildCompanySections();
+    }
+    if (tab === 'venues' && !this.venuesLoaded) {
+      this.venuesLoading = true;
+      try {
+        this.venues = await this.venueService.getAll();
+        this.venuesLoaded = true;
+      } finally {
+        this.venuesLoading = false;
+      }
     }
   }
 
@@ -275,6 +292,27 @@ export class HomeComponent implements OnInit, OnDestroy {
     } catch {
       return '—';
     }
+  }
+
+  get venuesNorth(): Venue[] { return this.venues.filter(v => v.region === 'north'); }
+  get venuesCentral(): Venue[] { return this.venues.filter(v => v.region === 'central'); }
+  get venuesSouth(): Venue[] { return this.venues.filter(v => v.region === 'south'); }
+
+  toggleVenue(id: string) {
+    if (this.expandedVenueIds.has(id)) {
+      this.expandedVenueIds.delete(id);
+    } else {
+      this.expandedVenueIds.add(id);
+    }
+  }
+
+  venueMapUrl(address: string): string {
+    return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
+  }
+
+  copyAddress(address: string, event: Event) {
+    event.stopPropagation();
+    navigator.clipboard.writeText(address);
   }
 
   ngOnDestroy() {

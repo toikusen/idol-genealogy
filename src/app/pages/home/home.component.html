@@ -174,6 +174,26 @@
             <span class="nav-tab-en">Events</span>
           </button>
 
+          <!-- 場地 -->
+          <button
+            id="tab-venues"
+            (click)="setTab('venues')"
+            class="nav-tab tab-venues"
+            [class.tab-active]="activeTab === 'venues'"
+            role="tab"
+            [attr.aria-selected]="activeTab === 'venues'"
+            [attr.aria-controls]="'panel-venues'"
+            [attr.tabindex]="activeTab === 'venues' ? 0 : -1"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="tab-icon" aria-hidden="true" focusable="false">
+              <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span class="nav-tab-tw">場地</span>
+            <span class="nav-tab-en">Venues</span>
+            <span class="nav-tab-count">{{venueCount || ''}}</span>
+          </button>
+
         </div>
       </nav>
     }
@@ -810,7 +830,189 @@
         </section>
       }
 
+      @if (activeTab === 'venues') {
+        <div
+          id="panel-venues"
+          role="tabpanel"
+          aria-labelledby="tab-venues"
+          style="padding-top: 4px;"
+        >
+          @if (venuesLoading) {
+            <div style="text-align:center;padding:60px 0;color:var(--text-faint-40);font-size:0.85rem;">載入中…</div>
+          } @else if (venues.length === 0 && venuesLoaded) {
+            <div style="text-align:center;padding:60px 0;color:var(--text-faint-40);font-size:0.85rem;">尚無場館資料</div>
+          } @else {
+
+            <!-- Coming soon notice -->
+            <div style="
+              background:rgba(124,108,242,0.05);border:1px solid rgba(124,108,242,0.14);
+              border-radius:8px;padding:9px 14px;font-size:0.7rem;
+              color:rgba(124,108,242,0.75);letter-spacing:0.03em;
+              margin-bottom:20px;display:flex;align-items:center;gap:8px;
+            ">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+              </svg>
+              「查看近期活動」功能開發中，完成後可在此直接瀏覽各場館活動
+            </div>
+
+            <!-- 北部 -->
+            @if (venuesNorth.length > 0) {
+              <div style="margin-bottom:28px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                  <span style="font-size:0.63rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-faint);white-space:nowrap;">北部</span>
+                  <div style="flex:1;height:1px;background:linear-gradient(to right,var(--border-default),transparent);"></div>
+                </div>
+                @for (venue of venuesNorth; track venue.id) {
+                  <ng-container *ngTemplateOutlet="venueCard; context:{$implicit: venue, accent:'north'}"></ng-container>
+                }
+              </div>
+            }
+
+            <!-- 中部 -->
+            @if (venuesCentral.length > 0) {
+              <div style="margin-bottom:28px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                  <span style="font-size:0.63rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-faint);white-space:nowrap;">中部</span>
+                  <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(124,108,242,0.25),transparent);"></div>
+                </div>
+                @for (venue of venuesCentral; track venue.id) {
+                  <ng-container *ngTemplateOutlet="venueCard; context:{$implicit: venue, accent:'central'}"></ng-container>
+                }
+              </div>
+            }
+
+            <!-- 南部 -->
+            @if (venuesSouth.length > 0) {
+              <div style="margin-bottom:28px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                  <span style="font-size:0.63rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-faint);white-space:nowrap;">南部</span>
+                  <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(245,158,11,0.3),transparent);"></div>
+                </div>
+                @for (venue of venuesSouth; track venue.id) {
+                  <ng-container *ngTemplateOutlet="venueCard; context:{$implicit: venue, accent:'south'}"></ng-container>
+                }
+              </div>
+            }
+
+          }
+        </div>
+      }
+
     }
+
+    <!-- Venue card template -->
+    <ng-template #venueCard let-venue let-accent="accent">
+      <div
+        (click)="toggleVenue(venue.id)"
+        style="
+          background:var(--bg-card);border:1px solid var(--border-subtle);
+          border-radius:10px;margin-bottom:8px;
+          box-shadow:var(--shadow-sm);overflow:hidden;
+          cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s,transform 0.15s;
+        "
+        [style.border-color]="expandedVenueIds.has(venue.id) ? 'rgba(124,108,242,0.25)' : ''"
+      >
+        <!-- Card row -->
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;">
+
+          <!-- Accent strip -->
+          <div style="width:3px;border-radius:2px;align-self:stretch;flex-shrink:0;"
+            [style.background]="accent === 'north'
+              ? 'linear-gradient(to bottom,#e879a0,#f9a8d4)'
+              : accent === 'central'
+                ? 'linear-gradient(to bottom,#7c6cf2,#a5b4fc)'
+                : 'linear-gradient(to bottom,#f59e0b,#fcd34d)'">
+          </div>
+
+          <!-- Icon -->
+          <div style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;"
+            [style.background]="accent === 'north' ? 'rgba(232,121,160,0.10)' : accent === 'central' ? 'rgba(124,108,242,0.10)' : 'rgba(245,158,11,0.10)'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"
+              [style.color]="accent === 'north' ? '#e879a0' : accent === 'central' ? '#7c6cf2' : '#f59e0b'">
+              <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+
+          <!-- Info -->
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.88rem;font-weight:500;color:var(--text-primary);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              {{venue.name}}
+            </div>
+            <div style="font-size:0.7rem;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              {{venue.address}}
+            </div>
+            @if (venue.type) {
+              <span style="display:inline-block;font-size:0.58rem;padding:1px 6px;border-radius:20px;background:rgba(122,90,122,0.06);border:1px solid rgba(122,90,122,0.11);color:var(--text-secondary);margin-top:4px;letter-spacing:0.03em;">
+                {{venue.type}}
+              </span>
+            }
+          </div>
+
+          <!-- Buttons -->
+          <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+            <span style="font-size:0.6rem;padding:4px 9px;border-radius:20px;border:1px dashed rgba(232,121,160,0.28);color:rgba(232,121,160,0.45);background:rgba(232,121,160,0.04);cursor:not-allowed;letter-spacing:0.04em;white-space:nowrap;">
+              近期活動
+            </span>
+            <button
+              (click)="copyAddress(venue.address, $event)"
+              style="width:30px;height:30px;border-radius:7px;border:1px solid var(--border-subtle);background:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);cursor:pointer;"
+              [attr.aria-label]="'複製 ' + venue.name + ' 地址'"
+              title="複製地址"
+            >
+              <svg width="13" height="13" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
+                <path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/>
+              </svg>
+            </button>
+            <span style="font-size:0.65rem;color:var(--text-faint);padding:0 2px;user-select:none;">
+              {{expandedVenueIds.has(venue.id) ? '▲' : '▼'}}
+            </span>
+          </div>
+        </div>
+
+        <!-- Expanded map panel -->
+        @if (expandedVenueIds.has(venue.id)) {
+          <div style="padding:0 16px 14px;">
+            <iframe
+              [src]="venueMapUrl(venue.address) | safeUrl"
+              width="100%"
+              height="200"
+              style="border-radius:8px;border:1px solid var(--border-subtle);display:block;"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              [title]="venue.name + ' 地圖'"
+              aria-hidden="true"
+            ></iframe>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+              @if (venue.google_maps_url) {
+                <a
+                  [href]="venue.google_maps_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  (click)="$event.stopPropagation()"
+                  style="font-size:0.68rem;color:#4285F4;text-decoration:none;display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid rgba(66,133,244,0.2);border-radius:6px;background:rgba(66,133,244,0.04);"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#4285F4" aria-hidden="true">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                  Google Maps 開啟
+                </a>
+              }
+              @if (venue.phone) {
+                <a
+                  [href]="'tel:' + venue.phone"
+                  (click)="$event.stopPropagation()"
+                  style="font-size:0.68rem;color:var(--text-secondary);text-decoration:none;display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid var(--border-subtle);border-radius:6px;background:rgba(255,255,255,0.6);"
+                >
+                  {{venue.phone}}
+                </a>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </ng-template>
 
     <!-- ══ Proposal panels ══ -->
     @defer (when showMemberInsertPanel) {
