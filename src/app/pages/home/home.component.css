@@ -690,28 +690,28 @@ input::placeholder {
 :host-context([data-theme="dark"]) .calendar-container { background: rgba(18, 8, 20, 0.90); }
 :host-context([data-theme="dark"]) .company-section-heading { color: rgba(210, 175, 210, 0.80) !important; }
 
-/* Venues — indigo (same hue family as groups) */
+/* Venues — teal (map / location) */
 .tab-venues:hover {
-  background: rgba(80,64,168,0.10);
-  border-bottom-color: rgba(124,108,242,0.42);
+  background: rgba(13,148,136,0.10);
+  border-bottom-color: rgba(13,148,136,0.42);
   transform: translateY(-1px);
 }
-.tab-venues:hover .tab-icon { opacity: 0.85; color: #5040a8; }
-.tab-venues:hover .nav-tab-tw { color: rgba(72,56,160,0.85); }
-.tab-venues:hover .nav-tab-count { background: rgba(124,108,242,0.15); color: rgba(72,56,160,0.72); }
+.tab-venues:hover .tab-icon { opacity: 0.85; color: #0d9488; }
+.tab-venues:hover .nav-tab-tw { color: rgba(9,120,110,0.85); }
+.tab-venues:hover .nav-tab-count { background: rgba(13,148,136,0.15); color: rgba(9,120,110,0.72); }
 .tab-venues.tab-active {
-  color: #5040a8;
-  border-bottom-color: #7c6cf2;
-  background: rgba(124,108,242,0.08);
+  color: #0d9488;
+  border-bottom-color: #14b8a6;
+  background: rgba(13,148,136,0.08);
 }
-.tab-venues.tab-active .tab-icon    { color: #5040a8; opacity: 1; }
-.tab-venues.tab-active .nav-tab-tw  { color: #5040a8; }
-.tab-venues.tab-active .nav-tab-en  { color: rgba(80,64,168,0.58); }
-.tab-venues.tab-active .nav-tab-count { background: rgba(124,108,242,0.16); color: rgba(72,56,160,0.7); }
+.tab-venues.tab-active .tab-icon    { color: #0d9488; opacity: 1; }
+.tab-venues.tab-active .nav-tab-tw  { color: #0a7870; }
+.tab-venues.tab-active .nav-tab-en  { color: rgba(10,120,112,0.58); }
+.tab-venues.tab-active .nav-tab-count { background: rgba(13,148,136,0.16); color: rgba(9,120,110,0.7); }
 
-:host-context([data-theme="dark"]) .tab-venues:hover .nav-tab-tw { color: rgba(144, 128, 224, 0.88); }
-:host-context([data-theme="dark"]) .tab-venues:hover .nav-tab-count { background: rgba(144, 128, 224, 0.20); color: rgba(144, 128, 224, 0.75); }
-:host-context([data-theme="dark"]) .tab-venues.tab-active .tab-icon     { color: #9080e0; }
-:host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-tw   { color: rgba(144, 128, 224, 0.92); }
-:host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-en   { color: rgba(144, 128, 224, 0.58); }
-:host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-count { background: rgba(144, 128, 224, 0.22); color: rgba(144, 128, 224, 0.75); }
+:host-context([data-theme="dark"]) .tab-venues:hover .nav-tab-tw { color: rgba(20, 184, 166, 0.88); }
+:host-context([data-theme="dark"]) .tab-venues:hover .nav-tab-count { background: rgba(20, 184, 166, 0.20); color: rgba(20, 184, 166, 0.75); }
+:host-context([data-theme="dark"]) .tab-venues.tab-active .tab-icon     { color: #14b8a6; }
+:host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-tw   { color: rgba(20, 184, 166, 0.92); }
+:host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-en   { color: rgba(20, 184, 166, 0.58); }
+:host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-count { background: rgba(20, 184, 166, 0.22); color: rgba(20, 184, 166, 0.75); }
