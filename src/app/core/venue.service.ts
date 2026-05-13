@@ -20,7 +20,7 @@ export class VenueService {
         .eq('is_active', true)
         .order('region')
         .order('name')
-    ).then(({ data, error }: { data: Venue[] | null; error: unknown }) => {
+    ).then(({ data, error }) => {
       this._promise = null;
       if (error) throw error;
       this._cache = data ?? [];
@@ -45,7 +45,7 @@ export class VenueService {
     return data ?? [];
   }
 
-  async upsert(venue: Partial<Venue> & { name: string; address: string; region: 'north' | 'central' | 'south' }): Promise<void> {
+  async create(venue: Omit<Venue, 'id' | 'created_at' | 'updated_at'>): Promise<void> {
     const { error } = await this.db.from('venues').insert(venue);
     if (error) throw error;
     this.invalidateCache();
@@ -59,5 +59,6 @@ export class VenueService {
 
   invalidateCache() {
     this._cache = null;
+    this._promise = null;
   }
 }
