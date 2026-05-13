@@ -22,6 +22,8 @@ import {
   sanitizePublicMemberRecord,
 } from '../../core/public-record.utils';
 
+type VenueRegionFilter = 'all' | 'north' | 'central' | 'south';
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -300,6 +302,17 @@ export class HomeComponent implements OnInit, OnDestroy {
   venuesNorth: Venue[] = [];
   venuesCentral: Venue[] = [];
   venuesSouth: Venue[] = [];
+  activeVenueRegionFilter: VenueRegionFilter = 'all';
+  readonly venueRegionFilters: { key: VenueRegionFilter; label: string }[] = [
+    { key: 'all', label: '全部' },
+    { key: 'north', label: '北部' },
+    { key: 'central', label: '中部' },
+    { key: 'south', label: '南部' },
+  ];
+
+  setVenueRegionFilter(filter: VenueRegionFilter) {
+    this.activeVenueRegionFilter = filter;
+  }
 
   toggleVenue(id: string) {
     if (this.expandedVenueIds.has(id)) {
