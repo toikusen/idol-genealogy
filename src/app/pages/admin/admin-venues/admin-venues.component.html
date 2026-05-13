@@ -1,0 +1,105 @@
+<div style="padding:24px;max-width:900px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <h2 style="font-size:1.1rem;font-weight:500;color:var(--text-primary);">場館管理</h2>
+    <button (click)="openAdd()" style="
+      padding:7px 16px;border-radius:6px;border:none;
+      background:#7c6cf2;color:white;
+      font-size:0.78rem;cursor:pointer;font-family:inherit;
+    ">＋ 新增場館</button>
+  </div>
+
+  @if (error) {
+    <div style="color:#c04070;font-size:0.8rem;margin-bottom:12px;padding:8px 12px;background:rgba(192,64,112,0.06);border-radius:6px;">{{error}}</div>
+  }
+
+  <!-- Add/Edit Form -->
+  @if (showForm) {
+    <div style="
+      background:rgba(255,255,255,0.85);border:1px solid rgba(124,108,242,0.2);
+      border-radius:10px;padding:20px;margin-bottom:24px;
+    ">
+      <div style="font-size:0.85rem;font-weight:500;margin-bottom:16px;color:var(--text-primary);">
+        {{editingId ? '編輯場館' : '新增場館'}}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:0.7rem;color:var(--text-secondary);display:block;margin-bottom:4px;">名稱 *</label>
+          <input [(ngModel)]="draft.name" placeholder="場館名稱" style="width:100%;padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;font-size:0.82rem;font-family:inherit;">
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--text-secondary);display:block;margin-bottom:4px;">類型</label>
+          <input [(ngModel)]="draft.type" placeholder="Live House / 展演空間…" style="width:100%;padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;font-size:0.82rem;font-family:inherit;">
+        </div>
+        <div style="grid-column:1/-1;">
+          <label style="font-size:0.7rem;color:var(--text-secondary);display:block;margin-bottom:4px;">地址 *</label>
+          <input [(ngModel)]="draft.address" placeholder="完整地址" style="width:100%;padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;font-size:0.82rem;font-family:inherit;">
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--text-secondary);display:block;margin-bottom:4px;">區域 *</label>
+          <select [(ngModel)]="draft.region" style="width:100%;padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;font-size:0.82rem;font-family:inherit;">
+            <option value="north">北部</option>
+            <option value="central">中部</option>
+            <option value="south">南部</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--text-secondary);display:block;margin-bottom:4px;">電話</label>
+          <input [(ngModel)]="draft.phone" placeholder="選填" style="width:100%;padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;font-size:0.82rem;font-family:inherit;">
+        </div>
+        <div style="grid-column:1/-1;">
+          <label style="font-size:0.7rem;color:var(--text-secondary);display:block;margin-bottom:4px;">Google Maps 短連結</label>
+          <input [(ngModel)]="draft.google_maps_url" placeholder="https://maps.app.goo.gl/..." style="width:100%;padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;font-size:0.82rem;font-family:inherit;">
+        </div>
+        <div style="grid-column:1/-1;">
+          <label style="font-size:0.7rem;color:var(--text-secondary);display:block;margin-bottom:4px;">備註</label>
+          <textarea [(ngModel)]="draft.notes" rows="2" style="width:100%;padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;font-size:0.82rem;resize:vertical;font-family:inherit;"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button (click)="cancelForm()" style="padding:7px 14px;border-radius:6px;border:1px solid var(--border-default);background:transparent;font-size:0.78rem;cursor:pointer;font-family:inherit;">取消</button>
+        <button (click)="save()" [disabled]="saving" style="padding:7px 16px;border-radius:6px;border:none;background:#7c6cf2;color:white;font-size:0.78rem;cursor:pointer;font-family:inherit;opacity:1;"
+          [style.opacity]="saving ? 0.6 : 1">
+          {{saving ? '儲存中…' : '儲存'}}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Table -->
+  @if (loading) {
+    <div style="color:var(--text-faint);font-size:0.82rem;text-align:center;padding:40px 0;">載入中…</div>
+  } @else if (venues.length === 0) {
+    <div style="color:var(--text-faint);font-size:0.82rem;text-align:center;padding:40px 0;">尚無場館資料</div>
+  } @else {
+    <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border-default);">
+          <th style="text-align:left;padding:8px 10px;color:var(--text-secondary);font-weight:500;">名稱</th>
+          <th style="text-align:left;padding:8px 10px;color:var(--text-secondary);font-weight:500;">地址</th>
+          <th style="text-align:left;padding:8px 10px;color:var(--text-secondary);font-weight:500;">區域</th>
+          <th style="text-align:left;padding:8px 10px;color:var(--text-secondary);font-weight:500;">類型</th>
+          <th style="text-align:center;padding:8px 10px;color:var(--text-secondary);font-weight:500;">狀態</th>
+          <th style="padding:8px 10px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (v of venues; track v.id) {
+          <tr style="border-bottom:1px solid var(--border-subtle);" [style.opacity]="v.is_active ? 1 : 0.45">
+            <td style="padding:9px 10px;color:var(--text-primary);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{v.name}}</td>
+            <td style="padding:9px 10px;color:var(--text-faint);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{v.address}}</td>
+            <td style="padding:9px 10px;color:var(--text-secondary);">{{regionLabels[v.region]}}</td>
+            <td style="padding:9px 10px;color:var(--text-secondary);">{{v.type ?? '—'}}</td>
+            <td style="padding:9px 10px;text-align:center;">
+              <button (click)="toggleActive(v)" style="font-size:0.68rem;padding:3px 9px;border-radius:20px;border:1px solid var(--border-default);cursor:pointer;background:transparent;font-family:inherit;">
+                {{v.is_active ? '顯示中' : '已隱藏'}}
+              </button>
+            </td>
+            <td style="padding:9px 10px;text-align:right;">
+              <button (click)="openEdit(v)" style="font-size:0.68rem;padding:3px 9px;border-radius:6px;border:1px solid var(--border-default);cursor:pointer;background:transparent;font-family:inherit;">編輯</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

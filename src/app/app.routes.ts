@@ -93,6 +93,7 @@ export const routes: Routes = [
       { path: 'companies', loadComponent: () => import('./pages/admin/admin-companies/admin-companies.component').then(m => m.AdminCompaniesComponent) },
       { path: 'history', loadComponent: () => import('./pages/admin/admin-history/admin-history.component').then(m => m.AdminHistoryComponent) },
       { path: 'songs', loadComponent: () => import('./pages/admin/admin-songs/admin-songs.component').then(m => m.AdminSongsComponent) },
+      { path: 'venues', loadComponent: () => import('./pages/admin/admin-venues/admin-venues.component').then(m => m.AdminVenuesComponent) },
       {
         path: 'audit-log',
         loadComponent: () => import('./pages/admin/admin-audit-log/admin-audit-log.component').then(m => m.AdminAuditLogComponent)
