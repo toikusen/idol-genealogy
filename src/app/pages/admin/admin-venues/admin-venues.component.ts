@@ -40,6 +40,8 @@ export class AdminVenuesComponent implements OnInit {
     north: '北部', central: '中部', south: '南部',
   };
 
+  readonly venueTypeOptions = ['Live House', '展演空間', '大型場館', '展覽館', '劇場'];
+
   constructor(private venueService: VenueService) {}
 
   async ngOnInit() {

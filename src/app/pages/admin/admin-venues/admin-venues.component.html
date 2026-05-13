@@ -109,8 +109,13 @@
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">類型</label>
-            <input type="text" [(ngModel)]="draft.type" placeholder="Live House…"
-              class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+            <select [(ngModel)]="draft.type"
+              class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+              <option value="">未分類</option>
+              @for (type of venueTypeOptions; track type) {
+                <option [value]="type">{{type}}</option>
+              }
+            </select>
           </div>
         </div>
 
