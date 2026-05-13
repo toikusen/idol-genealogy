@@ -31,7 +31,7 @@ export class AdminVenuesComponent implements OnInit {
   venues: Venue[] = [];
   loading = true;
   error = '';
-  showForm = false;
+  showModal = false;
   editingId: string | null = null;
   draft: VenueDraft = emptyDraft();
   saving = false;
@@ -61,7 +61,7 @@ export class AdminVenuesComponent implements OnInit {
   openAdd() {
     this.draft = emptyDraft();
     this.editingId = null;
-    this.showForm = true;
+    this.showModal = true;
   }
 
   openEdit(v: Venue) {
@@ -75,11 +75,11 @@ export class AdminVenuesComponent implements OnInit {
       notes: v.notes ?? '',
     };
     this.editingId = v.id;
-    this.showForm = true;
+    this.showModal = true;
   }
 
   cancelForm() {
-    this.showForm = false;
+    this.showModal = false;
     this.editingId = null;
     this.draft = emptyDraft();
     this.error = '';
@@ -107,7 +107,7 @@ export class AdminVenuesComponent implements OnInit {
       } else {
         await this.venueService.create({ ...payload, is_active: true });
       }
-      this.showForm = false;
+      this.showModal = false;
       this.editingId = null;
       await this.load();
     } catch (e: unknown) {
