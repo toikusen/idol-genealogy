@@ -60,7 +60,7 @@
       </a>
       <a routerLink="/admin/venues" (click)="closeDrawer()" routerLinkActive="bg-pink-100 text-pink-700 font-medium"
          class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors">
-        場館管理
+        場地管理
       </a>
       <div class="pt-2 mt-2 border-t border-gray-100">
         <a routerLink="/admin/roles" (click)="closeDrawer()" routerLinkActive="bg-purple-100 text-purple-700 font-medium"
@@ -157,7 +157,7 @@
         routerLinkActive="bg-pink-100 text-pink-700 font-medium"
         class="flex items-center px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
       >
-        場館管理
+        場地管理
       </a>
 
       <!-- 管理功能 -->
@@ -228,7 +228,7 @@
   </aside>
 
   <!-- Main content area -->
-  <main class="flex-1 overflow-auto pt-12 md:pt-0">
+  <main class="min-w-0 flex-1 overflow-auto pt-12 md:pt-0">
     <router-outlet />
   </main>
 </div>

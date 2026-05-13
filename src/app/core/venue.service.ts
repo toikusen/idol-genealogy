@@ -57,6 +57,12 @@ export class VenueService {
     this.invalidateCache();
   }
 
+  async delete(id: string): Promise<void> {
+    const { error } = await this.db.from('venues').delete().eq('id', id);
+    if (error) throw error;
+    this.invalidateCache();
+  }
+
   invalidateCache() {
     this._cache = null;
     this._promise = null;

@@ -117,15 +117,13 @@ export class AdminVenuesComponent implements OnInit {
     }
   }
 
-  async toggleActive(v: Venue) {
-    const original = v.is_active;
-    v.is_active = !v.is_active;
+  async delete(v: Venue) {
+    if (!confirm(`確定刪除「${v.name}」？`)) return;
     try {
-      await this.venueService.update(v.id, { is_active: v.is_active });
+      await this.venueService.delete(v.id);
       await this.load();
     } catch (e: unknown) {
-      v.is_active = original;
-      this.error = e instanceof Error ? e.message : '更新失敗';
+      alert(e instanceof Error ? e.message : '刪除失敗');
     }
   }
 }
