@@ -113,7 +113,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.memberCount = data.memberCount;
       this.groupCount = data.groupCount;
       this.companyCount = data.companyCount;
-      this.venueService.getCount().then(c => this.venueCount = c);
+      this.venueService.getCount().then(c => { if (!this.destroyed) this.venueCount = c; });
       this.topMembers = data.topMembers;
       this.topGroups = data.topGroups;
       this.upcomingBirthdays = data.upcomingBirthdays;
@@ -195,6 +195,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       try {
         this.venues = await this.venueService.getAll();
         this.venuesLoaded = true;
+        this.venuesNorth = this.venues.filter(v => v.region === 'north');
+        this.venuesCentral = this.venues.filter(v => v.region === 'central');
+        this.venuesSouth = this.venues.filter(v => v.region === 'south');
       } finally {
         this.venuesLoading = false;
       }
@@ -294,9 +297,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  get venuesNorth(): Venue[] { return this.venues.filter(v => v.region === 'north'); }
-  get venuesCentral(): Venue[] { return this.venues.filter(v => v.region === 'central'); }
-  get venuesSouth(): Venue[] { return this.venues.filter(v => v.region === 'south'); }
+  venuesNorth: Venue[] = [];
+  venuesCentral: Venue[] = [];
+  venuesSouth: Venue[] = [];
 
   toggleVenue(id: string) {
     if (this.expandedVenueIds.has(id)) {
@@ -312,7 +315,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   copyAddress(address: string, event: Event) {
     event.stopPropagation();
-    navigator.clipboard.writeText(address);
+    if (this.isBrowser) navigator.clipboard.writeText(address);
   }
 
   ngOnDestroy() {

@@ -708,3 +708,10 @@ input::placeholder {
 .tab-venues.tab-active .nav-tab-tw  { color: #5040a8; }
 .tab-venues.tab-active .nav-tab-en  { color: rgba(80,64,168,0.58); }
 .tab-venues.tab-active .nav-tab-count { background: rgba(124,108,242,0.16); color: rgba(72,56,160,0.7); }
+
+:host-context([data-theme="dark"]) .tab-venues:hover .nav-tab-tw { color: rgba(144, 128, 224, 0.88); }
+:host-context([data-theme="dark"]) .tab-venues:hover .nav-tab-count { background: rgba(144, 128, 224, 0.20); color: rgba(144, 128, 224, 0.75); }
+:host-context([data-theme="dark"]) .tab-venues.tab-active .tab-icon     { color: #9080e0; }
+:host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-tw   { color: rgba(144, 128, 224, 0.92); }
+:host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-en   { color: rgba(144, 128, 224, 0.58); }
+:host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-count { background: rgba(144, 128, 224, 0.22); color: rgba(144, 128, 224, 0.75); }
