@@ -81,10 +81,15 @@ export class AdminVenuesComponent implements OnInit {
   cancelForm() {
     this.showForm = false;
     this.editingId = null;
+    this.draft = emptyDraft();
+    this.error = '';
   }
 
   async save() {
-    if (!this.draft.name.trim() || !this.draft.address.trim()) return;
+    if (!this.draft.name.trim() || !this.draft.address.trim()) {
+      this.error = '名稱與地址為必填欄位';
+      return;
+    }
     this.saving = true;
     this.error = '';
     try {
@@ -113,10 +118,13 @@ export class AdminVenuesComponent implements OnInit {
   }
 
   async toggleActive(v: Venue) {
+    const original = v.is_active;
+    v.is_active = !v.is_active;
     try {
-      await this.venueService.update(v.id, { is_active: !v.is_active });
+      await this.venueService.update(v.id, { is_active: v.is_active });
       await this.load();
     } catch (e: unknown) {
+      v.is_active = original;
       this.error = e instanceof Error ? e.message : '更新失敗';
     }
   }
