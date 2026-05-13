@@ -204,3 +204,17 @@ export interface GroupSong {
   updated_at: string;
   created_by: string | null;
 }
+
+export interface Venue {
+  id: string;
+  name: string;
+  address: string;
+  type: string | null;
+  region: 'north' | 'central' | 'south';
+  google_maps_url: string | null;
+  phone: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
