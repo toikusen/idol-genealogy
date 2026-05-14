@@ -6,8 +6,9 @@ import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
+import { GoogleCalendarService } from '../../core/google-calendar.service';
 import { SeoService } from '../../core/seo.service';
-import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry, Venue } from '../../models';
+import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry, Venue, VenueCalendarEvent } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
@@ -51,6 +52,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   venuesLoaded = false;
   venuesLoading = false;
   expandedVenueIds = new Set<string>();
+  venueEventCounts = new Map<string, number>();
+  calendarLoaded = false;
+  venueEvents = new Map<string, VenueCalendarEvent[]>();
+  venueEventsLoaded = new Set<string>();
+  venueEventsLoading = new Set<string>();
+  venueEventsError = new Map<string, string>();
   upcomingBirthdays: { member: Member; daysUntil: number }[] = [];
   allGroups: Group[] = [];
   allCompanies: Company[] = [];
@@ -82,6 +89,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     private memberService: MemberService,
     private groupService: GroupService,
     private companyService: CompanyService,
+    private googleCalendarService: GoogleCalendarService,
     private seo: SeoService,
     private route: ActivatedRoute
   ) {}
@@ -200,6 +208,17 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.venuesNorth = this.venues.filter(v => v.region === 'north');
         this.venuesCentral = this.venues.filter(v => v.region === 'central');
         this.venuesSouth = this.venues.filter(v => v.region === 'south');
+        this.googleCalendarService
+          .preloadForVenues(this.venues)
+          .then(counts => {
+            if (!this.destroyed) {
+              this.venueEventCounts = counts;
+              this.calendarLoaded = true;
+            }
+          })
+          .catch(() => {
+            if (!this.destroyed) this.calendarLoaded = true;
+          });
       } finally {
         this.venuesLoading = false;
       }
@@ -314,16 +333,68 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.activeVenueRegionFilter = filter;
   }
 
-  toggleVenue(id: string) {
-    if (this.expandedVenueIds.has(id)) {
-      this.expandedVenueIds.delete(id);
+  toggleVenue(venue: Venue) {
+    if (this.expandedVenueIds.has(venue.id)) {
+      this.expandedVenueIds.delete(venue.id);
     } else {
-      this.expandedVenueIds.add(id);
+      this.expandedVenueIds.add(venue.id);
+      void this.loadVenueEvents(venue);
     }
   }
 
   venueMapUrl(address: string): string {
     return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
+  }
+
+  async loadVenueEvents(venue: Venue) {
+    if (this.venueEventsLoaded.has(venue.id) || this.venueEventsLoading.has(venue.id)) return;
+    if (!this.googleCalendarService.isConfigured()) {
+      this.venueEventsLoaded.add(venue.id);
+      this.venueEvents.set(venue.id, []);
+      return;
+    }
+    this.venueEventsLoading.add(venue.id);
+    this.venueEventsError.delete(venue.id);
+    try {
+      const events = await this.googleCalendarService.getUpcomingVenueEvents(venue);
+      if (this.destroyed) return;
+      this.venueEvents.set(venue.id, events);
+      this.venueEventsLoaded.add(venue.id);
+    } catch {
+      if (!this.destroyed) this.venueEventsError.set(venue.id, '近期活動載入失敗');
+    } finally {
+      this.venueEventsLoading.delete(venue.id);
+    }
+  }
+
+  getVenueEvents(venueId: string): VenueCalendarEvent[] {
+    return this.venueEvents.get(venueId) ?? [];
+  }
+
+  isVenueEventsLoading(venueId: string): boolean {
+    return this.venueEventsLoading.has(venueId);
+  }
+
+  venueEventsLoadError(venueId: string): string {
+    return this.venueEventsError.get(venueId) ?? '';
+  }
+
+  hasVenueEventsLoaded(venueId: string): boolean {
+    return this.venueEventsLoaded.has(venueId);
+  }
+
+  isVenueCalendarConfigured(): boolean {
+    return this.googleCalendarService.isConfigured();
+  }
+
+  formatVenueEventDate(event: VenueCalendarEvent): string {
+    if (!event.start) return '';
+    const date = new Date(event.start);
+    if (isNaN(date.getTime())) return event.start;
+    const options: Intl.DateTimeFormatOptions = event.isAllDay
+      ? { month: 'numeric', day: 'numeric', weekday: 'short' }
+      : { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' };
+    return date.toLocaleString('zh-TW', options);
   }
 
   copyAddress(address: string, event: Event) {
