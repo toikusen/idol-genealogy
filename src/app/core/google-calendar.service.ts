@@ -1,0 +1,207 @@
+import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
+import { Venue, VenueCalendarEvent } from '../models';
+
+interface GoogleCalendarEventDate {
+  date?: string;
+  dateTime?: string;
+}
+
+interface GoogleCalendarEventResource {
+  id: string;
+  summary?: string;
+  description?: string;
+  location?: string;
+  htmlLink?: string;
+  start?: GoogleCalendarEventDate;
+  end?: GoogleCalendarEventDate;
+  status?: string;
+}
+
+interface GoogleCalendarEventsResponse {
+  items?: GoogleCalendarEventResource[];
+}
+
+@Injectable({ providedIn: 'root' })
+export class GoogleCalendarService {
+  private readonly calendarId = environment.googleCalendar?.calendarId ?? '';
+  private readonly apiKey = environment.googleCalendar?.apiKey ?? '';
+  private readonly cache = new Map<string, Promise<VenueCalendarEvent[]>>();
+  private readonly rawCache = new Map<number, Promise<GoogleCalendarEventResource[]>>();
+
+  isConfigured(): boolean {
+    return this.calendarId.trim().length > 0 && this.apiKey.trim().length > 0;
+  }
+
+  async preloadForVenues(venues: Venue[], daysAhead = 90): Promise<Map<string, number>> {
+    if (!this.isConfigured()) return new Map();
+    const rawEvents = await this.fetchUpcomingEvents(daysAhead);
+    // Seed rawCache so getUpcomingVenueEvents can reuse these events without re-fetching
+    this.rawCache.set(daysAhead, Promise.resolve(rawEvents));
+    const counts = new Map<string, number>();
+    for (const venue of venues) {
+      const count = rawEvents.filter(event => this.matchesVenue(event, venue)).length;
+      if (count > 0) counts.set(venue.id, count);
+    }
+    return counts;
+  }
+
+  getUpcomingVenueEvents(venue: Venue, daysAhead = 90): Promise<VenueCalendarEvent[]> {
+    if (!this.isConfigured()) return Promise.resolve([]);
+
+    const cacheKey = `${venue.id}:${daysAhead}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const rawPromise = this.rawCache.get(daysAhead) ?? this.fetchUpcomingEvents(daysAhead);
+    const promise = rawPromise.then(events => events
+      .filter(event => this.matchesVenue(event, venue))
+      .map(event => this.toVenueEvent(event)));
+
+    this.cache.set(cacheKey, promise);
+    return promise;
+  }
+
+  private fetchUpcomingEvents(daysAhead: number): Promise<GoogleCalendarEventResource[]> {
+    const cached = this.rawCache.get(daysAhead);
+    if (cached) return cached;
+    const timeMin = new Date();
+    const timeMax = new Date(timeMin);
+    timeMax.setDate(timeMax.getDate() + daysAhead);
+    const params = new URLSearchParams({
+      key: this.apiKey,
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      timeMin: timeMin.toISOString(),
+      timeMax: timeMax.toISOString(),
+      maxResults: '100',
+    });
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(this.calendarId)}/events?${params}`;
+    const promise = fetch(url)
+      .then(response => {
+        if (!response.ok) throw new Error(`Google Calendar API failed: ${response.status}`);
+        return response.json() as Promise<GoogleCalendarEventsResponse>;
+      })
+      .then(data => (data.items ?? []).filter(event => event.status !== 'cancelled' && !!event.start));
+    this.rawCache.set(daysAhead, promise);
+    return promise;
+  }
+
+  private matchesVenue(event: GoogleCalendarEventResource, venue: Venue): boolean {
+    const location = event.location ?? '';
+    const description = event.description ?? '';
+    const locationIsMinimal = location.replace(/\s+/g, '').length < 5;
+
+    const eventShortText = this.normalize(`${event.summary ?? ''} ${location}`);
+    const eventLocation = this.normalizeLocation(location);
+    const venueName = this.normalize(venue.name);
+    const venueAddress = this.normalize(venue.address);
+
+    if (venueName && eventShortText.includes(venueName)) return true;
+    if (venueAddress && eventShortText.includes(venueAddress)) return true;
+
+    // Parts matching never uses description — individual parts are too common in long text.
+    const venueParts = this.venueNameParts(venue.name);
+    if (venueParts.some(part => eventShortText.includes(part) || eventLocation.includes(part))) return true;
+
+    // When location is empty/minimal, check description — but only if the venue name
+    // appears near a venue-indicator keyword (演出地點, 地點, 📍 …).
+    // This prevents matching venue names that appear only in narrative/historical context.
+    if (locationIsMinimal && this.venueNameNearIndicator(venueName, venueAddress, description)) return true;
+
+    // CJK bigram: use filtered venue name parts (stopwords removed) so generic CJK phrases
+    // like 音樂展演空間 don't contribute bigrams and false-match other venues' descriptions.
+    const venuePartsStr = venueParts.join(' ');
+    return this.hasSimilarCjkName(venuePartsStr, `${location} ${description}`);
+  }
+
+  private readonly VENUE_INDICATORS = ['演出地點', '地點', '📍', '場地', '地址', 'venue', 'location'];
+
+  private venueNameNearIndicator(venueName: string, venueAddress: string, desc: string): boolean {
+    if (!desc) return false;
+    // Split on line/sentence breaks so a past-venue reference on a different line
+    // cannot "borrow" an indicator from the current-venue line.
+    const phrases = desc.split(/[\n\r。；;]+/);
+    for (const phrase of phrases) {
+      // Check indicators against the original phrase (not normalized) to avoid
+      // normalize('📍') === '' making every phrase appear to have an indicator.
+      const lowerPhrase = phrase.toLowerCase();
+      const hasIndicator = this.VENUE_INDICATORS.some(ind => lowerPhrase.includes(ind.toLowerCase()));
+      if (!hasIndicator) continue;
+      const normalized = this.normalize(phrase);
+      if (venueName && normalized.includes(venueName)) return true;
+      if (venueAddress && normalized.includes(venueAddress)) return true;
+    }
+    return false;
+  }
+
+  private readonly VENUE_STOPWORDS = new Set([
+    // venue-type generics (English)
+    'studio', 'live', 'house', 'livehouse', 'music', 'hall', 'center', 'centre',
+    'theatre', 'theater', 'space', 'room', 'bar', 'club', 'cafe',
+    // city/region names that appear in nearly every regional event
+    'taipei', 'taiwan', 'tokyo', 'japan',
+    // venue-type generics (Chinese) — exact matches
+    '展演空間', '音樂展演空間', '展演廳', '演藝廳', '劇場', '大會堂',
+  ]);
+
+  // CJK parts that end with these suffixes are also venue-type generics regardless of prefix
+  // e.g. 音樂藝文展演空間, 花漾展演空間, 傳音樂展演空間 are all just "<modifier>展演空間"
+  private readonly VENUE_TYPE_SUFFIXES = ['展演空間', '展演廳', '演藝廳', '劇場', '大會堂'];
+
+  private venueNameParts(name: string): string[] {
+    return name
+      .split(/[\s・|｜/／()（）,，、]+/)
+      .map(part => this.normalize(part))
+      .filter(part => {
+        if (this.VENUE_STOPWORDS.has(part)) return false;
+        // CJK parts ending with a venue-type suffix (e.g. 音樂藝文展演空間) are also generic
+        if (/[㐀-鿿]/.test(part) && this.VENUE_TYPE_SUFFIXES.some(s => part.endsWith(s) && part.length > s.length)) return false;
+        const hasCjk = /[㐀-鿿]/.test(part);
+        return hasCjk ? part.length >= 2 : part.length >= 4;
+      });
+  }
+
+  private normalize(value: string): string {
+    return value
+      .toLowerCase()
+      .replace(/[📍🗺️]/g, '')
+      .replace(/[\s'"’‘“”`.,，。・|｜/／()（）\-_:：]+/g, '');
+  }
+
+  private normalizeLocation(value: string): string {
+    return this.normalize(value.replace(/^(演出)?地點\s*[:：|｜]?\s*/i, ''));
+  }
+
+  private hasSimilarCjkName(venueName: string, eventText: string): boolean {
+    const venueBigrams = this.cjkBigrams(venueName);
+    const eventBigrams = new Set(this.cjkBigrams(eventText));
+    if (venueBigrams.length < 4 || eventBigrams.size < 4) return false;
+
+    const matches = venueBigrams.filter(bigram => eventBigrams.has(bigram)).length;
+    return matches >= 4 && matches / venueBigrams.length >= 0.55;
+  }
+
+  private cjkBigrams(value: string): string[] {
+    const cjk = value.replace(/[^\u3400-\u9fff]/g, '');
+    const bigrams: string[] = [];
+    for (let i = 0; i < cjk.length - 1; i += 1) {
+      bigrams.push(cjk.slice(i, i + 2));
+    }
+    return [...new Set(bigrams)];
+  }
+
+  private toVenueEvent(event: GoogleCalendarEventResource): VenueCalendarEvent {
+    const start = event.start?.dateTime ?? event.start?.date ?? '';
+    const end = event.end?.dateTime ?? event.end?.date ?? null;
+    return {
+      id: event.id,
+      title: event.summary ?? '未命名活動',
+      start,
+      end,
+      location: event.location ?? null,
+      url: event.htmlLink ?? null,
+      isAllDay: !!event.start?.date && !event.start?.dateTime,
+    };
+  }
+}
