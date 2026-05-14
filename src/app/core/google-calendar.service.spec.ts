@@ -194,7 +194,11 @@ describe('GoogleCalendarService', () => {
     ];
 
     beforeEach(() => {
-      spyOn(service as any, 'fetchUpcomingEvents').and.returnValue(Promise.resolve(rawEvents));
+      spyOn(service as any, 'fetchUpcomingEvents').and.callFake((daysAhead: number) => {
+        const p = Promise.resolve(rawEvents);
+        (service as any).rawCache.set(daysAhead, p);
+        return p;
+      });
     });
 
     it('returns count map keyed by venue id', async () => {

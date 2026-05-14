@@ -36,8 +36,6 @@ export class GoogleCalendarService {
   async preloadForVenues(venues: Venue[], daysAhead = 90): Promise<Map<string, number>> {
     if (!this.isConfigured()) return new Map();
     const rawEvents = await this.fetchUpcomingEvents(daysAhead);
-    // Seed rawCache so getUpcomingVenueEvents can reuse these events without re-fetching
-    this.rawCache.set(daysAhead, Promise.resolve(rawEvents));
     const counts = new Map<string, number>();
     for (const venue of venues) {
       const count = rawEvents.filter(event => this.matchesVenue(event, venue)).length;
