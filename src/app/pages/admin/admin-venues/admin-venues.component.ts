@@ -5,6 +5,7 @@ import { VenueService } from '../../../core/venue.service';
 import { Venue } from '../../../models';
 
 type RegionKey = 'north' | 'central' | 'south';
+type RegionFilterKey = RegionKey | 'all';
 
 interface VenueDraft {
   name: string;
@@ -35,10 +36,19 @@ export class AdminVenuesComponent implements OnInit {
   editingId: string | null = null;
   draft: VenueDraft = emptyDraft();
   saving = false;
+  venueFilterText = '';
+  activeRegionFilter: RegionFilterKey = 'all';
 
   readonly regionLabels: Record<RegionKey, string> = {
     north: '北部', central: '中部', south: '南部',
   };
+
+  readonly regionFilters: { key: RegionFilterKey; label: string }[] = [
+    { key: 'all', label: '全部' },
+    { key: 'north', label: '北部' },
+    { key: 'central', label: '中部' },
+    { key: 'south', label: '南部' },
+  ];
 
   readonly venueTypeOptions = ['Live House', '展演空間', '大型場館', '展覽館', '劇場'];
 
@@ -58,6 +68,36 @@ export class AdminVenuesComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  get filteredVenues(): Venue[] {
+    const keyword = this.normalizeFilterText(this.venueFilterText);
+    return this.venues.filter(venue => {
+      const matchesRegion = this.activeRegionFilter === 'all' || venue.region === this.activeRegionFilter;
+      if (!matchesRegion) return false;
+      if (!keyword) return true;
+
+      return this.normalizeFilterText([
+        venue.name,
+        venue.address,
+        venue.type,
+        venue.phone,
+        venue.notes,
+      ].filter(Boolean).join(' ')).includes(keyword);
+    });
+  }
+
+  get hasActiveFilter(): boolean {
+    return this.activeRegionFilter !== 'all' || this.venueFilterText.trim().length > 0;
+  }
+
+  setRegionFilter(filter: RegionFilterKey) {
+    this.activeRegionFilter = filter;
+  }
+
+  clearFilters() {
+    this.venueFilterText = '';
+    this.activeRegionFilter = 'all';
   }
 
   openAdd() {
@@ -127,5 +167,9 @@ export class AdminVenuesComponent implements OnInit {
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : '刪除失敗');
     }
+  }
+
+  private normalizeFilterText(value: string): string {
+    return value.trim().toLowerCase().replace(/\s+/g, '');
   }
 }

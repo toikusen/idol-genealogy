@@ -35,9 +35,51 @@ describe('GoogleCalendarService', () => {
 
   it('matches location text prefixed with 演出地點', () => {
     const event = { id: 'e-2', location: '演出地點：Legacy Taipei 音樂展演空間', start: { dateTime: '2026-05-20T19:00:00+08:00' } };
-    const venue = { ...baseVenue, name: '台中 Legacy' };
+    const venue = { ...baseVenue, name: 'Legacy Taipei' };
 
     expect((service as any).matchesVenue(event, venue)).toBeTrue();
+  });
+
+  it('does not match 台中 Legacy from a Legacy Taipei location', () => {
+    const event = { id: 'e-legacy-tpe', location: '演出地點：Legacy Taipei 音樂展演空間', start: { dateTime: '2026-05-20T19:00:00+08:00' } };
+    const venue = { ...baseVenue, id: 'venue-legacy-taichung', name: '台中 Legacy', address: '407台中市西屯區安和路117號' };
+
+    expect((service as any).matchesVenue(event, venue)).toBeFalse();
+  });
+
+  it('matches 台中 Legacy when the location includes 台中 Legacy', () => {
+    const event = { id: 'e-legacy-taichung', location: '演出地點：台中 Legacy', start: { dateTime: '2026-05-20T19:00:00+08:00' } };
+    const venue = { ...baseVenue, id: 'venue-legacy-taichung', name: '台中 Legacy', address: '407台中市西屯區安和路117號' };
+
+    expect((service as any).matchesVenue(event, venue)).toBeTrue();
+  });
+
+  it('matches Legacy Taichung as 台中 Legacy', () => {
+    const event = { id: 'e-legacy-taichung-en', location: '演出地點：Legacy Taichung', start: { dateTime: '2026-05-20T19:00:00+08:00' } };
+    const venue = { ...baseVenue, id: 'venue-legacy-taichung', name: '台中 Legacy', address: '407台中市西屯區安和路117號' };
+
+    expect((service as any).matchesVenue(event, venue)).toBeTrue();
+  });
+
+  it('matches 台中 Legacy when the venue uses the formal Legacy Taichung name', () => {
+    const event = { id: 'e-legacy-taichung-zh', location: '演出地點：台中 Legacy', start: { dateTime: '2026-05-20T19:00:00+08:00' } };
+    const venue = { ...baseVenue, id: 'venue-legacy-taichung', name: 'Legacy Taichung 傳 音樂展演空間', address: '407台中市西屯區安和路117號' };
+
+    expect((service as any).matchesVenue(event, venue)).toBeTrue();
+  });
+
+  it('matches Legacy 台中 when the venue uses the formal Legacy Taichung name', () => {
+    const event = { id: 'e-legacy-taichung-mixed', location: '演出地點：Legacy 台中', start: { dateTime: '2026-05-20T19:00:00+08:00' } };
+    const venue = { ...baseVenue, id: 'venue-legacy-taichung', name: 'Legacy Taichung 傳 音樂展演空間', address: '407台中市西屯區安和路117號' };
+
+    expect((service as any).matchesVenue(event, venue)).toBeTrue();
+  });
+
+  it('does not match Legacy Taipei from a Legacy Taichung location', () => {
+    const event = { id: 'e-legacy-taichung-en', location: '演出地點：Legacy Taichung', start: { dateTime: '2026-05-20T19:00:00+08:00' } };
+    const venue = { ...baseVenue, id: 'venue-legacy-taipei', name: 'Legacy Taipei', address: '100臺北市中正區八德路一段1號' };
+
+    expect((service as any).matchesVenue(event, venue)).toBeFalse();
   });
 
   it('matches location text prefixed with 地點｜', () => {
@@ -102,6 +144,19 @@ describe('GoogleCalendarService', () => {
     expect((service as any).matchesVenue(event, sub)).toBeFalse();
   });
 
+  it('matches SUB Live as an alias of SUB Livehouse', () => {
+    const sub = { ...baseVenue, id: 'venue-sub', name: 'SUB Livehouse', address: '115臺北市南港區市民大道八段99號' };
+    const event = {
+      id: 'e-sub-live',
+      summary: 'Sorry Youth x PEDRO',
+      location: '',
+      description: '演出地點：SUB Live\n演出時間：OPEN 18:30 / START 19:30',
+      start: { dateTime: '2026-05-22T19:30:00+08:00' },
+    };
+
+    expect((service as any).matchesVenue(event, sub)).toBeTrue();
+  });
+
   it('does not match a venue that appears only in description narrative (no indicator prefix)', () => {
     const zepp = { ...baseVenue, id: 'venue-zepp', name: 'Zepp New Taipei', address: '新北市新莊區某路1號' };
     const event = {
@@ -152,6 +207,32 @@ describe('GoogleCalendarService', () => {
     };
 
     expect((service as any).matchesVenue(event, zepp)).toBeTrue();
+  });
+
+  it('matches when indicator and venue name are on separate lines (【場地】\\nNUZONE format)', () => {
+    const nuzone = { ...baseVenue, id: 'venue-nuzone', name: 'NUZONE 展演空間', address: '台北市大安區市民大道三段198號2樓' };
+    const event = {
+      id: 'e-16',
+      summary: 'TOYPLA TAIWAN 6th Anniversary Series - The Carnival -',
+      location: '',
+      description: '2026 / 05 / 30 (六)\n【場地】\nNUZONE\n台北市大安區市民大道三段198號2樓\n【時間】\n日後公開',
+      start: { dateTime: '2026-05-30T18:00:00+08:00' },
+    };
+
+    expect((service as any).matchesVenue(event, nuzone)).toBeTrue();
+  });
+
+  it('matches when Google Calendar HTML puts the venue after a bare 場地 label', () => {
+    const nuzone = { ...baseVenue, id: 'venue-nuzone', name: 'NUZONE 展演空間', address: '106臺北市大安區市民大道三段198號2樓' };
+    const event = {
+      id: 'e-17',
+      summary: 'TOYPLA TAIWAN 6th Anniversary Series - The Carnival -',
+      location: '',
+      description: '<br><div dir="auto">2026 / 05 / 30 (六)<div dir="auto">【場地】<br><div dir="auto">NUZONE<br><div dir="auto">台北市大安區市民大道三段198號2樓<div dir="auto">【時間】<br><div dir="auto">日後公開',
+      start: { dateTime: '2026-05-30T18:00:00+08:00' },
+    };
+
+    expect((service as any).matchesVenue(event, nuzone)).toBeTrue();
   });
 
   describe('preloadForVenues', () => {

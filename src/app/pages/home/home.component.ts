@@ -47,7 +47,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   memberCount = 0;
   groupCount = 0;
   companyCount = 0;
-  venueCount = 0;
   venues: Venue[] = [];
   venuesLoaded = false;
   venuesLoading = false;
@@ -123,7 +122,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.memberCount = data.memberCount;
       this.groupCount = data.groupCount;
       this.companyCount = data.companyCount;
-      this.venueService.getCount().then(c => { if (!this.destroyed) this.venueCount = c; });
       this.topMembers = data.topMembers;
       this.topGroups = data.topGroups;
       this.upcomingBirthdays = data.upcomingBirthdays;

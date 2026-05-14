@@ -94,18 +94,20 @@ export class GoogleCalendarService {
     const eventLocation = this.normalizeLocation(location);
     const venueName = this.normalize(venue.name);
     const venueAddress = this.normalize(venue.address);
+    const venueAliases = this.venueAliases(venue.name);
 
     if (venueName && eventShortText.includes(venueName)) return true;
     if (venueAddress && eventShortText.includes(venueAddress)) return true;
+    if (venueAliases.some(alias => eventShortText.includes(alias) || eventLocation.includes(alias))) return true;
 
     // Parts matching never uses description — individual parts are too common in long text.
     const venueParts = this.venueNameParts(venue.name);
-    if (venueParts.some(part => eventShortText.includes(part) || eventLocation.includes(part))) return true;
+    if (this.venuePartsMatch(venueParts, eventShortText) || this.venuePartsMatch(venueParts, eventLocation)) return true;
 
     // When location is empty/minimal, check description — but only if the venue name
     // appears near a venue-indicator keyword (演出地點, 地點, 📍 …).
     // This prevents matching venue names that appear only in narrative/historical context.
-    if (locationIsMinimal && this.venueNameNearIndicator(venueName, venueAddress, description)) return true;
+    if (locationIsMinimal && this.venueNameNearIndicator(venueName, venueAddress, description, venueParts, venueAliases)) return true;
 
     // CJK bigram: use filtered venue name parts (stopwords removed) so generic CJK phrases
     // like 音樂展演空間 don't contribute bigrams and false-match other venues' descriptions.
@@ -115,22 +117,64 @@ export class GoogleCalendarService {
 
   private readonly VENUE_INDICATORS = ['演出地點', '地點', '📍', '場地', '地址', 'venue', 'location'];
 
-  private venueNameNearIndicator(venueName: string, venueAddress: string, desc: string): boolean {
+  private venueNameNearIndicator(
+    venueName: string,
+    venueAddress: string,
+    desc: string,
+    venueParts: string[] = [],
+    venueAliases: string[] = [],
+  ): boolean {
     if (!desc) return false;
     // Split on line/sentence breaks so a past-venue reference on a different line
     // cannot "borrow" an indicator from the current-venue line.
-    const phrases = desc.split(/[\n\r。；;]+/);
-    for (const phrase of phrases) {
+    const phrases = this.descriptionPhrases(desc);
+    for (let i = 0; i < phrases.length; i++) {
+      const phrase = phrases[i];
       // Check indicators against the original phrase (not normalized) to avoid
       // normalize('📍') === '' making every phrase appear to have an indicator.
       const lowerPhrase = phrase.toLowerCase();
       const hasIndicator = this.VENUE_INDICATORS.some(ind => lowerPhrase.includes(ind.toLowerCase()));
       if (!hasIndicator) continue;
-      const normalized = this.normalize(phrase);
-      if (venueName && normalized.includes(venueName)) return true;
-      if (venueAddress && normalized.includes(venueAddress)) return true;
+      // Check the current phrase (full name and address only).
+      const normalizedCurrent = this.normalize(phrase);
+      if (venueName && normalizedCurrent.includes(venueName)) return true;
+      if (venueAddress && normalizedCurrent.includes(venueAddress)) return true;
+      if (venueAliases.some(alias => normalizedCurrent.includes(alias))) return true;
+      if (this.venuePartsMatch(venueParts, normalizedCurrent)) return true;
+      // When the indicator phrase is a bare label with no venue value (e.g. "【場地】"),
+      // the venue name is on the next line — check it too, including venueParts.
+      // Guard: skip if this phrase already has meaningful content beyond the indicator
+      // (e.g. "演出地點：台北國際會議中心") so we don't bleed into narrative text below.
+      if (i + 1 < phrases.length && this.isIndicatorOnlyPhrase(phrase)) {
+        const normalizedNext = this.normalize(phrases[i + 1]);
+        if (venueName && normalizedNext.includes(venueName)) return true;
+        if (venueAddress && normalizedNext.includes(venueAddress)) return true;
+        if (venueAliases.some(alias => normalizedNext.includes(alias))) return true;
+        if (this.venuePartsMatch(venueParts, normalizedNext)) return true;
+      }
     }
     return false;
+  }
+
+  private descriptionPhrases(desc: string): string[] {
+    return desc
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(?:div|p|li)>/gi, '\n')
+      .replace(/<(?:div|p|li)(?:\s[^>]*)?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .split(/[\n\r。；;]+/)
+      .map(phrase => phrase.trim())
+      .filter(Boolean);
+  }
+
+  private isIndicatorOnlyPhrase(phrase: string): boolean {
+    let s = phrase.toLowerCase();
+    for (const ind of this.VENUE_INDICATORS) {
+      s = s.replace(new RegExp(ind.toLowerCase(), 'g'), '');
+    }
+    // Keep only alphanumeric and CJK characters to measure remaining content
+    s = s.replace(/[^a-z0-9㐀-鿿]/g, '');
+    return s.length < 3;
   }
 
   private readonly VENUE_STOPWORDS = new Set([
@@ -146,18 +190,96 @@ export class GoogleCalendarService {
   // CJK parts that end with these suffixes are also venue-type generics regardless of prefix
   // e.g. 音樂藝文展演空間, 花漾展演空間, 傳音樂展演空間 are all just "<modifier>展演空間"
   private readonly VENUE_TYPE_SUFFIXES = ['展演空間', '展演廳', '演藝廳', '劇場', '大會堂'];
+  private readonly CJK_GEO_PARTS = ['台北', '臺北', '新北', '台中', '臺中', '台南', '臺南', '高雄', '桃園', '基隆', '新竹', '苗栗', '彰化', '南投', '雲林', '嘉義', '屏東', '宜蘭', '花蓮', '台東', '臺東', '澎湖', '金門', '馬祖'];
+  private readonly GEO_ALIASES: Record<string, string[]> = {
+    '台北': ['taipei'], '臺北': ['taipei'],
+    '新北': ['newtaipei'],
+    '台中': ['taichung'], '臺中': ['taichung'],
+    '台南': ['tainan'], '臺南': ['tainan'],
+    '高雄': ['kaohsiung'],
+    '桃園': ['taoyuan'],
+    '基隆': ['keelung'],
+    '新竹': ['hsinchu'],
+    '嘉義': ['chiayi'],
+    '屏東': ['pingtung'],
+    '宜蘭': ['yilan'],
+    '花蓮': ['hualien'],
+    '台東': ['taitung'], '臺東': ['taitung'],
+  };
 
   private venueNameParts(name: string): string[] {
     return name
       .split(/[\s・|｜/／()（）,，、]+/)
       .map(part => this.normalize(part))
       .filter(part => {
-        if (this.VENUE_STOPWORDS.has(part)) return false;
+        if (this.VENUE_STOPWORDS.has(part) && !this.isGeoPart(part)) return false;
         // CJK parts ending with a venue-type suffix (e.g. 音樂藝文展演空間) are also generic
         if (/[㐀-鿿]/.test(part) && this.VENUE_TYPE_SUFFIXES.some(s => part.endsWith(s) && part.length > s.length)) return false;
         const hasCjk = /[㐀-鿿]/.test(part);
         return hasCjk ? part.length >= 2 : part.length >= 4;
       });
+  }
+
+  private venueAliases(name: string): string[] {
+    const normalizedName = this.normalize(name);
+    const venueParts = this.venueNameParts(name);
+    const aliases = new Set<string>();
+
+    // SUB Livehouse is often written as SUB Live in event descriptions.
+    if (normalizedName.endsWith('livehouse')) {
+      aliases.add(normalizedName.slice(0, -'house'.length));
+    }
+
+    for (const geoPart of venueParts.filter(part => this.CJK_GEO_PARTS.includes(part))) {
+      for (const geoAlias of this.GEO_ALIASES[geoPart] ?? []) {
+        for (const part of venueParts.filter(part => /^[a-z0-9]+$/.test(part))) {
+          aliases.add(`${part}${geoAlias}`);
+          aliases.add(`${geoAlias}${part}`);
+        }
+      }
+    }
+
+    for (const geoPart of venueParts.filter(part => this.isGeoAlias(part))) {
+      for (const geoAlias of this.cjkGeoAliasesFor(geoPart)) {
+        for (const part of venueParts.filter(part => /^[a-z0-9]+$/.test(part) && part !== geoPart)) {
+          aliases.add(`${part}${geoAlias}`);
+          aliases.add(`${geoAlias}${part}`);
+        }
+      }
+    }
+
+    return [...aliases].filter(alias => alias.length >= 6);
+  }
+
+  private venuePartsMatch(venueParts: string[], text: string): boolean {
+    if (!text) return false;
+    const hasGeoQualifier = venueParts.some(part => this.isGeoPart(part));
+    const nonGeoParts = venueParts.filter(part => !this.isGeoPart(part));
+
+    return venueParts.some(part => {
+      if (!text.includes(part)) return false;
+      if (this.isGeoPart(part) && nonGeoParts.length > 0) {
+        return nonGeoParts.some(other => text.includes(other));
+      }
+      if (hasGeoQualifier && /^[a-z0-9]+$/.test(part)) {
+        return venueParts.some(other => this.isGeoPart(other) && text.includes(other));
+      }
+      return true;
+    });
+  }
+
+  private isGeoPart(part: string): boolean {
+    return this.CJK_GEO_PARTS.includes(part) || this.isGeoAlias(part);
+  }
+
+  private isGeoAlias(part: string): boolean {
+    return Object.values(this.GEO_ALIASES).some(aliases => aliases.includes(part));
+  }
+
+  private cjkGeoAliasesFor(part: string): string[] {
+    return Object.entries(this.GEO_ALIASES)
+      .filter(([, aliases]) => aliases.includes(part))
+      .map(([geoPart]) => geoPart);
   }
 
   private normalize(value: string): string {

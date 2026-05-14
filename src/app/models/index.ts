@@ -218,3 +218,13 @@ export interface Venue {
   created_at: string;
   updated_at: string;
 }
+
+export interface VenueCalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string | null;
+  location: string | null;
+  url: string | null;
+  isAllDay: boolean;
+}
