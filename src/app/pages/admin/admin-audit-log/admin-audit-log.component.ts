@@ -63,7 +63,7 @@ export class AdminAuditLogComponent implements OnInit {
   showAllEditFields = false;
   editTeams: Team[] = [];
 
-  tableOptions = ['members', 'groups', 'history', 'companies', 'member_songs', 'group_songs'];
+  tableOptions = ['members', 'groups', 'history', 'companies', 'member_songs', 'group_songs', 'venues'];
   operationOptions = ['INSERT', 'UPDATE', 'DELETE'];
 
   members: Member[] = [];
@@ -156,6 +156,18 @@ export class AdminAuditLogComponent implements OnInit {
       { key: 'sort_order', type: 'number' },
       { key: 'notes', type: 'textarea' },
     ],
+    venues: [
+      { key: 'name', type: 'text', required: true },
+      { key: 'address', type: 'text' },
+      { key: 'type', type: 'text' },
+      { key: 'region', type: 'select', required: true },
+      { key: 'google_maps_url', type: 'url' },
+      { key: 'phone', type: 'text' },
+      { key: 'latitude', type: 'number' },
+      { key: 'longitude', type: 'number' },
+      { key: 'is_active', type: 'checkbox' },
+      { key: 'notes', type: 'textarea' },
+    ],
   };
 
   private readonly extraFieldLabels: Record<string, Record<string, string>> = {
@@ -193,6 +205,18 @@ export class AdminAuditLogComponent implements OnInit {
       lyricist: '作詞',
       arranger: '編曲',
       sort_order: '排序',
+      notes: '備注',
+    },
+    venues: {
+      name: '場地名稱',
+      address: '地址',
+      type: '類型',
+      region: '區域',
+      google_maps_url: 'Google Maps',
+      phone: '電話',
+      latitude: '緯度',
+      longitude: '經度',
+      is_active: '啟用',
       notes: '備注',
     },
   };
@@ -349,6 +373,8 @@ export class AdminAuditLogComponent implements OnInit {
         if (title && owner) return `${title}（${owner}）`;
         return title ?? owner ?? '—';
       }
+      case 'venues':
+        return src['name'] ?? '—';
       default:
         return '—';
     }
@@ -359,6 +385,7 @@ export class AdminAuditLogComponent implements OnInit {
     if (field === 'member_id') return this.memberMap.get(value) ?? value;
     if (field === 'group_id') return this.groupMap.get(value) ?? value;
     if (field === 'company_id') return this.companyMap.get(value) ?? value;
+    if (field === 'region') return ({ north: '北部', central: '中部', south: '南部' } as any)[value] ?? value;
     if (field.endsWith('_at') && typeof value === 'string') return this.formatLocalTime(value);
     return String(value);
   }
@@ -373,7 +400,7 @@ export class AdminAuditLogComponent implements OnInit {
   tableLabel(t: string): string {
     return {
       members: '成員', groups: '團體', history: '歷程', companies: '公司',
-      member_songs: '成員原創曲', group_songs: '團體原創曲',
+      member_songs: '成員原創曲', group_songs: '團體原創曲', venues: '場地',
     }[t] ?? t;
   }
 
@@ -508,6 +535,12 @@ export class AdminAuditLogComponent implements OnInit {
         ];
       case 'status':
         return this.historyStatusOptions;
+      case 'region':
+        return [
+          { value: 'north', label: '北部' },
+          { value: 'central', label: '中部' },
+          { value: 'south', label: '南部' },
+        ];
       default:
         return [];
     }

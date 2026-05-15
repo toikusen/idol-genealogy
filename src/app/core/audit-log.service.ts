@@ -9,7 +9,8 @@ type EditableAuditTable =
   | 'history'
   | 'companies'
   | 'member_songs'
-  | 'group_songs';
+  | 'group_songs'
+  | 'venues';
 
 const EDITABLE_FIELDS: Record<EditableAuditTable, Set<string>> = {
   members: new Set([
@@ -38,6 +39,10 @@ const EDITABLE_FIELDS: Record<EditableAuditTable, Set<string>> = {
   group_songs: new Set([
     'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger',
     'notes', 'sort_order',
+  ]),
+  venues: new Set([
+    'name', 'address', 'type', 'region', 'google_maps_url', 'phone', 'notes',
+    'is_active', 'latitude', 'longitude',
   ]),
 };
 
