@@ -15,8 +15,9 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() venues: Venue[] = [];
   @Input() activeRegion: VenueRegionFilter = 'all';
 
-  @Output() regionChange     = new EventEmitter<VenueRegionFilter>();
-  @Output() venuePopupOpened = new EventEmitter<string>();
+  @Output() regionChange          = new EventEmitter<VenueRegionFilter>();
+  @Output() venuePopupOpened      = new EventEmitter<string>();
+  @Output() venueProposalRequested = new EventEmitter<string>();
 
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly el        = inject(ElementRef);
@@ -136,6 +137,17 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
         this.venuePopupOpened.emit(venue.id);
       });
 
+      marker.on('popupopen', () => {
+        const popupEl = marker.getPopup()?.getElement();
+        const btn = popupEl?.querySelector('[data-propose-venue]') as HTMLElement | null;
+        if (btn) {
+          btn.addEventListener('click', () => {
+            this.map.closePopup();
+            this.venueProposalRequested.emit(venue.id);
+          });
+        }
+      });
+
       marker.on('popupclose', () => {
         if (this.openPopupVenueId === venue.id) this.openPopupVenueId = null;
       });
@@ -229,6 +241,7 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
         ${eventsHtml}
       </div>
       ${mapsLink}
+      <button data-propose-venue style="display:block;width:100%;margin-top:10px;padding:5px 0;font-size:0.68rem;color:#7c6cf2;background:rgba(124,108,242,0.06);border:1px solid rgba(124,108,242,0.18);border-radius:6px;cursor:pointer;text-align:center;">提案修改此場地資訊</button>
     </div>`;
   }
 

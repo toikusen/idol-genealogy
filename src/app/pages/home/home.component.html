@@ -848,8 +848,18 @@
               [activeRegion]="activeVenueRegionFilter"
               (regionChange)="setVenueRegionFilter($event)"
               (venuePopupOpened)="onVenuePopupOpened($event)"
+              (venueProposalRequested)="onVenueProposalRequested($event)"
               style="display:block;margin-bottom:16px;"
             ></app-venue-map>
+
+            <!-- Propose new venue -->
+            <div style="text-align:right;margin-bottom:10px;">
+              <button
+                type="button"
+                (click)="showVenueInsertPanel = true"
+                style="font-size:0.72rem;color:#7c6cf2;background:rgba(124,108,242,0.07);border:1px solid rgba(124,108,242,0.2);border-radius:20px;padding:5px 14px;cursor:pointer;"
+              >+ 提案新增場地</button>
+            </div>
 
             <!-- Region filter — between map and list -->
             <div style="background:rgba(124,108,242,0.05);border:1px solid rgba(124,108,242,0.15);border-radius:8px;padding:10px 14px;margin-bottom:20px;">
@@ -1117,6 +1127,30 @@
           [originalData]="{}"
           [requiredFields]="['name']"
           (closed)="showCompanyInsertPanel = false"
+        />
+      }
+    }
+    @defer (when showVenueInsertPanel) {
+      @if (showVenueInsertPanel) {
+        <app-proposal-panel
+          tableName="venues"
+          operation="INSERT"
+          [recordId]="null"
+          [originalData]="{}"
+          [requiredFields]="['name', 'address', 'region']"
+          (closed)="showVenueInsertPanel = false"
+        />
+      }
+    }
+    @defer (when showVenueUpdatePanel) {
+      @if (showVenueUpdatePanel && venueForProposal) {
+        <app-proposal-panel
+          tableName="venues"
+          operation="UPDATE"
+          [recordId]="venueForProposal.id"
+          [originalData]="venueForProposal"
+          [requiredFields]="['name', 'address', 'region']"
+          (closed)="showVenueUpdatePanel = false; venueForProposal = null"
         />
       }
     }

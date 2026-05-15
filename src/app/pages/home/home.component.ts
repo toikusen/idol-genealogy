@@ -35,6 +35,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   showMemberInsertPanel = false;
   showGroupInsertPanel = false;
   showCompanyInsertPanel = false;
+  showVenueInsertPanel = false;
+  showVenueUpdatePanel = false;
+  venueForProposal: Venue | null = null;
   query = '';
   recentMembers: Member[] = [];
   memberResults: Member[] = [];
@@ -338,6 +341,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     const events = this.venueEvents.get(venueId) ?? [];
     const error  = this.venueEventsError.get(venueId) ?? '';
     this.venueMapRef?.refreshPopup(venueId, events, error);
+  }
+
+  onVenueProposalRequested(venueId: string): void {
+    const venue = this.venues.find(v => v.id === venueId);
+    if (!venue) return;
+    this.venueForProposal = venue;
+    this.showVenueUpdatePanel = true;
   }
 
   toggleVenue(venue: Venue) {

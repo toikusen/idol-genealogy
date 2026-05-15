@@ -327,6 +327,22 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                 }
                 <p class="text-xs text-gray-300 mt-0.5">仍在活動中請留空</p>
 
+              <!-- Region dropdown (venues: region) -->
+              } @else if (tableName === 'venues' && field === 'region') {
+                <select
+                  [(ngModel)]="formData['region']"
+                  name="region"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                >
+                  <option value="">— 請選擇 —</option>
+                  <option value="north">北部</option>
+                  <option value="central">中部</option>
+                  <option value="south">南部</option>
+                </select>
+                @if (operation === 'UPDATE' && original('region')) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ { north: '北部', central: '中部', south: '南部' }[original('region')] ?? original('region') }}</p>
+                }
+
               <!-- Company dropdown (groups: company_id) -->
               } @else if (tableName === 'groups' && field === 'company_id') {
                 <select
@@ -643,7 +659,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
   `,
 })
 export class ProposalPanelComponent implements OnInit, AfterViewInit {
-  @Input() tableName: 'members' | 'groups' | 'history' | 'companies' = 'members';
+  @Input() tableName: 'members' | 'groups' | 'history' | 'companies' | 'venues' = 'members';
   @Input() recordId: string | null = null;
   @Input() operation: 'INSERT' | 'UPDATE' | 'DELETE' = 'UPDATE';
   @Input() originalData: Record<string, any> = {};
@@ -766,7 +782,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
   }
 
   get tableLabel(): string {
-    return { members: '成員', groups: '團體', history: '活動歷程', companies: '公司' }[this.tableName] ?? '';
+    return { members: '成員', groups: '團體', history: '活動歷程', companies: '公司', venues: '場地' }[this.tableName] ?? '';
   }
 
   fieldLabel(field: string): string {
@@ -776,7 +792,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
     return isRequired ? label + ' *' : label;
   }
 
-  private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'maid_url', 'youtube', 'website', 'photo_url']);
+  private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'maid_url', 'youtube', 'website', 'photo_url', 'google_maps_url']);
 
   fieldPlaceholder(field: string): string {
     const hints: Record<string, string> = {
@@ -802,6 +818,11 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
       'companies:youtube': 'https://www.youtube.com/@channel',
       'companies:website': 'https://example.com',
       'companies:photo_url': 'https://...',
+      'venues:name': '例：Legacy Taipei',
+      'venues:address': '例：台北市中正區八德路一段1號',
+      'venues:type': '例：Live House、展演空間',
+      'venues:google_maps_url': 'https://maps.google.com/...',
+      'venues:phone': '例：02-2396-2368',
     };
     return hints[`${this.tableName}:${field}`] ?? this.original(field);
   }

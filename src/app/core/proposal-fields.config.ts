@@ -17,6 +17,9 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
   companies: [
     'name', 'description', 'founded_at', 'website', 'instagram', 'facebook', 'x', 'youtube', 'photo_url',
   ],
+  venues: [
+    'name', 'address', 'type', 'region', 'google_maps_url', 'phone', 'notes',
+  ],
 };
 
 /** Field label map for display in forms and review UI */
@@ -41,5 +44,9 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
   companies: {
     name: '公司名稱', description: '簡介', founded_at: '成立日期', website: '官網',
     instagram: 'Instagram', facebook: 'Facebook', x: 'X (Twitter)', youtube: 'YouTube', photo_url: '頭像圖片',
+  },
+  venues: {
+    name: '場地名稱', address: '地址', type: '類型', region: '區域',
+    google_maps_url: 'Google Maps 連結', phone: '電話', notes: '備注',
   },
 };

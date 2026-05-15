@@ -137,7 +137,7 @@ export interface AuditLog {
 
 export interface Proposal {
   id: string;
-  table_name: 'members' | 'groups' | 'history' | 'companies' | 'group_songs' | 'member_songs';
+  table_name: 'members' | 'groups' | 'history' | 'companies' | 'group_songs' | 'member_songs' | 'venues';
   record_id: string | null;
   operation: 'INSERT' | 'UPDATE' | 'DELETE';
   proposed_data: Record<string, any>;
