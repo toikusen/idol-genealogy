@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VenueService } from '../../../core/venue.service';
 import { Venue } from '../../../models';
+import { environment } from '../../../../environments/environment';
 
 type RegionKey = 'north' | 'central' | 'south';
 type RegionFilterKey = RegionKey | 'all';
@@ -174,25 +175,39 @@ export class AdminVenuesComponent implements OnInit {
     this.geocoding = true;
     this.geocodeError = '';
     try {
-      // 1. Try parsing coordinates directly from the Google Maps URL
-      const fromUrl = this.parseGoogleMapsCoords(this.draft.google_maps_url);
-      if (fromUrl) {
-        this.draft.latitude  = fromUrl.lat;
-        this.draft.longitude = fromUrl.lng;
-        return;
+      const mapsUrl = this.draft.google_maps_url.trim();
+
+      // 1. Full Google Maps URL — parse coords directly (no network needed)
+      if (mapsUrl) {
+        const fromUrl = this.parseGoogleMapsCoords(mapsUrl);
+        if (fromUrl) {
+          this.draft.latitude  = fromUrl.lat;
+          this.draft.longitude = fromUrl.lng;
+          return;
+        }
+
+        // 2. Short URL (maps.app.goo.gl) — resolve via edge function
+        if (mapsUrl.includes('maps.app.goo.gl') || mapsUrl.includes('goo.gl/maps')) {
+          const coords = await this.resolveShortUrl(mapsUrl);
+          if (coords) {
+            this.draft.latitude  = coords.lat;
+            this.draft.longitude = coords.lng;
+            return;
+          }
+        }
       }
 
-      // 2. Fall back to Nominatim if address is provided
+      // 3. Nominatim fallback (address-based, Taiwan coverage limited)
       if (!this.draft.address.trim()) {
-        this.geocodeError = '請填入地址，或將 Google Maps 完整網址（瀏覽器地址列）貼入「Google Maps 連結」欄位後再試';
+        this.geocodeError = '請填入地址，或將 Google Maps 網址貼入「Google Maps 連結」欄位後再試';
         return;
       }
       const queryAddress = this.draft.address.replace(/^\d{3,6}\s*/, '').trim();
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryAddress)}&format=json&limit=1&countrycodes=tw&accept-language=zh-TW`;
-      const res  = await fetch(url, { headers: { 'Accept-Language': 'zh-TW' } });
+      const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryAddress)}&format=json&limit=1&countrycodes=tw&accept-language=zh-TW`;
+      const res  = await fetch(nomUrl, { headers: { 'Accept-Language': 'zh-TW' } });
       const data = await res.json() as { lat: string; lon: string }[];
       if (!data.length) {
-        this.geocodeError = '自動查詢失敗。請在 Google Maps 找到場地後，從瀏覽器地址列複製完整網址（含 @lat,lng）貼入「Google Maps 連結」欄位，再點此按鈕。';
+        this.geocodeError = '查詢失敗（台灣街道覆蓋有限）。請到 Google Maps 找到場地後，複製瀏覽器地址列的完整網址或短連結，貼入「Google Maps 連結」再試。';
         return;
       }
       this.draft.latitude  = parseFloat(data[0].lat);
@@ -206,15 +221,26 @@ export class AdminVenuesComponent implements OnInit {
 
   private parseGoogleMapsCoords(url: string): { lat: number; lng: number } | null {
     if (!url) return null;
-    // https://www.google.com/maps/place/.../@lat,lng,zoom
     const atMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+),/);
     if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
-    // ?q=lat,lng or &q=lat,lng
     const qMatch = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
     if (qMatch) return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
-    // ?ll=lat,lng (older format)
     const llMatch = url.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
     if (llMatch) return { lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) };
+    return null;
+  }
+
+  private async resolveShortUrl(url: string): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const res = await fetch(`${environment.supabaseUrl}/functions/v1/resolve-maps-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': environment.supabaseAnonKey },
+        body: JSON.stringify({ url }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json() as { lat?: number; lng?: number };
+      if (data.lat != null && data.lng != null) return { lat: data.lat, lng: data.lng };
+    } catch { /* fall through */ }
     return null;
   }
 
