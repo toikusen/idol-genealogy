@@ -319,7 +319,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   venuesNorth: Venue[] = [];
   venuesCentral: Venue[] = [];
   venuesSouth: Venue[] = [];
-  activeVenueRegionFilter: VenueRegionFilter = 'all';
+  activeVenueRegionFilter: VenueRegionFilter = 'north';
   readonly venueRegionFilters: { key: VenueRegionFilter; label: string }[] = [
     { key: 'all', label: '全部' },
     { key: 'north', label: '北部' },

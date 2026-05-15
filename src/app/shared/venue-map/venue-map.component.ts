@@ -30,8 +30,8 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     const L = await import('leaflet');
     const container = this.el.nativeElement.querySelector('.venue-map-container') as HTMLElement;
     this.map = L.map(container, { zoomControl: true });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 19,
     }).addTo(this.map);
     this.map.setView([25.045, 121.51], 12);
@@ -64,7 +64,43 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     ));
   }
 
+  private readonly MARKER_COLOR = '#4f46e5';
+
+  private injectMarkerStyles(): void {
+    if (document.getElementById('idol-marker-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'idol-marker-styles';
+    style.textContent = `
+      .venue-marker {
+        display:flex; flex-direction:column; align-items:center;
+        width:36px; height:44px; cursor:pointer;
+      }
+      .venue-marker__circle {
+        width:36px; height:36px; border-radius:50%;
+        background:white; border:2.5px solid ${this.MARKER_COLOR};
+        display:flex; align-items:center; justify-content:center;
+        box-shadow:0 2px 10px rgba(0,0,0,0.15);
+        position:relative; z-index:1;
+      }
+      .venue-marker__tail {
+        width:10px; height:10px; background:${this.MARKER_COLOR};
+        transform:rotate(45deg);
+        margin-top:-6px; z-index:0;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  private getVenueIcon(): string {
+    const c = this.MARKER_COLOR;
+    const sw = `stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+    const inner = `<path ${sw} d="M9 17V6l10-2v11"/><circle cx="7" cy="17" r="2" fill="${c}"/><circle cx="17" cy="15" r="2" fill="${c}"/>`;
+    return `<svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+  }
+
   private renderMarkers(L: any): void {
+    this.injectMarkerStyles();
+
     // Remove existing markers
     this.markers.forEach(m => m.remove());
     this.markers.clear();
@@ -74,21 +110,15 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     );
 
     for (const venue of withCoords) {
-      const color = venue.region === 'north' ? '#e879a0'
-        : venue.region === 'central' ? '#7c6cf2'
-        : '#f59e0b';
-
       const icon = L.divIcon({
         className: '',
-        html: `<div style="
-          width:28px;height:28px;border-radius:50% 50% 50% 0;
-          background:${color};border:2px solid white;
-          transform:rotate(-45deg);
-          box-shadow:0 2px 6px rgba(0,0,0,0.25);
-        "></div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 28],
-        popupAnchor: [0, -32],
+        html: `<div class="venue-marker">
+          <div class="venue-marker__circle">${this.getVenueIcon()}</div>
+          <div class="venue-marker__tail"></div>
+        </div>`,
+        iconSize: [36, 44],
+        iconAnchor: [18, 44],
+        popupAnchor: [0, -46],
       });
 
       const marker = L.marker([venue.latitude!, venue.longitude!], { icon })
@@ -180,7 +210,7 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
           <span style="font-size:0.7rem;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title}</span>
         </a>`;
       }).join('');
-      eventsHtml = `<div style="margin-top:4px;">${rows}</div>`;
+      eventsHtml = `<div style="margin-top:4px;max-height:220px;overflow-y:auto;overscroll-behavior:contain;">${rows}</div>`;
     }
 
     return `<div style="min-width:200px;max-width:280px;font-family:inherit;">

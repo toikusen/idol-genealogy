@@ -45,6 +45,10 @@ export class AdminVenuesComponent implements OnInit {
   venueFilterText = '';
   activeRegionFilter: RegionFilterKey = 'all';
 
+  batchGeocoding = false;
+  batchProgress = '';
+  batchResult = '';
+
   readonly regionLabels: Record<RegionKey, string> = {
     north: '北部', central: '中部', south: '南部',
   };
@@ -175,48 +179,74 @@ export class AdminVenuesComponent implements OnInit {
     this.geocoding = true;
     this.geocodeError = '';
     try {
-      const mapsUrl = this.draft.google_maps_url.trim();
-
-      // 1. Full Google Maps URL — parse coords directly (no network needed)
-      if (mapsUrl) {
-        const fromUrl = this.parseGoogleMapsCoords(mapsUrl);
-        if (fromUrl) {
-          this.draft.latitude  = fromUrl.lat;
-          this.draft.longitude = fromUrl.lng;
-          return;
-        }
-
-        // 2. Short URL (maps.app.goo.gl) — resolve via edge function
-        if (mapsUrl.includes('maps.app.goo.gl') || mapsUrl.includes('goo.gl/maps')) {
-          const coords = await this.resolveShortUrl(mapsUrl);
-          if (coords) {
-            this.draft.latitude  = coords.lat;
-            this.draft.longitude = coords.lng;
-            return;
-          }
-        }
-      }
-
-      // 3. Nominatim fallback (address-based, Taiwan coverage limited)
-      if (!this.draft.address.trim()) {
-        this.geocodeError = '請填入地址，或將 Google Maps 網址貼入「Google Maps 連結」欄位後再試';
-        return;
-      }
-      const queryAddress = this.draft.address.replace(/^\d{3,6}\s*/, '').trim();
-      const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryAddress)}&format=json&limit=1&countrycodes=tw&accept-language=zh-TW`;
-      const res  = await fetch(nomUrl, { headers: { 'Accept-Language': 'zh-TW' } });
-      const data = await res.json() as { lat: string; lon: string }[];
-      if (!data.length) {
+      const coords = await this.geocodeVenue(this.draft.address, this.draft.google_maps_url);
+      if (coords) {
+        this.draft.latitude  = coords.lat;
+        this.draft.longitude = coords.lng;
+      } else {
         this.geocodeError = '查詢失敗（台灣街道覆蓋有限）。請到 Google Maps 找到場地後，複製瀏覽器地址列的完整網址或短連結，貼入「Google Maps 連結」再試。';
-        return;
       }
-      this.draft.latitude  = parseFloat(data[0].lat);
-      this.draft.longitude = parseFloat(data[0].lon);
     } catch {
       this.geocodeError = '查詢失敗，請檢查網路連線';
     } finally {
       this.geocoding = false;
     }
+  }
+
+  async batchGeocode(): Promise<void> {
+    if (this.batchGeocoding) return;
+    const missing = this.venues.filter(v => v.latitude == null || v.longitude == null);
+    if (!missing.length) {
+      this.batchResult = '所有場地都已有座標，無需更新';
+      return;
+    }
+    this.batchGeocoding = true;
+    this.batchResult = '';
+    let done = 0;
+    let failed = 0;
+    for (const venue of missing) {
+      this.batchProgress = `查詢中 ${done + failed + 1} / ${missing.length}：${venue.name}`;
+      try {
+        const coords = await this.geocodeVenue(venue.address, venue.google_maps_url);
+        if (coords) {
+          await this.venueService.update(venue.id, { latitude: coords.lat, longitude: coords.lng });
+          done++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+      // Nominatim rate limit: 1 req/s
+      await new Promise(r => setTimeout(r, 1100));
+    }
+    this.batchGeocoding = false;
+    this.batchProgress = '';
+    this.batchResult = `完成：${done} 筆成功${failed ? `，${failed} 筆失敗（可手動編輯）` : ''}`;
+    await this.load();
+  }
+
+  private async geocodeVenue(address: string, mapsUrl: string | null): Promise<{ lat: number; lng: number } | null> {
+    const url = (mapsUrl ?? '').trim();
+
+    if (url) {
+      const fromUrl = this.parseGoogleMapsCoords(url);
+      if (fromUrl) return fromUrl;
+
+      if (url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps')) {
+        const coords = await this.resolveShortUrl(url);
+        if (coords) return coords;
+      }
+    }
+
+    const queryAddress = address.replace(/^\d{3,6}\s*/, '').trim();
+    if (!queryAddress) return null;
+
+    const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryAddress)}&format=json&limit=1&countrycodes=tw&accept-language=zh-TW`;
+    const res  = await fetch(nomUrl, { headers: { 'Accept-Language': 'zh-TW' } });
+    const data = await res.json() as { lat: string; lon: string }[];
+    if (!data.length) return null;
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
   }
 
   private parseGoogleMapsCoords(url: string): { lat: number; lng: number } | null {
