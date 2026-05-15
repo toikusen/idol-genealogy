@@ -135,13 +135,66 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.map.fitBounds(lib.latLngBounds(visible), { padding: [40, 40], maxZoom: 15 });
   }
 
+  private escapeHtml(str: string): string {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   private buildPopupContent(
-    _venue: Venue,
-    _events: VenueCalendarEvent[],
-    _loading: boolean,
-    _error: string,
+    venue: Venue,
+    events: VenueCalendarEvent[],
+    loading: boolean,
+    error: string,
   ): string {
-    // implemented in Task 6
-    return '';
+    const name    = this.escapeHtml(venue.name);
+    const address = this.escapeHtml(venue.address);
+    const type    = venue.type ? `<span style="display:inline-block;font-size:0.6rem;padding:1px 6px;border-radius:20px;background:rgba(122,90,122,0.06);border:1px solid rgba(122,90,122,0.11);color:#555;margin-top:4px;">${this.escapeHtml(venue.type)}</span>` : '';
+    const mapsLink = venue.google_maps_url
+      ? `<a href="${this.escapeHtml(venue.google_maps_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:8px;font-size:0.68rem;color:#4285F4;text-decoration:none;">Google Maps →</a>`
+      : '';
+
+    let eventsHtml: string;
+    if (loading) {
+      eventsHtml = `<div style="font-size:0.68rem;color:var(--text-faint,#aaa);padding:4px 0;">讀取活動中…</div>`;
+    } else if (error) {
+      eventsHtml = `<div style="font-size:0.68rem;color:#dc2626;padding:4px 0;">${this.escapeHtml(error)}</div>`;
+    } else if (events.length === 0) {
+      eventsHtml = `<div style="font-size:0.68rem;color:var(--text-faint,#aaa);padding:4px 0;">目前沒有近期活動</div>`;
+    } else {
+      const rows = events.map(e => {
+        const title = this.escapeHtml(e.title);
+        const date  = this.escapeHtml(this.formatEventDate(e));
+        const href  = e.url ? this.escapeHtml(e.url) : '#';
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="display:grid;grid-template-columns:70px 1fr;gap:6px;padding:5px 0;text-decoration:none;border-top:1px solid rgba(0,0,0,0.06);">
+          <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;">${date}</span>
+          <span style="font-size:0.7rem;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title}</span>
+        </a>`;
+      }).join('');
+      eventsHtml = `<div style="margin-top:4px;">${rows}</div>`;
+    }
+
+    return `<div style="min-width:200px;max-width:280px;font-family:inherit;">
+      <div style="font-weight:700;font-size:0.88rem;color:#222;margin-bottom:4px;">${name}</div>
+      <div style="font-size:0.72rem;color:#666;margin-bottom:2px;">${address}</div>
+      ${type}
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.08);">
+        <div style="font-size:0.65rem;font-weight:600;color:#888;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;">近期活動</div>
+        ${eventsHtml}
+      </div>
+      ${mapsLink}
+    </div>`;
+  }
+
+  private formatEventDate(event: VenueCalendarEvent): string {
+    try {
+      const d = new Date(event.start);
+      return `${d.getMonth() + 1}/${d.getDate()}`;
+    } catch {
+      return event.start.slice(5, 10).replace('-', '/');
+    }
   }
 }

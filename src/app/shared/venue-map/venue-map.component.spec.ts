@@ -31,6 +31,21 @@ describe('VenueMapComponent', () => {
     expect((f.componentInstance as any).map).toBeUndefined();
   });
 
+  describe('escapeHtml', () => {
+    it('escapes angle brackets and ampersands', () => {
+      const esc = (component as any).escapeHtml.bind(component);
+      expect(esc('<script>alert("xss")</script>')).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+      expect(esc('A & B')).toBe('A &amp; B');
+    });
+  });
+
+  describe('refreshPopup', () => {
+    it('does nothing when no popup is open for that venue', () => {
+      (component as any).openPopupVenueId = null;
+      expect(() => component.refreshPopup('v1', [], '')).not.toThrow();
+    });
+  });
+
   describe('renderMarkers', () => {
     it('excludes venues without coordinates', async () => {
       component.venues = [
