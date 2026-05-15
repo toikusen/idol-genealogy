@@ -849,6 +849,9 @@
               (regionChange)="setVenueRegionFilter($event)"
               (venuePopupOpened)="onVenuePopupOpened($event)"
               (venueProposalRequested)="onVenueProposalRequested($event)"
+              [style.filter]="(showVenueInsertPanel || showVenueUpdatePanel) ? 'blur(4px)' : ''"
+              [style.pointer-events]="(showVenueInsertPanel || showVenueUpdatePanel) ? 'none' : ''"
+              [style.transition]="'filter 0.2s'"
               style="display:block;margin-bottom:16px;"
             ></app-venue-map>
 
@@ -1019,7 +1022,7 @@
               [title]="venue.name + ' 地圖'"
               aria-hidden="true"
             ></iframe>
-            <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
               @if (venue.google_maps_url) {
                 <a
                   [href]="venue.google_maps_url"
@@ -1043,6 +1046,13 @@
                   {{venue.phone}}
                 </a>
               }
+              <button
+                type="button"
+                (click)="onVenueProposalRequested(venue.id); $event.stopPropagation()"
+                style="font-size:0.68rem;color:#7c6cf2;display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid rgba(124,108,242,0.2);border-radius:6px;background:rgba(124,108,242,0.05);cursor:pointer;margin-left:auto;"
+              >
+                提案修改
+              </button>
             </div>
 
             <div style="margin-top:13px;border-top:1px solid var(--border-subtle);padding-top:12px;">
