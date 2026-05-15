@@ -82,6 +82,7 @@
                   'bg-yellow-100 text-yellow-700': h.status === 'hiatus',
                   'bg-orange-100 text-orange-700': h.status === 'transferred',
                   'bg-gray-100 text-gray-600':     h.status === 'graduated',
+                  'bg-red-100 text-red-600':       h.status === 'withdrawn',
                   'bg-gray-50 text-gray-400':      !h.status
                 }">
                 {{ h.status === 'active' ? '正常在籍'
@@ -90,6 +91,7 @@
                  : h.status === 'hiatus' ? '活休'
                  : h.status === 'transferred' ? '移籍'
                  : h.status === 'graduated' ? '畢業'
+                 : h.status === 'withdrawn' ? '脫退'
                  : '—' }}
               </span>
             </td>

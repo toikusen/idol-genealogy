@@ -750,6 +750,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
     { value: 'hiatus', label: '活休' },
     { value: 'transferred', label: '移籍' },
     { value: 'graduated', label: '畢業' },
+    { value: 'withdrawn', label: '脫退' },
   ];
 
   daysForMonth(month: number): number[] {

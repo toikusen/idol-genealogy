@@ -45,6 +45,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     { value: 'hiatus', label: '活休' },
     { value: 'transferred', label: '移籍' },
     { value: 'graduated', label: '畢業' },
+    { value: 'withdrawn', label: '脫退' },
   ];
 
   selectRole(r: string): void {

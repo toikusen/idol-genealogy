@@ -116,6 +116,9 @@ interface TimelineSegment {
                   @if (seg.history.status === 'hiatus') {
                     <span class="text-xs text-yellow-600 font-medium">活休</span>
                   }
+                  @if (seg.history.status === 'withdrawn') {
+                    <span class="text-xs text-gray-400">脫退</span>
+                  }
                 </div>
                 @if (seg.history.name_at_time) {
                   <p class="text-xs mt-1" style="color: var(--text-faint-65);">
