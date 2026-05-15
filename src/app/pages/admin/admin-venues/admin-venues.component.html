@@ -183,7 +183,7 @@
               class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
           </div>
           <button type="button" (click)="geocodeAddress()"
-            [disabled]="!draft.address.trim() || geocoding"
+            [disabled]="(!draft.address.trim() && !draft.google_maps_url.trim()) || geocoding"
             class="px-3 py-1.5 text-xs rounded-md border border-purple-300 text-purple-600 hover:bg-purple-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
             {{geocoding ? '查詢中…' : '自動帶入座標'}}
           </button>
