@@ -15,11 +15,14 @@ interface VenueDraft {
   google_maps_url: string;
   phone: string;
   notes: string;
+  latitude:  number | null;
+  longitude: number | null;
 }
 
 const emptyDraft = (): VenueDraft => ({
   name: '', address: '', type: '', region: 'north',
   google_maps_url: '', phone: '', notes: '',
+  latitude: null, longitude: null,
 });
 
 @Component({
@@ -36,6 +39,8 @@ export class AdminVenuesComponent implements OnInit {
   editingId: string | null = null;
   draft: VenueDraft = emptyDraft();
   saving = false;
+  geocoding = false;
+  geocodeError = '';
   venueFilterText = '';
   activeRegionFilter: RegionFilterKey = 'all';
 
@@ -115,6 +120,8 @@ export class AdminVenuesComponent implements OnInit {
       google_maps_url: v.google_maps_url ?? '',
       phone: v.phone ?? '',
       notes: v.notes ?? '',
+      latitude:  v.latitude  ?? null,
+      longitude: v.longitude ?? null,
     };
     this.editingId = v.id;
     this.showModal = true;
@@ -125,6 +132,7 @@ export class AdminVenuesComponent implements OnInit {
     this.editingId = null;
     this.draft = emptyDraft();
     this.error = '';
+    this.geocodeError = '';
   }
 
   async save() {
@@ -143,6 +151,8 @@ export class AdminVenuesComponent implements OnInit {
         google_maps_url: this.draft.google_maps_url.trim() || null,
         phone: this.draft.phone.trim() || null,
         notes: this.draft.notes.trim() || null,
+        latitude:  this.draft.latitude,
+        longitude: this.draft.longitude,
       };
       if (this.editingId) {
         await this.venueService.update(this.editingId, payload);
@@ -156,6 +166,27 @@ export class AdminVenuesComponent implements OnInit {
       this.error = e instanceof Error ? e.message : '儲存失敗';
     } finally {
       this.saving = false;
+    }
+  }
+
+  async geocodeAddress(): Promise<void> {
+    if (!this.draft.address.trim() || this.geocoding) return;
+    this.geocoding = true;
+    this.geocodeError = '';
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(this.draft.address)}&format=json&limit=1&countrycodes=tw&accept-language=zh-TW`;
+      const res  = await fetch(url, { headers: { 'Accept-Language': 'zh-TW' } });
+      const data = await res.json() as { lat: string; lon: string }[];
+      if (!data.length) {
+        this.geocodeError = '找不到座標，請手動輸入';
+        return;
+      }
+      this.draft.latitude  = parseFloat(data[0].lat);
+      this.draft.longitude = parseFloat(data[0].lon);
+    } catch {
+      this.geocodeError = '查詢失敗，請檢查網路連線';
+    } finally {
+      this.geocoding = false;
     }
   }
 
