@@ -842,24 +842,39 @@
             <div style="text-align:center;padding:60px 0;color:var(--text-faint-40);font-size:0.85rem;">尚無場館資料</div>
           } @else {
 
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
-              @for (filter of venueRegionFilters; track filter.key) {
-                <button
-                  type="button"
-                  (click)="setVenueRegionFilter(filter.key)"
-                  style="
-                    border-radius:20px;padding:7px 14px;font-size:0.72rem;
-                    border:1px solid var(--border-subtle);transition:background 0.15s,border-color 0.15s,color 0.15s;
-                    cursor:pointer;letter-spacing:0.04em;
-                  "
-                  [style.background]="activeVenueRegionFilter === filter.key ? 'rgba(124,108,242,0.12)' : 'var(--bg-card)'"
-                  [style.border-color]="activeVenueRegionFilter === filter.key ? 'rgba(124,108,242,0.35)' : 'var(--border-subtle)'"
-                  [style.color]="activeVenueRegionFilter === filter.key ? '#5040a8' : 'var(--text-secondary)'"
-                  [attr.aria-pressed]="activeVenueRegionFilter === filter.key"
-                >
-                  {{filter.label}}
-                </button>
-              }
+            <!-- Venue map -->
+            <app-venue-map
+              [venues]="venues"
+              [activeRegion]="activeVenueRegionFilter"
+              (regionChange)="setVenueRegionFilter($event)"
+              (venuePopupOpened)="onVenuePopupOpened($event)"
+              style="display:block;margin-bottom:16px;"
+            ></app-venue-map>
+
+            <!-- Region filter — between map and list -->
+            <div style="background:rgba(124,108,242,0.05);border:1px solid rgba(124,108,242,0.15);border-radius:8px;padding:10px 14px;margin-bottom:20px;">
+              <div style="font-size:0.65rem;color:rgba(124,108,242,0.6);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;font-weight:600;">
+                區域篩選 — 同步過濾地圖與列表
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                @for (filter of venueRegionFilters; track filter.key) {
+                  <button
+                    type="button"
+                    (click)="setVenueRegionFilter(filter.key)"
+                    style="
+                      border-radius:20px;padding:7px 14px;font-size:0.72rem;
+                      border:1px solid var(--border-subtle);transition:background 0.15s,border-color 0.15s,color 0.15s;
+                      cursor:pointer;letter-spacing:0.04em;
+                    "
+                    [style.background]="activeVenueRegionFilter === filter.key ? 'rgba(124,108,242,0.12)' : 'var(--bg-card)'"
+                    [style.border-color]="activeVenueRegionFilter === filter.key ? 'rgba(124,108,242,0.35)' : 'var(--border-subtle)'"
+                    [style.color]="activeVenueRegionFilter === filter.key ? '#5040a8' : 'var(--text-secondary)'"
+                    [attr.aria-pressed]="activeVenueRegionFilter === filter.key"
+                  >
+                    {{filter.label}}
+                  </button>
+                }
+              </div>
             </div>
 
             <!-- 北部 -->
