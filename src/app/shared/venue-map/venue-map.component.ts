@@ -64,12 +64,75 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     ));
   }
 
-  private renderMarkers(_L: any): void {
-    // implemented in Task 5
+  private renderMarkers(L: any): void {
+    // Remove existing markers
+    this.markers.forEach(m => m.remove());
+    this.markers.clear();
+
+    const withCoords = this.venues.filter(
+      v => v.latitude != null && v.longitude != null,
+    );
+
+    for (const venue of withCoords) {
+      const color = venue.region === 'north' ? '#e879a0'
+        : venue.region === 'central' ? '#7c6cf2'
+        : '#f59e0b';
+
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="
+          width:28px;height:28px;border-radius:50% 50% 50% 0;
+          background:${color};border:2px solid white;
+          transform:rotate(-45deg);
+          box-shadow:0 2px 6px rgba(0,0,0,0.25);
+        "></div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 28],
+        popupAnchor: [0, -32],
+      });
+
+      const marker = L.marker([venue.latitude!, venue.longitude!], { icon })
+        .addTo(this.map)
+        .bindPopup(this.buildPopupContent(venue, [], true, ''), { maxWidth: 280 });
+
+      marker.on('click', () => {
+        this.openPopupVenueId = venue.id;
+        this.venuePopupOpened.emit(venue.id);
+      });
+
+      this.markers.set(venue.id, marker);
+    }
+
+    this.applyRegionFilter();
+    this.fitBounds(L);
   }
 
   private applyRegionFilter(): void {
-    // implemented in Task 5
+    this.markers.forEach((marker, venueId) => {
+      const venue = this.venues.find(v => v.id === venueId);
+      if (!venue) return;
+      const visible = this.activeRegion === 'all' || venue.region === this.activeRegion;
+      if (visible) {
+        if (!this.map.hasLayer(marker)) marker.addTo(this.map);
+      } else {
+        if (this.map.hasLayer(marker)) marker.remove();
+      }
+    });
+    this.fitBounds(null);
+  }
+
+  private async fitBounds(L: any | null): Promise<void> {
+    const visible: [number, number][] = [];
+    this.markers.forEach((marker, venueId) => {
+      if (!this.map.hasLayer(marker)) return;
+      const venue = this.venues.find(v => v.id === venueId);
+      if (venue?.latitude != null && venue.longitude != null) {
+        visible.push([venue.latitude, venue.longitude]);
+      }
+    });
+    if (visible.length === 0) return;
+    const lib = L ?? (await import('leaflet'));
+    this.map.fitBounds(lib.latLngBounds(visible), { padding: [40, 40], maxZoom: 15 });
   }
 
   private buildPopupContent(
