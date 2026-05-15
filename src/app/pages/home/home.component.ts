@@ -8,7 +8,7 @@ import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
 import { SeoService } from '../../core/seo.service';
-import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry, Venue, VenueCalendarEvent } from '../../models';
+import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry, Venue, VenueCalendarEvent, VenueRegionFilter } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
@@ -22,8 +22,6 @@ import {
   sanitizePublicGroupRecord,
   sanitizePublicMemberRecord,
 } from '../../core/public-record.utils';
-
-type VenueRegionFilter = 'all' | 'north' | 'central' | 'south';
 
 @Component({
   selector: 'app-home',
