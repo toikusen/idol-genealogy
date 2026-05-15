@@ -1,4 +1,4 @@
-import { Component, NgZone, OnInit, OnDestroy, PLATFORM_ID, inject } from '@angular/core';
+import { Component, NgZone, OnInit, OnDestroy, PLATFORM_ID, inject, ViewChild } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -8,10 +8,11 @@ import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
 import { SeoService } from '../../core/seo.service';
-import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry, Venue, VenueCalendarEvent } from '../../models';
+import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry, Venue, VenueCalendarEvent, VenueRegionFilter } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
+import { VenueMapComponent } from '../../shared/venue-map/venue-map.component';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 import type { HomePageData } from '../../core/page-data.resolvers';
 import {
@@ -23,12 +24,10 @@ import {
   sanitizePublicMemberRecord,
 } from '../../core/public-record.utils';
 
-type VenueRegionFilter = 'all' | 'north' | 'central' | 'south';
-
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe],
+  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe, VenueMapComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
@@ -51,6 +50,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   venuesLoaded = false;
   venuesLoading = false;
   expandedVenueIds = new Set<string>();
+  @ViewChild(VenueMapComponent) venueMapRef?: VenueMapComponent;
   venueEventCounts = new Map<string, number>();
   calendarLoaded = false;
   venueEvents = new Map<string, VenueCalendarEvent[]>();
@@ -329,6 +329,15 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   setVenueRegionFilter(filter: VenueRegionFilter) {
     this.activeVenueRegionFilter = filter;
+  }
+
+  async onVenuePopupOpened(venueId: string): Promise<void> {
+    const venue = this.venues.find(v => v.id === venueId);
+    if (!venue) return;
+    await this.loadVenueEvents(venue);
+    const events = this.venueEvents.get(venueId) ?? [];
+    const error  = this.venueEventsError.get(venueId) ?? '';
+    this.venueMapRef?.refreshPopup(venueId, events, error);
   }
 
   toggleVenue(venue: Venue) {

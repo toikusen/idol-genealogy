@@ -205,6 +205,8 @@ export interface GroupSong {
   created_by: string | null;
 }
 
+export type VenueRegionFilter = 'all' | 'north' | 'central' | 'south';
+
 export interface Venue {
   id: string;
   name: string;
@@ -217,6 +219,8 @@ export interface Venue {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface VenueCalendarEvent {

@@ -171,6 +171,27 @@
             class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
         </div>
 
+        <!-- Coordinates -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">座標</label>
+          <div class="grid grid-cols-2 gap-3 mb-2">
+            <input type="number" step="any" [(ngModel)]="draft.latitude"
+              placeholder="緯度 (Latitude)"
+              class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+            <input type="number" step="any" [(ngModel)]="draft.longitude"
+              placeholder="經度 (Longitude)"
+              class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+          </div>
+          <button type="button" (click)="geocodeAddress()"
+            [disabled]="!draft.address.trim() || geocoding"
+            class="px-3 py-1.5 text-xs rounded-md border border-purple-300 text-purple-600 hover:bg-purple-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            {{geocoding ? '查詢中…' : '自動帶入座標'}}
+          </button>
+          @if (geocodeError) {
+            <p class="text-xs text-red-500 mt-1">{{geocodeError}}</p>
+          }
+        </div>
+
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">電話</label>
           <input type="tel" [(ngModel)]="draft.phone" placeholder="選填"
