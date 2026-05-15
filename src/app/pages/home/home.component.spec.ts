@@ -1,10 +1,11 @@
 // src/app/pages/home/home.component.spec.ts
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HomeComponent } from './home.component';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
+import { VenueService } from '../../core/venue.service';
 import { SeoService } from '../../core/seo.service';
 import { Group, Member, Company } from '../../models';
 import { HomePageData } from '../../core/page-data.resolvers';
@@ -73,6 +74,7 @@ describe('HomeComponent', () => {
         { provide: MemberService, useValue: { ...emptyMemberService(), ...memberOverrides } },
         { provide: GroupService, useValue: { ...emptyGroupService(), ...groupOverrides } },
         { provide: CompanyService, useValue: { ...emptyCompanyService(), ...companyOverrides } },
+        { provide: VenueService, useValue: { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([])) } },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -90,12 +92,13 @@ describe('HomeComponent', () => {
   // ── Issue 1: *ngIf → @if ─────────────────────────────────────────────────
 
   describe('member name display (Issue 1 — mixed ngIf)', () => {
-    it('shows roman name secondary line only when name_roman exists', async () => {
+    it('shows roman name secondary line only when name_roman exists', fakeAsync(async () => {
       const m = member({ id: 'm1', name: 'Alice', name_roman: 'Alice Roman', name_hiragana: null });
       await setup({ search: jasmine.createSpy().and.returnValue(Promise.resolve([m])), searchByAlias: jasmine.createSpy().and.returnValue(Promise.resolve([])) });
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
-      await fixture.whenStable();
+      tick(3000); // flush scheduleDeferredHomeSections 2500ms timer + idle callback
+      fixture.detectChanges();
 
       fixture.componentInstance.query = 'Alice';
       await fixture.componentInstance.search();
@@ -103,14 +106,16 @@ describe('HomeComponent', () => {
 
       const compiled: HTMLElement = fixture.nativeElement;
       expect(compiled.textContent).toContain('Alice Roman');
-    });
+      discardPeriodicTasks();
+    }));
 
-    it('shows both hiragana and roman separated by ·', async () => {
+    it('shows both hiragana and roman separated by ·', fakeAsync(async () => {
       const m = member({ id: 'm1', name: 'Alice', name_roman: 'Alice Roman', name_hiragana: 'ありす' });
       await setup({ search: jasmine.createSpy().and.returnValue(Promise.resolve([m])), searchByAlias: jasmine.createSpy().and.returnValue(Promise.resolve([])) });
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
-      await fixture.whenStable();
+      tick(3000); // flush scheduleDeferredHomeSections 2500ms timer + idle callback
+      fixture.detectChanges();
 
       fixture.componentInstance.query = 'Alice';
       await fixture.componentInstance.search();
@@ -119,7 +124,8 @@ describe('HomeComponent', () => {
       const compiled: HTMLElement = fixture.nativeElement;
       expect(compiled.textContent).toContain('·');
       expect(compiled.textContent).toContain('Alice Roman');
-    });
+      discardPeriodicTasks();
+    }));
   });
 
   // ── Issue 2: computed properties cached after init ───────────────────────
