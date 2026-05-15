@@ -234,7 +234,11 @@ export class AdminVenuesComponent implements OnInit {
     try {
       const res = await fetch(`${environment.supabaseUrl}/functions/v1/resolve-maps-url`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': environment.supabaseAnonKey },
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': environment.supabaseAnonKey,
+          'Authorization': `Bearer ${environment.supabaseAnonKey}`,
+        },
         body: JSON.stringify({ url }),
       });
       if (!res.ok) return null;
