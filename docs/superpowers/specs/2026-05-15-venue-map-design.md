@@ -1,7 +1,7 @@
 # Venue Interactive Map — Design Spec
 
 **Date:** 2026-05-15
-**Status:** Approved
+**Status:** Approved (revised after code review)
 
 ## Overview
 
@@ -37,6 +37,7 @@ Add an interactive geographic map to the Venues tab on the home page, placed abo
 
 - **Library:** Leaflet.js (open-source, no API key, used by vegemap.org)
 - **Tile layer:** OpenStreetMap (`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`)
+- **Leaflet CSS:** must be loaded via `angular.json` styles array (`node_modules/leaflet/dist/leaflet.css`) — required for zoom controls, popup positioning, and marker rendering
 - **Initial view:** `fitBounds()` on all loaded venue markers — shows all visible venues automatically
 - **Fallback center** (no venues): `[25.045, 121.51]`, zoom 12 (Taipei center)
 - **SSR safety:** dynamic `import('leaflet')` behind `isPlatformBrowser` check
@@ -52,15 +53,22 @@ Add an interactive geographic map to the Venues tab on the home page, placed abo
 
 ### Popup (on marker click)
 
-Leaflet native popup with HTML content:
+Leaflet popup renders as a plain HTML string — Angular template bindings do not work inside it.
+
+**Content:**
 - Venue name (bold)
-- Address + copy button
+- Address (text only — no copy button; copy button stays in the card list below)
 - Type badge (if present)
-- Upcoming events list — reads from home component's existing `venueEvents` Map
-  - If not yet loaded: shows "讀取中…"
-  - If no events: shows "目前沒有近期活動"
+- Upcoming events list (loading / error / event rows)
 - Google Maps link (if `google_maps_url` present)
 - Click outside popup to close
+
+**XSS:** all user-supplied strings (`venue.name`, `venue.address`, `venue.type`, `event.title`) must be HTML-escaped before insertion into the popup HTML string. Use a shared `escapeHtml()` utility.
+
+**Popup refresh (Map/Set mutation problem):**
+`venueEvents`, `venueEventsLoaded`, `venueEventsLoading`, `venueEventsError` are all mutated in-place in `HomeComponent` (`.set()`, `.add()`, `.delete()`). Angular's `ngOnChanges` fires on reference change only, so passing these Maps/Sets as `@Input()` will not trigger updates.
+
+Solution: `VenueMapComponent` exposes a **public `refreshPopup(venueId: string)`** method. `HomeComponent` holds a `@ViewChild(VenueMapComponent)` reference and calls `refreshPopup(venueId)` after `loadVenueEvents()` resolves. The method re-reads the current Map/Set state and updates the open popup's content if it matches that venue id.
 
 ### Mobile
 
@@ -71,7 +79,18 @@ Leaflet native popup with HTML content:
 
 ## Data Layer
 
+### Shared Type
+
+Move `VenueRegionFilter` out of `home.component.ts` (currently a local type at line 26) and into `src/app/models/index.ts` so `VenueMapComponent` can import it cleanly:
+
+```typescript
+// models/index.ts
+export type VenueRegionFilter = 'all' | 'north' | 'central' | 'south';
+```
+
 ### DB Migration
+
+Create a Supabase migration file (e.g. `supabase/migrations/YYYYMMDDHHMMSS_venues_add_coords.sql`):
 
 ```sql
 ALTER TABLE venues
@@ -87,12 +106,12 @@ Both columns are nullable. Venues with null coordinates appear in the card list 
 // models/index.ts
 export interface Venue {
   // ...existing fields...
-  latitude:  number | null;
-  longitude: number | null;
+  latitude?:  number | null;
+  longitude?: number | null;
 }
 ```
 
-`VenueService.getAll()` requires no changes — `select('*')` picks up new columns automatically.
+Fields are **optional** (`?`) so existing fixtures (e.g. `venue.service.spec.ts` `mockVenue`) do not need to be updated — TypeScript will not error on missing optional fields. `VenueService.getAll()` requires no changes — `select('*')` picks up new columns automatically.
 
 ---
 
@@ -106,33 +125,41 @@ export interface Venue {
 ```typescript
 @Input() venues: Venue[] = [];
 @Input() activeRegion: VenueRegionFilter = 'all';
-@Input() venueEvents: Map<string, VenueCalendarEvent[]> = new Map();
-@Input() venueEventsLoaded: Set<string> = new Set();
-@Input() venueEventsLoading: Set<string> = new Set();
-@Input() venueEventsError: Map<string, string> = new Map();
 ```
 
 **Outputs:**
 ```typescript
-@Output() regionChange = new EventEmitter<VenueRegionFilter>();
-@Output() venuePopupOpened = new EventEmitter<string>(); // emits venue.id
+@Output() regionChange       = new EventEmitter<VenueRegionFilter>();
+@Output() venuePopupOpened   = new EventEmitter<string>(); // emits venue.id
 ```
+
+**Public method (called by parent via ViewChild):**
+```typescript
+refreshPopup(venueId: string): void
+// Re-reads venueEvents/Loading/Error from HomeComponent and updates
+// the currently-open popup's HTML if it belongs to venueId.
+// HomeComponent passes state via a callback or direct Map reference,
+// not via @Input, to avoid the ngOnChanges/mutation problem.
+```
+
+**State access pattern:** `HomeComponent` passes a `getEventState(venueId)` callback function (not the Maps directly as `@Input`) so `VenueMapComponent` can read current state on demand when rendering or refreshing popup content.
 
 **Responsibilities:**
 - Initialize Leaflet map (browser-only, dynamic import)
 - Render colored `divIcon` markers for venues with coordinates
-- Show/hide markers based on `activeRegion` input changes
-- Call `map.fitBounds()` when markers update
-- On marker click: open Leaflet popup, emit `venuePopupOpened` with `venue.id` so home component triggers event loading (same path as `toggleVenue`)
-- Render popup HTML using `venueEvents` / `venueEventsLoading` / `venueEventsError` inputs; re-render popup content when inputs change via `ngOnChanges`
+- Show/hide markers based on `activeRegion` input (via `ngOnChanges` — safe since `activeRegion` is a primitive string)
+- Call `map.fitBounds()` when visible markers change
+- On marker click: open Leaflet popup with HTML-escaped content, emit `venuePopupOpened` with `venue.id`
+- `refreshPopup(venueId)`: update open popup content by re-reading state via callback
 
 ### Modified: `HomeComponent`
 
 - Import and add `<app-venue-map>` inside the venues tab panel, above filter buttons
+- Add `@ViewChild(VenueMapComponent) venueMap?: VenueMapComponent`
 - Move filter button section below map, add label "區域篩選 — 同步過濾地圖與列表"
-- Pass `venues`, `activeVenueRegionFilter`, `venueEvents`, `venueEventsLoaded`, `venueEventsLoading`, `venueEventsError` as inputs
+- Pass `venues`, `activeVenueRegionFilter` as `@Input()`; pass `getEventState` callback
 - Handle `(regionChange)` output to update `activeVenueRegionFilter`
-- Handle `(venuePopupOpened)` output: call existing event-loading logic (same as `toggleVenue`) for that venue id
+- Handle `(venuePopupOpened)` output: call **`loadVenueEvents(venue)`** only (not `toggleVenue` — do not expand the card list entry); after `loadVenueEvents` resolves, call `this.venueMap?.refreshPopup(venueId)`
 
 ### Modified: `AdminVenuesComponent`
 
@@ -140,20 +167,23 @@ export interface Venue {
 - `latitude`: number input, optional, label "緯度 (Latitude)"
 - `longitude`: number input, optional, label "經度 (Longitude)"
 - "自動帶入座標" button:
-  - Disabled until `address` field has a value
-  - On click: `fetch` Nominatim geocoding API
+  - Disabled when `address` field is empty or geocoding is in progress (prevent double-click)
+  - On click: `fetch` Nominatim geocoding API with properly URL-encoded address
   - Shows loading spinner while fetching
-  - On success: fills `latitude` and `longitude` inputs (user can adjust before saving)
-  - On failure: shows inline error "找不到座標，請手動輸入"
+  - On success: fills `latitude` and `longitude` inputs (editable before saving)
+  - On failure (empty result or network error): shows inline error "找不到座標，請手動輸入"
 
 **Geocoding API call:**
 ```
 GET https://nominatim.openstreetmap.org/search
-  ?q={address}
+  ?q={encodeURIComponent(address)}
   &format=json
   &limit=1
+  &countrycodes=tw
   &accept-language=zh-TW
 ```
+
+`countrycodes=tw` restricts results to Taiwan, improving accuracy for Chinese-language addresses.
 
 Response: `[{ lat: "25.037...", lon: "121.564..." }]`
 
@@ -163,20 +193,23 @@ Response: `[{ lat: "25.037...", lon: "121.564..." }]`
 
 | File | Change |
 |------|--------|
-| `src/app/models/index.ts` | Add `latitude`, `longitude` to `Venue` interface |
+| `src/app/models/index.ts` | Add `VenueRegionFilter` type; add optional `latitude?`, `longitude?` to `Venue` |
+| `src/app/pages/home/home.component.ts` | Remove local `VenueRegionFilter` type; add `@ViewChild`; wire popup refresh |
+| `supabase/migrations/*_venues_add_coords.sql` | New migration file |
 | `src/app/shared/venue-map/venue-map.component.ts` | New component |
 | `src/app/shared/venue-map/venue-map.component.css` | New styles |
 | `src/app/pages/home/home.component.html` | Add `<app-venue-map>`, reposition filter buttons |
-| `src/app/pages/home/home.component.ts` | Import `VenueMapComponent`, wire inputs/outputs |
 | `src/app/pages/admin/admin-venues/admin-venues.component.html` | Add lat/lng fields + geocoding button |
 | `src/app/pages/admin/admin-venues/admin-venues.component.ts` | Add geocoding logic |
+| `angular.json` | Add `node_modules/leaflet/dist/leaflet.css` to styles array |
 | `package.json` | Add `leaflet`, `@types/leaflet` |
 
 ---
 
 ## Out of Scope
 
-- Backfilling coordinate data (done manually in Supabase)
+- Backfilling coordinate data (done manually in Supabase after migration)
 - Marker clustering
 - Runtime geocoding for public users
 - Directions / routing
+- Switching to a paid tile provider (revisit if OSM tile usage becomes an issue)
