@@ -237,7 +237,6 @@ export class AdminVenuesComponent implements OnInit {
         headers: {
           'Content-Type': 'application/json',
           'apikey': environment.supabaseAnonKey,
-          'Authorization': `Bearer ${environment.supabaseAnonKey}`,
         },
         body: JSON.stringify({ url }),
       });
