@@ -27,7 +27,8 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   async ngAfterViewInit(): Promise<void> {
     if (!this.isBrowser) return;
-    const L = await import('leaflet');
+    const mod = await import('leaflet');
+    const L = (mod as any).default ?? mod;
     const container = this.el.nativeElement.querySelector('.venue-map-container') as HTMLElement;
     this.map = L.map(container, { zoomControl: true });
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -40,7 +41,8 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   async ngOnChanges(changes: SimpleChanges): Promise<void> {
     if (!this.isBrowser || !this.map) return;
-    const L = await import('leaflet');
+    const mod = await import('leaflet');
+    const L = (mod as any).default ?? mod;
     if (changes['venues']) this.renderMarkers(L);
     if (changes['activeRegion']) this.applyRegionFilter();
   }
@@ -58,7 +60,7 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (!popup) return;
     popup.setContent(this.buildPopupContent(
       this.venues.find(v => v.id === venueId)!,
-      events,
+      Array.isArray(events) ? events : [],
       false,
       error,
     ));
@@ -121,9 +123,13 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
         popupAnchor: [0, -46],
       });
 
+      const isMobile = window.innerWidth <= 640;
       const marker = L.marker([venue.latitude!, venue.longitude!], { icon })
         .addTo(this.map)
-        .bindPopup(this.buildPopupContent(venue, [], true, ''), { maxWidth: 280 });
+        .bindPopup(this.buildPopupContent(venue, [], true, ''), {
+          maxWidth: 280,
+          ...(isMobile ? { maxHeight: 220 } : {}),
+        });
 
       marker.on('click', () => {
         this.openPopupVenueId = venue.id;
@@ -165,7 +171,8 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
       }
     });
     if (visible.length === 0) return;
-    const lib = L ?? (await import('leaflet'));
+    const mod = L ?? (await import('leaflet'));
+    const lib = (mod as any).default ?? mod;
     this.map.fitBounds(lib.latLngBounds(visible), { padding: [40, 40], maxZoom: 15 });
   }
 
