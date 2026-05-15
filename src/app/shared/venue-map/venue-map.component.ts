@@ -8,7 +8,7 @@ import { Venue, VenueRegionFilter, VenueCalendarEvent } from '../../models';
 @Component({
   selector: 'app-venue-map',
   standalone: true,
-  template: `<div class="venue-map-container" #mapEl></div>`,
+  template: `<div class="venue-map-container"></div>`,
   styleUrl: './venue-map.component.css',
 })
 export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -100,14 +100,18 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
         this.venuePopupOpened.emit(venue.id);
       });
 
+      marker.on('popupclose', () => {
+        if (this.openPopupVenueId === venue.id) this.openPopupVenueId = null;
+      });
+
       this.markers.set(venue.id, marker);
     }
 
-    this.applyRegionFilter();
+    this.applyRegionFilter(true);
     this.fitBounds(L);
   }
 
-  private applyRegionFilter(): void {
+  private applyRegionFilter(skipFitBounds = false): void {
     this.markers.forEach((marker, venueId) => {
       const venue = this.venues.find(v => v.id === venueId);
       if (!venue) return;
@@ -118,7 +122,7 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
         if (this.map.hasLayer(marker)) marker.remove();
       }
     });
-    this.fitBounds(null);
+    if (!skipFitBounds) this.fitBounds(null);
   }
 
   private async fitBounds(L: any | null): Promise<void> {
@@ -153,8 +157,10 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     const name    = this.escapeHtml(venue.name);
     const address = this.escapeHtml(venue.address);
     const type    = venue.type ? `<span style="display:inline-block;font-size:0.6rem;padding:1px 6px;border-radius:20px;background:rgba(122,90,122,0.06);border:1px solid rgba(122,90,122,0.11);color:#555;margin-top:4px;">${this.escapeHtml(venue.type)}</span>` : '';
-    const mapsLink = venue.google_maps_url
-      ? `<a href="${this.escapeHtml(venue.google_maps_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:8px;font-size:0.68rem;color:#4285F4;text-decoration:none;">Google Maps →</a>`
+    const rawMapsUrl = venue.google_maps_url ?? '';
+    const safeMapsUrl = /^https?:\/\//i.test(rawMapsUrl) ? rawMapsUrl : '';
+    const mapsLink = safeMapsUrl
+      ? `<a href="${this.escapeHtml(safeMapsUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:8px;font-size:0.68rem;color:#4285F4;text-decoration:none;">Google Maps →</a>`
       : '';
 
     let eventsHtml: string;
