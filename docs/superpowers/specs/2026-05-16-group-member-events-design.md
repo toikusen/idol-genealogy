@@ -36,7 +36,7 @@ getUpcomingGroupEvents(group: Group, daysAhead = 90): Promise<VenueCalendarEvent
 
 **Normalize 規則（group matching 專用）**：先 `value.normalize('NFKC')`（半形化全形字元），再 lowercase 並移除符號空白。長度門檻在 normalize 之後計算。
 
-候選名稱：`group.name` 與 `group.name_jp`（若存在），兩者皆 normalize 後使用。
+候選名稱：`group.name` 與 `group.name_jp`（若存在）。兩者皆先做 NFKC + lowercase；CJK/Kana 候選另準備移除符號空白的版本用於 includes 比對，純英數候選另準備保留分隔符的版本用於 token 邊界比對。
 
 **字元範圍定義**：
 - 「CJK/Kana 字元」涵蓋：漢字（U+4E00–U+9FFF、U+3400–U+4DBF）、平假名（U+3041–U+3096）、片假名（U+30A1–U+30FC）
