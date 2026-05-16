@@ -109,7 +109,7 @@ group-events.component.spec.ts
 
 位置：原創曲區塊**之後**，編輯紀錄**之前**。
 
-資料來源：`histories` 中 status 為 `active`、`hiatus`、`concurrent` 的所有 group（代表「目前仍關聯」），不含 `support`（臨時性，活動歸屬感較弱）、`transferred`、`graduated`、`withdrawn`。
+資料來源：`histories` 中 status 為 `active`（活動中）、`concurrent`（兼任）、`support`（支援）的所有 group，不含 `hiatus`（活休，暫停出活動）、`transferred`、`graduated`、`withdrawn`。
 
 透過頁面已有的 `histories` 資料取得對應 `Group[]`（history 物件已 join group）。
 
@@ -123,7 +123,7 @@ group-events.component.spec.ts
 
 ```ts
 get activeGroups(): Group[] {
-  const statuses = new Set(['active', 'hiatus', 'concurrent']);
+  const statuses = new Set(['active', 'concurrent', 'support']);
   const seen = new Set<string>();
   return this.histories
     .filter(h => statuses.has(h.status ?? '') && h.group)
