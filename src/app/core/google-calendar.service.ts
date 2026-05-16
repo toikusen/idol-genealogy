@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { Venue, VenueCalendarEvent } from '../models';
+import { Group, Venue, VenueCalendarEvent } from '../models';
 
 interface GoogleCalendarEventDate {
   date?: string;
@@ -47,7 +47,7 @@ export class GoogleCalendarService {
   getUpcomingVenueEvents(venue: Venue, daysAhead = 90): Promise<VenueCalendarEvent[]> {
     if (!this.isConfigured()) return Promise.resolve([]);
 
-    const cacheKey = `${venue.id}:${daysAhead}`;
+    const cacheKey = `venue:${venue.id}:${daysAhead}`;
     const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
@@ -58,6 +58,54 @@ export class GoogleCalendarService {
 
     this.cache.set(cacheKey, promise);
     return promise;
+  }
+
+  getUpcomingGroupEvents(group: Group, daysAhead = 90): Promise<VenueCalendarEvent[]> {
+    if (!this.isConfigured()) return Promise.resolve([]);
+    const cacheKey = `group:${group.id}:${daysAhead}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) return cached;
+    const rawPromise = this.rawCache.get(daysAhead) ?? this.fetchUpcomingEvents(daysAhead);
+    const promise = rawPromise.then(events =>
+      events
+        .filter(event => this.matchesGroup(event, group))
+        .map(event => this.toVenueEvent(event)),
+    );
+    this.cache.set(cacheKey, promise);
+    return promise;
+  }
+
+  private matchesGroup(event: GoogleCalendarEventResource, group: Group): boolean {
+    const names = [group.name, group.name_jp].filter((n): n is string => !!n);
+    const summaryNfkc = (event.summary ?? '').normalize('NFKC').toLowerCase();
+    const locationNfkc = (event.location ?? '').normalize('NFKC').toLowerCase();
+    const stripNonCjk = (s: string) =>
+      s.replace(/[^ぁ-ゖァ-ー一-鿿㐀-䶿a-z0-9]/g, '');
+    const summaryStripped = stripNonCjk(summaryNfkc);
+    const locationStripped = stripNonCjk(locationNfkc);
+
+    for (const name of names) {
+      const nfkc = name.normalize('NFKC').toLowerCase();
+      const hasCjkKana = /[ぁ-ゖァ-ー一-鿿㐀-䶿]/.test(nfkc);
+
+      if (hasCjkKana) {
+        const stripped = stripNonCjk(nfkc);
+        const cjkKanaCount = (stripped.match(/[ぁ-ゖァ-ー一-鿿㐀-䶿]/g) ?? []).length;
+        if (cjkKanaCount >= 3 && summaryStripped.includes(stripped)) return true;
+        if (stripped.length >= 4 && cjkKanaCount >= 3 && locationStripped.includes(stripped)) return true;
+      } else {
+        const stripped = stripNonCjk(nfkc);
+        const alphaCount = stripped.length;
+        if (alphaCount >= 4 && this.tokenMatch(stripped, summaryNfkc)) return true;
+        if (alphaCount >= 6 && this.tokenMatch(stripped, locationNfkc)) return true;
+      }
+    }
+    return false;
+  }
+
+  private tokenMatch(name: string, text: string): boolean {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`).test(text);
   }
 
   private fetchUpcomingEvents(daysAhead: number): Promise<GoogleCalendarEventResource[]> {

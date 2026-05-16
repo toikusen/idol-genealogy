@@ -316,3 +316,64 @@ describe('GoogleCalendarService', () => {
     });
   });
 });
+
+describe('matchesGroup', () => {
+  let service: GoogleCalendarService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [GoogleCalendarService] });
+    service = TestBed.inject(GoogleCalendarService);
+  });
+
+  function mkEvent(summary: string, location = '', description = ''): any {
+    return { id: 'e1', summary, location, description, status: 'confirmed', start: { dateTime: '2026-06-01T10:00:00' } };
+  }
+
+  function mkGroup(name: string, name_jp: string | null = null): any {
+    return { id: 'g1', name, name_jp } as any;
+  }
+
+  it('matches group name found in summary', () => {
+    expect((service as any).matchesGroup(mkEvent('乃木坂46 ライブ'), mkGroup('乃木坂46'))).toBeTrue();
+  });
+
+  it('matches name_jp in summary', () => {
+    expect((service as any).matchesGroup(mkEvent('ピンクハット ライブ'), mkGroup('Pink Hat', 'ピンクハット'))).toBeTrue();
+  });
+
+  it('matches alphanumeric name in summary with token boundary', () => {
+    expect((service as any).matchesGroup(mkEvent('AKB48 concert'), mkGroup('AKB48'))).toBeTrue();
+  });
+
+  it('does NOT match alphanumeric name embedded in another word', () => {
+    expect((service as any).matchesGroup(mkEvent('spring concert'), mkGroup('RING'))).toBeFalse();
+  });
+
+  it('does NOT match short CJK name (< 3 chars) anywhere', () => {
+    expect((service as any).matchesGroup(mkEvent('嵐 コンサート'), mkGroup('嵐'))).toBeFalse();
+  });
+
+  it('does NOT match short alpha name (< 4 chars) in summary', () => {
+    expect((service as any).matchesGroup(mkEvent('AKB live'), mkGroup('AKB'))).toBeFalse();
+  });
+
+  it('does NOT match description even when name present', () => {
+    expect((service as any).matchesGroup(mkEvent('live show', '', '乃木坂46 出演'), mkGroup('乃木坂46'))).toBeFalse();
+  });
+
+  it('matches CJK name in location when length >= 4', () => {
+    expect((service as any).matchesGroup(mkEvent('live show', '乃木坂46'), mkGroup('乃木坂46'))).toBeTrue();
+  });
+
+  it('does NOT match CJK name in location when length < 4 (only 3 CJK chars)', () => {
+    expect((service as any).matchesGroup(mkEvent('show', '乃木坂'), mkGroup('乃木坂'))).toBeFalse();
+  });
+
+  it('does NOT match alpha name in location when length < 6', () => {
+    expect((service as any).matchesGroup(mkEvent('show', 'AKB48 venue'), mkGroup('AKB48'))).toBeFalse();
+  });
+
+  it('handles full-width alphanumeric via NFKC normalization', () => {
+    expect((service as any).matchesGroup(mkEvent('ＡＫＢ４８ concert'), mkGroup('AKB48'))).toBeTrue();
+  });
+});
