@@ -238,8 +238,8 @@ describe('HomeComponent', () => {
     }));
   });
 
-  // ── LCP image loading attributes ──────────────────────────────────────────
-  describe('LCP image loading (popular rank)', () => {
+  // ── Deferred image loading attributes ────────────────────────────────────
+  describe('popular rank image loading', () => {
     function leaderMember(id: string, photoUrl: string): MemberLeaderboardEntry {
       return { id, name: id, name_roman: null, photo_url: photoUrl, color: null, view_count: 1 };
     }
@@ -248,7 +248,7 @@ describe('HomeComponent', () => {
       return { id, name: id, photo_url: photoUrl, color: null, view_count: 1 };
     }
 
-    it('first topMember image uses loading=eager and fetchpriority=high', fakeAsync(async () => {
+    it('keeps topMember images lazy because the section is deferred below the fold', fakeAsync(async () => {
       await setup({}, {}, {}, {
         topMembers: [
           leaderMember('m1', 'https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/object/public/members/m1.jpg'),
@@ -263,15 +263,15 @@ describe('HomeComponent', () => {
       const imgs = el.querySelectorAll<HTMLImageElement>('.popular-rank-img');
 
       expect(imgs.length).toBeGreaterThanOrEqual(2);
-      expect(imgs[0].getAttribute('loading')).toBe('eager');
-      expect(imgs[0].getAttribute('fetchpriority')).toBe('high');
+      expect(imgs[0].getAttribute('loading')).toBe('lazy');
+      expect(imgs[0].getAttribute('fetchpriority')).toBeNull();
       expect(imgs[1].getAttribute('loading')).toBe('lazy');
       expect(imgs[1].getAttribute('fetchpriority')).toBeNull();
 
       discardPeriodicTasks();
     }));
 
-    it('first topGroup image uses loading=eager and fetchpriority=high', fakeAsync(async () => {
+    it('keeps topGroup images lazy because the section is deferred below the fold', fakeAsync(async () => {
       await setup({}, {}, {}, {
         topMembers: [],
         topGroups: [
@@ -286,8 +286,8 @@ describe('HomeComponent', () => {
       const imgs = el.querySelectorAll<HTMLImageElement>('.popular-rank-img');
 
       expect(imgs.length).toBeGreaterThanOrEqual(2);
-      expect(imgs[0].getAttribute('loading')).toBe('eager');
-      expect(imgs[0].getAttribute('fetchpriority')).toBe('high');
+      expect(imgs[0].getAttribute('loading')).toBe('lazy');
+      expect(imgs[0].getAttribute('fetchpriority')).toBeNull();
       expect(imgs[1].getAttribute('loading')).toBe('lazy');
       expect(imgs[1].getAttribute('fetchpriority')).toBeNull();
 

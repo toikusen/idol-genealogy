@@ -20,6 +20,8 @@ export class AdBannerComponent implements AfterViewInit, OnDestroy {
   @Input() adSlot = '4061570176';
   visible = false;
   private observer: MutationObserver | null = null;
+  private intersectionObserver: IntersectionObserver | null = null;
+  private adRequested = false;
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
@@ -28,6 +30,31 @@ export class AdBannerComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     if (!isPlatformBrowser(this.platformId)) return;
+
+    const loadAd = () => this.loadAd();
+    if ('IntersectionObserver' in window) {
+      this.intersectionObserver = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          this.intersectionObserver?.disconnect();
+          this.intersectionObserver = null;
+          loadAd();
+        }
+      }, { rootMargin: '600px 0px' });
+      this.intersectionObserver.observe(this.el.nativeElement);
+      return;
+    }
+
+    globalThis.setTimeout(loadAd, 6000);
+  }
+
+  ngOnDestroy() {
+    this.intersectionObserver?.disconnect();
+    this.observer?.disconnect();
+  }
+
+  private loadAd(): void {
+    if (this.adRequested) return;
+    this.adRequested = true;
 
     // Inject the AdSense loader the first time an ad banner mounts. This keeps
     // the script off pages without ad-eligible content (login, errors, thin
@@ -60,9 +87,5 @@ export class AdBannerComponent implements AfterViewInit, OnDestroy {
     });
 
     this.observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
-  }
-
-  ngOnDestroy() {
-    this.observer?.disconnect();
   }
 }
