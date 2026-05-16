@@ -238,6 +238,30 @@ describe('HomeComponent', () => {
     }));
   });
 
+  // ── LCP image loading — recentMembers ─────────────────────────────────────
+  describe('LCP image loading (recent members)', () => {
+    const PHOTO = 'https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/object/public/members/x.jpg';
+
+    it('first recentMember image uses loading=eager and fetchpriority=high', fakeAsync(async () => {
+      const m1 = member({ id: 'm1', name: 'A', photo_url: PHOTO });
+      const m2 = member({ id: 'm2', name: 'B', photo_url: PHOTO });
+      await setup({}, {}, {}, { recentMembers: [m1, m2] });
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const imgs = el.querySelectorAll<HTMLImageElement>('.recent-member-card img');
+
+      expect(imgs.length).toBeGreaterThanOrEqual(2);
+      expect(imgs[0].getAttribute('loading')).toBe('eager');
+      expect(imgs[0].getAttribute('fetchpriority')).toBe('high');
+      expect(imgs[1].getAttribute('loading')).toBe('lazy');
+      expect(imgs[1].getAttribute('fetchpriority')).toBeNull();
+
+      discardPeriodicTasks();
+    }));
+  });
+
   // ── LCP image loading attributes ──────────────────────────────────────────
   describe('LCP image loading (popular rank)', () => {
     function leaderMember(id: string, photoUrl: string): MemberLeaderboardEntry {
