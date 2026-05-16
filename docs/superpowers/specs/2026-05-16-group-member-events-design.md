@@ -46,12 +46,15 @@ getUpcomingGroupEvents(group: Group, daysAhead = 90): Promise<VenueCalendarEvent
 
 | 比對來源 | 長度門檻 | 規則 |
 |---|---|---|
-| `summary`（事件標題） | CJK/Kana ≥ 3，或英數 ≥ 4 | 候選名稱未達門檻則跳過；CJK/Kana 候選用 normalized includes；純英數候選用 token 邊界 regex：`(^｜[^a-z0-9])name([^a-z0-9]｜$)` |
+| `summary`（事件標題） | CJK/Kana ≥ 3，或英數 ≥ 4 | 候選名稱未達門檻則跳過；CJK/Kana 候選用 normalized includes；純英數候選用 token 邊界 regex：`(^|[^a-z0-9])name([^a-z0-9]|$)` |
 | `location`（事件地點） | CJK/Kana ≥ 4，或英數 ≥ 6 | 門檻較 summary 更嚴；英數同樣用 token 邊界 regex |
 | `description`（事件說明） | — | **完全跳過**，風險過高 |
 | CJK bigram 模糊比對 | — | **不使用**，保留給場地邏輯 |
 
-比對為「有一項符合即算」。CJK/Kana 候選名稱用 normalized substring includes；純英數候選名稱用 token 邊界確認，避免 `RING` 誤中 `during`、`spring` 等。
+比對為「有一項符合即算」，依候選名稱類型使用不同比對方式：
+
+- **CJK/Kana 候選**：對事件文字套用「NFKC + lowercase + 移除符號空白」後做 substring includes
+- **純英數候選**：對事件文字套用「NFKC + lowercase，但保留非英數分隔符（空白、標點保留）」後，用 `(^|[^a-z0-9])name([^a-z0-9]|$)` 做 token 邊界比對；不可對已移除分隔符的字串跑，否則 `AKB48 Team TP` 會變成 `akb48teamtp` 而邊界資訊消失
 
 ---
 
