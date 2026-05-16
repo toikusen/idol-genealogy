@@ -5,7 +5,8 @@ import { isPlatformBrowser } from '@angular/common';
   selector: 'app-ad-banner',
   standalone: true,
   template: `
-    <div [style.display]="visible ? 'block' : 'none'" style="margin: 24px 0; text-align: center;">
+    <div [style.maxHeight]="visible ? '' : '0'"
+         style="margin: 24px 0; text-align: center; overflow: hidden;">
       <ins class="adsbygoogle"
            style="display:block"
            data-ad-client="ca-pub-8862517332076590"
@@ -41,28 +42,29 @@ export class AdBannerComponent implements AfterViewInit, OnDestroy {
       document.head.appendChild(s);
     }
 
-    // Defer push to next frame so the container has layout dimensions.
-    // Calling push() when availableWidth=0 produces a TagError console error.
-    requestAnimationFrame(() => {
-      const ins: HTMLElement | null = this.el.nativeElement.querySelector('ins');
-      if (!ins || ins.getBoundingClientRect().width === 0) return;
+    const ins: HTMLElement | null = this.el.nativeElement.querySelector('ins');
+    if (!ins) return;
 
+    // Observer must be set up before push() so it catches the status change.
+    this.observer = new MutationObserver(() => {
+      const status = ins.getAttribute('data-ad-status');
+      if (status === 'filled') {
+        this.visible = true;
+        this.observer?.disconnect();
+      } else if (status === 'unfilled') {
+        this.visible = false;
+        this.observer?.disconnect();
+      }
+    });
+    this.observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
+
+    // Defer push to next frame. The outer div uses max-height:0/overflow:hidden
+    // instead of display:none, so <ins> retains its block width — AdSense can
+    // calculate availableWidth without the TagError console error.
+    requestAnimationFrame(() => {
       try {
         ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
       } catch (_) {}
-
-      this.observer = new MutationObserver(() => {
-        const status = ins.getAttribute('data-ad-status');
-        if (status === 'filled') {
-          this.visible = true;
-          this.observer?.disconnect();
-        } else if (status === 'unfilled') {
-          this.visible = false;
-          this.observer?.disconnect();
-        }
-      });
-
-      this.observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
     });
   }
 
