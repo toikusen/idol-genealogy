@@ -46,12 +46,12 @@ getUpcomingGroupEvents(group: Group, daysAhead = 90): Promise<VenueCalendarEvent
 
 | 比對來源 | 長度門檻 | 規則 |
 |---|---|---|
-| `summary`（事件標題） | CJK/Kana ≥ 3，或英數 ≥ 4 | 候選名稱未達門檻則跳過不比對；符合門檻者 normalize 後須完整出現 |
-| `location`（事件地點） | CJK/Kana ≥ 4，或英數 ≥ 6 | 門檻較 summary 更嚴；候選名稱未達門檻則跳過 |
+| `summary`（事件標題） | CJK/Kana ≥ 3，或英數 ≥ 4 | 候選名稱未達門檻則跳過；CJK/Kana 候選用 normalized includes；純英數候選用 token 邊界 regex：`(^｜[^a-z0-9])name([^a-z0-9]｜$)` |
+| `location`（事件地點） | CJK/Kana ≥ 4，或英數 ≥ 6 | 門檻較 summary 更嚴；英數同樣用 token 邊界 regex |
 | `description`（事件說明） | — | **完全跳過**，風險過高 |
 | CJK bigram 模糊比對 | — | **不使用**，保留給場地邏輯 |
 
-比對為「有一項符合即算」，每項都要求 normalize 後整個名稱完整出現，不允許碎片比對。
+比對為「有一項符合即算」。CJK/Kana 候選名稱用 normalized substring includes；純英數候選名稱用 token 邊界確認，避免 `RING` 誤中 `during`、`spring` 等。
 
 ---
 
@@ -84,7 +84,7 @@ group-events.component.spec.ts
 
 **單一團體模式**（`groups.length === 1`，用於團體頁）：
 - 直接列出活動，無 header
-- 某一活動無法載入：靜默隱藏
+- 該團體載入失敗：整個元件靜默隱藏
 
 **合併列表模式**（`groups.length > 1`，用於成員頁）：
 - 所有團體的活動合併成單一列表
