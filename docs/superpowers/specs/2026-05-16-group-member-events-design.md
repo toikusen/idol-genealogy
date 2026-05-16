@@ -38,12 +38,18 @@ getUpcomingGroupEvents(group: Group, daysAhead = 90): Promise<VenueCalendarEvent
 
 候選名稱：`group.name` 與 `group.name_jp`（若存在），兩者皆 normalize 後使用。
 
-| 比對來源 | 規則 |
-|---|---|
-| `summary`（事件標題） | 比對所有候選名稱（`group.name` 及 `group.name_jp`），normalize 後完整出現 |
-| `location`（事件地點） | 比對所有候選名稱，但每個候選名稱須通過長度門檻：normalize 後 ≥ 4 CJK 字元，或 ≥ 6 英數字元，才納入比對 |
-| `description`（事件說明） | **完全跳過**，風險過高 |
-| CJK bigram 模糊比對 | **不使用**，保留給場地邏輯 |
+**字元範圍定義**：
+- 「CJK/Kana 字元」涵蓋：漢字（U+4E00–U+9FFF、U+3400–U+4DBF）、平假名（U+3041–U+3096）、片假名（U+30A1–U+30FC）
+- 「英數字元」為 NFKC normalize 後的 `[a-z0-9]`
+
+**各比對來源的長度門檻**：
+
+| 比對來源 | 長度門檻 | 規則 |
+|---|---|---|
+| `summary`（事件標題） | CJK/Kana ≥ 3，或英數 ≥ 4 | 候選名稱未達門檻則跳過不比對；符合門檻者 normalize 後須完整出現 |
+| `location`（事件地點） | CJK/Kana ≥ 4，或英數 ≥ 6 | 門檻較 summary 更嚴；候選名稱未達門檻則跳過 |
+| `description`（事件說明） | — | **完全跳過**，風險過高 |
+| CJK bigram 模糊比對 | — | **不使用**，保留給場地邏輯 |
 
 比對為「有一項符合即算」，每項都要求 normalize 後整個名稱完整出現，不允許碎片比對。
 
@@ -70,16 +76,30 @@ group-events.component.spec.ts
 - 共用 `GoogleCalendarService` 的 raw cache（不重複打 API）
 - group derived cache 使用獨立 key prefix：`group:${group.id}:${daysAhead}`，與 venue cache（`venue:${venue.id}:${daysAhead}`）隔離
 - 各自管理 loading / error 狀態
+- `groups` input 變更時（Angular routing 重用元件情境），重置所有 loading / error / events 狀態後重新載入；忽略已過期 promise 的結果（以 per-request flag 或 generation counter 判斷）
 
-### 顯示邏輯
+### 顯示模式
+
+元件有兩種模式，由傳入的 `groups.length` 決定：
+
+**單一團體模式**（`groups.length === 1`，用於團體頁）：
+- 直接列出活動，無 header
+- 某一活動無法載入：靜默隱藏
+
+**合併列表模式**（`groups.length > 1`，用於成員頁）：
+- 所有團體的活動合併成單一列表
+- 依 `event.id` 去重（同一活動命中多個團體只顯示一次）
+- 依 `start` 升冪排列
+- 每筆活動下方顯示命中的團體名稱 tag（可能多個）
+- 某一團體載入失敗：只跳過該團體，其他正常顯示
+
+**共同規則**：
 
 | 情境 | 顯示 |
 |---|---|
-| 單一團體，有活動 | 直接列出活動（無團體名稱 header） |
-| 多個團體，各有活動 | 每個團體一個小區塊，有團體名稱作 header |
-| 無活動（任何情境） | 整個元件隱藏，不顯示空狀態 |
+| 有活動 | 依上述模式顯示 |
+| 無活動（全部） | 整個元件隱藏，不顯示空狀態 |
 | 載入中 | 輕量文字提示（如「讀取活動中…」） |
-| 某一團體載入失敗 | 只隱藏該團體的區塊，其他有活動的團體照常顯示 |
 | 全部失敗或全部無活動 | 整個元件隱藏 |
 
 ### 活動項目格式
@@ -87,8 +107,7 @@ group-events.component.spec.ts
 每筆活動顯示：
 - 日期：`M/D` 格式
 - 標題：截斷 ellipsis，點擊開新分頁（Google Calendar 連結）
-
-成員頁多個團體皆命中同一活動（相同 `event.id`）時，去重後只顯示一次；活動列表依 `start` 升冪排列。
+- 合併列表模式下：標題下方一行顯示命中的團體名稱 tag（小字）
 
 ---
 
