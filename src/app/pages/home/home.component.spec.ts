@@ -7,7 +7,7 @@ import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
 import { SeoService } from '../../core/seo.service';
-import { Group, Member, Company } from '../../models';
+import { Group, Member, Company, MemberLeaderboardEntry, GroupLeaderboardEntry } from '../../models';
 import { HomePageData } from '../../core/page-data.resolvers';
 
 const makeGroup = (overrides: Partial<Group> = {}): Group =>
@@ -235,6 +235,63 @@ describe('HomeComponent', () => {
 
       // Advance past debounce; no errors should occur
       tick(500);
+    }));
+  });
+
+  // ── LCP image loading attributes ──────────────────────────────────────────
+  describe('LCP image loading (popular rank)', () => {
+    function leaderMember(id: string, photoUrl: string): MemberLeaderboardEntry {
+      return { id, name: id, name_roman: null, photo_url: photoUrl, color: null, view_count: 1 };
+    }
+
+    function leaderGroup(id: string, photoUrl: string): GroupLeaderboardEntry {
+      return { id, name: id, photo_url: photoUrl, color: null, view_count: 1 };
+    }
+
+    it('first topMember image uses loading=eager and fetchpriority=high', fakeAsync(async () => {
+      await setup({}, {}, {}, {
+        topMembers: [
+          leaderMember('m1', 'https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/object/public/members/m1.jpg'),
+          leaderMember('m2', 'https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/object/public/members/m2.jpg'),
+        ],
+        topGroups: [],
+      });
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const imgs = el.querySelectorAll<HTMLImageElement>('.popular-rank-img');
+
+      expect(imgs.length).toBeGreaterThanOrEqual(2);
+      expect(imgs[0].getAttribute('loading')).toBe('eager');
+      expect(imgs[0].getAttribute('fetchpriority')).toBe('high');
+      expect(imgs[1].getAttribute('loading')).toBe('lazy');
+      expect(imgs[1].getAttribute('fetchpriority')).toBeNull();
+
+      discardPeriodicTasks();
+    }));
+
+    it('first topGroup image uses loading=eager and fetchpriority=high', fakeAsync(async () => {
+      await setup({}, {}, {}, {
+        topMembers: [],
+        topGroups: [
+          leaderGroup('g1', 'https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/object/public/groups/g1.jpg'),
+          leaderGroup('g2', 'https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/object/public/groups/g2.jpg'),
+        ],
+      });
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const imgs = el.querySelectorAll<HTMLImageElement>('.popular-rank-img');
+
+      expect(imgs.length).toBeGreaterThanOrEqual(2);
+      expect(imgs[0].getAttribute('loading')).toBe('eager');
+      expect(imgs[0].getAttribute('fetchpriority')).toBe('high');
+      expect(imgs[1].getAttribute('loading')).toBe('lazy');
+      expect(imgs[1].getAttribute('fetchpriority')).toBeNull();
+
+      discardPeriodicTasks();
     }));
   });
 });
