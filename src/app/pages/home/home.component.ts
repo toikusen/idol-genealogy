@@ -13,6 +13,7 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { VenueMapComponent } from '../../shared/venue-map/venue-map.component';
+import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 import type { HomePageData } from '../../core/page-data.resolvers';
 import {
@@ -27,7 +28,7 @@ import {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe, VenueMapComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe, VenueMapComponent, AdBannerComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })

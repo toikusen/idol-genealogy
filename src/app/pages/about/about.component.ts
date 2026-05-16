@@ -6,11 +6,12 @@ import { SeoService } from '../../core/seo.service';
 import { TeamMember } from '../../models';
 import { siteUrl } from '../../core/public-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
+import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 
 @Component({
   selector: 'app-about',
   standalone: true,
-  imports: [CommonModule, RouterLink, SupabaseImgPipe],
+  imports: [CommonModule, RouterLink, SupabaseImgPipe, AdBannerComponent],
   templateUrl: './about.component.html',
 })
 export class AboutComponent implements OnInit {
