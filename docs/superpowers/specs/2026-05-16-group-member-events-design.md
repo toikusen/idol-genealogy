@@ -34,10 +34,14 @@ getUpcomingGroupEvents(group: Group, daysAhead = 90): Promise<VenueCalendarEvent
 
 搭配 `matchesGroup(event, group)` private method，規則如下：
 
+**Normalize 規則（group matching 專用）**：先 `value.normalize('NFKC')`（半形化全形字元），再 lowercase 並移除符號空白。長度門檻在 normalize 之後計算。
+
+候選名稱：`group.name` 與 `group.name_jp`（若存在），兩者皆 normalize 後使用。
+
 | 比對來源 | 規則 |
 |---|---|
-| `summary`（事件標題） | 比對 `group.name`（normalize 後完整出現），以及 `group.name_jp`（若存在） |
-| `location`（事件地點） | 只有在 group.name ≥ 4 CJK 字元，或 ≥ 6 英數字元時才比對，避免短名稱誤中 |
+| `summary`（事件標題） | 比對所有候選名稱（`group.name` 及 `group.name_jp`），normalize 後完整出現 |
+| `location`（事件地點） | 比對所有候選名稱，但每個候選名稱須通過長度門檻：normalize 後 ≥ 4 CJK 字元，或 ≥ 6 英數字元，才納入比對 |
 | `description`（事件說明） | **完全跳過**，風險過高 |
 | CJK bigram 模糊比對 | **不使用**，保留給場地邏輯 |
 
@@ -64,6 +68,7 @@ group-events.component.spec.ts
 
 - 對每個 group 各自呼叫 `getUpcomingGroupEvents(group)`
 - 共用 `GoogleCalendarService` 的 raw cache（不重複打 API）
+- group derived cache 使用獨立 key prefix：`group:${group.id}:${daysAhead}`，與 venue cache（`venue:${venue.id}:${daysAhead}`）隔離
 - 各自管理 loading / error 狀態
 
 ### 顯示邏輯
@@ -74,13 +79,16 @@ group-events.component.spec.ts
 | 多個團體，各有活動 | 每個團體一個小區塊，有團體名稱作 header |
 | 無活動（任何情境） | 整個元件隱藏，不顯示空狀態 |
 | 載入中 | 輕量文字提示（如「讀取活動中…」） |
-| 載入失敗 | 靜默失敗，不顯示區塊 |
+| 某一團體載入失敗 | 只隱藏該團體的區塊，其他有活動的團體照常顯示 |
+| 全部失敗或全部無活動 | 整個元件隱藏 |
 
 ### 活動項目格式
 
 每筆活動顯示：
 - 日期：`M/D` 格式
 - 標題：截斷 ellipsis，點擊開新分頁（Google Calendar 連結）
+
+成員頁多個團體皆命中同一活動（相同 `event.id`）時，去重後只顯示一次；活動列表依 `start` 升冪排列。
 
 ---
 
@@ -101,7 +109,9 @@ group-events.component.spec.ts
 
 位置：原創曲區塊**之後**，編輯紀錄**之前**。
 
-資料來源：`histories` 中 `status === 'active'` 的所有 group，透過 resolver 或頁面已有的 `histories` 資料取得對應 `Group[]`。
+資料來源：`histories` 中 status 為 `active`、`hiatus`、`concurrent` 的所有 group（代表「目前仍關聯」），不含 `support`（臨時性，活動歸屬感較弱）、`transferred`、`graduated`、`withdrawn`。
+
+透過頁面已有的 `histories` 資料取得對應 `Group[]`（history 物件已 join group）。
 
 ```html
 <!-- 原創曲 -->
@@ -109,7 +119,18 @@ group-events.component.spec.ts
 <!-- 編輯紀錄 -->
 ```
 
-其中 `activeGroups` 為 component 計算屬性，從 `histories` 過濾出 status='active' 且有對應 group 物件的紀錄。
+其中 `activeGroups` 為 component 計算屬性：
+
+```ts
+get activeGroups(): Group[] {
+  const statuses = new Set(['active', 'hiatus', 'concurrent']);
+  const seen = new Set<string>();
+  return this.histories
+    .filter(h => statuses.has(h.status ?? '') && h.group)
+    .map(h => h.group!)
+    .filter(g => !seen.has(g.id) && seen.add(g.id));
+}
+```
 
 ---
 
@@ -119,3 +140,15 @@ group-events.component.spec.ts
 - 成員本人的個人行事曆活動
 - 活動篩選 / 排序功能
 - 場地欄位（venue marker 上已有）
+
+---
+
+## 實作注意事項
+
+### Cache key migration
+
+`GoogleCalendarService.cache` 現有 venue key 格式為 `${venue.id}:${daysAhead}`，實作時一併改為 `venue:${venue.id}:${daysAhead}`，避免未來 UUID 碰撞風險。group key 使用 `group:${group.id}:${daysAhead}`。
+
+### 型別沿用
+
+`VenueCalendarEvent` 型別暫時沿用，不在本次改名；未來統一改為 `CalendarEvent` 時再處理。
