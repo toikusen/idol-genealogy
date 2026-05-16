@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RecordEditHistoryComponent } from './record-edit-history.component';
 import { ProposalService } from '../../core/proposal.service';
+import { CompanyService } from '../../core/company.service';
+import { MemberService } from '../../core/member.service';
+import { GroupService } from '../../core/group.service';
 import { Proposal } from '../../models';
 
 const mockProposal: Proposal = {
@@ -23,7 +26,12 @@ describe('RecordEditHistoryComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [RecordEditHistoryComponent],
-      providers: [{ provide: ProposalService, useValue: proposalServiceSpy }],
+      providers: [
+        { provide: ProposalService, useValue: proposalServiceSpy },
+        { provide: CompanyService, useValue: { getAll: () => Promise.resolve([]) } },
+        { provide: MemberService, useValue: { getAll: () => Promise.resolve([]) } },
+        { provide: GroupService, useValue: { getAll: () => Promise.resolve([]) } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RecordEditHistoryComponent);

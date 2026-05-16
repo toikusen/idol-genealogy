@@ -16,9 +16,9 @@ describe('AdminShellComponent drawer', () => {
       imports: [AdminShellComponent],
       providers: [
         provideRouter([]),
-        { provide: AdminRoleService, useValue: { isAdmin$: new BehaviorSubject(false) } },
+        { provide: AdminRoleService, useValue: { isAdmin$: new BehaviorSubject(false), getAll: () => Promise.resolve([]) } },
         { provide: ProposalService, useValue: { getPendingCount: () => Promise.resolve(0) } },
-        { provide: SupabaseService, useValue: { signOut: () => Promise.resolve() } },
+        { provide: SupabaseService, useValue: { authState$: new BehaviorSubject(null), signOut: () => Promise.resolve() } },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(AdminShellComponent);

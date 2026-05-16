@@ -31,6 +31,6 @@ describe('adminGuard', () => {
       adminGuard(null as any, { url: '/admin/audit-log' } as RouterStateSnapshot)
     );
     expect(result).not.toBeTrue(); // must return a UrlTree, not boolean true
-    expect(routerSpy.createUrlTree).toHaveBeenCalledWith(['/admin']);
+    expect(routerSpy.createUrlTree).toHaveBeenCalledWith(['/']);
   });
 });

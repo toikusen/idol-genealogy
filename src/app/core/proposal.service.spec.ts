@@ -7,18 +7,30 @@ describe('ProposalService', () => {
   let mockDb: any;
 
   beforeEach(() => {
+    const createSelectChain = () => {
+      const isChain = {
+        gte: jasmine.createSpy('gte').and.returnValue(Promise.resolve({ count: 0, error: null }))
+      };
+      const eqChain = {
+        is: jasmine.createSpy('is').and.returnValue(isChain),
+        order: jasmine.createSpy('order').and.returnValue(Promise.resolve({ data: [], error: null }))
+      };
+      return {
+        eq: jasmine.createSpy('eq').and.returnValue(eqChain)
+      };
+    };
     mockDb = {
-      from: jasmine.createSpy('from').and.returnValue({
-        insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null })),
-        select: jasmine.createSpy('select').and.returnValue({
-          eq: jasmine.createSpy('eq').and.returnValue({
-            order: jasmine.createSpy('order').and.returnValue(Promise.resolve({ data: [], error: null }))
-          }),
-          order: jasmine.createSpy('order').and.returnValue(Promise.resolve({ data: [], error: null }))
-        }),
-        update: jasmine.createSpy('update').and.returnValue({
-          eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
-        }),
+      from: jasmine.createSpy('from').and.callFake((table: string) => {
+        if (table === 'proposals') {
+          return {
+            insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null })),
+            select: jasmine.createSpy('select').and.returnValue(createSelectChain()),
+            update: jasmine.createSpy('update').and.returnValue({
+              eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
+            }),
+          };
+        }
+        return { select: jasmine.createSpy('select').and.returnValue(createSelectChain()) };
       })
     };
     TestBed.configureTestingModule({
@@ -50,11 +62,6 @@ describe('ProposalService', () => {
   });
 
   it('getPendingCount() should return 0 for empty result', async () => {
-    mockDb.from.and.returnValue({
-      select: jasmine.createSpy('select').and.returnValue({
-        eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ data: [], error: null }))
-      })
-    });
     const count = await service.getPendingCount();
     expect(count).toBe(0);
   });

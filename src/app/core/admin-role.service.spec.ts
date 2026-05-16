@@ -34,13 +34,11 @@ describe('AdminRoleService', () => {
 
   it('isAdmin$ becomes true when authState$ emits a session and user is admin', async () => {
     const supabase = TestBed.inject(SupabaseService) as any;
-    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({
-      eq: jasmine.createSpy('eqRole').and.returnValue({
-        limit: jasmine.createSpy('limit').and.returnValue(
-          Promise.resolve({ data: [{ id: '1' }], error: null })
-        )
-      })
-    });
+    const limitSpy = jasmine.createSpy('limit').and.returnValue(
+      Promise.resolve({ data: [{ id: '1' }], error: null })
+    );
+    const inSpy = jasmine.createSpy('in').and.returnValue({ limit: limitSpy });
+    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ in: inSpy });
     dbSpy.from.and.returnValue({ select: jasmine.createSpy().and.returnValue({ eq: eqEmailSpy }) });
     supabase.getSessionOnce.and.returnValue(Promise.resolve({ user: { email: 'admin@test.com' } }));
     authState$.next({ user: { email: 'admin@test.com' } });
@@ -61,8 +59,8 @@ describe('AdminRoleService', () => {
     const supabase = TestBed.inject(SupabaseService) as any;
     supabase.getSessionOnce.and.returnValue(Promise.resolve({ user: { email: 'user@test.com' } }));
     const limitSpy = jasmine.createSpy('limit').and.returnValue(Promise.resolve({ data: [], error: null }));
-    const eqRoleSpy = jasmine.createSpy('eqRole').and.returnValue({ limit: limitSpy });
-    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ eq: eqRoleSpy });
+    const inSpy = jasmine.createSpy('in').and.returnValue({ limit: limitSpy });
+    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ in: inSpy });
     dbSpy.from.and.returnValue({ select: jasmine.createSpy().and.returnValue({ eq: eqEmailSpy }) });
     const result = await service.isAdmin();
     expect(result).toBeFalse();
@@ -74,8 +72,8 @@ describe('AdminRoleService', () => {
     const limitSpy = jasmine.createSpy('limit').and.returnValue(
       Promise.resolve({ data: [{ id: '1' }], error: null })
     );
-    const eqRoleSpy = jasmine.createSpy('eqRole').and.returnValue({ limit: limitSpy });
-    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ eq: eqRoleSpy });
+    const inSpy = jasmine.createSpy('in').and.returnValue({ limit: limitSpy });
+    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ in: inSpy });
     dbSpy.from.and.returnValue({ select: jasmine.createSpy().and.returnValue({ eq: eqEmailSpy }) });
     const result = await service.isAdmin();
     expect(result).toBeTrue();
@@ -84,7 +82,9 @@ describe('AdminRoleService', () => {
   it('getAll() returns user_roles list', async () => {
     const roles = [{ id: '1', email: 'a@b.com', role: 'admin', created_at: '' }];
     const fromChain = {
-      select: jasmine.createSpy().and.returnValue({ data: roles, error: null })
+      select: jasmine.createSpy().and.returnValue({
+        order: jasmine.createSpy().and.returnValue({ data: roles, error: null })
+      })
     };
     dbSpy.from.and.returnValue(fromChain);
     const result = await service.getAll();
@@ -97,7 +97,7 @@ describe('AdminRoleService', () => {
     };
     dbSpy.from.and.returnValue(fromChain);
     await expectAsync(service.add('new@test.com', 'editor')).toBeResolved();
-    expect(fromChain.insert).toHaveBeenCalledWith({ email: 'new@test.com', role: 'editor' });
+    expect(fromChain.insert).toHaveBeenCalledWith({ email: 'new@test.com', role: 'editor', display_name: null });
   });
 
   it('remove() deletes a user_role by id', async () => {
@@ -123,8 +123,8 @@ describe('AdminRoleService', () => {
     const limitSpy = jasmine.createSpy('limit').and.returnValue(
       Promise.resolve({ data: null, error: { message: 'db error' } })
     );
-    const eqRoleSpy = jasmine.createSpy('eqRole').and.returnValue({ limit: limitSpy });
-    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ eq: eqRoleSpy });
+    const inSpy = jasmine.createSpy('in').and.returnValue({ limit: limitSpy });
+    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ in: inSpy });
     dbSpy.from.and.returnValue({ select: jasmine.createSpy().and.returnValue({ eq: eqEmailSpy }) });
     const result = await service.isAdmin();
     expect(result).toBeFalse();
