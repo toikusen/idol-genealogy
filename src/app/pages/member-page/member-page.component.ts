@@ -9,7 +9,8 @@ import { MemberTimelineComponent } from '../../shared/member-timeline/member-tim
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { MemberCareerGraphComponent } from '../../shared/member-career-graph/member-career-graph.component';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
-import { Member, History, Proposal, MemberSong } from '../../models';
+import { Member, History, Proposal, MemberSong, Group } from '../../models';
+import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { ProposalService } from '../../core/proposal.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
@@ -29,13 +30,23 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 @Component({
   selector: 'app-member-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe],
+  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent],
   templateUrl: './member-page.component.html',
   styleUrl: './member-page.component.css',
 })
 export class MemberPageComponent implements OnInit, OnDestroy {
   member: Member | null = null;
   histories: History[] = [];
+
+  get activeGroups(): Group[] {
+    const statuses = new Set(['active', 'concurrent', 'support']);
+    const seen = new Set<string>();
+    return this.histories
+      .filter(h => statuses.has(h.status ?? '') && h.group != null)
+      .map(h => h.group!)
+      .filter(g => !seen.has(g.id) && seen.add(g.id));
+  }
+
   loading = true;
   deferredLoading = false;
   error = false;

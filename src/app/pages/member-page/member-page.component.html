@@ -570,6 +570,11 @@
 
       </section>
 
+      <!-- ══ Recent Events ══ -->
+      @if (activeGroups.length > 0) {
+        <app-group-events [groups]="activeGroups" />
+      }
+
       <!-- Source and editorial note -->
       <div class="attribution-widget" style="
         margin:40px 0 20px;
