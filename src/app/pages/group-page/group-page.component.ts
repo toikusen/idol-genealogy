@@ -35,6 +35,7 @@ import {
   sanitizePublicGroupRecord,
 } from '../../core/public-record.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
+import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 
 interface GanttRow {
   history: History;
@@ -46,7 +47,7 @@ interface GanttRow {
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe],
+  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent],
   templateUrl: './group-page.component.html',
   styleUrl: './group-page.component.css',
 })

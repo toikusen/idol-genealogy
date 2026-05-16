@@ -619,6 +619,13 @@
         </section>
       }
 
+      <!-- ══ Recent Events ══ -->
+      @if (group) {
+        <div class="px-4 sm:px-6">
+          <app-group-events [groups]="[group]" />
+        </div>
+      }
+
       <!-- ══ Tabs: members / connections ══ -->
       <div class="mt-10 px-4 sm:px-6">
         <div role="tablist" aria-label="團體內容切換" style="display:flex;gap:4px;border-bottom:1px solid var(--border-subtle);margin-bottom:24px;">
