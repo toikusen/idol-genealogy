@@ -15,6 +15,9 @@ export class SupabaseService implements OnDestroy {
         autoRefreshToken: this.isBrowser,
         detectSessionInUrl: this.isBrowser,
         persistSession: this.isBrowser,
+        // Bypass Navigator.locks to prevent "lock immediately failed" console errors
+        // during Angular hydration when two async paths race on the same lock.
+        lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => fn(),
       }
     }
   );

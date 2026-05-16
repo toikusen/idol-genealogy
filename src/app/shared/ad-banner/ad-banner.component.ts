@@ -41,25 +41,29 @@ export class AdBannerComponent implements AfterViewInit, OnDestroy {
       document.head.appendChild(s);
     }
 
-    try {
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-    } catch (_) {}
+    // Defer push to next frame so the container has layout dimensions.
+    // Calling push() when availableWidth=0 produces a TagError console error.
+    requestAnimationFrame(() => {
+      const ins: HTMLElement | null = this.el.nativeElement.querySelector('ins');
+      if (!ins || ins.getBoundingClientRect().width === 0) return;
 
-    const ins: HTMLElement | null = this.el.nativeElement.querySelector('ins');
-    if (!ins) return;
+      try {
+        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      } catch (_) {}
 
-    this.observer = new MutationObserver(() => {
-      const status = ins.getAttribute('data-ad-status');
-      if (status === 'filled') {
-        this.visible = true;
-        this.observer?.disconnect();
-      } else if (status === 'unfilled') {
-        this.visible = false;
-        this.observer?.disconnect();
-      }
+      this.observer = new MutationObserver(() => {
+        const status = ins.getAttribute('data-ad-status');
+        if (status === 'filled') {
+          this.visible = true;
+          this.observer?.disconnect();
+        } else if (status === 'unfilled') {
+          this.visible = false;
+          this.observer?.disconnect();
+        }
+      });
+
+      this.observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
     });
-
-    this.observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
   }
 
   ngOnDestroy() {

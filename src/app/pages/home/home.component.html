@@ -540,8 +540,7 @@
                     overflow: hidden; position: relative;
                   ">
                     @if (member.photo_url) {
-                      <img [loading]="i === 0 ? 'eager' : 'lazy'"
-                           [attr.fetchpriority]="i === 0 ? 'high' : null"
+                      <img loading="lazy"
                            [src]="member.photo_url | supabaseImg:112" [alt]="member.name" width="56" height="56"
                            style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>
                     } @else {
