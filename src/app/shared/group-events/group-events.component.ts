@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, PendingTasks, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Group, VenueCalendarEvent } from '../../models';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
@@ -51,13 +51,12 @@ export class GroupEventsComponent implements OnChanges {
 
   constructor(
     private calendarService: GoogleCalendarService,
-    private pendingTasks: PendingTasks,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['groups']) {
-      void this.pendingTasks.run(() => this.reload());
-    }
+    if (changes['groups']) void this.ngZone.run(() => this.reload());
   }
 
   protected get hasEvents(): boolean {
@@ -107,5 +106,6 @@ export class GroupEventsComponent implements OnChanges {
     }
 
     this.loading = false;
+    this.cdr.markForCheck();
   }
 }
