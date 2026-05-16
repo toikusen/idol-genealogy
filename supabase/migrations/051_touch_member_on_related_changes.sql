@@ -1,9 +1,11 @@
 -- Bump members.updated_at whenever a related row (history, member_songs) changes,
 -- so the member appears in the homepage "recent updates" section.
 create or replace function touch_member_updated_at()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer
+set search_path = public
+as $$
 begin
-  update members
+  update public.members
     set updated_at = now()
   where id = coalesce(NEW.member_id, OLD.member_id);
   return null;
