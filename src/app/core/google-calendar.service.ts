@@ -76,6 +76,7 @@ export class GoogleCalendarService {
   }
 
   private readonly GROUP_ORGANIZER_KEYWORDS = ['presents', '主辦', '主催'];
+  private readonly GROUP_PERFORMER_KEYWORDS = ['演出者', '出演者', '出演', 'guest', '嘉賓', 'ゲスト'];
 
   private stripNonCjk(s: string): string {
     return s.replace(/[^ぁ-ゖァ-ー一-鿿㐀-䶿a-z0-9]/g, '');
@@ -109,8 +110,28 @@ export class GoogleCalendarService {
 
     if (event.description) {
       if (this.groupNameNearOrganizerKeyword(names, event.description)) return true;
+      if (this.groupNameNearPerformerKeyword(names, event.description)) return true;
+      if (this.groupMatchesFromPattern(names, event.description)) return true;
     }
 
+    return false;
+  }
+
+  private groupNameInPhrase(names: string[], phraseNfkc: string): boolean {
+    const phraseStripped = this.stripNonCjk(phraseNfkc);
+    for (const name of names) {
+      const nfkc = name.normalize('NFKC').toLowerCase();
+      const hasCjkKana = /[ぁ-ゖァ-ー一-鿿㐀-䶿]/.test(nfkc);
+      if (hasCjkKana) {
+        const stripped = this.stripNonCjk(nfkc);
+        const cjkKanaCount = (stripped.match(/[ぁ-ゖァ-ー一-鿿㐀-䶿]/g) ?? []).length;
+        if (cjkKanaCount >= 3 && phraseStripped.includes(stripped)) return true;
+        if (cjkKanaCount < 3 && cjkKanaCount >= 1 && nfkc.length >= 3 && phraseNfkc.includes(nfkc)) return true;
+      } else {
+        const stripped = this.stripNonCjk(nfkc);
+        if (stripped.length >= 4 && this.tokenMatch(stripped, phraseNfkc)) return true;
+      }
+    }
     return false;
   }
 
@@ -120,19 +141,38 @@ export class GoogleCalendarService {
       const phraseNfkc = phrase.normalize('NFKC').toLowerCase();
       const hasKeyword = this.GROUP_ORGANIZER_KEYWORDS.some(kw => phraseNfkc.includes(kw));
       if (!hasKeyword) continue;
-      const phraseStripped = this.stripNonCjk(phraseNfkc);
+      if (this.groupNameInPhrase(names, phraseNfkc)) return true;
+    }
+    return false;
+  }
+
+  private groupNameNearPerformerKeyword(names: string[], description: string): boolean {
+    const phrases = this.descriptionPhrases(description);
+    for (let i = 0; i < phrases.length; i++) {
+      const phraseNfkc = phrases[i].normalize('NFKC').toLowerCase();
+      const hasKeyword = this.GROUP_PERFORMER_KEYWORDS.some(kw => phraseNfkc.includes(kw));
+      if (!hasKeyword) continue;
+      // Same phrase (e.g. "幻波SYNC が出演します")
+      if (this.groupNameInPhrase(names, phraseNfkc)) return true;
+      // Following phrases: performers are often listed one per line after the keyword
+      for (let j = i + 1; j < Math.min(i + 15, phrases.length); j++) {
+        const nextNfkc = phrases[j].normalize('NFKC').toLowerCase();
+        if (this.groupNameInPhrase(names, nextNfkc)) return true;
+      }
+    }
+    return false;
+  }
+
+  private groupMatchesFromPattern(names: string[], description: string): boolean {
+    // Match "(From X)" or "（From X）" — indicates X is the member's source group
+    const pattern = /[（(]\s*[Ff]rom\s+([^)）\n]{1,40})[)）]/g;
+    let match;
+    while ((match = pattern.exec(description)) !== null) {
+      const extracted = this.stripNonCjk(match[1].trim().normalize('NFKC').toLowerCase());
+      if (!extracted) continue;
       for (const name of names) {
-        const nfkc = name.normalize('NFKC').toLowerCase();
-        const hasCjkKana = /[ぁ-ゖァ-ー一-鿿㐀-䶿]/.test(nfkc);
-        if (hasCjkKana) {
-          const stripped = this.stripNonCjk(nfkc);
-          const cjkKanaCount = (stripped.match(/[ぁ-ゖァ-ー一-鿿㐀-䶿]/g) ?? []).length;
-          if (cjkKanaCount >= 3 && phraseStripped.includes(stripped)) return true;
-          if (cjkKanaCount < 3 && cjkKanaCount >= 1 && nfkc.length >= 3 && phraseNfkc.includes(nfkc)) return true;
-        } else {
-          const stripped = this.stripNonCjk(nfkc);
-          if (stripped.length >= 4 && this.tokenMatch(stripped, phraseNfkc)) return true;
-        }
+        const nameStripped = this.stripNonCjk(name.normalize('NFKC').toLowerCase());
+        if (nameStripped && extracted === nameStripped) return true;
       }
     }
     return false;

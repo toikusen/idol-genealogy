@@ -357,8 +357,11 @@ describe('matchesGroup', () => {
     expect((service as any).matchesGroup(mkEvent('AKB live'), mkGroup('AKB'))).toBeFalse();
   });
 
-  it('does NOT match description even when name present', () => {
-    expect((service as any).matchesGroup(mkEvent('live show', '', '乃木坂46 出演'), mkGroup('乃木坂46'))).toBeFalse();
+  it('does NOT match description without any organizer or performer keyword', () => {
+    expect((service as any).matchesGroup(
+      mkEvent('live show', '', '乃木坂46の元メンバーによる特別公演'),
+      mkGroup('乃木坂46'),
+    )).toBeFalse();
   });
 
   it('matches CJK name in location when length >= 4', () => {
@@ -426,5 +429,41 @@ describe('matchesGroup', () => {
       mkEvent('live show', '', '乃木坂46 presents 特別公演'),
       mkGroup('AKB48'),
     )).toBeFalse();
+  });
+
+  // performer keyword: group listed after 演出者
+  it('matches group listed on line after 演出者 keyword', () => {
+    const desc = '🤍演出者🤍\n幻波SYNC\n木苺FRUCTOSE\n初恋Eternal';
+    expect((service as any).matchesGroup(mkEvent('生誕祭', '', desc), mkGroup('幻波SYNC'))).toBeTrue();
+    expect((service as any).matchesGroup(mkEvent('生誕祭', '', desc), mkGroup('木苺FRUCTOSE'))).toBeTrue();
+    expect((service as any).matchesGroup(mkEvent('生誕祭', '', desc), mkGroup('初恋Eternal'))).toBeTrue();
+  });
+
+  it('does NOT match group NOT in performer list', () => {
+    const desc = '🤍演出者🤍\n幻波SYNC\n木苺FRUCTOSE';
+    expect((service as any).matchesGroup(mkEvent('生誕祭', '', desc), mkGroup('乃木坂46'))).toBeFalse();
+  });
+
+  it('matches group inline with 出演 keyword', () => {
+    expect((service as any).matchesGroup(
+      mkEvent('live', '', '幻波SYNCが出演します'),
+      mkGroup('幻波SYNC'),
+    )).toBeTrue();
+  });
+
+  // (From X) pattern
+  it('matches source group via (From X) pattern', () => {
+    const desc = 'もも(From Pure Maker )\nOTAKU EVENT';
+    expect((service as any).matchesGroup(mkEvent('生誕祭', '', desc), mkGroup('Pure Maker'))).toBeTrue();
+  });
+
+  it('matches CJK source group via (From X) pattern', () => {
+    const desc = '鈴花（From 幻波SYNC）';
+    expect((service as any).matchesGroup(mkEvent('solo event', '', desc), mkGroup('幻波SYNC'))).toBeTrue();
+  });
+
+  it('does NOT match different group via (From X) pattern', () => {
+    const desc = 'もも(From Pure Maker)';
+    expect((service as any).matchesGroup(mkEvent('生誕祭', '', desc), mkGroup('幻波SYNC'))).toBeFalse();
   });
 });
