@@ -14,7 +14,11 @@ interface MergedEvent extends VenueCalendarEvent {
   template: `
     @if (loading || hasEvents) {
       <section style="margin: 32px 0;">
-        <div style="font-size:0.65rem;font-weight:600;color:var(--text-label,#888);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;">近期活動</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="height:1px;width:16px;background:rgba(124,108,242,0.35);"></div>
+          <span style="font-size:0.65rem;font-weight:600;color:var(--text-label,#888);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">近期活動</span>
+          <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(124,108,242,0.18),transparent);"></div>
+        </div>
         @if (loading) {
           <div style="font-size:0.68rem;color:var(--text-faint,#aaa);">讀取活動中…</div>
         } @else {
