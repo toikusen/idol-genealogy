@@ -221,7 +221,8 @@ export class GoogleCalendarService {
   private fetchUpcomingEvents(daysAhead: number): Promise<GoogleCalendarEventResource[]> {
     const cached = this.rawCache.get(daysAhead);
     if (cached) return cached;
-    const timeMin = new Date();
+    const now = new Date();
+    const timeMin = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const timeMax = new Date(timeMin);
     timeMax.setDate(timeMax.getDate() + daysAhead);
     const params = new URLSearchParams({
