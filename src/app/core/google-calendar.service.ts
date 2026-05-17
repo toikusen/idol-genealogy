@@ -97,6 +97,8 @@ export class GoogleCalendarService {
         const cjkKanaCount = (stripped.match(/[ぁ-ゖァ-ー一-鿿㐀-䶿]/g) ?? []).length;
         if (cjkKanaCount >= 3 && summaryStripped.includes(stripped)) return true;
         if (stripped.length >= 4 && cjkKanaCount >= 3 && locationStripped.includes(stripped)) return true;
+        // Short names with distinctive punctuation (e.g. "おれ。"): match full NFKC literal
+        if (cjkKanaCount < 3 && cjkKanaCount >= 1 && nfkc.length >= 3 && summaryNfkc.includes(nfkc)) return true;
       } else {
         const stripped = this.stripNonCjk(nfkc);
         const alphaCount = stripped.length;
@@ -126,6 +128,7 @@ export class GoogleCalendarService {
           const stripped = this.stripNonCjk(nfkc);
           const cjkKanaCount = (stripped.match(/[ぁ-ゖァ-ー一-鿿㐀-䶿]/g) ?? []).length;
           if (cjkKanaCount >= 3 && phraseStripped.includes(stripped)) return true;
+          if (cjkKanaCount < 3 && cjkKanaCount >= 1 && nfkc.length >= 3 && phraseNfkc.includes(nfkc)) return true;
         } else {
           const stripped = this.stripNonCjk(nfkc);
           if (stripped.length >= 4 && this.tokenMatch(stripped, phraseNfkc)) return true;

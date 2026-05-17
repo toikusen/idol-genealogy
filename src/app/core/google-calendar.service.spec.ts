@@ -377,6 +377,21 @@ describe('matchesGroup', () => {
     expect((service as any).matchesGroup(mkEvent('ＡＫＢ４８ concert'), mkGroup('AKB48'))).toBeTrue();
   });
 
+  // Short CJK/Kana name with punctuation (< 3 Kana/CJK chars, but distinctive)
+  it('matches short Kana name with punctuation in summary (e.g. おれ。)', () => {
+    expect((service as any).matchesGroup(
+      mkEvent('おれ。1st Single Release Live ～Side by Side～'),
+      mkGroup('おれ。'),
+    )).toBeTrue();
+  });
+
+  it('does NOT match single Kana char even with punctuation', () => {
+    expect((service as any).matchesGroup(
+      mkEvent('あ。コンサート'),
+      mkGroup('あ。'),
+    )).toBeFalse(); // nfkc.length = 2 < 3
+  });
+
   // description organizer keyword matching
   it('matches group name near "presents" in description', () => {
     expect((service as any).matchesGroup(
