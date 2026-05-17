@@ -13,26 +13,30 @@ interface MergedEvent extends VenueCalendarEvent {
   imports: [CommonModule],
   template: `
     @if (loading || hasEvents) {
-      <section style="margin: 32px 0;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="height:1px;width:16px;background:rgba(124,108,242,0.35);"></div>
-          <span style="font-size:0.65rem;font-weight:600;color:var(--text-label,#888);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">近期活動</span>
+      <section style="margin:28px 0;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;">
+          <div style="height:1px;width:20px;background:rgba(124,108,242,0.4);flex-shrink:0;"></div>
+          <span style="font-size:0.72rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-label);white-space:nowrap;">近期活動</span>
           <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(124,108,242,0.18),transparent);"></div>
         </div>
         @if (loading) {
-          <div style="font-size:0.68rem;color:var(--text-faint,#aaa);">讀取活動中…</div>
+          <div style="font-size:0.68rem;color:var(--text-faint,#aaa);padding:4px 0;">讀取活動中…</div>
         } @else {
           @for (event of singleEvents; track event.id) {
             <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
-               style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 0;text-decoration:none;border-top:1px solid rgba(0,0,0,0.06);">
-              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
+               style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 6px;text-decoration:none;border-radius:6px;transition:background 0.15s;"
+               onmouseenter="this.style.background='rgba(124,108,242,0.05)'"
+               onmouseleave="this.style.background='transparent'">
+              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;padding-top:1px;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
               <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ event.title }}</span>
             </a>
           }
           @for (event of mergedEvents; track event.id) {
             <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
-               style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 0;text-decoration:none;border-top:1px solid rgba(0,0,0,0.06);">
-              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
+               style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 6px;text-decoration:none;border-radius:6px;transition:background 0.15s;"
+               onmouseenter="this.style.background='rgba(124,108,242,0.05)'"
+               onmouseleave="this.style.background='transparent'">
+              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;padding-top:1px;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
               <div>
                 <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">{{ event.title }}</span>
                 <span style="font-size:0.6rem;color:var(--text-faint);">{{ event.groupNames.join(' · ') }}</span>
