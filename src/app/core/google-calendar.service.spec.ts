@@ -1,6 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { GoogleCalendarService } from './google-calendar.service';
-import { Group, Venue } from '../models';
+import { Group, Member, Venue } from '../models';
+
+function mockMember(id: string, overrides: Partial<Member> = {}): Member {
+  return {
+    id, name: `Member ${id}`, name_hiragana: null, name_roman: null, emoji: null,
+    photo_url: null, color: null, color_name: null, birthdate: null, nickname: null,
+    instagram: null, facebook: null, x: null, maid_url: null, notes: null,
+    company_id: null, no_sns: false, updated_at: '2026-01-01', created_at: '2026-01-01',
+    ...overrides,
+  };
+}
 
 const baseGroup: Group = {
   id: 'g1', name: 'Group 1', name_jp: null, photo_url: null, color: '#000',
@@ -321,6 +331,50 @@ describe('GoogleCalendarService', () => {
       const events = await service.getUpcomingVenueEvents(baseVenue);
       expect(events.length).toBe(6);
     });
+  });
+
+  it('matchesMember: matches short-name member via (From Group) pattern', () => {
+    const member = mockMember('m1', { name: 'もも' });
+    const event = {
+      id: 'e-seitan',
+      summary: '綿空もり生誕祭2026',
+      description: '🤍演出者🤍\nもも(From Pure Maker)',
+      start: { dateTime: '2026-06-06T17:30:00+08:00' },
+    };
+    expect((service as any).matchesMember(event, member)).toBeTrue();
+  });
+
+  it('matchesMember: does not match a different member via (From Group) pattern', () => {
+    const member = mockMember('m2', { name: '幻波' });
+    const event = {
+      id: 'e-seitan',
+      summary: '綿空もり生誕祭2026',
+      description: '🤍演出者🤍\nもも(From Pure Maker)',
+      start: { dateTime: '2026-06-06T17:30:00+08:00' },
+    };
+    expect((service as any).matchesMember(event, member)).toBeFalse();
+  });
+
+  it('matchesMember: matches longer-name member via performer keyword', () => {
+    const member = mockMember('m3', { name: '初恋ちゃん' });
+    const event = {
+      id: 'e-live',
+      summary: '夏日LIVE',
+      description: '演出者\n初恋ちゃん',
+      start: { dateTime: '2026-07-01T18:00:00+08:00' },
+    };
+    expect((service as any).matchesMember(event, member)).toBeTrue();
+  });
+
+  it('matchesMember: matches member roman name in event title', () => {
+    const member = mockMember('m4', { name: '春花', name_roman: 'Haruka' });
+    const event = {
+      id: 'e-solo',
+      summary: 'Haruka Solo Live 2026',
+      description: null,
+      start: { dateTime: '2026-08-01T19:00:00+08:00' },
+    };
+    expect((service as any).matchesMember(event, member)).toBeTrue();
   });
 
   it('does not match a group when event only references it via (From Group) in description', () => {

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { Group, Venue, VenueCalendarEvent } from '../models';
+import { Group, Member, Venue, VenueCalendarEvent } from '../models';
 
 interface GoogleCalendarEventDate {
   date?: string;
@@ -69,6 +69,21 @@ export class GoogleCalendarService {
     const promise = rawPromise.then(events =>
       events
         .filter(event => this.matchesGroup(event, group))
+        .map(event => this.toVenueEvent(event)),
+    );
+    this.cache.set(cacheKey, promise);
+    return promise;
+  }
+
+  getUpcomingMemberEvents(member: Member, daysAhead = 90): Promise<VenueCalendarEvent[]> {
+    if (!this.isConfigured()) return Promise.resolve([]);
+    const cacheKey = `member:${member.id}:${daysAhead}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) return cached;
+    const rawPromise = this.rawCache.get(daysAhead) ?? this.fetchUpcomingEvents(daysAhead);
+    const promise = rawPromise.then(events =>
+      events
+        .filter(event => this.matchesMember(event, member))
         .map(event => this.toVenueEvent(event)),
     );
     this.cache.set(cacheKey, promise);
@@ -174,6 +189,42 @@ export class GoogleCalendarService {
         if (nameStripped && extracted === nameStripped) return true;
       }
     }
+    return false;
+  }
+
+  private memberNameInFromPattern(names: string[], description: string): boolean {
+    // Extracts the performer name from "name(From Group)" or "name（From Group）" format.
+    // Each phrase is one line from descriptionPhrases. The regex matches text immediately
+    // before a "(From " opener — precise enough to safely handle short names like "もも".
+    const fromPattern = /^(.+?)\s*[（(]\s*[Ff]rom\s+/;
+    for (const phrase of this.descriptionPhrases(description)) {
+      const m = fromPattern.exec(phrase.trim());
+      if (!m) continue;
+      const extracted = m[1].trim().normalize('NFKC').toLowerCase();
+      for (const name of names) {
+        if (extracted === name.normalize('NFKC').toLowerCase()) return true;
+      }
+    }
+    return false;
+  }
+
+  private matchesMember(event: GoogleCalendarEventResource, member: Member): boolean {
+    const names = [member.name, member.name_hiragana, member.name_roman, member.nickname]
+      .filter((n): n is string => !!n);
+    if (names.length === 0) return false;
+
+    // Layer 1: extract performer from "name(From Group)" — handles short names precisely
+    if (event.description && this.memberNameInFromPattern(names, event.description)) return true;
+
+    // Layer 2: performer keyword scan — reuses existing logic, handles names ≥ 3 CJK/kana chars
+    if (event.description && this.groupNameNearPerformerKeyword(names, event.description)) return true;
+
+    // Layer 3: title / location direct match — reuses existing phrase matching thresholds
+    const summaryNfkc = (event.summary ?? '').normalize('NFKC').toLowerCase();
+    const locationNfkc = (event.location ?? '').normalize('NFKC').toLowerCase();
+    if (this.groupNameInPhrase(names, summaryNfkc)) return true;
+    if (this.groupNameInPhrase(names, locationNfkc)) return true;
+
     return false;
   }
 
