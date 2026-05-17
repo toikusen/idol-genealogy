@@ -68,9 +68,9 @@ export class GroupEventsComponent implements OnChanges {
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (!changes['groups']) return;
+    if (!changes['groups'] && !changes['member']) return;
     const nextSignature = this.groups.map(g => g.id).join('|');
-    if (nextSignature === this.groupSignature) return;
+    if (nextSignature === this.groupSignature && !changes['member']) return;
     this.groupSignature = nextSignature;
     void this.reload();
   }
@@ -105,6 +105,7 @@ export class GroupEventsComponent implements OnChanges {
     this.loading = true;
     this.singleEvents = [];
     this.mergedEvents = [];
+    this.cdr.markForCheck();
 
     if (groups.length === 0 && !member) {
       this.loading = false;
