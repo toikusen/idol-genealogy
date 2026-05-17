@@ -48,13 +48,25 @@ getUpcomingGroupEvents(group: Group, daysAhead = 90): Promise<VenueCalendarEvent
 |---|---|---|
 | `summary`（事件標題） | CJK/Kana ≥ 3，或英數 ≥ 4 | 候選名稱未達門檻則跳過；CJK/Kana 候選用 normalized includes；純英數候選用 token 邊界 regex：`(^|[^a-z0-9])name([^a-z0-9]|$)` |
 | `location`（事件地點） | CJK/Kana ≥ 4，或英數 ≥ 6 | 門檻較 summary 更嚴；英數同樣用 token 邊界 regex |
-| `description`（事件說明） | — | **完全跳過**，風險過高 |
+| `description`（事件說明） | CJK/Kana ≥ 3，或英數 ≥ 4（同 summary） | **只在主辦關鍵字附近才比對**（見下方說明）；無關鍵字的句子完全跳過 |
 | CJK bigram 模糊比對 | — | **不使用**，保留給場地邏輯 |
 
 比對為「有一項符合即算」，依候選名稱類型使用不同比對方式：
 
 - **CJK/Kana 候選**：對事件文字套用「NFKC + lowercase + 移除符號空白」後做 substring includes
 - **純英數候選**：對事件文字套用「NFKC + lowercase，但保留非英數分隔符（空白、標點保留）」後，用 `(^|[^a-z0-9])name([^a-z0-9]|$)` 做 token 邊界比對；不可對已移除分隔符的字串跑，否則 `AKB48 Team TP` 會變成 `akb48teamtp` 而邊界資訊消失
+
+**Description 主辦關鍵字規則**：
+
+將 description 以換行 / 句點切成短句（reuse 現有 `descriptionPhrases()`）。只有**同時包含以下主辦關鍵字之一**的短句，才允許在其中比對團體名稱：
+
+主辦關鍵字（NFKC + lowercase 後比對）：`presents`、`主辦`、`主催`
+
+- 比對邏輯與 summary 相同（CJK/Kana includes；alpha token boundary）
+- 長度門檻與 summary 相同（CJK/Kana ≥ 3；alpha ≥ 4）
+- 只看短句內是否同時有關鍵字與名稱；不跨句比對
+
+範例：`未確認感情体presents『…』` 這句同時有 `未確認感情体`（CJK ≥ 3）和 `presents` → 命中。
 
 ---
 

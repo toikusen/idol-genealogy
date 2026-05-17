@@ -75,29 +75,61 @@ export class GoogleCalendarService {
     return promise;
   }
 
+  private readonly GROUP_ORGANIZER_KEYWORDS = ['presents', '主辦', '主催'];
+
+  private stripNonCjk(s: string): string {
+    return s.replace(/[^ぁ-ゖァ-ー一-鿿㐀-䶿a-z0-9]/g, '');
+  }
+
   private matchesGroup(event: GoogleCalendarEventResource, group: Group): boolean {
     const names = [group.name, group.name_jp].filter((n): n is string => !!n);
     const summaryNfkc = (event.summary ?? '').normalize('NFKC').toLowerCase();
     const locationNfkc = (event.location ?? '').normalize('NFKC').toLowerCase();
-    const stripNonCjk = (s: string) =>
-      s.replace(/[^ぁ-ゖァ-ー一-鿿㐀-䶿a-z0-9]/g, '');
-    const summaryStripped = stripNonCjk(summaryNfkc);
-    const locationStripped = stripNonCjk(locationNfkc);
+    const summaryStripped = this.stripNonCjk(summaryNfkc);
+    const locationStripped = this.stripNonCjk(locationNfkc);
 
     for (const name of names) {
       const nfkc = name.normalize('NFKC').toLowerCase();
       const hasCjkKana = /[ぁ-ゖァ-ー一-鿿㐀-䶿]/.test(nfkc);
 
       if (hasCjkKana) {
-        const stripped = stripNonCjk(nfkc);
+        const stripped = this.stripNonCjk(nfkc);
         const cjkKanaCount = (stripped.match(/[ぁ-ゖァ-ー一-鿿㐀-䶿]/g) ?? []).length;
         if (cjkKanaCount >= 3 && summaryStripped.includes(stripped)) return true;
         if (stripped.length >= 4 && cjkKanaCount >= 3 && locationStripped.includes(stripped)) return true;
       } else {
-        const stripped = stripNonCjk(nfkc);
+        const stripped = this.stripNonCjk(nfkc);
         const alphaCount = stripped.length;
         if (alphaCount >= 4 && this.tokenMatch(stripped, summaryNfkc)) return true;
         if (alphaCount >= 6 && this.tokenMatch(stripped, locationNfkc)) return true;
+      }
+    }
+
+    if (event.description) {
+      if (this.groupNameNearOrganizerKeyword(names, event.description)) return true;
+    }
+
+    return false;
+  }
+
+  private groupNameNearOrganizerKeyword(names: string[], description: string): boolean {
+    const phrases = this.descriptionPhrases(description);
+    for (const phrase of phrases) {
+      const phraseNfkc = phrase.normalize('NFKC').toLowerCase();
+      const hasKeyword = this.GROUP_ORGANIZER_KEYWORDS.some(kw => phraseNfkc.includes(kw));
+      if (!hasKeyword) continue;
+      const phraseStripped = this.stripNonCjk(phraseNfkc);
+      for (const name of names) {
+        const nfkc = name.normalize('NFKC').toLowerCase();
+        const hasCjkKana = /[ぁ-ゖァ-ー一-鿿㐀-䶿]/.test(nfkc);
+        if (hasCjkKana) {
+          const stripped = this.stripNonCjk(nfkc);
+          const cjkKanaCount = (stripped.match(/[ぁ-ゖァ-ー一-鿿㐀-䶿]/g) ?? []).length;
+          if (cjkKanaCount >= 3 && phraseStripped.includes(stripped)) return true;
+        } else {
+          const stripped = this.stripNonCjk(nfkc);
+          if (stripped.length >= 4 && this.tokenMatch(stripped, phraseNfkc)) return true;
+        }
       }
     }
     return false;

@@ -376,4 +376,40 @@ describe('matchesGroup', () => {
   it('handles full-width alphanumeric via NFKC normalization', () => {
     expect((service as any).matchesGroup(mkEvent('ＡＫＢ４８ concert'), mkGroup('AKB48'))).toBeTrue();
   });
+
+  // description organizer keyword matching
+  it('matches group name near "presents" in description', () => {
+    expect((service as any).matchesGroup(
+      mkEvent('氧鋰氖生誕祭', '', '未確認感情体presents『ねぇ、私の心臓、食べてみて？』'),
+      mkGroup('未確認感情体'),
+    )).toBeTrue();
+  });
+
+  it('matches group name near "主辦" in description', () => {
+    expect((service as any).matchesGroup(
+      mkEvent('春季演唱會', '', '主辦：乃木坂46\n詳情請見官網'),
+      mkGroup('乃木坂46'),
+    )).toBeTrue();
+  });
+
+  it('matches group name near "主催" in description', () => {
+    expect((service as any).matchesGroup(
+      mkEvent('live event', '', '主催：未確認感情体'),
+      mkGroup('未確認感情体'),
+    )).toBeTrue();
+  });
+
+  it('does NOT match group name in description without organizer keyword', () => {
+    expect((service as any).matchesGroup(
+      mkEvent('live show', '', '乃木坂46の元メンバーによる特別公演'),
+      mkGroup('乃木坂46'),
+    )).toBeFalse();
+  });
+
+  it('does NOT match when organizer keyword present but group name absent', () => {
+    expect((service as any).matchesGroup(
+      mkEvent('live show', '', '乃木坂46 presents 特別公演'),
+      mkGroup('AKB48'),
+    )).toBeFalse();
+  });
 });
