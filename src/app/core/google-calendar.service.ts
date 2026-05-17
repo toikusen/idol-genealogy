@@ -91,7 +91,7 @@ export class GoogleCalendarService {
   }
 
   private readonly GROUP_ORGANIZER_KEYWORDS = ['presents', '主辦', '主催'];
-  private readonly GROUP_PERFORMER_KEYWORDS = ['演出者', '出演者', '出演', '演出嘉賓', 'guest', '嘉賓', 'ゲスト'];
+  private readonly GROUP_PERFORMER_KEYWORDS = ['演出陣容', '演出者', '出演者', '出演', '演出嘉賓', 'guest', '嘉賓', 'ゲスト'];
 
   private stripNonCjk(s: string): string {
     return s.replace(/[^ぁ-ゖァ-ー一-鿿㐀-䶿a-z0-9]/g, '');
@@ -321,7 +321,7 @@ export class GoogleCalendarService {
       .replace(/<\/(?:div|p|li)>/gi, '\n')
       .replace(/<(?:div|p|li)(?:\s[^>]*)?>/gi, '\n')
       .replace(/<[^>]+>/g, '')
-      .split(/[\n\r。；;]+/)
+      .split(/[\n\r。；;、]+/)
       .map(phrase => phrase.trim())
       .filter(Boolean);
   }

@@ -388,6 +388,28 @@ describe('GoogleCalendarService', () => {
     expect((service as any).matchesMember(event, member)).toBeTrue();
   });
 
+  it('matchesGroup: matches group listed under 演出陣容 keyword with comma-separated performers', () => {
+    const group: Group = { ...baseGroup, id: 'shojogacha', name: '少女ガチャポン' };
+    const event = {
+      id: 'e-unknown',
+      summary: '【Unknown vol.10】',
+      description: '■ 演出陣容：\n《昼》\n小浜ゆみな、Nevaris-ネヴァリス、少女ガチャポン、デュアリア',
+      start: { dateTime: '2026-06-07T12:00:00+08:00' },
+    };
+    expect((service as any).matchesGroup(event, group)).toBeTrue();
+  });
+
+  it('matchesGroup: matches non-CJK group in comma-separated performer line', () => {
+    const group: Group = { ...baseGroup, id: 'sol-luna', name: 'SOL☆LUNA ᯓ★sora' };
+    const event = {
+      id: 'e-unknown',
+      summary: '【Unknown vol.10】',
+      description: '■ 演出陣容：\n《昼》\n少女ガチャポン、SOL☆LUNA ᯓ★sora、デュアリア',
+      start: { dateTime: '2026-06-07T12:00:00+08:00' },
+    };
+    expect((service as any).matchesGroup(event, group)).toBeTrue();
+  });
+
   it('matchesGroup: matches multi-word non-CJK group name listed under performer keyword', () => {
     const group: Group = { ...baseGroup, id: 'pure-maker', name: 'Pure maker' };
     const event = {
