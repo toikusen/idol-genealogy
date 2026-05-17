@@ -105,3 +105,38 @@ describe('GroupEventsComponent', () => {
     expect(component.mergedEvents.length).toBe(1);
   });
 });
+
+describe('GroupEventsComponent.formatDate', () => {
+  let component: GroupEventsComponent;
+  let calendarSpy: jasmine.SpyObj<GoogleCalendarService>;
+
+  beforeEach(async () => {
+    calendarSpy = jasmine.createSpyObj('GoogleCalendarService', ['getUpcomingGroupEvents']);
+    await TestBed.configureTestingModule({
+      imports: [GroupEventsComponent],
+      providers: [{ provide: GoogleCalendarService, useValue: calendarSpy }],
+    }).compileComponents();
+    component = TestBed.createComponent(GroupEventsComponent).componentInstance;
+  });
+
+  it('returns M/D for single-day event', () => {
+    expect((component as any).formatDate('2026-05-29', null, false)).toBe('5/29');
+  });
+
+  it('returns M/D–D for same-month multi-day all-day event', () => {
+    // Google Calendar all-day end is exclusive: 6/1 means last day is 5/31
+    expect((component as any).formatDate('2026-05-29', '2026-06-01', true)).toBe('5/29–31');
+  });
+
+  it('returns M/D–M/D for cross-month all-day event', () => {
+    expect((component as any).formatDate('2026-05-30', '2026-06-02', true)).toBe('5/30–6/1');
+  });
+
+  it('returns M/D when end equals start (same day after exclusive adjustment)', () => {
+    expect((component as any).formatDate('2026-05-29', '2026-05-30', true)).toBe('5/29');
+  });
+
+  it('returns M/D–D for timed multi-day event', () => {
+    expect((component as any).formatDate('2026-05-29T18:00:00', '2026-05-31T22:00:00', false)).toBe('5/29–31');
+  });
+});

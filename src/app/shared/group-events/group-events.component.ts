@@ -21,14 +21,14 @@ interface MergedEvent extends VenueCalendarEvent {
           @for (event of singleEvents; track event.id) {
             <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
                style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 0;text-decoration:none;border-top:1px solid rgba(0,0,0,0.06);">
-              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;">{{ formatDate(event.start) }}</span>
+              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
               <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ event.title }}</span>
             </a>
           }
           @for (event of mergedEvents; track event.id) {
             <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
                style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 0;text-decoration:none;border-top:1px solid rgba(0,0,0,0.06);">
-              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;">{{ formatDate(event.start) }}</span>
+              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
               <div>
                 <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">{{ event.title }}</span>
                 <span style="font-size:0.6rem;color:var(--text-faint);">{{ event.groupNames.join(' · ') }}</span>
@@ -63,13 +63,25 @@ export class GroupEventsComponent implements OnChanges {
     return this.singleEvents.length > 0 || this.mergedEvents.length > 0;
   }
 
-  protected formatDate(start: string): string {
-    try {
-      const d = new Date(start);
-      return `${d.getMonth() + 1}/${d.getDate()}`;
-    } catch {
-      return start.slice(5, 10).replace('-', '/');
+  protected formatDate(start: string, end: string | null, isAllDay: boolean): string {
+    const startDate = new Date(start);
+    if (isNaN(startDate.getTime())) return start.slice(5, 10).replace('-', '/');
+    const sm = startDate.getMonth() + 1;
+    const sd = startDate.getDate();
+    if (!end) return `${sm}/${sd}`;
+    const endDate = new Date(end);
+    if (isNaN(endDate.getTime())) return `${sm}/${sd}`;
+    // All-day event end is exclusive in Google Calendar — subtract 1 day
+    if (isAllDay) endDate.setDate(endDate.getDate() - 1);
+    // Same day as start → single date
+    if (endDate.getFullYear() === startDate.getFullYear() &&
+        endDate.getMonth() === startDate.getMonth() &&
+        endDate.getDate() === startDate.getDate()) {
+      return `${sm}/${sd}`;
     }
+    const em = endDate.getMonth() + 1;
+    const ed = endDate.getDate();
+    return sm === em ? `${sm}/${sd}–${ed}` : `${sm}/${sd}–${em}/${ed}`;
   }
 
   private async reload(): Promise<void> {
