@@ -140,7 +140,7 @@ export class GoogleCalendarService {
         const stripped = this.stripNonCjk(nfkc);
         const cjkKanaCount = (stripped.match(/[ぁ-ゖァ-ー一-鿿㐀-䶿]/g) ?? []).length;
         if (cjkKanaCount >= 3 && phraseStripped.includes(stripped)) return true;
-        if (cjkKanaCount < 3 && cjkKanaCount >= 1 && nfkc.length >= 3 && phraseNfkc.includes(nfkc)) return true;
+        if (cjkKanaCount < 3 && cjkKanaCount >= 1 && nfkc.length >= 3 && (phraseNfkc.includes(nfkc) || phraseStripped === stripped)) return true;
       } else {
         const stripped = this.stripNonCjk(nfkc);
         if (stripped.length >= 4 && (this.tokenMatch(stripped, phraseNfkc) || phraseStripped === stripped)) return true;

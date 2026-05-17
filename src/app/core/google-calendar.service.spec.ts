@@ -410,6 +410,28 @@ describe('GoogleCalendarService', () => {
     expect((service as any).matchesGroup(event, group)).toBeTrue();
   });
 
+  it('matchesGroup: matches CJK+Latin mixed name when DB has space but event description does not', () => {
+    const group: Group = { ...baseGroup, id: 'genpa-sync', name: '幻波 SYNC' };
+    const event = {
+      id: 'e-ssr',
+      summary: 'SSrグループ公演Vol.10',
+      description: '演出者：\n幻波SYNC\n初恋Eternal',
+      start: { dateTime: '2026-05-23T17:00:00+08:00' },
+    };
+    expect((service as any).matchesGroup(event, group)).toBeTrue();
+  });
+
+  it('matchesGroup: matches CJK+Latin mixed name when event description has space but DB does not', () => {
+    const group: Group = { ...baseGroup, id: 'genpa-sync', name: '幻波SYNC' };
+    const event = {
+      id: 'e-ssr',
+      summary: 'SSrグループ公演Vol.10',
+      description: '演出者：\n幻波 SYNC\n初恋Eternal',
+      start: { dateTime: '2026-05-23T17:00:00+08:00' },
+    };
+    expect((service as any).matchesGroup(event, group)).toBeTrue();
+  });
+
   it('does not match a group when event only references it via (From Group) in description', () => {
     const group: Group = { ...baseGroup, id: 'pure-maker', name: 'Pure Maker' };
     const event = {
