@@ -111,7 +111,6 @@ export class GoogleCalendarService {
     if (event.description) {
       if (this.groupNameNearOrganizerKeyword(names, event.description)) return true;
       if (this.groupNameNearPerformerKeyword(names, event.description)) return true;
-      if (this.groupMatchesFromPattern(names, event.description)) return true;
     }
 
     return false;

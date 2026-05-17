@@ -1,6 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { GoogleCalendarService } from './google-calendar.service';
-import { Venue } from '../models';
+import { Group, Venue } from '../models';
+
+const baseGroup: Group = {
+  id: 'g1', name: 'Group 1', name_jp: null, photo_url: null, color: '#000',
+  company: null, company_id: null, founded_at: null, disbanded_at: null,
+  notes: null, is_trainee: false, style: null, instagram: null, facebook: null,
+  x: null, youtube: null, updated_at: '2026-01-01', created_at: '2026-01-01',
+};
 
 const baseVenue: Venue = {
   id: 'venue-1',
@@ -315,6 +322,17 @@ describe('GoogleCalendarService', () => {
       expect(events.length).toBe(6);
     });
   });
+
+  it('does not match a group when event only references it via (From Group) in description', () => {
+    const group: Group = { ...baseGroup, id: 'pure-maker', name: 'Pure Maker' };
+    const event = {
+      id: 'e-seitan',
+      summary: '綿空もり生誕祭2026',
+      description: '🤍演出者🤍\nもも(From Pure Maker)',
+      start: { dateTime: '2026-06-06T17:30:00+08:00' },
+    };
+    expect((service as any).matchesGroup(event, group)).toBeFalse();
+  });
 });
 
 describe('matchesGroup', () => {
@@ -451,15 +469,15 @@ describe('matchesGroup', () => {
     )).toBeTrue();
   });
 
-  // (From X) pattern
-  it('matches source group via (From X) pattern', () => {
+  // (From X) pattern — group matching ignores this pattern
+  it('does NOT match source group via (From X) pattern', () => {
     const desc = 'もも(From Pure Maker )\nOTAKU EVENT';
-    expect((service as any).matchesGroup(mkEvent('生誕祭', '', desc), mkGroup('Pure Maker'))).toBeTrue();
+    expect((service as any).matchesGroup(mkEvent('生誕祭', '', desc), mkGroup('Pure Maker'))).toBeFalse();
   });
 
-  it('matches CJK source group via (From X) pattern', () => {
+  it('does NOT match CJK source group via (From X) pattern', () => {
     const desc = '鈴花（From 幻波SYNC）';
-    expect((service as any).matchesGroup(mkEvent('solo event', '', desc), mkGroup('幻波SYNC'))).toBeTrue();
+    expect((service as any).matchesGroup(mkEvent('solo event', '', desc), mkGroup('幻波SYNC'))).toBeFalse();
   });
 
   it('does NOT match different group via (From X) pattern', () => {
