@@ -155,7 +155,7 @@ export class GoogleCalendarService {
       // Same phrase (e.g. "幻波SYNC が出演します")
       if (this.groupNameInPhrase(names, phraseNfkc)) return true;
       // Following phrases: performers are often listed one per line after the keyword
-      for (let j = i + 1; j < Math.min(i + 15, phrases.length); j++) {
+      for (let j = i + 1; j < phrases.length; j++) {
         const nextNfkc = phrases[j].normalize('NFKC').toLowerCase();
         if (this.groupNameInPhrase(names, nextNfkc)) return true;
       }
