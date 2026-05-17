@@ -143,7 +143,7 @@ export class GoogleCalendarService {
         if (cjkKanaCount < 3 && cjkKanaCount >= 1 && nfkc.length >= 3 && phraseNfkc.includes(nfkc)) return true;
       } else {
         const stripped = this.stripNonCjk(nfkc);
-        if (stripped.length >= 4 && this.tokenMatch(stripped, phraseNfkc)) return true;
+        if (stripped.length >= 4 && (this.tokenMatch(stripped, phraseNfkc) || phraseStripped === stripped)) return true;
       }
     }
     return false;

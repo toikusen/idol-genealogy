@@ -388,6 +388,28 @@ describe('GoogleCalendarService', () => {
     expect((service as any).matchesMember(event, member)).toBeTrue();
   });
 
+  it('matchesGroup: matches multi-word non-CJK group name listed under performer keyword', () => {
+    const group: Group = { ...baseGroup, id: 'pure-maker', name: 'Pure maker' };
+    const event = {
+      id: 'e-live',
+      summary: '推しは増やすものだ SP.9',
+      description: '🎤午場出演者🎤\n♪ Pure maker\n♪ 幻波SYNC',
+      start: { dateTime: '2026-05-17T10:30:00+08:00' },
+    };
+    expect((service as any).matchesGroup(event, group)).toBeTrue();
+  });
+
+  it('matchesGroup: matches multi-word non-CJK group name with organizer typo in capitalisation', () => {
+    const group: Group = { ...baseGroup, id: 'pure-maker', name: 'Pure maker' };
+    const event = {
+      id: 'e-acosta',
+      summary: 'acosta!@台北vol.2',
+      description: '【出演】\nPure makeR',
+      start: { dateTime: '2026-05-17T15:30:00+08:00' },
+    };
+    expect((service as any).matchesGroup(event, group)).toBeTrue();
+  });
+
   it('does not match a group when event only references it via (From Group) in description', () => {
     const group: Group = { ...baseGroup, id: 'pure-maker', name: 'Pure Maker' };
     const event = {
