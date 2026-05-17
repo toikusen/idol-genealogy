@@ -571,8 +571,8 @@
       </section>
 
       <!-- ══ Recent Events ══ -->
-      @if (activeGroups.length > 0) {
-        <app-group-events [groups]="activeGroups" />
+      @if (activeGroups.length > 0 || member) {
+        <app-group-events [groups]="activeGroups" [member]="member" />
       }
 
       <!-- Source and editorial note -->
