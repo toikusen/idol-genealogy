@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Group, VenueCalendarEvent } from '../../models';
+import { Group, Member, VenueCalendarEvent } from '../../models';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
 
 interface MergedEvent extends VenueCalendarEvent {
@@ -39,7 +39,9 @@ interface MergedEvent extends VenueCalendarEvent {
               <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;padding-top:1px;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
               <div>
                 <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">{{ event.title }}</span>
-                <span style="font-size:0.6rem;color:var(--text-faint);">{{ event.groupNames.join(' · ') }}</span>
+                @if (event.groupNames.length > 0) {
+                  <span style="font-size:0.6rem;color:var(--text-faint);">{{ event.groupNames.join(' · ') }}</span>
+                }
               </div>
             </a>
           }
@@ -50,12 +52,14 @@ interface MergedEvent extends VenueCalendarEvent {
 })
 export class GroupEventsComponent implements OnChanges {
   @Input() groups: Group[] = [];
+  @Input() member: Member | null = null;
 
   protected loading = false;
   singleEvents: VenueCalendarEvent[] = [];
   mergedEvents: MergedEvent[] = [];
 
   private generation = 0;
+  private groupSignature = '';
 
   constructor(
     private calendarService: GoogleCalendarService,
@@ -64,7 +68,11 @@ export class GroupEventsComponent implements OnChanges {
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['groups']) void this.ngZone.run(() => this.reload());
+    if (!changes['groups']) return;
+    const nextSignature = this.groups.map(g => g.id).join('|');
+    if (nextSignature === this.groupSignature) return;
+    this.groupSignature = nextSignature;
+    void this.reload();
   }
 
   protected get hasEvents(): boolean {
@@ -79,9 +87,7 @@ export class GroupEventsComponent implements OnChanges {
     if (!end) return `${sm}/${sd}`;
     const endDate = new Date(end);
     if (isNaN(endDate.getTime())) return `${sm}/${sd}`;
-    // All-day event end is exclusive in Google Calendar — subtract 1 day
     if (isAllDay) endDate.setDate(endDate.getDate() - 1);
-    // Same day as start → single date
     if (endDate.getFullYear() === startDate.getFullYear() &&
         endDate.getMonth() === startDate.getMonth() &&
         endDate.getDate() === startDate.getDate()) {
@@ -94,38 +100,57 @@ export class GroupEventsComponent implements OnChanges {
 
   private async reload(): Promise<void> {
     const gen = ++this.generation;
+    const groups = [...this.groups];
+    const member = this.member;
     this.loading = true;
     this.singleEvents = [];
     this.mergedEvents = [];
 
-    const results = await Promise.allSettled(
-      this.groups.map(g =>
-        this.calendarService.getUpcomingGroupEvents(g).then(events => ({ group: g, events })),
-      ),
+    if (groups.length === 0 && !member) {
+      this.loading = false;
+      return;
+    }
+
+    const results = await this.ngZone.runOutsideAngular(() =>
+      Promise.allSettled([
+        ...groups.map(g =>
+          this.calendarService.getUpcomingGroupEvents(g).then(events => ({ group: g as Group | null, events })),
+        ),
+        ...(member
+          ? [this.calendarService.getUpcomingMemberEvents(member).then(events => ({ group: null as Group | null, events }))]
+          : []),
+      ]),
     );
 
     if (gen !== this.generation) return;
 
-    if (this.groups.length === 1) {
-      const r = results[0];
-      this.singleEvents = r.status === 'fulfilled' ? r.value.events : [];
-    } else {
+    this.ngZone.run(() => {
       const eventMap = new Map<string, MergedEvent>();
       for (const r of results) {
         if (r.status !== 'fulfilled') continue;
         for (const event of r.value.events) {
           const existing = eventMap.get(event.id);
+          const groupName = r.value.group?.name ?? null;
           if (existing) {
-            existing.groupNames.push(r.value.group.name);
+            if (groupName && !existing.groupNames.includes(groupName)) {
+              existing.groupNames.push(groupName);
+            }
           } else {
-            eventMap.set(event.id, { ...event, groupNames: [r.value.group.name] });
+            eventMap.set(event.id, { ...event, groupNames: groupName ? [groupName] : [] });
           }
         }
       }
-      this.mergedEvents = [...eventMap.values()].sort((a, b) => a.start.localeCompare(b.start));
-    }
+      const allEvents = [...eventMap.values()].sort((a, b) => a.start.localeCompare(b.start));
 
-    this.loading = false;
-    this.cdr.markForCheck();
+      // Single mode: exactly 1 group, no member — show without group name label
+      if (groups.length === 1 && !member) {
+        this.singleEvents = allEvents;
+      } else {
+        this.mergedEvents = allEvents;
+      }
+
+      this.loading = false;
+      this.cdr.markForCheck();
+    });
   }
 }

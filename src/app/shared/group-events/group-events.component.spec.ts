@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { GroupEventsComponent } from './group-events.component';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
-import { Group, VenueCalendarEvent } from '../../models';
+import { Group, Member, VenueCalendarEvent } from '../../models';
 
 function mockGroup(id: string, name = `Group ${id}`): Group {
   return { id, name, name_jp: null, photo_url: null, color: '#000', company: null, company_id: null,
@@ -15,13 +15,22 @@ function mockEvent(id: string, start = '2026-06-01T10:00:00'): VenueCalendarEven
   return { id, title: `Event ${id}`, start, end: null, location: null, url: `https://example.com/${id}`, isAllDay: false };
 }
 
+function mockMember(id: string, name = `Member ${id}`): Member {
+  return {
+    id, name, name_hiragana: null, name_roman: null, emoji: null, photo_url: null,
+    color: null, color_name: null, birthdate: null, nickname: null, instagram: null,
+    facebook: null, x: null, maid_url: null, notes: null, company_id: null,
+    no_sns: false, updated_at: '2026-01-01', created_at: '2026-01-01',
+  };
+}
+
 describe('GroupEventsComponent', () => {
   let component: GroupEventsComponent;
   let fixture: ComponentFixture<GroupEventsComponent>;
   let calendarSpy: jasmine.SpyObj<GoogleCalendarService>;
 
   beforeEach(async () => {
-    calendarSpy = jasmine.createSpyObj('GoogleCalendarService', ['getUpcomingGroupEvents']);
+    calendarSpy = jasmine.createSpyObj('GoogleCalendarService', ['getUpcomingGroupEvents', 'getUpcomingMemberEvents']);
     await TestBed.configureTestingModule({
       imports: [GroupEventsComponent],
       providers: [{ provide: GoogleCalendarService, useValue: calendarSpy }],
@@ -35,19 +44,23 @@ describe('GroupEventsComponent', () => {
     component.ngOnChanges({ groups: new SimpleChange(null, newGroups, true) });
   }
 
+  async function settleEvents(): Promise<void> {
+    await fixture.whenStable();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    fixture.detectChanges();
+  }
+
   it('hides section when no events returned', async () => {
     calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([]));
     triggerChange([mockGroup('g1')]);
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settleEvents();
     expect(fixture.nativeElement.querySelector('section')).toBeNull();
   });
 
   it('shows events in single mode', async () => {
     calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([mockEvent('e1')]));
     triggerChange([mockGroup('g1')]);
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settleEvents();
     expect(fixture.nativeElement.querySelectorAll('a').length).toBe(1);
   });
 
@@ -55,8 +68,7 @@ describe('GroupEventsComponent', () => {
     const shared = mockEvent('e1');
     calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([shared]));
     triggerChange([mockGroup('g1'), mockGroup('g2')]);
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settleEvents();
     expect(component.mergedEvents.length).toBe(1);
     expect(component.mergedEvents[0].groupNames.length).toBe(2);
   });
@@ -68,8 +80,7 @@ describe('GroupEventsComponent', () => {
         : Promise.resolve([mockEvent('e1', '2026-06-01T10:00:00')]),
     );
     triggerChange([mockGroup('g1'), mockGroup('g2')]);
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settleEvents();
     expect(component.mergedEvents[0].id).toBe('e1');
     expect(component.mergedEvents[1].id).toBe('e2');
   });
@@ -77,21 +88,19 @@ describe('GroupEventsComponent', () => {
   it('resets and reloads when groups input changes', async () => {
     calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([mockEvent('e1')]));
     triggerChange([mockGroup('g1')]);
-    await fixture.whenStable();
+    await settleEvents();
 
     calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([]));
     component.groups = [mockGroup('g2')];
     component.ngOnChanges({ groups: new SimpleChange([mockGroup('g1')], [mockGroup('g2')], false) });
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settleEvents();
     expect(component.singleEvents.length).toBe(0);
   });
 
   it('hides section on load failure in single mode', async () => {
     calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.reject('error'));
     triggerChange([mockGroup('g1')]);
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settleEvents();
     expect(fixture.nativeElement.querySelector('section')).toBeNull();
   });
 
@@ -100,9 +109,47 @@ describe('GroupEventsComponent', () => {
       g.id === 'g1' ? Promise.resolve([mockEvent('e1')]) : Promise.reject('err'),
     );
     triggerChange([mockGroup('g1'), mockGroup('g2')]);
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settleEvents();
     expect(component.mergedEvents.length).toBe(1);
+  });
+
+  it('does not reload when a new groups array contains the same group ids', async () => {
+    calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([mockEvent('e1')]));
+    triggerChange([mockGroup('g1')]);
+    await settleEvents();
+
+    component.groups = [mockGroup('g1')];
+    component.ngOnChanges({ groups: new SimpleChange([mockGroup('g1')], [mockGroup('g1')], false) });
+    await settleEvents();
+
+    expect(calendarSpy.getUpcomingGroupEvents).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows member individual events when member input is provided', async () => {
+    calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([]));
+    calendarSpy.getUpcomingMemberEvents.and.returnValue(Promise.resolve([mockEvent('e-personal')]));
+    component.member = mockMember('m1');
+    triggerChange([mockGroup('g1')]);
+    await settleEvents();
+    expect(component.mergedEvents.length).toBe(1);
+    expect(component.mergedEvents[0].id).toBe('e-personal');
+  });
+
+  it('deduplicates an event that appears in both group and member results', async () => {
+    const ev = mockEvent('e-shared');
+    calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([ev]));
+    calendarSpy.getUpcomingMemberEvents.and.returnValue(Promise.resolve([ev]));
+    component.member = mockMember('m1');
+    triggerChange([mockGroup('g1')]);
+    await settleEvents();
+    expect(component.mergedEvents.length).toBe(1);
+  });
+
+  it('does not call getUpcomingMemberEvents when no member is provided', async () => {
+    calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([]));
+    triggerChange([mockGroup('g1')]);
+    await settleEvents();
+    expect(calendarSpy.getUpcomingMemberEvents).not.toHaveBeenCalled();
   });
 });
 
@@ -111,7 +158,7 @@ describe('GroupEventsComponent.formatDate', () => {
   let calendarSpy: jasmine.SpyObj<GoogleCalendarService>;
 
   beforeEach(async () => {
-    calendarSpy = jasmine.createSpyObj('GoogleCalendarService', ['getUpcomingGroupEvents']);
+    calendarSpy = jasmine.createSpyObj('GoogleCalendarService', ['getUpcomingGroupEvents', 'getUpcomingMemberEvents']);
     await TestBed.configureTestingModule({
       imports: [GroupEventsComponent],
       providers: [{ provide: GoogleCalendarService, useValue: calendarSpy }],
