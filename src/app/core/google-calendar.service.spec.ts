@@ -366,6 +366,17 @@ describe('GoogleCalendarService', () => {
     expect((service as any).matchesMember(event, member)).toBeTrue();
   });
 
+  it('matchesMember: does not match short-name member (2 chars) listed under performer keyword without (From X)', () => {
+    const member = mockMember('m5', { name: 'もも' });
+    const event = {
+      id: 'e-live',
+      summary: '夏日LIVE',
+      description: '演出者\nもも',
+      start: { dateTime: '2026-07-01T18:00:00+08:00' },
+    };
+    expect((service as any).matchesMember(event, member)).toBeFalse();
+  });
+
   it('matchesMember: matches member roman name in event title', () => {
     const member = mockMember('m4', { name: '春花', name_roman: 'Haruka' });
     const event = {

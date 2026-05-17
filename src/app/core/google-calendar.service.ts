@@ -177,21 +177,6 @@ export class GoogleCalendarService {
     return false;
   }
 
-  private groupMatchesFromPattern(names: string[], description: string): boolean {
-    // Match "(From X)" or "（From X）" — indicates X is the member's source group
-    const pattern = /[（(]\s*[Ff]rom\s+([^)）\n]{1,40})[)）]/g;
-    let match;
-    while ((match = pattern.exec(description)) !== null) {
-      const extracted = this.stripNonCjk(match[1].trim().normalize('NFKC').toLowerCase());
-      if (!extracted) continue;
-      for (const name of names) {
-        const nameStripped = this.stripNonCjk(name.normalize('NFKC').toLowerCase());
-        if (nameStripped && extracted === nameStripped) return true;
-      }
-    }
-    return false;
-  }
-
   private memberNameInFromPattern(names: string[], description: string): boolean {
     // Extracts the performer name from "name(From Group)" or "name（From Group）" format.
     // Each phrase is one line from descriptionPhrases. The regex matches text immediately
