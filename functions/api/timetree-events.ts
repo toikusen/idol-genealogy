@@ -51,9 +51,10 @@ function toVenueEvent(e: TimeTreeEvent): VenueCalendarEvent {
 export const onRequest: PagesFunction = async ({ request }) => {
   const url = new URL(request.url);
   const alias = url.searchParams.get('alias');
-  const days = Math.max(1, Math.min(365, parseInt(url.searchParams.get('days') ?? '90', 10)));
+  const rawDays = parseInt(url.searchParams.get('days') ?? '90', 10);
+  const days = Math.max(1, Math.min(365, isNaN(rawDays) ? 90 : rawDays));
 
-  if (!alias) return new Response('Missing alias', { status: 400 });
+  if (!alias || !/^[\w-]+$/.test(alias)) return new Response('Invalid alias', { status: 400 });
 
   const cacheKey = `${alias}:${days}`;
   const cached = cache.get(cacheKey);
@@ -85,7 +86,10 @@ export const onRequest: PagesFunction = async ({ request }) => {
         { headers: { 'X-TimeTreeA': 'web/2.1.0/en' } }
       );
 
-      if (res.status === 404) return Response.json([]);
+      if (res.status === 404) {
+        if (page === 0) return Response.json([]);
+        break;
+      }
       if (!res.ok) return new Response('TimeTree error', { status: 503 });
 
       const data: TimeTreeResponse = await res.json();
