@@ -15,6 +15,7 @@ export class TimeTreeService {
         return res.json() as Promise<VenueCalendarEvent[]>;
       });
     this.cache.set(key, promise);
+    promise.catch(() => this.cache.delete(key));
     return promise;
   }
 }
