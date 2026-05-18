@@ -37,6 +37,7 @@ export interface Group {
   facebook: string | null;
   x: string | null;
   youtube: string | null;
+  timetree_url: string | null;
   updated_at: string;
   created_at: string;
 }

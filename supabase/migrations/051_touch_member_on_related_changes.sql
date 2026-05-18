@@ -12,10 +12,18 @@ begin
 end;
 $$;
 
-create trigger history_touch_member
-  after insert or update or delete on history
-  for each row execute function touch_member_updated_at();
+DO $$ BEGIN
+  CREATE TRIGGER history_touch_member
+    AFTER INSERT OR UPDATE OR DELETE ON history
+    FOR EACH ROW EXECUTE FUNCTION touch_member_updated_at();
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-create trigger member_songs_touch_member
-  after insert or update or delete on member_songs
-  for each row execute function touch_member_updated_at();
+DO $$ BEGIN
+  CREATE TRIGGER member_songs_touch_member
+    AFTER INSERT OR UPDATE OR DELETE ON member_songs
+    FOR EACH ROW EXECUTE FUNCTION touch_member_updated_at();
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

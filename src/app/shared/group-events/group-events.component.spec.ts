@@ -7,7 +7,7 @@ import { Group, Member, VenueCalendarEvent } from '../../models';
 function mockGroup(id: string, name = `Group ${id}`): Group {
   return { id, name, name_jp: null, photo_url: null, color: '#000', company: null, company_id: null,
     founded_at: null, disbanded_at: null, notes: null, is_trainee: false, style: null,
-    instagram: null, facebook: null, x: null, youtube: null,
+    instagram: null, facebook: null, x: null, youtube: null, timetree_url: null,
     updated_at: '2026-01-01', created_at: '2026-01-01' };
 }
 
