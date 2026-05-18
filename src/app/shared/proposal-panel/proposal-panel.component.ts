@@ -793,7 +793,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
     return isRequired ? label + ' *' : label;
   }
 
-  private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'maid_url', 'youtube', 'website', 'photo_url', 'google_maps_url']);
+  private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'maid_url', 'youtube', 'website', 'photo_url', 'google_maps_url', 'timetree_url']);
 
   fieldPlaceholder(field: string): string {
     const hints: Record<string, string> = {
@@ -812,6 +812,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
       'groups:facebook': 'https://www.facebook.com/username',
       'groups:x': 'https://x.com/username',
       'groups:youtube': 'https://www.youtube.com/@channel',
+      'groups:timetree_url': 'https://timetreeapp.com/public_calendars/...',
       'groups:photo_url': 'https://...',
       'companies:instagram': 'https://www.instagram.com/username/',
       'companies:facebook': 'https://www.facebook.com/username',
@@ -1049,6 +1050,13 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
         this.fieldErrors[f] = '必須是以 https:// 開頭的網址';
       }
       this.scrollToField(invalidUrlFields[0]);
+      return;
+    }
+
+    // Validate timetree_url must be a TimeTree public calendar URL
+    if (proposed['timetree_url'] && !String(proposed['timetree_url']).startsWith('https://timetreeapp.com/public_calendars/')) {
+      this.fieldErrors['timetree_url'] = '必須是 https://timetreeapp.com/public_calendars/ 開頭的網址';
+      this.scrollToField('timetree_url');
       return;
     }
 

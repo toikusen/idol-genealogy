@@ -7,7 +7,7 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
   ],
   groups: [
     'name', 'name_jp', 'color', 'founded_at', 'disbanded_at',
-    'instagram', 'facebook', 'x', 'youtube', 'company_id', 'photo_url',
+    'instagram', 'facebook', 'x', 'youtube', 'timetree_url', 'company_id', 'photo_url',
   ],
   history: [
     'member_id', 'group_id', 'name_at_time',
@@ -33,7 +33,7 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
   groups: {
     name: '團體名稱', name_jp: '日文名稱', color: '代表色(HEX)',
     founded_at: '成立日期', disbanded_at: '解散日期',
-    instagram: 'Instagram', facebook: 'Facebook', x: 'X', youtube: 'YouTube',
+    instagram: 'Instagram', facebook: 'Facebook', x: 'X', youtube: 'YouTube', timetree_url: 'TimeTree',
     company_id: '所屬公司', photo_url: '頭像圖片',
   },
   history: {
