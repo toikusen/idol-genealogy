@@ -57,11 +57,13 @@ group 編輯介面新增 `timetree_url` 輸入欄。
 
 ---
 
-## 第二段：Netlify Function（Web Endpoint 代理）
+## 第二段：Cloudflare Pages Function（Web Endpoint 代理）
 
 ### 新增檔案
 
-`netlify/functions/timetree-events.ts`
+`functions/api/timetree-events.ts`
+
+Cloudflare Pages Functions 依檔案路徑自動路由，`functions/api/timetree-events.ts` 對應 `/api/timetree-events`，不需要額外 redirect 設定。使用現有 `onRequest: PagesFunction` 模式（與 `functions/sitemap.xml.ts` 相同）。
 
 ### 請求格式
 
@@ -75,14 +77,19 @@ TimeTree web frontend 使用的非官方 endpoint（無需 API key）：
 
 ```
 GET https://timetreeapp.com/api/v2/public_calendars/{alias}/public_events
-    ?from={nowMs}
-    &to={nowMs + days * 86400000}
+    ?from={todayStartTW}
+    &to={todayStartTW + days * 86400000}
     &utc_offset=480
     &limit=100
 X-TimeTreeA: web/2.1.0/en
 ```
 
 - `from` / `to`：Unix 毫秒時間戳
+- `from` 使用台灣時區（UTC+8）**當天 00:00**，避免漏掉今天的全天活動：
+  ```ts
+  const utcOffsetMs = 8 * 60 * 60 * 1000;
+  const todayStartTW = Math.floor((Date.now() + utcOffsetMs) / 86400000) * 86400000 - utcOffsetMs;
+  ```
 - `utc_offset`：480 = UTC+8（台灣）
 - 不需要 `Authorization` header
 
@@ -94,7 +101,7 @@ X-TimeTreeA: web/2.1.0/en
 
 ```json
 {
-  "paging": { "next": false },
+  "paging": { "next": true, "next_cursor": "xxx" },
   "public_events": [
     {
       "id": "...",
@@ -113,18 +120,40 @@ X-TimeTreeA: web/2.1.0/en
 **`all_day` 注意事項**：很多活動雖有實際開演時間，但 `all_day: true`，時間資訊寫在 `note` 裡。
 第一版只顯示日期，不解析 note 中的時間；note 解析留待後續版本。
 
+### 分頁處理
+
+TimeTree 每頁最多 100 筆，`paging.next === true` 時有 `next_cursor`。Function 需跟隨 cursor 直到 `paging.next === false`，安全上限 5 頁（500 筆），超過即停止並回傳已收集的結果。
+
+```ts
+let cursor: string | undefined;
+let page = 0;
+const MAX_PAGES = 5;
+const allEvents: TimeTreeEvent[] = [];
+
+do {
+  const params = new URLSearchParams({ from: ..., to: ..., utc_offset: '480', limit: '100' });
+  if (cursor) params.set('cursor', cursor);
+  const res = await fetch(`...?${params}`, { headers: { 'X-TimeTreeA': 'web/2.1.0/en' } });
+  const data = await res.json();
+  allEvents.push(...data.public_events);
+  cursor = data.paging.next ? data.paging.next_cursor : undefined;
+  page++;
+} while (cursor && page < MAX_PAGES);
+```
+
 ### 回傳格式
 
 `public_events[]` 轉換成 `VenueCalendarEvent` 結構：
 
-| TimeTree 欄位 | VenueCalendarEvent 欄位 |
-|---|---|
-| `id` | `id` |
-| `title` | `title` |
-| `start_at`（ms → ISO string）| `start` |
-| `end_at`（ms → ISO string）| `end` |
-| `location_name` | `location` |
-| `url` | `htmlLink` |
+| TimeTree 欄位 | VenueCalendarEvent 欄位 | 備註 |
+|---|---|---|
+| `id` | `id` | |
+| `title` | `title` | |
+| `start_at`（ms → ISO string）| `start` | |
+| `end_at` | `end` | all_day 且 `end_at === start_at` → `null`；all_day 且 `end_at > start_at` → `end_at + 1ms` 轉 ISO（exclusive end，對齊 Google Calendar 慣例）；非 all_day → 直接轉 ISO |
+| `all_day` | `isAllDay` | |
+| `location_name` | `location` | |
+| `url` | `url` | |
 
 前端不需感知資料來源差異。
 
@@ -155,7 +184,7 @@ getUpcomingEvents(alias: string, daysAhead = 90): Promise<VenueCalendarEvent[]>
 
 - 呼叫 `/api/timetree-events?alias={alias}&days={daysAhead}`
 - 前端 cache key：`timetree:{alias}:{daysAhead}`
-- Netlify Function 回傳 503 時 throw，由 caller 決定 fallback
+- Cloudflare Pages Function 回傳 503 時 throw，由 caller 決定 fallback
 
 ### `GroupEventsComponent` 修改
 
@@ -206,7 +235,7 @@ TimeTree 失敗並 fallback 時，顯示 `Google Calendar` badge，不揭露失�
 
 1. DB migration（新增 `timetree_url` 欄位）
 2. `Group` interface 更新
-3. Netlify Function `timetree-events.ts`
+3. Cloudflare Pages Function `functions/api/timetree-events.ts`
 4. `TimeTreeService`
 5. `GroupEventsComponent` 優先邏輯 + 來源 badge
 6. 團體頁 SNS 連結區新增 TimeTree
@@ -222,4 +251,4 @@ TimeTree 失敗並 fallback 時，顯示 `Google Calendar` badge，不揭露失�
 ## 風險與監控
 
 - **Endpoint 失效風險**：`/api/v2/public_calendars/{alias}/public_events` 為非文件化介面，TimeTree 改版時可能無預警失效。失效時所有 TimeTree 團體自動 fallback 至 Google Calendar，功能不中斷。
-- **監控建議**：Netlify Function 錯誤率異常升高時，檢查 TimeTree endpoint 是否仍有效。
+- **監控建議**：Cloudflare Pages Function 錯誤率異常升高時，檢查 TimeTree endpoint 是否仍有效。
