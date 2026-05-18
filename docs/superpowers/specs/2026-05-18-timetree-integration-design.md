@@ -152,7 +152,7 @@ do {
 | `start_at`（ms → ISO string）| `start` | |
 | `end_at` | `end` | all_day 且 `end_at === start_at` → `null`；all_day 且 `end_at > start_at` → `end_at + 1ms` 轉 ISO（exclusive end，對齊 Google Calendar 慣例）；非 all_day → 直接轉 ISO |
 | `all_day` | `isAllDay` | |
-| `location_name` | `location` | |
+| `location_name` | `location` | 空字串轉 `null` |
 | `url` | `url` | |
 
 前端不需感知資料來源差異。
