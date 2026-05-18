@@ -812,7 +812,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
       'groups:facebook': 'https://www.facebook.com/username',
       'groups:x': 'https://x.com/username',
       'groups:youtube': 'https://www.youtube.com/@channel',
-      'groups:timetree_url': 'https://timetreeapp.com/public_calendars/...',
+      'groups:timetree_url': 'https://timetreeapp.com/public_calendars/... 或 https://timetr.ee/p/...',
       'groups:photo_url': 'https://...',
       'companies:instagram': 'https://www.instagram.com/username/',
       'companies:facebook': 'https://www.facebook.com/username',
@@ -1053,11 +1053,15 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // Validate timetree_url must be a TimeTree public calendar URL
-    if (proposed['timetree_url'] && !String(proposed['timetree_url']).startsWith('https://timetreeapp.com/public_calendars/')) {
-      this.fieldErrors['timetree_url'] = '必須是 https://timetreeapp.com/public_calendars/ 開頭的網址';
-      this.scrollToField('timetree_url');
-      return;
+    // Validate timetree_url must be a TimeTree public calendar URL (full or short link)
+    if (proposed['timetree_url']) {
+      const ttUrl = String(proposed['timetree_url']);
+      const validTimetree = ttUrl.startsWith('https://timetreeapp.com/public_calendars/') || ttUrl.startsWith('https://timetr.ee/p/');
+      if (!validTimetree) {
+        this.fieldErrors['timetree_url'] = '必須是 https://timetreeapp.com/public_calendars/ 或 https://timetr.ee/p/ 開頭的網址';
+        this.scrollToField('timetree_url');
+        return;
+      }
     }
 
     // When in external mode (海外/solo), group_id is not applicable — skip its required check
