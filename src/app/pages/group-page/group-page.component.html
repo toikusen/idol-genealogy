@@ -272,11 +272,9 @@
                 }
                 @if (snsUrls.timetree) {
                   <a [href]="snsUrls.timetree" target="_blank" rel="noopener noreferrer"
-                    style="color: rgba(124,108,242,0.7); transition: color 0.2s; display: flex;"
+                    style="display: flex; opacity: 0.75; transition: opacity 0.2s;"
                     title="TimeTree">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
-                    </svg>
+                    <img src="/timetree-icon.png" width="16" height="16" alt="TimeTree" style="border-radius:3px;" />
                   </a>
                 }
               </div>
