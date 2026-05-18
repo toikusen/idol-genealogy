@@ -227,7 +227,7 @@
           }
 
           <!-- SNS links -->
-          @if (snsUrls.instagram || snsUrls.facebook || snsUrls.x || snsUrls.youtube) {
+          @if (snsUrls.instagram || snsUrls.facebook || snsUrls.x || snsUrls.youtube || snsUrls.timetree) {
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(184,160,184,0.12);">
 
               <!-- SNS icons -->
@@ -267,6 +267,15 @@
                     title="YouTube">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                  </a>
+                }
+                @if (snsUrls.timetree) {
+                  <a [href]="snsUrls.timetree" target="_blank" rel="noopener noreferrer"
+                    style="color: rgba(124,108,242,0.7); transition: color 0.2s; display: flex;"
+                    title="TimeTree">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
                     </svg>
                   </a>
                 }
@@ -393,23 +402,63 @@
                 <!-- Meta grid -->
                 <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 4px;">
 
-                  <!-- Dates -->
-                  <div style="display: flex; align-items: center; gap: 6px;">
-                    <span style="
-                      font-size: 0.72rem; letter-spacing: 0.18em;
-                      text-transform: uppercase; color: var(--text-label);
-                    ">在籍</span>
-                    <span style="
-                      font-size: 0.85rem; color: var(--text-faint-60);
-                      letter-spacing: 0.04em;
-                    ">
-                      {{ formatDateShort(selectedHistory.joined_at) }}
-                      @if (!selectedHistory.left_at) {
-                        <span style="color: rgba({{ hexToRgb(group.color) }},0.65);">〜 現在</span>
-                      } @else {
-                        〜 {{ formatDateShort(selectedHistory.left_at) }}
+                  <!-- 在籍 and 生日 stacked vertically, full width -->
+                  <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+
+                    <!-- Dates - show all membership periods -->
+                    <div style="display: flex; align-items: flex-start; gap: 6px;">
+                      <span style="
+                        font-size: 0.72rem; letter-spacing: 0.18em;
+                        text-transform: uppercase; color: var(--text-label);
+                        white-space: nowrap; padding-top: 2px;
+                      ">在籍</span>
+                      <div style="display: flex; flex-direction: column; gap: 2px;">
+                        @for (period of selectedMemberPeriods; track period.id) {
+                          <span style="
+                            font-size: 0.85rem; color: var(--text-faint-60);
+                            letter-spacing: 0.04em;
+                          ">
+                            {{ formatDateShort(period.joined_at) }}
+                            @if (!period.left_at) {
+                              <span style="color: rgba({{ hexToRgb(group.color) }},0.65);">〜 現在</span>
+                            } @else {
+                              〜 {{ formatDateShort(period.left_at) }}
+                            }
+                          </span>
+                        }
+                      </div>
+                      <!-- Status badge inline after dates -->
+                      @if (selectedHistory.status) {
+                        <span
+                          [class]="'status-badge status-badge--' + selectedHistory.status"
+                          style="align-self: flex-start; margin-top: 1px;"
+                        >
+                          @if (selectedHistory.status === 'active') { 活動中 }
+                          @if (selectedHistory.status === 'graduated') { 畢業 }
+                          @if (selectedHistory.status === 'transferred') { 移籍 }
+                          @if (selectedHistory.status === 'concurrent') { 兼任 }
+                          @if (selectedHistory.status === 'support') { 支援 }
+                          @if (selectedHistory.status === 'hiatus') { 活休 }
+                          @if (selectedHistory.status === 'withdrawn') { 脫退 }
+                        </span>
                       }
-                    </span>
+                    </div>
+
+                    <!-- Birthdate -->
+                    @if (selectedHistory.member?.birthdate) {
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="
+                          font-size: 0.72rem; letter-spacing: 0.18em;
+                          text-transform: uppercase; color: var(--text-label);
+                          white-space: nowrap;
+                        ">生日</span>
+                        <span style="
+                          font-size: 0.85rem; color: var(--text-faint-60);
+                          letter-spacing: 0.04em;
+                        ">{{ formatDateLong(selectedHistory.member!.birthdate) }}</span>
+                      </div>
+                    }
+
                   </div>
 
                   <!-- Role -->
@@ -426,40 +475,7 @@
                     </div>
                   }
 
-                  <!-- Status badge -->
-                  @if (selectedHistory.status) {
-                    <span style="
-                      display: inline-flex; align-items: center;
-                      font-size: 0.72rem; letter-spacing: 0.12em;
-                      padding: 2px 10px; border-radius: 2px;
-                    "
-                    [style.background]="selectedHistory.status === 'active' ? 'rgba(' + hexToRgb(group.color) + ',0.1)' : 'rgba(184,160,184,0.1)'"
-                    [style.color]="selectedHistory.status === 'active' ? safeColor(group.color) : 'var(--text-faint)'"
-                    [style.border]="selectedHistory.status === 'active' ? '1px solid rgba(' + hexToRgb(group.color) + ',0.2)' : '1px solid rgba(184,160,184,0.2)'"
-                    >
-                      @if (selectedHistory.status === 'active') { 活動中 }
-                      @if (selectedHistory.status === 'graduated') { 畢業 }
-                      @if (selectedHistory.status === 'transferred') { 移籍 }
-                      @if (selectedHistory.status === 'concurrent') { 兼任 }
-                      @if (selectedHistory.status === 'support') { 支援 }
-                      @if (selectedHistory.status === 'hiatus') { 活休 }
-                      @if (selectedHistory.status === 'withdrawn') { 脫退 }
-                    </span>
-                  }
 
-                  <!-- Birthdate -->
-                  @if (selectedHistory.member?.birthdate) {
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                      <span style="
-                        font-size: 0.72rem; letter-spacing: 0.18em;
-                        text-transform: uppercase; color: var(--text-label);
-                      ">生年月日</span>
-                      <span style="
-                        font-size: 0.85rem; color: var(--text-faint-60);
-                        letter-spacing: 0.04em;
-                      ">{{ formatDateLong(selectedHistory.member!.birthdate) }}</span>
-                    </div>
-                  }
                 </div>
 
                 <!-- Notes -->
@@ -476,18 +492,19 @@
                 <div style="margin-top: 14px;">
                   <a
                     [routerLink]="'/member/' + selectedHistory.member_id"
+                    class="member-link"
                     style="
-                      display: inline-flex; align-items: center; gap: 6px;
+                      display: inline-flex; align-items: center; gap: 8px;
                       font-size: 0.72rem; letter-spacing: 0.2em;
                       text-decoration: none; padding: 6px 14px;
                       border-radius: 2px;
-                      transition: background 0.2s, border-color 0.2s, color 0.2s, filter 0.2s, transform 0.2s;
+                      transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s;
                     "
-                    [style.color]="safeColor(group.color)"
-                    [style.border]="'1px solid rgba(' + hexToRgb(group.color) + ',0.35)'"
-                    [style.background]="'rgba(' + hexToRgb(group.color) + ',0.06)'"
-                    class="member-link"
                   >
+                    <!-- Group color accent dot -->
+                    <span style="
+                      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+                    " [style.background]="group.color"></span>
                     <span>前往成員頁面</span>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                       <path d="M9 18l6-6-6-6"/>
@@ -545,10 +562,10 @@
               </div>
 
               <!-- Rows -->
-              @for (row of ganttRows; track row.history.id) {
+              @for (row of ganttRows; track row.primaryHistory.id) {
                 <!-- Name cell -->
                 <div
-                  (click)="selectMember(row.history)"
+                  (click)="selectMember(row.primaryHistory)"
                   style="
                     white-space: nowrap;
                     padding: 0 12px 0 4px; text-align: right;
@@ -557,12 +574,12 @@
                     cursor: pointer; border-radius: 4px 0 0 4px;
                     transition: color 0.15s, background 0.15s;
                   "
-                  [style.color]="selectedHistory?.id === row.history.id ? group.color : 'var(--text-secondary)'"
-                  [style.background]="selectedHistory?.id === row.history.id ? 'rgba(' + hexToRgb(group.color) + ',0.06)' : 'transparent'"
+                  [style.color]="isRowSelected(row.primaryHistory) ? 'var(--text-primary)' : 'var(--text-secondary)'"
+                  [style.background]="isRowSelected(row.primaryHistory) ? 'rgba(' + hexToRgb(group.color) + ',0.06)' : 'transparent'"
                 >
-                  {{ row.history.name_at_time || row.history.member?.name || row.history.member?.name_roman || '—' }}
+                  {{ row.primaryHistory.name_at_time || row.primaryHistory.member?.name || row.primaryHistory.member?.name_roman || '—' }}
                   <button
-                    (click)="$event.stopPropagation(); proposalHistoryEntry = row.history"
+                    (click)="$event.stopPropagation(); proposalHistoryEntry = row.primaryHistory"
                     class="hover:text-pink-400 text-xs" style="color:var(--text-faint-40);"
                     title="提案修改此歷程"
                   >✏️</button>
@@ -570,13 +587,13 @@
 
                 <!-- Bar cell -->
                 <div
-                  (click)="selectMember(row.history)"
+                  (click)="selectMember(row.primaryHistory)"
                   style="
                     position: relative; display: flex; align-items: center;
                     cursor: pointer; border-radius: 0 4px 4px 0;
                     transition: background 0.15s;
                   "
-                  [style.background]="selectedHistory?.id === row.history.id ? 'rgba(' + hexToRgb(group.color) + ',0.06)' : 'transparent'"
+                  [style.background]="isRowSelected(row.primaryHistory) ? 'rgba(' + hexToRgb(group.color) + ',0.06)' : 'transparent'"
                 >
                   <div style="flex: 1; position: relative; height: 10px;">
                     <!-- Year grid lines -->
@@ -587,22 +604,24 @@
                         background: rgba(180,160,180,0.12);
                       " [style.left]="yr.leftPct + '%'"></div>
                     }
-                    <!-- Bar -->
-                    <div style="
-                      position: absolute; top: 0; height: 100%;
-                      border-radius: 3px;
-                      transition: opacity 0.15s, filter 0.15s;
-                      cursor: pointer;
-                      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
-                    "
-                    [style.left]="row.leftPct + '%'"
-                    [style.width]="row.widthPct + '%'"
-                    [style.background]="row.isActive ? '#c05080' : 'rgba(192,80,128,0.4)'"
-                    [style.opacity]="selectedHistory && selectedHistory.id !== row.history.id ? '0.5' : '1'"
-                    (mouseenter)="onBarMouseEnter($event, row)"
-                    (mousemove)="onBarMouseMove($event)"
-                    (mouseleave)="onBarMouseLeave()"
-                    ></div>
+                    <!-- Bar segments (one per membership period) -->
+                    @for (seg of row.segments; track seg.history.id) {
+                      <div style="
+                        position: absolute; top: 0; height: 100%;
+                        border-radius: 3px;
+                        transition: opacity 0.15s, filter 0.15s;
+                        cursor: pointer;
+                        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+                      "
+                      [style.left]="seg.leftPct + '%'"
+                      [style.width]="seg.widthPct + '%'"
+                      [style.background]="seg.isActive ? '#c05080' : 'rgba(192,80,128,0.4)'"
+                      [style.opacity]="selectedHistory && !isRowSelected(row.primaryHistory) ? '0.5' : '1'"
+                      (mouseenter)="onBarMouseEnter($event, seg.history)"
+                      (mousemove)="onBarMouseMove($event)"
+                      (mouseleave)="onBarMouseLeave()"
+                      ></div>
+                    }
                   </div>
                 </div>
               }
@@ -1193,7 +1212,7 @@
 </div>
 
 <!-- ══ Gantt Tooltip ══ -->
-@if (tooltipRow && group) {
+@if (tooltipHistory && group) {
   <div
     class="gantt-tooltip"
     style="
@@ -1232,7 +1251,7 @@
         letter-spacing: 0.06em;
         margin-bottom: 8px;
         white-space: nowrap;
-      ">{{ tooltipRow.history.name_at_time || tooltipRow.history.member?.name || tooltipRow.history.member?.name_roman || '—' }}</div>
+      ">{{ tooltipHistory.name_at_time || tooltipHistory.member?.name || tooltipHistory.member?.name_roman || '—' }}</div>
 
       <!-- Divider -->
       <div style="
@@ -1253,18 +1272,18 @@
         font-size: 0.73rem; letter-spacing: 0.03em;
         white-space: nowrap;
       ">
-        <span style="color: rgba(240, 215, 232, 0.82);">{{ formatDateShort(tooltipRow.history.joined_at) }}</span>
+        <span style="color: rgba(240, 215, 232, 0.82);">{{ formatDateShort(tooltipHistory.joined_at) }}</span>
         <span style="
           display: inline-flex; align-items: center; gap: 0;
           color: rgba(232,121,160,0.45); font-size: 0.65rem; letter-spacing: 0;
         ">→</span>
-        @if (!tooltipRow.history.left_at) {
+        @if (!tooltipHistory.left_at) {
           <span style="
             font-size: 0.68rem; letter-spacing: 0.18em;
             font-weight: 500;
           " [style.color]="group.color">現在</span>
         } @else {
-          <span style="color: rgba(240, 215, 232, 0.82);">{{ formatDateShort(tooltipRow.history.left_at) }}</span>
+          <span style="color: rgba(240, 215, 232, 0.82);">{{ formatDateShort(tooltipHistory.left_at) }}</span>
         }
       </div>
     </div>

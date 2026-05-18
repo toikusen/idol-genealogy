@@ -37,11 +37,16 @@ import {
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 
-interface GanttRow {
+interface GanttSegment {
   history: History;
   leftPct: number;
   widthPct: number;
   isActive: boolean;
+}
+
+interface GanttRow {
+  primaryHistory: History;
+  segments: GanttSegment[];
 }
 
 @Component({
@@ -53,6 +58,7 @@ interface GanttRow {
 })
 export class GroupPageComponent implements OnInit, OnDestroy {
   group: Group | null = null;
+  eventGroups: Group[] = [];
   companyName: string | null = null;
   teams: Team[] = [];
   histories: History[] = [];
@@ -75,8 +81,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   linkCopied = false;
   allMembers: { id: string; name: string }[] = [];
   adEligible = false;
-  snsUrls: { instagram: string | null; facebook: string | null; x: string | null; youtube: string | null } = {
-    instagram: null, facebook: null, x: null, youtube: null,
+  snsUrls: { instagram: string | null; facebook: string | null; x: string | null; youtube: string | null; timetree: string | null } = {
+    instagram: null, facebook: null, x: null, youtube: null, timetree: null,
   };
 
   // Songs tab
@@ -130,7 +136,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
   ganttRows: GanttRow[] = [];
   ganttYears: { label: string; leftPct: number }[] = [];
-  tooltipRow: GanttRow | null = null;
+  tooltipHistory: History | null = null;
   tooltipX = 0;
   tooltipY = 0;
   private _routeSub?: Subscription;
@@ -247,6 +253,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.loading = false;
     this.error = pageData.error;
     this.group = pageData.group;
+    this.eventGroups = pageData.group ? [pageData.group] : [];
     this.companyName = pageData.companyName;
     this.teams = pageData.teams;
     this.histories = pageData.histories;
@@ -277,7 +284,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd();
       this.adEligible = false;
-      this.snsUrls = { instagram: null, facebook: null, x: null, youtube: null };
+      this.eventGroups = [];
+      this.snsUrls = { instagram: null, facebook: null, x: null, youtube: null, timetree: null };
       return;
     }
 
@@ -307,6 +315,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       facebook: normalizeSnsUrl(pageData.group.facebook, 'facebook'),
       x: normalizeSnsUrl(pageData.group.x, 'x'),
       youtube: normalizeSnsUrl(pageData.group.youtube, 'youtube'),
+      timetree: pageData.group.timetree_url ?? null,
     };
     const sameAs: string[] = [
       this.snsUrls.instagram,
@@ -363,13 +372,24 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   }
 
   selectMember(h: History) {
-    const isDeselect = this.selectedHistory?.id === h.id;
+    const isDeselect = this.selectedHistory?.member_id === h.member_id;
     this.selectedHistory = isDeselect ? null : h;
     if (!isDeselect) {
       setTimeout(() => {
         document.getElementById('member-detail-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 30);
     }
+  }
+
+  get selectedMemberPeriods(): History[] {
+    if (!this.selectedHistory) return [];
+    return this.histories
+      .filter(h => h.member_id === this.selectedHistory!.member_id)
+      .sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
+  }
+
+  isRowSelected(primaryHistory: History): boolean {
+    return !!this.selectedHistory && this.selectedHistory.member_id === primaryHistory.member_id;
   }
 
   getInitial(h: History): string {
@@ -413,19 +433,32 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     );
     const totalMs = maxMs - minMs || 1;
 
-    const sorted = [...histories].sort((a, b) =>
+    // Group by member_id; sort each member's histories by joined_at
+    const memberMap = new Map<string, History[]>();
+    for (const h of [...histories].sort((a, b) =>
       new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime()
-    );
+    )) {
+      if (!memberMap.has(h.member_id)) memberMap.set(h.member_id, []);
+      memberMap.get(h.member_id)!.push(h);
+    }
 
-    this.ganttRows = sorted.map(h => {
-      const start = new Date(h.joined_at).getTime();
-      const end = h.left_at ? new Date(h.left_at).getTime() : maxMs;
-      return {
-        history: h,
-        leftPct: (start - minMs) / totalMs * 100,
-        widthPct: Math.max((end - start) / totalMs * 100, 0.5),
-        isActive: !h.left_at || new Date(h.left_at).getTime() > Date.now(),
-      };
+    this.ganttRows = [...memberMap.values()].map(memberHistories => {
+      const primaryHistory =
+        memberHistories.find(h => !h.left_at || new Date(h.left_at).getTime() > now)
+        ?? memberHistories[memberHistories.length - 1];
+
+      const segments: GanttSegment[] = memberHistories.map(h => {
+        const start = new Date(h.joined_at).getTime();
+        const end = h.left_at ? new Date(h.left_at).getTime() : maxMs;
+        return {
+          history: h,
+          leftPct: (start - minMs) / totalMs * 100,
+          widthPct: Math.max((end - start) / totalMs * 100, 0.5),
+          isActive: !h.left_at || new Date(h.left_at).getTime() > now,
+        };
+      });
+
+      return { primaryHistory, segments };
     });
 
     const minYear = new Date(minMs).getFullYear();
@@ -567,8 +600,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     return this.allMembers;
   }
 
-  onBarMouseEnter(event: MouseEvent, row: GanttRow) {
-    this.tooltipRow = row;
+  onBarMouseEnter(event: MouseEvent, history: History) {
+    this.tooltipHistory = history;
     this.tooltipX = event.clientX;
     this.tooltipY = event.clientY;
   }
@@ -579,7 +612,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   }
 
   onBarMouseLeave() {
-    this.tooltipRow = null;
+    this.tooltipHistory = null;
   }
 
   hexToRgb(hex: string): string {
