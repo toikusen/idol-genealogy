@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef, NgZone }
 import { CommonModule } from '@angular/common';
 import { Group, Member, VenueCalendarEvent } from '../../models';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
+import { TimeTreeService } from '../../core/timetree.service';
 
 interface MergedEvent extends VenueCalendarEvent {
   groupNames: string[];
@@ -17,6 +18,11 @@ interface MergedEvent extends VenueCalendarEvent {
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;">
           <div style="height:1px;width:20px;background:rgba(124,108,242,0.4);flex-shrink:0;"></div>
           <span style="font-size:0.72rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-label);white-space:nowrap;">近期活動</span>
+          @if (eventSource && groups.length === 1 && !member) {
+            <span style="font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:1px 5px;border-radius:3px;background:rgba(124,108,242,0.12);color:#7c6cf2;">
+              {{ eventSource === 'timetree' ? 'TimeTree' : 'Google Calendar' }}
+            </span>
+          }
           <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(124,108,242,0.18),transparent);"></div>
         </div>
         @if (loading) {
@@ -57,12 +63,14 @@ export class GroupEventsComponent implements OnChanges {
   protected loading = false;
   singleEvents: VenueCalendarEvent[] = [];
   mergedEvents: MergedEvent[] = [];
+  eventSource: 'timetree' | 'google' | null = null;
 
   private generation = 0;
   private groupSignature = '';
 
   constructor(
     private calendarService: GoogleCalendarService,
+    private timetreeService: TimeTreeService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
   ) {}
@@ -98,6 +106,22 @@ export class GroupEventsComponent implements OnChanges {
     return sm === em ? `${sm}/${sd}–${ed}` : `${sm}/${sd}–${em}/${ed}`;
   }
 
+  private async fetchGroupEventsWithSource(group: Group): Promise<{ events: VenueCalendarEvent[]; source: 'timetree' | 'google' }> {
+    if (group.timetree_url) {
+      const alias = new URL(group.timetree_url).pathname.split('/').filter(Boolean).pop();
+      if (alias) {
+        try {
+          const events = await this.timetreeService.getUpcomingEvents(alias);
+          return { events, source: 'timetree' };
+        } catch {
+          // silent fallback
+        }
+      }
+    }
+    const events = await this.calendarService.getUpcomingGroupEvents(group);
+    return { events, source: 'google' };
+  }
+
   private async reload(): Promise<void> {
     const gen = ++this.generation;
     const groups = [...this.groups];
@@ -105,6 +129,7 @@ export class GroupEventsComponent implements OnChanges {
     this.loading = true;
     this.singleEvents = [];
     this.mergedEvents = [];
+    this.eventSource = null;
     this.cdr.markForCheck();
 
     if (groups.length === 0 && !member) {
@@ -115,12 +140,12 @@ export class GroupEventsComponent implements OnChanges {
     const results = await this.ngZone.runOutsideAngular(() =>
       Promise.allSettled([
         ...groups.map(g =>
-          this.calendarService.getUpcomingGroupEvents(g).then(events => ({ group: g as Group | null, events })),
+          this.fetchGroupEventsWithSource(g).then(r => ({ group: g as Group | null, events: r.events, source: r.source }))
         ),
         ...(member
-          ? [this.calendarService.getUpcomingMemberEvents(member).then(events => ({ group: null as Group | null, events }))]
+          ? [this.calendarService.getUpcomingMemberEvents(member).then(events => ({ group: null as Group | null, events, source: 'google' as const }))]
           : []),
-      ]),
+      ])
     );
 
     if (gen !== this.generation) return;
@@ -143,9 +168,10 @@ export class GroupEventsComponent implements OnChanges {
       }
       const allEvents = [...eventMap.values()].sort((a, b) => a.start.localeCompare(b.start));
 
-      // Single mode: exactly 1 group, no member — show without group name label
       if (groups.length === 1 && !member) {
         this.singleEvents = allEvents;
+        const first = results[0];
+        this.eventSource = first.status === 'fulfilled' ? first.value.source : null;
       } else {
         this.mergedEvents = allEvents;
       }

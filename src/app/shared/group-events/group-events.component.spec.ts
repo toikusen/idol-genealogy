@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { GroupEventsComponent } from './group-events.component';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
+import { TimeTreeService } from '../../core/timetree.service';
 import { Group, Member, VenueCalendarEvent } from '../../models';
 
 function mockGroup(id: string, name = `Group ${id}`): Group {
@@ -28,12 +29,17 @@ describe('GroupEventsComponent', () => {
   let component: GroupEventsComponent;
   let fixture: ComponentFixture<GroupEventsComponent>;
   let calendarSpy: jasmine.SpyObj<GoogleCalendarService>;
+  let timetreeSpy: jasmine.SpyObj<TimeTreeService>;
 
   beforeEach(async () => {
     calendarSpy = jasmine.createSpyObj('GoogleCalendarService', ['getUpcomingGroupEvents', 'getUpcomingMemberEvents']);
+    timetreeSpy = jasmine.createSpyObj('TimeTreeService', ['getUpcomingEvents']);
     await TestBed.configureTestingModule({
       imports: [GroupEventsComponent],
-      providers: [{ provide: GoogleCalendarService, useValue: calendarSpy }],
+      providers: [
+        { provide: GoogleCalendarService, useValue: calendarSpy },
+        { provide: TimeTreeService, useValue: timetreeSpy },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(GroupEventsComponent);
     component = fixture.componentInstance;
@@ -150,6 +156,59 @@ describe('GroupEventsComponent', () => {
     triggerChange([mockGroup('g1')]);
     await settleEvents();
     expect(calendarSpy.getUpcomingMemberEvents).not.toHaveBeenCalled();
+  });
+
+  describe('TimeTree priority', () => {
+    function mockGroupWithTimeTree(id: string): Group {
+      return { ...mockGroup(id), timetree_url: 'https://timetreeapp.com/public_calendars/test_alias/' };
+    }
+
+    it('uses TimeTree when group has timetree_url', async () => {
+      const ttEvent = mockEvent('tt1', '2026-07-01T00:00:00');
+      timetreeSpy.getUpcomingEvents.and.returnValue(Promise.resolve([ttEvent]));
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([]));
+      triggerChange([mockGroupWithTimeTree('g1')]);
+      await settleEvents();
+      expect(timetreeSpy.getUpcomingEvents).toHaveBeenCalledWith('test_alias');
+      expect(calendarSpy.getUpcomingGroupEvents).not.toHaveBeenCalled();
+      expect(component.singleEvents.length).toBe(1);
+      expect(component.singleEvents[0].id).toBe('tt1');
+    });
+
+    it('falls back to Google Calendar when TimeTree throws', async () => {
+      const gcEvent = mockEvent('gc1', '2026-07-01T00:00:00');
+      timetreeSpy.getUpcomingEvents.and.returnValue(Promise.reject(new Error('503')));
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([gcEvent]));
+      triggerChange([mockGroupWithTimeTree('g1')]);
+      await settleEvents();
+      expect(calendarSpy.getUpcomingGroupEvents).toHaveBeenCalled();
+      expect(component.singleEvents.length).toBe(1);
+      expect(component.singleEvents[0].id).toBe('gc1');
+    });
+
+    it('uses Google Calendar directly when group has no timetree_url', async () => {
+      const gcEvent = mockEvent('gc2');
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([gcEvent]));
+      triggerChange([mockGroup('g1')]);
+      await settleEvents();
+      expect(timetreeSpy.getUpcomingEvents).not.toHaveBeenCalled();
+      expect(component.singleEvents[0].id).toBe('gc2');
+    });
+
+    it('sets eventSource to timetree when TimeTree succeeds', async () => {
+      timetreeSpy.getUpcomingEvents.and.returnValue(Promise.resolve([mockEvent('tt1')]));
+      triggerChange([mockGroupWithTimeTree('g1')]);
+      await settleEvents();
+      expect(component.eventSource).toBe('timetree');
+    });
+
+    it('sets eventSource to google when TimeTree fails', async () => {
+      timetreeSpy.getUpcomingEvents.and.returnValue(Promise.reject(new Error('503')));
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([mockEvent('gc1')]));
+      triggerChange([mockGroupWithTimeTree('g1')]);
+      await settleEvents();
+      expect(component.eventSource).toBe('google');
+    });
   });
 });
 
