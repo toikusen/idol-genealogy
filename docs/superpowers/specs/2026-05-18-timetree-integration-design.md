@@ -3,6 +3,10 @@
 **日期**：2026-05-18
 **狀態**：已確認，待實作
 
+> **注意**：TimeTree 官方 Connect App/API 已於 2023-12-22 終止。
+> 本整合使用 TimeTree web frontend 所呼叫的非官方公開 endpoint，無需 API key。
+> 該 endpoint 為非文件化介面，可能隨 TimeTree 改版無預警失效；已設計 fallback 至 Google Calendar。
+
 ---
 
 ## 概述
@@ -36,11 +40,11 @@ ALTER TABLE groups ADD COLUMN timetree_url text;
 timetree_url: string | null;
 ```
 
-### Token 解析（code 層）
+### Alias 解析（code 層）
 
 ```ts
 // "https://timetreeapp.com/public_calendars/pure_maker/" → "pure_maker"
-const token = new URL(group.timetree_url).pathname.split('/').filter(Boolean).pop();
+const alias = new URL(group.timetree_url).pathname.split('/').filter(Boolean).pop();
 ```
 
 ### Proposal 系統
@@ -53,7 +57,7 @@ group 編輯介面新增 `timetree_url` 輸入欄。
 
 ---
 
-## 第二段：Netlify Function（API 代理）
+## 第二段：Netlify Function（Web Endpoint 代理）
 
 ### 新增檔案
 
@@ -62,36 +66,79 @@ group 編輯介面新增 `timetree_url` 輸入欄。
 ### 請求格式
 
 ```
-GET /api/timetree-events?token=pure_maker&days=90
+GET /api/timetree-events?alias=pure_maker&days=90
 ```
 
-### TimeTree API 呼叫
+### TimeTree Web Endpoint 呼叫
+
+TimeTree web frontend 使用的非官方 endpoint（無需 API key）：
 
 ```
-GET https://timetreeapp.com/api/v1/public/calendars/{token}/upcoming_events
-    ?timezone=Asia/Taipei
-    &days={days}
-Authorization: Bearer {TIMETREE_APPLICATION_TOKEN}
+GET https://timetreeapp.com/api/v2/public_calendars/{alias}/public_events
+    ?from={nowMs}
+    &to={nowMs + days * 86400000}
+    &utc_offset=480
+    &limit=100
+X-TimeTreeA: web/2.1.0/en
 ```
+
+- `from` / `to`：Unix 毫秒時間戳
+- `utc_offset`：480 = UTC+8（台灣）
+- 不需要 `Authorization` header
 
 ### 環境變數
 
-`TIMETREE_APPLICATION_TOKEN`：加入 Netlify 環境變數，不進 repo。
+不需要。此 endpoint 為公開無鑑權存取。
+
+### Response 結構（TimeTree 回傳）
+
+```json
+{
+  "paging": { "next": false },
+  "public_events": [
+    {
+      "id": "...",
+      "title": "SSr Vol.68 DAY3",
+      "note": "時間：開場9:30  開演10:00...",
+      "location_name": "MOONDOG",
+      "all_day": true,
+      "start_at": 1780185600000,
+      "end_at": 1780185600000,
+      "url": "https://timetr.ee/p/pure_maker/..."
+    }
+  ]
+}
+```
+
+**`all_day` 注意事項**：很多活動雖有實際開演時間，但 `all_day: true`，時間資訊寫在 `note` 裡。
+第一版只顯示日期，不解析 note 中的時間；note 解析留待後續版本。
 
 ### 回傳格式
 
-統一轉換成 `VenueCalendarEvent` 結構，前端不需感知資料來源差異。
+`public_events[]` 轉換成 `VenueCalendarEvent` 結構：
+
+| TimeTree 欄位 | VenueCalendarEvent 欄位 |
+|---|---|
+| `id` | `id` |
+| `title` | `title` |
+| `start_at`（ms → ISO string）| `start` |
+| `end_at`（ms → ISO string）| `end` |
+| `location_name` | `location` |
+| `url` | `htmlLink` |
+
+前端不需感知資料來源差異。
 
 ### Server-side Cache
 
-In-memory cache，key 為 `{token}:{days}`，TTL 30 分鐘。
+In-memory cache，key 為 `{alias}:{days}`，TTL 30 分鐘，減少對 TimeTree 的請求頻率。
 
 ### 錯誤處理
 
 | 狀況 | 回傳 | 前端行為 |
 |------|------|----------|
-| TimeTree 404（token 不存在）| 200 + 空陣列 | 正常顯示無活動 |
+| TimeTree 404（alias 不存在）| 200 + 空陣列 | 正常顯示無活動 |
 | TimeTree 429（rate limit）| 503 | fallback 到 Google Calendar |
+| TimeTree endpoint 改版失效 | 503 | fallback 到 Google Calendar |
 | 其他錯誤 | 503 | fallback 到 Google Calendar |
 
 ---
@@ -103,11 +150,11 @@ In-memory cache，key 為 `{token}:{days}`，TTL 30 分鐘。
 `src/app/core/timetree.service.ts`
 
 ```ts
-getUpcomingEvents(token: string, daysAhead = 90): Promise<VenueCalendarEvent[]>
+getUpcomingEvents(alias: string, daysAhead = 90): Promise<VenueCalendarEvent[]>
 ```
 
-- 呼叫 `/api/timetree-events?token={token}&days={daysAhead}`
-- 前端 cache key：`timetree:{token}:{daysAhead}`
+- 呼叫 `/api/timetree-events?alias={alias}&days={daysAhead}`
+- 前端 cache key：`timetree:{alias}:{daysAhead}`
 - Netlify Function 回傳 503 時 throw，由 caller 決定 fallback
 
 ### `GroupEventsComponent` 修改
@@ -170,6 +217,9 @@ TimeTree 失敗並 fallback 時，顯示 `Google Calendar` badge，不揭露失�
 
 ## 前置條件
 
-- 申請 TimeTree Developer Account，取得 Application Token
-- 確認 TimeTree Public Calendar API 端點與參數（建議對照官方文件：https://developers.timetreeapp.com/docs/api/public-calendar）
-- 將 `TIMETREE_APPLICATION_TOKEN` 加入 Netlify 環境變數
+無需申請任何 API key 或開發者帳號。
+
+## 風險與監控
+
+- **Endpoint 失效風險**：`/api/v2/public_calendars/{alias}/public_events` 為非文件化介面，TimeTree 改版時可能無預警失效。失效時所有 TimeTree 團體自動 fallback 至 Google Calendar，功能不中斷。
+- **監控建議**：Netlify Function 錯誤率異常升高時，檢查 TimeTree endpoint 是否仍有效。
