@@ -28,28 +28,43 @@ interface MergedEvent extends VenueCalendarEvent {
         @if (loading) {
           <div style="font-size:0.68rem;color:var(--text-faint,#aaa);padding:4px 0;">讀取活動中…</div>
         } @else {
-          @for (event of singleEvents; track event.id) {
-            <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
-               style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 6px;text-decoration:none;border-radius:6px;transition:background 0.15s;"
-               onmouseenter="this.style.background='rgba(124,108,242,0.05)'"
-               onmouseleave="this.style.background='transparent'">
-              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;padding-top:1px;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
-              <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ event.title }}</span>
-            </a>
-          }
-          @for (event of mergedEvents; track event.id) {
-            <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
-               style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 6px;text-decoration:none;border-radius:6px;transition:background 0.15s;"
-               onmouseenter="this.style.background='rgba(124,108,242,0.05)'"
-               onmouseleave="this.style.background='transparent'">
-              <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;padding-top:1px;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
-              <div>
-                <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">{{ event.title }}</span>
-                @if (event.groupNames.length > 0) {
-                  <span style="font-size:0.6rem;color:var(--text-faint);">{{ event.groupNames.join(' · ') }}</span>
-                }
-              </div>
-            </a>
+          <div [style.position]="hasMore ? 'relative' : null">
+            @for (event of visibleSingleEvents; track event.id) {
+              <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
+                 style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 6px;text-decoration:none;border-radius:6px;transition:background 0.15s;"
+                 onmouseenter="this.style.background='rgba(124,108,242,0.05)'"
+                 onmouseleave="this.style.background='transparent'">
+                <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;padding-top:1px;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
+                <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ event.title }}</span>
+              </a>
+            }
+            @for (event of visibleMergedEvents; track event.id) {
+              <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
+                 style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 6px;text-decoration:none;border-radius:6px;transition:background 0.15s;"
+                 onmouseenter="this.style.background='rgba(124,108,242,0.05)'"
+                 onmouseleave="this.style.background='transparent'">
+                <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;padding-top:1px;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
+                <div>
+                  <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">{{ event.title }}</span>
+                  @if (event.groupNames.length > 0) {
+                    <span style="font-size:0.6rem;color:var(--text-faint);">{{ event.groupNames.join(' · ') }}</span>
+                  }
+                </div>
+              </a>
+            }
+            @if (hasMore) {
+              <div style="position:absolute;bottom:0;left:0;right:0;height:36px;pointer-events:none;background:linear-gradient(to bottom,transparent,var(--bg-page,#fdf6fb));"></div>
+            }
+          </div>
+          @if (hasMore) {
+            <button (click)="showAll = true"
+              style="display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;cursor:pointer;padding:8px 6px 2px;color:rgba(124,108,242,0.5);transition:color 0.2s;"
+              onmouseenter="this.style.color='rgba(124,108,242,0.9)'"
+              onmouseleave="this.style.color='rgba(124,108,242,0.5)'">
+              <div style="flex:1;height:1px;background:rgba(124,108,242,0.12);"></div>
+              <span style="font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;white-space:nowrap;">+ {{ remainingCount }} 筆</span>
+              <div style="flex:1;height:1px;background:rgba(124,108,242,0.12);"></div>
+            </button>
           }
         }
       </section>
@@ -64,6 +79,25 @@ export class GroupEventsComponent implements OnChanges {
   singleEvents: VenueCalendarEvent[] = [];
   mergedEvents: MergedEvent[] = [];
   eventSource: 'timetree' | 'google' | null = null;
+  protected showAll = false;
+
+  private readonly INITIAL_LIMIT = 10;
+
+  protected get visibleSingleEvents(): VenueCalendarEvent[] {
+    return this.showAll ? this.singleEvents : this.singleEvents.slice(0, this.INITIAL_LIMIT);
+  }
+
+  protected get visibleMergedEvents(): MergedEvent[] {
+    return this.showAll ? this.mergedEvents : this.mergedEvents.slice(0, this.INITIAL_LIMIT);
+  }
+
+  protected get hasMore(): boolean {
+    return !this.showAll && (this.singleEvents.length + this.mergedEvents.length) > this.INITIAL_LIMIT;
+  }
+
+  protected get remainingCount(): number {
+    return Math.max(0, this.singleEvents.length + this.mergedEvents.length - this.INITIAL_LIMIT);
+  }
 
   private generation = 0;
   private groupSignature = '';
@@ -130,6 +164,7 @@ export class GroupEventsComponent implements OnChanges {
     this.singleEvents = [];
     this.mergedEvents = [];
     this.eventSource = null;
+    this.showAll = false;
     this.cdr.markForCheck();
 
     if (groups.length === 0 && !member) {
