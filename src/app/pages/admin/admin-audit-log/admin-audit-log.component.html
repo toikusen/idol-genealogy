@@ -27,7 +27,7 @@
     <div class="text-sm text-gray-400 py-8 text-center">載入中…</div>
   } @else if (error) {
     <div class="text-sm text-red-500 py-4">{{ error }}</div>
-  } @else if (logs.length === 0) {
+  } @else if (displayLogs.length === 0) {
     <div class="text-sm text-gray-400 py-8 text-center">尚無變更記錄</div>
   } @else {
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
@@ -44,7 +44,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (log of logs; track log.id) {
+          @for (log of displayLogs; track log.id) {
             <!-- Main row -->
             <tr
               class="border-b border-gray-50 hover:bg-pink-50/30 cursor-pointer transition-colors"

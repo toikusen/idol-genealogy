@@ -43,6 +43,11 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   newVideoUrl = '';
   videoError = '';
   savingVideo = false;
+  private readonly TIMETREE_URL_PREFIXES = [
+    'https://timetreeapp.com/public_calendars/',
+    'https://www.timetreeapp.com/public_calendars/',
+    'https://timetr.ee/p/',
+  ];
 
   constructor(
     private groupService: GroupService,
@@ -201,6 +206,16 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   async save() {
     if (!this.editing.name?.trim()) { this.error = '團體名稱為必填'; return; }
+    if (this.editing.timetree_url?.trim()) {
+      const timetreeUrl = this.editing.timetree_url.trim();
+      if (!this.TIMETREE_URL_PREFIXES.some(prefix => timetreeUrl.startsWith(prefix))) {
+        this.error = 'TimeTree 必須是 https://timetreeapp.com/public_calendars/ 或 https://timetr.ee/p/ 開頭的網址';
+        return;
+      }
+      this.editing.timetree_url = timetreeUrl;
+    } else if (this.editing.timetree_url === '') {
+      this.editing.timetree_url = null;
+    }
     if (!this.isEditor) {
       this.editing.style = this.editingStyles.length > 0 ? this.editingStyles.join(',') : null;
     }

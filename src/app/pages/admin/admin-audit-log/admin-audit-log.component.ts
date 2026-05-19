@@ -315,6 +315,20 @@ export class AdminAuditLogComponent implements OnInit {
     return null;
   }
 
+  private static readonly SYSTEM_FIELDS = new Set(['updated_at', 'created_at']);
+
+  /** Returns true for UPDATE entries where only auto-managed timestamps differ.
+   *  These come from touch_member_updated_at() and carry no content change. */
+  private isTimestampOnlyChange(log: AuditLog): boolean {
+    if (log.operation !== 'UPDATE') return false;
+    const diffs = this.getDiff(log);
+    return diffs.length === 0 || diffs.every(d => AdminAuditLogComponent.SYSTEM_FIELDS.has(d.field));
+  }
+
+  get displayLogs(): AuditLog[] {
+    return this.logs.filter(log => !this.isTimestampOnlyChange(log));
+  }
+
   getDiff(log: AuditLog): AuditDiff[] {
     if (!log.old_data && !log.new_data) return [];
     const fields = new Set([
