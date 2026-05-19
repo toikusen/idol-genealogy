@@ -286,12 +286,9 @@ export class GroupTreeComponent implements OnChanges {
   private historyToNode(h: History, allHistories?: History[]): TreeNode {
     const currentName = h.member?.name || h.member?.name_roman || '—';
     const label = h.name_at_time || currentName;
-    const nameSublabel = (h.name_at_time && h.name_at_time !== currentName) ? currentName : undefined;
 
     let sublabel: string;
-    if (nameSublabel) {
-      sublabel = nameSublabel;
-    } else if (allHistories && allHistories.length > 1) {
+    if (allHistories && allHistories.length > 1) {
       sublabel = `${allHistories.length} 次在籍`;
     } else {
       const joined = h.joined_at.slice(0, 10).replaceAll('-', '.');
