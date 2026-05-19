@@ -26,13 +26,14 @@ interface VenueCalendarEvent {
 const cache = new Map<string, { data: VenueCalendarEvent[]; expiresAt: number }>();
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const MAX_PAGES = 5;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function toVenueEvent(e: TimeTreeEvent): VenueCalendarEvent {
   const start = new Date(e.start_at).toISOString();
   let end: string | null = null;
   if (e.all_day) {
     if (e.end_at > e.start_at) {
-      end = new Date(e.end_at + 1).toISOString();
+      end = new Date(e.end_at + DAY_MS).toISOString();
     }
   } else {
     end = new Date(e.end_at).toISOString();
@@ -64,9 +65,9 @@ export const onRequest: PagesFunction = async ({ request }) => {
 
   try {
     const utcOffsetMs = 8 * 60 * 60 * 1000;
-    const todayStartTW = Math.floor((Date.now() + utcOffsetMs) / 86400000) * 86400000 - utcOffsetMs;
+    const todayStartTW = Math.floor((Date.now() + utcOffsetMs) / DAY_MS) * DAY_MS - utcOffsetMs;
     const from = todayStartTW;
-    const to = todayStartTW + days * 86400000;
+    const to = todayStartTW + days * DAY_MS;
 
     const allEvents: VenueCalendarEvent[] = [];
     let cursor: string | undefined;

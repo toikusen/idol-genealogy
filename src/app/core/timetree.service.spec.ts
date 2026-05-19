@@ -46,4 +46,11 @@ describe('TimeTreeService', () => {
     const p2 = service.getUpcomingEvents('alias_b');
     expect(p1).not.toBe(p2);
   });
+
+  it('does not fetch during server rendering', async () => {
+    const serverService = new TimeTreeService('server' as any);
+    const result = await serverService.getUpcomingEvents('pure_maker');
+    expect(result).toEqual([]);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 });
