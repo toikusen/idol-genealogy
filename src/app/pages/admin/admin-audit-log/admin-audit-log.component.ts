@@ -350,6 +350,11 @@ export class AdminAuditLogComponent implements OnInit {
         });
       }
     }
+    diffs.sort((a, b) => {
+      const aSystem = AdminAuditLogComponent.SYSTEM_FIELDS.has(a.field) ? 1 : 0;
+      const bSystem = AdminAuditLogComponent.SYSTEM_FIELDS.has(b.field) ? 1 : 0;
+      return aSystem - bSystem;
+    });
     return diffs;
   }
 
