@@ -110,8 +110,9 @@ export const onRequest: PagesFunction = async ({ request }) => {
       page++;
     } while (cursor && page < MAX_PAGES);
 
-    cache.set(cacheKey, { data: allEvents, expiresAt: Date.now() + CACHE_TTL_MS });
-    return Response.json(allEvents);
+    const futureEvents = allEvents.filter(e => new Date(e.start).getTime() >= from);
+    cache.set(cacheKey, { data: futureEvents, expiresAt: Date.now() + CACHE_TTL_MS });
+    return Response.json(futureEvents);
   } catch {
     return new Response('Internal error', { status: 503 });
   }
