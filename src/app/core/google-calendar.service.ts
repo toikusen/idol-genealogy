@@ -120,6 +120,10 @@ export class GoogleCalendarService {
         const alphaCount = stripped.length;
         if (alphaCount >= 4 && this.tokenMatch(stripped, summaryNfkc)) return true;
         if (alphaCount >= 6 && this.tokenMatch(stripped, locationNfkc)) return true;
+        // Short names with special chars (e.g. "i<3"): match full NFKC literal in summary.
+        // Guard nfkc.length > stripped.length ensures the name actually has non-alphanumeric
+        // chars (i.e. stripping removed something), so pure short names like "AKB" are excluded.
+        if (alphaCount < 4 && nfkc.length > alphaCount && nfkc.length >= 3 && summaryNfkc.includes(nfkc)) return true;
       }
     }
 
@@ -144,6 +148,9 @@ export class GoogleCalendarService {
       } else {
         const stripped = this.stripNonCjk(nfkc);
         if (stripped.length >= 4 && (this.tokenMatch(stripped, phraseNfkc) || phraseStripped === stripped)) return true;
+        // Short names with special chars (e.g. "i<3"): match full NFKC literal.
+        // Same guard as matchesGroup: only applies when stripping actually removed chars.
+        if (stripped.length < 4 && nfkc.length > stripped.length && nfkc.length >= 3 && phraseNfkc.includes(nfkc)) return true;
       }
     }
     return false;
@@ -315,12 +322,26 @@ export class GoogleCalendarService {
     return false;
   }
 
+  private decodeHtmlEntities(s: string): string {
+    return s
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#(\d+);/g, (_, n: string) => String.fromCharCode(Number(n)));
+  }
+
   private descriptionPhrases(desc: string): string[] {
-    return desc
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/(?:div|p|li)>/gi, '\n')
-      .replace(/<(?:div|p|li)(?:\s[^>]*)?>/gi, '\n')
-      .replace(/<[^>]+>/g, '')
+    // Decode HTML entities before splitting so entity semicolons (e.g. &lt; → <)
+    // are not treated as phrase separators.
+    const decoded = this.decodeHtmlEntities(
+      desc
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(?:div|p|li)>/gi, '\n')
+        .replace(/<(?:div|p|li)(?:\s[^>]*)?>/gi, '\n')
+        .replace(/<[^>]+>/g, ''),
+    );
+    return decoded
       .split(/[\n\r。；;、]+/)
       .map(phrase => phrase.trim())
       .filter(Boolean);

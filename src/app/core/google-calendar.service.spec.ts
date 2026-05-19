@@ -615,4 +615,23 @@ describe('matchesGroup', () => {
     const desc = 'もも(From Pure Maker)';
     expect((service as any).matchesGroup(mkEvent('生誕祭', '', desc), mkGroup('幻波SYNC'))).toBeFalse();
   });
+
+  // Short alpha names with special chars (e.g. "i<3")
+  it('matches short alpha name with special char in summary (e.g. "i<3")', () => {
+    expect((service as any).matchesGroup(mkEvent('i<3 1st Live'), mkGroup('i<3'))).toBeTrue();
+  });
+
+  it('matches short alpha name with special char listed under performer keyword', () => {
+    const desc = '演出者：\ni<3\n月宵◇クレシェンテ';
+    expect((service as any).matchesGroup(mkEvent('SSr Vol.67', '', desc), mkGroup('i<3'))).toBeTrue();
+  });
+
+  it('matches short alpha name with special char when HTML-encoded as &lt; in description', () => {
+    const desc = '演出者：\ni&lt;3\n月宵◇クレシェンテ';
+    expect((service as any).matchesGroup(mkEvent('SSr Vol.67', '', desc), mkGroup('i<3'))).toBeTrue();
+  });
+
+  it('does NOT match short alpha name with special char in location (below threshold)', () => {
+    expect((service as any).matchesGroup(mkEvent('show', 'i<3 venue'), mkGroup('i<3'))).toBeFalse();
+  });
 });
