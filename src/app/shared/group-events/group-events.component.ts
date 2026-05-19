@@ -15,7 +15,7 @@ interface MergedEvent extends VenueCalendarEvent {
   template: `
     @if (loading || hasEvents) {
       <section style="margin:28px 0;">
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
           <div style="height:1px;width:20px;background:rgba(124,108,242,0.4);flex-shrink:0;"></div>
           <span style="font-size:0.72rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-label);white-space:nowrap;">近期活動</span>
           @if (groups.length === 1 && !member) {
@@ -24,35 +24,35 @@ interface MergedEvent extends VenueCalendarEvent {
               (click)="openSourceUrl($event)"
               target="_blank"
               rel="noopener noreferrer"
-              style="font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:1px 5px;border-radius:3px;background:rgba(124,108,242,0.12);color:#7c6cf2;text-decoration:none;cursor:pointer;">
+              style="font-size:0.63rem;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(124,108,242,0.12);color:#7c6cf2;text-decoration:none;cursor:pointer;">
               {{ eventSource === 'timetree' ? 'TimeTree' : 'OTAKU EVENT' }}
             </a>
           }
           <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(124,108,242,0.18),transparent);"></div>
         </div>
         @if (loading) {
-          <div style="font-size:0.68rem;color:var(--text-faint,#aaa);padding:4px 0;">讀取活動中…</div>
+          <div style="font-size:0.75rem;color:var(--text-faint,#aaa);padding:4px 0;">讀取活動中…</div>
         } @else {
           <div [style.position]="hasMore ? 'relative' : null">
             @for (event of visibleSingleEvents; track event.id) {
               <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
-                 style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 6px;text-decoration:none;border-radius:6px;transition:background 0.15s;"
+                 style="display:grid;grid-template-columns:56px 1fr;gap:10px;padding:7px 10px;text-decoration:none;border-radius:6px;transition:background 0.15s;margin-bottom:1px;"
                  onmouseenter="this.style.background='rgba(124,108,242,0.05)'"
                  onmouseleave="this.style.background='transparent'">
-                <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;padding-top:1px;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
-                <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ event.title }}</span>
+                <span style="font-size:0.7rem;color:#7c6cf2;font-weight:600;padding-top:1px;line-height:1.4;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
+                <span style="font-size:0.82rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;">{{ event.title }}</span>
               </a>
             }
             @for (event of visibleMergedEvents; track event.id) {
               <a [href]="event.url ?? '#'" target="_blank" rel="noopener noreferrer"
-                 style="display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 6px;text-decoration:none;border-radius:6px;transition:background 0.15s;"
+                 style="display:grid;grid-template-columns:56px 1fr;gap:10px;padding:7px 10px;text-decoration:none;border-radius:6px;transition:background 0.15s;margin-bottom:1px;"
                  onmouseenter="this.style.background='rgba(124,108,242,0.05)'"
                  onmouseleave="this.style.background='transparent'">
-                <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;padding-top:1px;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
+                <span style="font-size:0.7rem;color:#7c6cf2;font-weight:600;padding-top:1px;line-height:1.4;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
                 <div>
-                  <span style="font-size:0.7rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">{{ event.title }}</span>
+                  <span style="font-size:0.82rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;line-height:1.4;">{{ event.title }}</span>
                   @if (event.groupNames.length > 0) {
-                    <span style="font-size:0.6rem;color:var(--text-faint);">{{ event.groupNames.join(' · ') }}</span>
+                    <span style="font-size:0.68rem;color:var(--text-faint);line-height:1.3;">{{ event.groupNames.join(' · ') }}</span>
                   }
                 </div>
               </a>
@@ -63,15 +63,15 @@ interface MergedEvent extends VenueCalendarEvent {
           </div>
           @if (hasMore) {
             <button (click)="showAll = true"
-              style="display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;cursor:pointer;padding:8px 6px 2px;color:rgba(124,108,242,0.5);transition:color 0.2s;"
+              style="display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;cursor:pointer;padding:8px 10px 2px;color:rgba(124,108,242,0.5);transition:color 0.2s;"
               onmouseenter="this.style.color='rgba(124,108,242,0.9)'"
               onmouseleave="this.style.color='rgba(124,108,242,0.5)'">
               <div style="flex:1;height:1px;background:rgba(124,108,242,0.12);"></div>
-              <span style="font-size:0.58rem;letter-spacing:0.22em;text-transform:uppercase;white-space:nowrap;">+ {{ remainingCount }} 筆</span>
+              <span style="font-size:0.63rem;letter-spacing:0.2em;text-transform:uppercase;white-space:nowrap;">+ {{ remainingCount }} 筆</span>
               <div style="flex:1;height:1px;background:rgba(124,108,242,0.12);"></div>
             </button>
           }
-          <p style="margin:8px 0 0;padding:0 6px;font-size:0.56rem;color:var(--text-faint,#bbb);letter-spacing:0.04em;line-height:1.6;opacity:0.8;">
+          <p style="margin:8px 0 0;padding:0 10px;font-size:0.62rem;color:var(--text-faint,#bbb);letter-spacing:0.04em;line-height:1.6;opacity:0.8;">
             ※ 資料由 TimeTree / Otaku Event 提供，活動詳情以官方公告為準
           </p>
         }
