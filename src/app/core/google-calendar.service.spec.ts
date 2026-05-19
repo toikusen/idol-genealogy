@@ -366,7 +366,11 @@ describe('GoogleCalendarService', () => {
     expect((service as any).matchesMember(event, member)).toBeTrue();
   });
 
-  it('matchesMember: does not match short-name member (2 chars) listed under performer keyword without (From X)', () => {
+  it('matchesMember: matches short-name member (2 chars) listed as exact phrase under performer keyword', () => {
+    // Design note: 2-char kana names (e.g. "もも", "しか") now match when they appear
+    // as the sole content of a performer-list line. The (From X) pattern remains the
+    // preferred way to disambiguate common names across groups, but exact-phrase matching
+    // in performer context is accepted for short unique stage names.
     const member = mockMember('m5', { name: 'もも' });
     const event = {
       id: 'e-live',
@@ -374,7 +378,7 @@ describe('GoogleCalendarService', () => {
       description: '演出者\nもも',
       start: { dateTime: '2026-07-01T18:00:00+08:00' },
     };
-    expect((service as any).matchesMember(event, member)).toBeFalse();
+    expect((service as any).matchesMember(event, member)).toBeTrue();
   });
 
   it('matchesMember: matches member roman name in event title', () => {
@@ -542,6 +546,22 @@ describe('matchesGroup', () => {
       mkEvent('あ。コンサート'),
       mkGroup('あ。'),
     )).toBeFalse(); // nfkc.length = 2 < 3
+  });
+
+  // Very short kana member/group name (2 chars, e.g. "しか") listed in performer list
+  it('matches 2-char kana name listed as own phrase under performer keyword', () => {
+    const desc = '演出者：\n幻波SYNC\n初恋Eternal\nしか';
+    expect((service as any).matchesGroup(mkEvent('SSrグループ公演Vol.10', '', desc), mkGroup('しか'))).toBeTrue();
+  });
+
+  it('does NOT match 2-char kana name when embedded in a longer phrase', () => {
+    const desc = '演出者：\nしかしながら最高のライブ';
+    expect((service as any).matchesGroup(mkEvent('live', '', desc), mkGroup('しか'))).toBeFalse();
+  });
+
+  it('does NOT match single-char kana name even as exact phrase', () => {
+    const desc = '演出者：\nか';
+    expect((service as any).matchesGroup(mkEvent('live', '', desc), mkGroup('か'))).toBeFalse();
   });
 
   // description organizer keyword matching

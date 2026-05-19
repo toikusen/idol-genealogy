@@ -145,6 +145,9 @@ export class GoogleCalendarService {
         const cjkKanaCount = (stripped.match(/[ぁ-ゖァ-ー一-鿿㐀-䶿]/g) ?? []).length;
         if (cjkKanaCount >= 3 && phraseStripped.includes(stripped)) return true;
         if (cjkKanaCount < 3 && cjkKanaCount >= 1 && nfkc.length >= 3 && (phraseNfkc.includes(nfkc) || phraseStripped === stripped)) return true;
+        // Very short kana names (e.g. "しか", 2 chars): allow when the phrase is exactly
+        // this name. Safe in performer-list context where each line is one name.
+        if (cjkKanaCount < 3 && cjkKanaCount >= 1 && stripped.length >= 2 && phraseStripped === stripped) return true;
       } else {
         const stripped = this.stripNonCjk(nfkc);
         if (stripped.length >= 4 && (this.tokenMatch(stripped, phraseNfkc) || phraseStripped === stripped)) return true;
