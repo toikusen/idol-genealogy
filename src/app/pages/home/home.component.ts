@@ -485,6 +485,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   getGroupLabel(group: Group): string | null {
+    if (group.company_id) {
+      return this.allCompanies.find(c => c.id === group.company_id)?.name ?? null;
+    }
     return group.company ?? null;
   }
 
