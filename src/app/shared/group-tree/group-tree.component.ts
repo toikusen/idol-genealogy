@@ -7,7 +7,7 @@ interface TreeNode {
   type: 'team' | 'member';
   id: string;
   label: string;
-  sublabel?: string;
+  periods?: string[];
   photo_url?: string | null;
   history?: History;
   children?: TreeNode[];
@@ -60,7 +60,7 @@ interface FlatGroup {
               <div class="flex-1 h-px gt-divider"></div>
               <span class="text-xs text-gray-400">{{ flatGroup.activeNodes.length }}</span>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               @for (node of flatGroup.activeNodes; track node.id) {
                 <ng-container *ngTemplateOutlet="memberCard; context: { node: node, dim: false }"></ng-container>
               }
@@ -78,7 +78,7 @@ interface FlatGroup {
               <div class="flex-1 h-px gt-divider"></div>
               <span class="text-xs text-gray-400">{{ flatGroup.formerNodes.length }}</span>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               @for (node of flatGroup.formerNodes; track node.id) {
                 <ng-container *ngTemplateOutlet="memberCard; context: { node: node, dim: true }"></ng-container>
               }
@@ -92,26 +92,28 @@ interface FlatGroup {
     <!-- Shared member card template -->
     <ng-template #memberCard let-node="node" let-dim="dim">
       <button type="button"
-           class="block w-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
+           class="block w-full h-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
            (click)="selectMember.emit(node.history!)"
            [style.opacity]="dim ? '0.6' : '1'">
-        <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm
-                    p-3 text-center hover:-translate-y-1 transition-all duration-200">
+        <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm h-full
+                    p-4 flex flex-col items-center justify-center text-center hover:-translate-y-1 transition-all duration-200">
           @if (node.photo_url) {
-            <img [src]="node.photo_url | supabaseImg:112" [alt]="node.label"
-                 class="w-14 h-14 rounded-full object-cover mx-auto mb-2 ring-2 gt-ring shadow-sm">
+            <img [src]="node.photo_url | supabaseImg:128" [alt]="node.label"
+                 class="w-16 h-16 rounded-full object-cover mx-auto mb-2.5 ring-2 gt-ring shadow-sm">
           } @else {
-            <div class="w-14 h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ring-2 gt-ring shadow-sm"
+            <div class="w-16 h-16 rounded-full mx-auto mb-2.5 flex items-center justify-center text-xl font-bold ring-2 gt-ring shadow-sm"
                  [style.background]="(node.color || '#e879a0') + '22'"
                  [style.color]="node.color || '#e879a0'">
               {{ node.label[0] }}
             </div>
           }
-          <p class="text-xs font-medium leading-tight line-clamp-2"
+          <p class="text-sm font-medium leading-tight line-clamp-2"
              [class.text-gray-800]="!dim" [class.text-gray-400]="dim">{{ node.label }}</p>
-          @if (node.sublabel) {
-            <p class="text-xs text-gray-400 mt-0.5 leading-tight">{{ node.sublabel }}</p>
-          }
+          <div class="flex flex-wrap justify-center gap-x-1.5 gap-y-0 mt-1">
+            @for (period of (node.periods ?? []); track period) {
+              <span class="text-xs text-gray-400 whitespace-nowrap leading-tight">{{ period }}</span>
+            }
+          </div>
         </div>
       </button>
     </ng-template>
@@ -130,28 +132,32 @@ interface FlatGroup {
               </h3>
               <div class="flex-1 h-px gt-divider"></div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               @for (child of node.children || []; track child.id) {
                 <button type="button"
-                     class="block w-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
+                     class="block w-full h-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
                      (click)="selectMember.emit(child.history!)"
                      [style.opacity]="child.history?.left_at ? '0.65' : '1'">
-                  <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm
-                              p-3 text-center hover:-translate-y-1 transition-all duration-200">
+                  <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm h-full
+                              p-4 flex flex-col items-center justify-center text-center hover:-translate-y-1 transition-all duration-200">
                     @if (child.photo_url) {
-                      <img [src]="child.photo_url | supabaseImg:112" [alt]="child.label"
-                           class="w-14 h-14 rounded-full object-cover mx-auto mb-2 ring-2 gt-ring shadow-sm">
+                      <img [src]="child.photo_url | supabaseImg:128" [alt]="child.label"
+                           class="w-16 h-16 rounded-full object-cover mx-auto mb-2.5 ring-2 gt-ring shadow-sm">
                     } @else {
-                      <div class="w-14 h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ring-2 gt-ring shadow-sm"
+                      <div class="w-16 h-16 rounded-full mx-auto mb-2.5 flex items-center justify-center text-xl font-bold ring-2 gt-ring shadow-sm"
                            [style.background]="(child.color || '#e879a0') + '22'"
                            [style.color]="child.color || '#e879a0'">
                         {{ child.label[0] }}
                       </div>
                     }
-                    <p class="text-xs font-medium leading-tight line-clamp-2"
+                    <p class="text-sm font-medium leading-tight line-clamp-2"
                        [class.text-gray-800]="!child.history?.left_at" [class.text-gray-400]="!!child.history?.left_at">{{ child.label }}</p>
-                    @if (child.sublabel) {
-                      <p class="text-xs text-gray-400 mt-0.5 leading-tight">{{ child.sublabel }}</p>
+                    @if (child.periods?.length) {
+                      <div class="flex flex-wrap justify-center gap-x-1.5 gap-y-0 mt-1">
+                        @for (period of child.periods; track period) {
+                          <span class="text-xs text-gray-400 whitespace-nowrap leading-tight">{{ period }}</span>
+                        }
+                      </div>
                     }
                   </div>
                 </button>
@@ -287,20 +293,21 @@ export class GroupTreeComponent implements OnChanges {
     const currentName = h.member?.name || h.member?.name_roman || '—';
     const label = h.name_at_time || currentName;
 
-    let sublabel: string;
-    if (allHistories && allHistories.length > 1) {
-      sublabel = `${allHistories.length} 次在籍`;
-    } else {
-      const joined = h.joined_at.slice(0, 10).replaceAll('-', '.');
-      const left = h.left_at ? h.left_at.slice(0, 10).replaceAll('-', '.') : '現在';
-      sublabel = `${joined}～${left}`;
-    }
+    const source = allHistories?.length ? allHistories : [h];
+    const sorted = [...source].sort(
+      (a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime()
+    );
+    const periods = sorted.map(hist => {
+      const joined = hist.joined_at.slice(0, 10).replaceAll('-', '.');
+      const left = hist.left_at ? hist.left_at.slice(0, 10).replaceAll('-', '.') : '現在';
+      return `${joined}～${left}`;
+    });
 
     return {
       type: 'member',
       id: h.member_id,
       label,
-      sublabel,
+      periods,
       photo_url: h.member?.photo_url,
       history: h,
       color: this.group?.color
