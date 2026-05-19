@@ -1,10 +1,10 @@
-<div class="p-8">
+<div class="p-4 md:p-8">
   <!-- Page header -->
-  <div class="flex items-center justify-between mb-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
     <h1 class="text-2xl font-semibold text-gray-800">歷史記錄管理</h1>
     <button
       (click)="openCreate()"
-      class="px-4 py-2 bg-pink-500 text-white text-sm rounded-md hover:bg-pink-600 transition-colors"
+      class="self-start sm:self-auto px-4 py-2 bg-pink-500 text-white text-sm rounded-md hover:bg-pink-600 transition-colors"
     >
       + 新增記錄
     </button>
@@ -15,12 +15,12 @@
     <input type="text" [(ngModel)]="searchQuery" placeholder="搜尋成員名稱或團體…"
       class="flex-1 min-w-[180px] max-w-sm border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"/>
     <select [(ngModel)]="filterMemberId"
-      class="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white text-gray-700">
+      class="flex-1 min-w-[130px] border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white text-gray-700">
       <option value="">全部成員</option>
       <option *ngFor="let m of members" [value]="m.id">{{ m.name || m.name_roman }}</option>
     </select>
     <select [(ngModel)]="filterGroupId"
-      class="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white text-gray-700">
+      class="flex-1 min-w-[130px] border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white text-gray-700">
       <option value="">全部團體</option>
       <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
     </select>

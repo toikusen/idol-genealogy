@@ -1,8 +1,8 @@
-<div class="p-8">
+<div class="p-4 md:p-8">
   <!-- Page header -->
-  <div class="flex items-center justify-between mb-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
     <h1 class="text-2xl font-semibold text-gray-800">成員管理</h1>
-    <div class="flex gap-2">
+    <div class="flex flex-wrap gap-2 self-start sm:self-auto">
       <button
         (click)="batchFetchIgPhotos()"
         [disabled]="batchFetching"
@@ -129,7 +129,7 @@
               <span *ngIf="!m.instagram && !m.facebook && !m.x && !m.maid_url && m.no_sns" class="text-gray-400 text-xs" title="已確認無社群帳號">無帳號</span>
             </div>
           </td>
-          <td class="px-4 py-3 text-right space-x-2">
+          <td class="px-4 py-3 text-right whitespace-nowrap space-x-2">
             <button
               (click)="openEdit(m)"
               class="text-xs px-2 py-1 rounded text-pink-600 hover:bg-pink-50 transition-colors"
