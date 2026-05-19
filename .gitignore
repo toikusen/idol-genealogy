@@ -53,6 +53,11 @@ Thumbs.db
 # Local scratch / preview files
 .impeccable.md
 theme-toggle-preview.html
+tile-preview.html
+docs/ai/
+
+# Profiling output
+*.profraw
 
 # Supabase local files
 supabase/.temp/
@@ -69,6 +74,13 @@ docs/superpowers/plans/2026-03-16-team-member-ownership.md
 docs/superpowers/plans/2026-03-17-contributor-guide.md
 docs/superpowers/plans/2026-03-19-my-contributions-badges.md
 docs/superpowers/specs/2026-03-19-my-contributions-badges-design.md
+docs/superpowers/plans/2026-04-23-audit-fixes.md
+docs/superpowers/plans/2026-05-05-audit-fixes.md
+docs/superpowers/plans/2026-05-05-pagespeed-optimization.md
+docs/superpowers/plans/2026-05-05-remove-resolver-blocking.md
+docs/superpowers/plans/2026-05-05-resolver-slimdown.md
+docs/superpowers/plans/2026-05-13-venues-tab.md
+docs/superpowers/specs/2026-05-13-venues-tab-design.md
 
 # playwright test cach
 .playwright-mcp/
