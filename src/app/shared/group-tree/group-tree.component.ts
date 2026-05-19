@@ -190,20 +190,49 @@ export class GroupTreeComponent implements OnChanges {
     return new Date(h.left_at).getTime() <= Date.now();
   }
 
+  private groupByMember(histories: History[]): Map<string, History[]> {
+    const map = new Map<string, History[]>();
+    for (const h of histories) {
+      if (!map.has(h.member_id)) map.set(h.member_id, []);
+      map.get(h.member_id)!.push(h);
+    }
+    return map;
+  }
+
+  private primaryHistory(histories: History[]): History {
+    return histories.find(h => !this.hasLeft(h))
+      ?? histories.reduce((latest, h) =>
+          new Date(h.joined_at) > new Date(latest.joined_at) ? h : latest
+        );
+  }
+
   private buildTree() {
     if (this.teams.length === 0) {
-      const active = this.histories
-        .filter(h => !this.hasLeft(h))
-        .sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime());
+      const grouped = this.groupByMember(this.histories);
+      const activeNodes: TreeNode[] = [];
+      const formerNodes: TreeNode[] = [];
 
-      const former = this.histories
-        .filter(h => this.hasLeft(h))
-        .sort((a, b) => new Date(b.left_at!).getTime() - new Date(a.left_at!).getTime());
+      for (const memberHistories of grouped.values()) {
+        const hasActive = memberHistories.some(h => !this.hasLeft(h));
+        const primary = this.primaryHistory(memberHistories);
+        const node = this.historyToNode(primary, memberHistories);
+        if (hasActive) {
+          activeNodes.push(node);
+        } else {
+          formerNodes.push(node);
+        }
+      }
 
-      this.flatGroup = {
-        activeNodes: active.map(h => this.historyToNode(h)),
-        formerNodes: former.map(h => this.historyToNode(h)),
-      };
+      activeNodes.sort((a, b) =>
+        new Date(a.history!.joined_at).getTime() - new Date(b.history!.joined_at).getTime()
+      );
+      formerNodes.sort((a, b) => {
+        const aLeft = a.history!.left_at ?? '';
+        const bLeft = b.history!.left_at ?? '';
+        return bLeft.localeCompare(aLeft);
+      });
+
+      this.flatGroup = { activeNodes, formerNodes };
       this.teamNodes = [];
       return;
     }
@@ -219,14 +248,33 @@ export class GroupTreeComponent implements OnChanges {
       });
     }
 
-    const noTeam: TreeNode[] = [];
+    // Group per-team histories by member_id, then deduplicate
+    const teamHistoriesMap = new Map<string, History[]>();
+    const noTeamHistories: History[] = [];
     for (const h of this.histories) {
-      const node = this.historyToNode(h);
       if (h.team_id && teamMap.has(h.team_id)) {
-        teamMap.get(h.team_id)!.children!.push(node);
+        if (!teamHistoriesMap.has(h.team_id)) teamHistoriesMap.set(h.team_id, []);
+        teamHistoriesMap.get(h.team_id)!.push(h);
       } else {
-        noTeam.push(node);
+        noTeamHistories.push(h);
       }
+    }
+
+    for (const [teamId, hs] of teamHistoriesMap) {
+      const grouped = this.groupByMember(hs);
+      const children: TreeNode[] = [];
+      for (const memberHistories of grouped.values()) {
+        const primary = this.primaryHistory(memberHistories);
+        children.push(this.historyToNode(primary, memberHistories));
+      }
+      teamMap.get(teamId)!.children = children;
+    }
+
+    const noTeamGrouped = this.groupByMember(noTeamHistories);
+    const noTeam: TreeNode[] = [];
+    for (const memberHistories of noTeamGrouped.values()) {
+      const primary = this.primaryHistory(memberHistories);
+      noTeam.push(this.historyToNode(primary, memberHistories));
     }
 
     this.teamNodes = [
@@ -235,19 +283,27 @@ export class GroupTreeComponent implements OnChanges {
     ];
   }
 
-  private historyToNode(h: History): TreeNode {
+  private historyToNode(h: History, allHistories?: History[]): TreeNode {
     const currentName = h.member?.name || h.member?.name_roman || '—';
     const label = h.name_at_time || currentName;
-    const joined = h.joined_at.slice(0, 10).replaceAll('-', '.');
-    const left = h.left_at ? h.left_at.slice(0, 10).replaceAll('-', '.') : '現在';
-    // Show current name as sublabel if it differs from name_at_time
-    const nameSublabel = (h.name_at_time && h.name_at_time !== currentName)
-      ? currentName : undefined;
+    const nameSublabel = (h.name_at_time && h.name_at_time !== currentName) ? currentName : undefined;
+
+    let sublabel: string;
+    if (nameSublabel) {
+      sublabel = nameSublabel;
+    } else if (allHistories && allHistories.length > 1) {
+      sublabel = `${allHistories.length} 次在籍`;
+    } else {
+      const joined = h.joined_at.slice(0, 10).replaceAll('-', '.');
+      const left = h.left_at ? h.left_at.slice(0, 10).replaceAll('-', '.') : '現在';
+      sublabel = `${joined}～${left}`;
+    }
+
     return {
       type: 'member',
-      id: h.id,
+      id: h.member_id,
       label,
-      sublabel: nameSublabel ?? `${joined}～${left}`,
+      sublabel,
       photo_url: h.member?.photo_url,
       history: h,
       color: this.group?.color
