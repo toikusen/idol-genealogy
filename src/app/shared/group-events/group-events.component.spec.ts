@@ -67,7 +67,8 @@ describe('GroupEventsComponent', () => {
     calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([mockEvent('e1')]));
     triggerChange([mockGroup('g1')]);
     await settleEvents();
-    expect(fixture.nativeElement.querySelectorAll('a').length).toBe(1);
+    // source label <a> + 1 event link = 2 total
+    expect(fixture.nativeElement.querySelectorAll('a').length).toBe(2);
   });
 
   it('deduplicates events across groups in merged mode', async () => {
@@ -158,6 +159,64 @@ describe('GroupEventsComponent', () => {
     expect(calendarSpy.getUpcomingMemberEvents).not.toHaveBeenCalled();
   });
 
+  it('includes events from members array in single-group view', async () => {
+    calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([]));
+    calendarSpy.getUpcomingMemberEvents.and.returnValue(Promise.resolve([mockEvent('e-member')]));
+    component.members = [mockMember('m1')];
+    triggerChange([mockGroup('g1')]);
+    await settleEvents();
+    expect(calendarSpy.getUpcomingMemberEvents).toHaveBeenCalledWith(jasmine.objectContaining({ id: 'm1' }));
+    expect(component.singleEvents.length).toBe(1);
+    expect(component.singleEvents[0].id).toBe('e-member');
+  });
+
+  it('fetches events for each member in members array', async () => {
+    calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([]));
+    calendarSpy.getUpcomingMemberEvents.and.returnValues(
+      Promise.resolve([mockEvent('e-m1')]),
+      Promise.resolve([mockEvent('e-m2')]),
+    );
+    component.members = [mockMember('m1'), mockMember('m2')];
+    triggerChange([mockGroup('g1')]);
+    await settleEvents();
+    expect(calendarSpy.getUpcomingMemberEvents).toHaveBeenCalledTimes(2);
+    expect(component.singleEvents.length).toBe(2);
+  });
+
+  it('deduplicates events that appear in both group and members results', async () => {
+    const shared = mockEvent('e-shared');
+    calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([shared]));
+    calendarSpy.getUpcomingMemberEvents.and.returnValue(Promise.resolve([shared]));
+    component.members = [mockMember('m1')];
+    triggerChange([mockGroup('g1')]);
+    await settleEvents();
+    expect(component.singleEvents.length).toBe(1);
+  });
+
+  it('reloads when members input changes', async () => {
+    calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([]));
+    calendarSpy.getUpcomingMemberEvents.and.returnValue(Promise.resolve([mockEvent('e1')]));
+    triggerChange([mockGroup('g1')]);
+    await settleEvents();
+    expect(calendarSpy.getUpcomingGroupEvents).toHaveBeenCalledTimes(1);
+
+    component.members = [mockMember('m1')];
+    component.ngOnChanges({ members: new SimpleChange([], [mockMember('m1')], false) });
+    await settleEvents();
+    expect(calendarSpy.getUpcomingMemberEvents).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fetch member events when group uses TimeTree', async () => {
+    const groupWithTimeTree = { ...mockGroup('g1'), timetree_url: 'https://timetreeapp.com/public_calendars/alias123/' };
+    timetreeSpy.getUpcomingEvents.and.returnValue(Promise.resolve([mockEvent('tt1')]));
+    component.members = [mockMember('m1')];
+    triggerChange([groupWithTimeTree]);
+    await settleEvents();
+    expect(calendarSpy.getUpcomingMemberEvents).not.toHaveBeenCalled();
+    expect(component.singleEvents.length).toBe(1);
+    expect(component.singleEvents[0].id).toBe('tt1');
+  });
+
   describe('TimeTree priority', () => {
     function mockGroupWithTimeTree(id: string): Group {
       return { ...mockGroup(id), timetree_url: 'https://timetreeapp.com/public_calendars/test_alias/' };
@@ -208,6 +267,26 @@ describe('GroupEventsComponent', () => {
       triggerChange([mockGroupWithTimeTree('g1')]);
       await settleEvents();
       expect(component.eventSource).toBe('google');
+    });
+
+    it('supports TimeTree short links', async () => {
+      const ttEvent = mockEvent('tt-short');
+      timetreeSpy.getUpcomingEvents.and.returnValue(Promise.resolve([ttEvent]));
+      triggerChange([{ ...mockGroup('g1'), timetree_url: 'https://timetr.ee/p/short_alias' }]);
+      await settleEvents();
+      expect(timetreeSpy.getUpcomingEvents).toHaveBeenCalledWith('short_alias');
+      expect(calendarSpy.getUpcomingGroupEvents).not.toHaveBeenCalled();
+      expect(component.singleEvents[0].id).toBe('tt-short');
+    });
+
+    it('falls back to Google Calendar when timetree_url is malformed', async () => {
+      const gcEvent = mockEvent('gc-malformed');
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([gcEvent]));
+      triggerChange([{ ...mockGroup('g1'), timetree_url: 'not a url' }]);
+      await settleEvents();
+      expect(timetreeSpy.getUpcomingEvents).not.toHaveBeenCalled();
+      expect(calendarSpy.getUpcomingGroupEvents).toHaveBeenCalled();
+      expect(component.singleEvents[0].id).toBe('gc-malformed');
     });
   });
 });

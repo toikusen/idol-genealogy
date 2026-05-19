@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef, NgZone } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Inject, Input, OnChanges, PLATFORM_ID, SimpleChanges, ChangeDetectorRef, NgZone } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Group, Member, VenueCalendarEvent } from '../../models';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
 import { TimeTreeService } from '../../core/timetree.service';
@@ -18,10 +18,15 @@ interface MergedEvent extends VenueCalendarEvent {
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;">
           <div style="height:1px;width:20px;background:rgba(124,108,242,0.4);flex-shrink:0;"></div>
           <span style="font-size:0.72rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-label);white-space:nowrap;">近期活動</span>
-          @if (eventSource && groups.length === 1 && !member) {
-            <span style="font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:1px 5px;border-radius:3px;background:rgba(124,108,242,0.12);color:#7c6cf2;">
-              {{ eventSource === 'timetree' ? 'TimeTree' : 'Google Calendar' }}
-            </span>
+          @if (groups.length === 1 && !member) {
+            <a
+              [href]="groups[0].timetree_url ?? 'https://calendar.google.com/calendar/'"
+              (click)="openSourceUrl($event)"
+              target="_blank"
+              rel="noopener noreferrer"
+              style="font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:1px 5px;border-radius:3px;background:rgba(124,108,242,0.12);color:#7c6cf2;text-decoration:none;cursor:pointer;">
+              {{ groups[0].timetree_url ? 'TimeTree' : 'OTAKU EVENT' }}
+            </a>
           }
           <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(124,108,242,0.18),transparent);"></div>
         </div>
@@ -66,6 +71,9 @@ interface MergedEvent extends VenueCalendarEvent {
               <div style="flex:1;height:1px;background:rgba(124,108,242,0.12);"></div>
             </button>
           }
+          <p style="margin:8px 0 0;padding:0 6px;font-size:0.56rem;color:var(--text-faint,#bbb);letter-spacing:0.04em;line-height:1.6;opacity:0.8;">
+            ※ 資料由 TimeTree / Otaku Event 提供，活動詳情以官方公告為準
+          </p>
         }
       </section>
     }
@@ -74,6 +82,7 @@ interface MergedEvent extends VenueCalendarEvent {
 export class GroupEventsComponent implements OnChanges {
   @Input() groups: Group[] = [];
   @Input() member: Member | null = null;
+  @Input() members: Member[] = [];
 
   protected loading = false;
   singleEvents: VenueCalendarEvent[] = [];
@@ -99,19 +108,29 @@ export class GroupEventsComponent implements OnChanges {
     return Math.max(0, this.singleEvents.length + this.mergedEvents.length - this.INITIAL_LIMIT);
   }
 
+  protected openSourceUrl(e: MouseEvent): void {
+    e.preventDefault();
+    const url = this.groups[0]?.timetree_url ?? 'https://calendar.google.com/calendar/';
+    if (this.isBrowser) window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   private generation = 0;
   private groupSignature = '';
+  private readonly isBrowser: boolean;
 
   constructor(
     private calendarService: GoogleCalendarService,
     private timetreeService: TimeTreeService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
-  ) {}
+    @Inject(PLATFORM_ID) platformId: object,
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (!changes['groups'] && !changes['member']) return;
-    const nextSignature = this.groups.map(g => g.id).join('|');
+    if (!changes['groups'] && !changes['member'] && !changes['members']) return;
+    const nextSignature = this.groups.map(g => g.id).join('|') + '::' + this.members.map(m => m.id).join('|');
     if (nextSignature === this.groupSignature && !changes['member']) return;
     this.groupSignature = nextSignature;
     void this.reload();
@@ -141,25 +160,42 @@ export class GroupEventsComponent implements OnChanges {
   }
 
   private async fetchGroupEventsWithSource(group: Group): Promise<{ events: VenueCalendarEvent[]; source: 'timetree' | 'google' }> {
-    if (group.timetree_url) {
-      const alias = new URL(group.timetree_url).pathname.split('/').filter(Boolean).pop();
-      if (alias) {
-        try {
-          const events = await this.timetreeService.getUpcomingEvents(alias);
-          return { events, source: 'timetree' };
-        } catch {
-          // silent fallback
-        }
+    const alias = this.timetreeAliasFromUrl(group.timetree_url);
+    if (alias) {
+      try {
+        const events = await this.timetreeService.getUpcomingEvents(alias);
+        return { events, source: 'timetree' };
+      } catch {
+        // silent fallback
       }
     }
     const events = await this.calendarService.getUpcomingGroupEvents(group);
     return { events, source: 'google' };
   }
 
+  private timetreeAliasFromUrl(value: string | null): string | null {
+    if (!value) return null;
+    try {
+      const url = new URL(value.trim());
+      const host = url.hostname.toLowerCase();
+      const parts = url.pathname.split('/').filter(Boolean);
+      let alias: string | undefined;
+      if ((host === 'timetreeapp.com' || host === 'www.timetreeapp.com') && parts[0] === 'public_calendars') {
+        alias = parts[1];
+      } else if (host === 'timetr.ee' && parts[0] === 'p') {
+        alias = parts[1];
+      }
+      return alias && /^[\w-]+$/.test(alias) ? alias : null;
+    } catch {
+      return null;
+    }
+  }
+
   private async reload(): Promise<void> {
     const gen = ++this.generation;
     const groups = [...this.groups];
     const member = this.member;
+    const members = [...this.members];
     this.loading = true;
     this.singleEvents = [];
     this.mergedEvents = [];
@@ -167,10 +203,21 @@ export class GroupEventsComponent implements OnChanges {
     this.showAll = false;
     this.cdr.markForCheck();
 
-    if (groups.length === 0 && !member) {
+    if (groups.length === 0 && !member && members.length === 0) {
       this.loading = false;
       return;
     }
+
+    if (!this.isBrowser) {
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Only supplement with member events when the group uses Google Calendar.
+    // If the group has a TimeTree URL, its calendar is authoritative — no need to layer in member events.
+    const groupUsesTimeTree = groups.length === 1 && !!this.timetreeAliasFromUrl(groups[0]?.timetree_url ?? null);
+    const activeMembers = groupUsesTimeTree ? [] : members;
 
     const results = await this.ngZone.runOutsideAngular(() =>
       Promise.allSettled([
@@ -180,6 +227,9 @@ export class GroupEventsComponent implements OnChanges {
         ...(member
           ? [this.calendarService.getUpcomingMemberEvents(member).then(events => ({ group: null as Group | null, events, source: 'google' as const }))]
           : []),
+        ...activeMembers.map(m =>
+          this.calendarService.getUpcomingMemberEvents(m).then(events => ({ group: null as Group | null, events, source: 'google' as const }))
+        ),
       ])
     );
 
