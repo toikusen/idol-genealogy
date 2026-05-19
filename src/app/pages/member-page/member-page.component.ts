@@ -6,7 +6,6 @@ import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ViewCountService } from '../../core/view-count.service';
 import { MemberTimelineComponent } from '../../shared/member-timeline/member-timeline.component';
-import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { MemberCareerGraphComponent } from '../../shared/member-career-graph/member-career-graph.component';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { Member, History, Proposal, MemberSong, Group } from '../../models';
@@ -30,22 +29,14 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 @Component({
   selector: 'app-member-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, AdBannerComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent],
   templateUrl: './member-page.component.html',
   styleUrl: './member-page.component.css',
 })
 export class MemberPageComponent implements OnInit, OnDestroy {
   member: Member | null = null;
   histories: History[] = [];
-
-  get activeGroups(): Group[] {
-    const statuses = new Set(['active', 'concurrent', 'support']);
-    const seen = new Set<string>();
-    return this.histories
-      .filter(h => statuses.has(h.status ?? '') && h.group != null)
-      .map(h => h.group!)
-      .filter(g => !seen.has(g.id) && seen.add(g.id));
-  }
+  activeGroups: Group[] = [];
 
   loading = true;
   deferredLoading = false;
@@ -188,6 +179,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.error = pageData.error;
     this.member = pageData.member;
     this.histories = pageData.histories;
+    this.activeGroups = this.buildActiveGroups(pageData.histories);
     this.companyName = pageData.companyName;
     this.companyId = pageData.companyId;
     this.allGroupsList = pageData.allGroupsList;
@@ -203,6 +195,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd();
       this.adEligible = false;
+      this.activeGroups = [];
       this.snsUrls = { instagram: null, facebook: null, x: null, maid: null };
       return;
     }
@@ -287,6 +280,15 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       member_name: displayName,
     });
     this.viewCount.increment('member', id).catch(() => {});
+  }
+
+  private buildActiveGroups(histories: History[]): Group[] {
+    const statuses = new Set(['active', 'concurrent', 'support']);
+    const seen = new Set<string>();
+    return histories
+      .filter(h => statuses.has(h.status ?? '') && h.group != null)
+      .map(h => h.group!)
+      .filter(g => !seen.has(g.id) && seen.add(g.id));
   }
 
   canEditSong(song: MemberSong): boolean {
