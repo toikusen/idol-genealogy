@@ -217,6 +217,18 @@ describe('GroupEventsComponent', () => {
     expect(component.singleEvents[0].id).toBe('tt1');
   });
 
+  it('includes member events when TimeTree falls back to Google Calendar', async () => {
+    const groupWithTimeTree = { ...mockGroup('g1'), timetree_url: 'https://timetreeapp.com/public_calendars/alias123/' };
+    timetreeSpy.getUpcomingEvents.and.returnValue(Promise.reject(new Error('503')));
+    calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([mockEvent('gc-group')]));
+    calendarSpy.getUpcomingMemberEvents.and.returnValue(Promise.resolve([mockEvent('gc-member')]));
+    component.members = [mockMember('m1')];
+    triggerChange([groupWithTimeTree]);
+    await settleEvents();
+    expect(calendarSpy.getUpcomingMemberEvents).toHaveBeenCalledWith(jasmine.objectContaining({ id: 'm1' }));
+    expect(component.singleEvents.map(e => e.id)).toEqual(['gc-group', 'gc-member']);
+  });
+
   describe('TimeTree priority', () => {
     function mockGroupWithTimeTree(id: string): Group {
       return { ...mockGroup(id), timetree_url: 'https://timetreeapp.com/public_calendars/test_alias/' };
@@ -287,6 +299,23 @@ describe('GroupEventsComponent', () => {
       expect(timetreeSpy.getUpcomingEvents).not.toHaveBeenCalled();
       expect(calendarSpy.getUpcomingGroupEvents).toHaveBeenCalled();
       expect(component.singleEvents[0].id).toBe('gc-malformed');
+    });
+
+    it('shows TimeTree label when TimeTree succeeds', async () => {
+      timetreeSpy.getUpcomingEvents.and.returnValue(Promise.resolve([mockEvent('tt1')]));
+      triggerChange([mockGroupWithTimeTree('g1')]);
+      await settleEvents();
+      const badge = fixture.nativeElement.querySelector('section div a');
+      expect(badge?.textContent?.trim()).toBe('TimeTree');
+    });
+
+    it('shows OTAKU EVENT label when TimeTree falls back to Google Calendar', async () => {
+      timetreeSpy.getUpcomingEvents.and.returnValue(Promise.reject(new Error('503')));
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([mockEvent('gc1')]));
+      triggerChange([mockGroupWithTimeTree('g1')]);
+      await settleEvents();
+      const badge = fixture.nativeElement.querySelector('section div a');
+      expect(badge?.textContent?.trim()).toBe('OTAKU EVENT');
     });
   });
 });

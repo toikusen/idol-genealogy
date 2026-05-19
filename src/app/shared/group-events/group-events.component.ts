@@ -20,12 +20,12 @@ interface MergedEvent extends VenueCalendarEvent {
           <span style="font-size:0.72rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-label);white-space:nowrap;">近期活動</span>
           @if (groups.length === 1 && !member) {
             <a
-              [href]="groups[0].timetree_url ?? 'https://calendar.google.com/calendar/'"
+              [href]="eventSource === 'timetree' ? groups[0].timetree_url : 'https://calendar.google.com/calendar/'"
               (click)="openSourceUrl($event)"
               target="_blank"
               rel="noopener noreferrer"
               style="font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:1px 5px;border-radius:3px;background:rgba(124,108,242,0.12);color:#7c6cf2;text-decoration:none;cursor:pointer;">
-              {{ groups[0].timetree_url ? 'TimeTree' : 'OTAKU EVENT' }}
+              {{ eventSource === 'timetree' ? 'TimeTree' : 'OTAKU EVENT' }}
             </a>
           }
           <div style="flex:1;height:1px;background:linear-gradient(to right,rgba(124,108,242,0.18),transparent);"></div>
@@ -110,7 +110,9 @@ export class GroupEventsComponent implements OnChanges {
 
   protected openSourceUrl(e: MouseEvent): void {
     e.preventDefault();
-    const url = this.groups[0]?.timetree_url ?? 'https://calendar.google.com/calendar/';
+    const url = this.eventSource === 'timetree'
+      ? (this.groups[0]?.timetree_url ?? 'https://calendar.google.com/calendar/')
+      : 'https://calendar.google.com/calendar/';
     if (this.isBrowser) window.open(url, '_blank', 'noopener,noreferrer');
   }
 
@@ -214,24 +216,34 @@ export class GroupEventsComponent implements OnChanges {
       return;
     }
 
-    // Only supplement with member events when the group uses Google Calendar.
-    // If the group has a TimeTree URL, its calendar is authoritative — no need to layer in member events.
-    const groupUsesTimeTree = groups.length === 1 && !!this.timetreeAliasFromUrl(groups[0]?.timetree_url ?? null);
-    const activeMembers = groupUsesTimeTree ? [] : members;
-
-    const results = await this.ngZone.runOutsideAngular(() =>
-      Promise.allSettled([
-        ...groups.map(g =>
-          this.fetchGroupEventsWithSource(g).then(r => ({ group: g as Group | null, events: r.events, source: r.source }))
-        ),
-        ...(member
-          ? [this.calendarService.getUpcomingMemberEvents(member).then(events => ({ group: null as Group | null, events, source: 'google' as const }))]
-          : []),
-        ...activeMembers.map(m =>
-          this.calendarService.getUpcomingMemberEvents(m).then(events => ({ group: null as Group | null, events, source: 'google' as const }))
-        ),
-      ])
+    const groupEventPromises = groups.map(g =>
+      this.fetchGroupEventsWithSource(g).then(r => ({ group: g as Group | null, events: r.events, source: r.source }))
     );
+    const memberEventPromises = (sourceMembers: Member[]) => [
+      ...(member
+        ? [this.calendarService.getUpcomingMemberEvents(member).then(events => ({ group: null as Group | null, events, source: 'google' as const }))]
+        : []),
+      ...sourceMembers.map(m =>
+        this.calendarService.getUpcomingMemberEvents(m).then(events => ({ group: null as Group | null, events, source: 'google' as const }))
+      ),
+    ];
+
+    let results: PromiseSettledResult<{ group: Group | null; events: VenueCalendarEvent[]; source: 'timetree' | 'google' }>[];
+    const singleGroupHasTimeTree = groups.length === 1 && !!this.timetreeAliasFromUrl(groups[0]?.timetree_url ?? null);
+    if (singleGroupHasTimeTree && !member) {
+      const groupResults = await this.ngZone.runOutsideAngular(() => Promise.allSettled(groupEventPromises));
+      if (gen !== this.generation) return;
+      const first = groupResults[0];
+      const timeTreeSucceeded = first?.status === 'fulfilled' && first.value.source === 'timetree';
+      const supplementalResults = timeTreeSucceeded
+        ? []
+        : await this.ngZone.runOutsideAngular(() => Promise.allSettled(memberEventPromises(members)));
+      results = [...groupResults, ...supplementalResults];
+    } else {
+      results = await this.ngZone.runOutsideAngular(() =>
+        Promise.allSettled([...groupEventPromises, ...memberEventPromises(members)])
+      );
+    }
 
     if (gen !== this.generation) return;
 
