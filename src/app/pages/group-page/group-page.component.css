@@ -114,9 +114,93 @@
   animation: slideIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.member-link {
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+}
 .member-link:hover {
-  filter: brightness(0.88);
-  transform: translateX(2px);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+  background: rgba(184, 160, 184, 0.04);
+  filter: none;
+  transform: translateX(3px);
+}
+
+/* Status badges — semantic colors, always readable regardless of group color */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  padding: 2px 9px;
+  border-radius: 3px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.status-badge--active {
+  background: rgba(16, 185, 129, 0.10);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.26);
+}
+.status-badge--graduated {
+  background: rgba(156, 163, 175, 0.10);
+  color: #6b7280;
+  border: 1px solid rgba(156, 163, 175, 0.22);
+}
+.status-badge--transferred {
+  background: rgba(99, 102, 241, 0.10);
+  color: #4338ca;
+  border: 1px solid rgba(99, 102, 241, 0.24);
+}
+.status-badge--concurrent,
+.status-badge--support {
+  background: rgba(59, 130, 246, 0.10);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+}
+.status-badge--hiatus {
+  background: rgba(249, 115, 22, 0.10);
+  color: #c2410c;
+  border: 1px solid rgba(249, 115, 22, 0.22);
+}
+.status-badge--withdrawn {
+  background: rgba(156, 163, 175, 0.10);
+  color: #6b7280;
+  border: 1px solid rgba(156, 163, 175, 0.22);
+}
+
+/* Dark mode overrides for status badges */
+:host-context([data-theme="dark"]) .status-badge--active {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.10);
+  border-color: rgba(52, 211, 153, 0.24);
+}
+:host-context([data-theme="dark"]) .status-badge--graduated {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.08);
+  border-color: rgba(156, 163, 175, 0.20);
+}
+:host-context([data-theme="dark"]) .status-badge--transferred {
+  color: #a5b4fc;
+  background: rgba(165, 180, 252, 0.10);
+  border-color: rgba(165, 180, 252, 0.24);
+}
+:host-context([data-theme="dark"]) .status-badge--concurrent,
+:host-context([data-theme="dark"]) .status-badge--support {
+  color: #93c5fd;
+  background: rgba(147, 197, 253, 0.10);
+  border-color: rgba(147, 197, 253, 0.22);
+}
+:host-context([data-theme="dark"]) .status-badge--hiatus {
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.10);
+  border-color: rgba(251, 146, 60, 0.22);
+}
+:host-context([data-theme="dark"]) .status-badge--withdrawn {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.08);
+  border-color: rgba(156, 163, 175, 0.20);
 }
 
 /* ── Similar groups carousel ── */

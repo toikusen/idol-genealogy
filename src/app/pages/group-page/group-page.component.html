@@ -901,7 +901,7 @@
       <!-- ══ Recent Events ══ -->
       @if (eventGroups.length > 0) {
         <div class="px-4 sm:px-6">
-          <app-group-events [groups]="eventGroups" />
+          <app-group-events [groups]="eventGroups" [members]="activeEventMembers" />
         </div>
       }
 
@@ -1047,12 +1047,12 @@
                           ">{{ g.name }}</p>
                         }
 
-                        @if (g.company) {
+                        @if (g.company || (g.company_id && similarGroupCompanyNames.get(g.company_id))) {
                           <p style="
                             font-size: 0.72rem; letter-spacing: 0.05em;
                             color: var(--text-faint-45); margin: 0;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                          ">{{ g.company }}</p>
+                          ">{{ g.company || similarGroupCompanyNames.get(g.company_id!) }}</p>
                         }
                       </div>
                     </a>

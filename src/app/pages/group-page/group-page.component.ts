@@ -10,7 +10,7 @@ import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component
 import { GroupConnectionGraphComponent } from '../../shared/group-connection-graph/group-connection-graph.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
-import { Group, GroupVideo, Team, History, Proposal } from '../../models';
+import { Group, GroupVideo, Member, Team, History, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { ProposalService } from '../../core/proposal.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
@@ -65,6 +65,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   allMemberHistories: History[] = [];
   videos: GroupVideo[] = [];
   similarGroups: Group[] = [];
+  similarGroupCompanyNames = new Map<string, string>();
   carouselIndex = 0;
   carouselVisibleCount = 2;
   selectedHistory: History | null = null;
@@ -170,6 +171,18 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     }
   }
 
+  private async resolveSimilarGroupCompanyNames(): Promise<void> {
+    const needsLookup = this.similarGroups.filter(g => g.company_id && !g.company);
+    if (!needsLookup.length) return;
+    const companies = await this.companyService.getAll().catch(() => []);
+    const nameById = new Map(companies.map(c => [c.id, c.name]));
+    this.similarGroupCompanyNames = new Map(
+      needsLookup
+        .filter(g => nameById.has(g.company_id!))
+        .map(g => [g.company_id!, nameById.get(g.company_id!)!])
+    );
+  }
+
   get carouselCanPrev(): boolean { return this.carouselIndex > 0; }
   get carouselCanNext(): boolean {
     return this.carouselIndex < this.similarGroups.length - this.carouselVisibleCount;
@@ -234,6 +247,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
           .map(m => ({ id: m.id, name: m.name ?? m.name_roman ?? m.id }))
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
         this.similarGroups = similarGroups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
+        await this.resolveSimilarGroupCompanyNames();
         this.songs = songs;
         this.videos = videos;
         if (this.pendingEditSongId) {
@@ -260,6 +274,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.allMemberHistories = pageData.allMemberHistories;
     this.videos = pageData.videos;
     this.similarGroups = pageData.similarGroups;
+    this.resolveSimilarGroupCompanyNames();
     this.carouselIndex = 0;
     this.lastProposal = pageData.lastProposal;
     this.allMembers = pageData.allMembers;
@@ -379,6 +394,15 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         document.getElementById('member-detail-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 30);
     }
+  }
+
+  get activeEventMembers(): Member[] {
+    const now = Date.now();
+    const seen = new Set<string>();
+    return this.histories
+      .filter(h => h.member && (!h.left_at || new Date(h.left_at).getTime() > now))
+      .filter(h => { if (seen.has(h.member_id)) return false; seen.add(h.member_id); return true; })
+      .map(h => h.member!);
   }
 
   get selectedMemberPeriods(): History[] {
