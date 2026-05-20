@@ -219,8 +219,8 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     const altNames = [hiraganaName, romanName].filter((v): v is string => !!v);
     const nameStr = altNames.length > 0 ? `${displayName}（${altNames.join(' / ')}）` : displayName;
     const description = groupParts.length > 0
-      ? `${nameStr}是台灣地下偶像，曾隸屬${groupParts.join('、')}。`
-      : `${displayName}的完整資料，包含所屬團體與活動記錄。`;
+      ? `${nameStr}是台灣地下偶像，曾隸屬${groupParts.join('、')}。查看活動歷程、所屬團體與近期演出資訊。`
+      : `${displayName}的完整資料，包含所屬團體、活動記錄與近期演出資訊。`;
 
     this.seo.setPage(
       `${displayName} - Idol Maps`,
@@ -260,6 +260,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       })()),
       ...(member.birthdate && { birthDate: member.birthdate }),
       ...(member.photo_url && { image: member.photo_url }),
+      description,
       ...(sameAs.length > 0 && { sameAs }),
     };
     const groupsForSchema = pageData.histories

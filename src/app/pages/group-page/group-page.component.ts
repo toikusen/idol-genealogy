@@ -310,8 +310,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     if (activeCount > 0) parts.push(`現有 ${activeCount} 名活躍成員`);
     if (pageData.companyName) parts.push(`隸屬 ${pageData.companyName}`);
     const description = parts.length > 0
-      ? `${displayName}，${parts.join('，')}。`
-      : `${displayName}的成員組成與活動記錄。`;
+      ? `${displayName}，${parts.join('，')}。查看成員組成、活動記錄與近期活動行程。`
+      : `${displayName}的成員組成、活動記錄與近期活動行程。`;
 
     this.seo.setPage(
       `${displayName} - Idol Maps`,

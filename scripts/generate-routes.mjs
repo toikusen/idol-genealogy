@@ -23,6 +23,7 @@ const KNOWLEDGE_ROUTES = [
   '/learn/how-to-read-idol-history',
   '/learn/member-group-company-relationships',
   '/learn/data-source-and-correction',
+  '/learn/upcoming-events-and-venues',
 ];
 
 function escapeXml(value) {

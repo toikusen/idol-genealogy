@@ -21,7 +21,7 @@ export class GuideComponent implements OnInit {
         '@type': 'HowToStep',
         position: 1,
         name: '找到想補充的頁面',
-        text: '從首頁搜尋或瀏覽，進入成員或團體詳細頁面；若不存在則先提案新增。',
+        text: '從首頁搜尋或瀏覽，進入成員、團體、公司或場地資料；若不存在則先提案新增。',
       },
       {
         '@type': 'HowToStep',
@@ -45,14 +45,14 @@ export class GuideComponent implements OnInit {
 
     this.seo.setPage(
       '貢獻者手冊 | Idol Maps',
-      '了解如何透過提案機制補充台灣地下偶像的資料，包含完整流程說明與資料來源建議。',
+      '了解如何透過提案機制補充台灣地下偶像資料，包含成員、團體、公司與場地來源建議。',
       guideUrl,
     );
     this.seo.setJsonLdGraph([
       {
         '@type': 'HowTo',
         name: '如何補充偶像資料',
-        description: 'Idol Maps 貢獻者提案流程與審核方式。',
+        description: 'Idol Maps 成員、團體、公司、場地資料的貢獻者提案流程與審核方式。',
         totalTime: 'PT5M',
         step: howToSteps,
         mainEntityOfPage: guideUrl,
@@ -61,7 +61,7 @@ export class GuideComponent implements OnInit {
         '@type': 'WebPage',
         name: '貢獻者手冊',
         url: guideUrl,
-        description: '了解如何透過提案機制補充台灣地下偶像的資料。',
+        description: '了解如何透過提案機制補充台灣地下偶像的成員、團體、公司與場地來源資料。',
       },
       {
         '@type': 'FAQPage',

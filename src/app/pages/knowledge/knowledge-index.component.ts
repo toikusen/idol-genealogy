@@ -34,7 +34,7 @@ export class KnowledgeIndexComponent implements OnInit {
 
     this.seo.setPage(
       '地下偶像資料閱讀指南 | Idol Maps',
-      '閱讀 Idol Maps 的資料整理方法，了解地下偶像活動歷程、成員團體公司關係與資料修正原則。',
+      '閱讀 Idol Maps 的資料整理方法，了解地下偶像活動歷程、成員團體公司關係、場地行程查詢與資料修正原則。',
       pageUrl
     );
     this.seo.setJsonLdGraph([
@@ -42,7 +42,7 @@ export class KnowledgeIndexComponent implements OnInit {
         '@type': 'CollectionPage',
         name: '地下偶像資料閱讀指南',
         url: pageUrl,
-        description: 'Idol Maps 的資料閱讀與整理方法文章集。',
+        description: 'Idol Maps 的資料閱讀、場地行程查詢與整理方法文章集。',
         mainEntity: {
           '@type': 'ItemList',
           itemListElement: listItems,

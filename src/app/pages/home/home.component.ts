@@ -96,7 +96,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Set page-level SEO
     this.seo.setPage(
       'Idol Maps | 台灣地下偶像資料庫',
-      '台灣地下偶像成員與團體的完整資料庫。查詢偶像成員經歷、所屬團體歷史、活動記錄。',
+      '台灣地下偶像成員與團體的完整資料庫。查詢成員履歷、團體歷史、場地資訊與近期活動行程。',
       siteUrl('/')
     );
     this.seo.setJsonLdGraph([
@@ -104,6 +104,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         '@type': 'WebSite',
         name: 'Idol Maps',
         url: siteUrl('/'),
+        description: '台灣地下偶像成員、團體、公司、演出場地與近期活動行程的公開資料庫。',
         potentialAction: {
           '@type': 'SearchAction',
           target: {
@@ -121,10 +122,10 @@ export class HomeComponent implements OnInit, OnDestroy {
           '@type': 'ImageObject',
           url: `${SITE_URL}/favicon-192.png`,
         },
-        description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體與公司關係。',
+        description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體、公司關係、演出場地與近期活動行程。',
         foundingDate: '2024',
         areaServed: '台灣',
-        knowsAbout: ['台灣地下偶像', '偶像團體', '偶像成員歷程'],
+        knowsAbout: ['台灣地下偶像', '偶像團體', '偶像成員歷程', '偶像演出場地', '地下偶像活動行程'],
       },
       {
         '@type': 'FAQPage',
@@ -142,7 +143,15 @@ export class HomeComponent implements OnInit, OnDestroy {
             name: 'Idol Maps 提供哪些偶像資料？',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Idol Maps 收錄台灣地下偶像的成員個人資料、所屬團體歷史、公司關係、活動歷程時間軸，以及成員間的團體關聯圖。資料來源為公開宣傳資料與官方公告，並由社群貢獻者協助維護。',
+              text: 'Idol Maps 收錄台灣地下偶像的成員個人資料、所屬團體歷史、公司關係、活動歷程時間軸、成員間的團體關聯圖，以及北中南演出場地資訊與近期活動行程。資料來源為公開宣傳資料與官方公告，並由社群貢獻者協助維護。',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: '如何在 Idol Maps 查看近期活動行程？',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: '在首頁切換到「場地」分頁，可以瀏覽台灣北中南各 Live House 與演出場地，並查看近期活動行程。在成員或團體個人頁面也可直接查看該對象的近期演出資訊。',
             },
           },
           {
