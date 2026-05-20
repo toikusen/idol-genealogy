@@ -15,6 +15,11 @@
 /terms       /terms/       200
 /contributors /contributors/ 200
 /wanted      /wanted/      200
+/login       /index.html   200
+/admin       /index.html   200
+/admin/*     /index.html   200
+/my-contributions /index.html 200
+/@*          /index.html   200
 
-# SPA fallback for all other routes
-/* /index.html 200
+# Unknown routes should be real 404s, not indexable homepage duplicates.
+/* /404.html 404

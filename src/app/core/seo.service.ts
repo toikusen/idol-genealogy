@@ -16,7 +16,6 @@ export class SeoService {
   setPage(pageTitle: string, description: string, url: string, image?: string): void {
     const canonicalUrl = this.toAbsoluteUrl(url);
     const ogImage = image ? this.toAbsoluteUrl(image) : DEFAULT_OG_IMAGE;
-    const pageDate = new Date().toISOString().slice(0, 10);
     // Reset page-scoped SEO state so simple content pages do not inherit stale
     // robots directives or JSON-LD from a previously visited detail page.
     this.clearJsonLd();
@@ -31,7 +30,6 @@ export class SeoService {
     this.meta.updateTag({ name: 'twitter:title', content: pageTitle });
     this.meta.updateTag({ name: 'twitter:description', content: description });
     this.meta.updateTag({ name: 'twitter:image', content: ogImage });
-    this.meta.updateTag({ name: 'date', content: pageDate });
     // canonical
     let link = this.doc.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!link) {

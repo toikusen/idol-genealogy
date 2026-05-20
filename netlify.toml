@@ -32,6 +32,12 @@
   [headers.values]
     Content-Type = "application/xml; charset=UTF-8"
 
+[[headers]]
+  for = "/feed.xml"
+  [headers.values]
+    Content-Type = "application/rss+xml; charset=UTF-8"
+    Cache-Control = "public, max-age=3600"
+
 # ── Angular hashed JS bundles: 1 year immutable ──
 [[headers]]
   for = "/*.js"

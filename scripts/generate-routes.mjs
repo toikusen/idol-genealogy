@@ -25,6 +25,26 @@ const KNOWLEDGE_ROUTES = [
   '/learn/data-source-and-correction',
 ];
 
+function escapeXml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function rssDate(value) {
+  const date = value ? new Date(value) : new Date();
+  return Number.isNaN(date.getTime()) ? new Date().toUTCString() : date.toUTCString();
+}
+
+function shortText(value, fallback) {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if (!text) return fallback;
+  return text.length > 180 ? `${text.slice(0, 177)}...` : text;
+}
+
 function isTestName(value) {
   if (typeof value !== 'string') return false;
   const text = value.trim().toLowerCase();
@@ -222,6 +242,42 @@ ${urlEntries.join('\n')}
 
   writeFileSync('public/sitemap.xml', sitemap, 'utf8');
   console.log(`sitemap.xml: ${urlEntries.length} URLs written.`);
+
+  const feedItems = indexableMembers
+    .slice()
+    .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))
+    .slice(0, 50)
+    .map(member => {
+      const memberName = member.name || member.id;
+      const url = `${SITE_URL}/member/${member.id}`;
+      const title = `${memberName} - Idol Maps`;
+      const description = shortText(
+        member.notes,
+        `${memberName} 的台灣地下偶像活動歷程與所屬團體紀錄。`,
+      );
+      return `    <item>
+      <title>${escapeXml(title)}</title>
+      <link>${escapeXml(url)}</link>
+      <guid isPermaLink="true">${escapeXml(url)}</guid>
+      <description>${escapeXml(description)}</description>
+      <pubDate>${rssDate(member.updated_at)}</pubDate>
+    </item>`;
+    });
+  const feed = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Idol Maps 最新成員</title>
+    <link>${SITE_URL}/</link>
+    <atom:link href="${SITE_URL}/feed.xml" rel="self" type="application/rss+xml"/>
+    <description>Idol Maps 最近更新的台灣地下偶像成員資料。</description>
+    <language>zh-TW</language>
+    <lastBuildDate>${rssDate(buildDate)}</lastBuildDate>
+${feedItems.join('\n')}
+  </channel>
+</rss>`;
+
+  writeFileSync('public/feed.xml', feed, 'utf8');
+  console.log(`feed.xml: ${feedItems.length} items written.`);
 }
 
 run().catch(err => {
