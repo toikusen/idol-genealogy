@@ -13,6 +13,7 @@ import { RecordEditHistoryComponent } from '../../shared/record-edit-history/rec
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
 import { companyIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { AnalyticsService } from '../../core/analytics.service';
 import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 
@@ -82,6 +83,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private seo: SeoService,
     private proposalService: ProposalService,
+    private analytics: AnalyticsService,
   ) {}
 
   ngOnDestroy() {
@@ -193,6 +195,10 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     };
 
     this.seo.setJsonLdGraph([orgSchema, breadcrumb]);
+    this.analytics.trackEvent('view_company', {
+      company_id: pageData.id,
+      company_name: pageData.company.name,
+    });
   }
 
   private async loadDeferredData(id: string): Promise<void> {
@@ -214,8 +220,19 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     const id = this.route.snapshot.paramMap.get('id')!;
     const url = siteUrl(companyPath(id));
     navigator.clipboard.writeText(url).then(() => {
+      this.analytics.trackEvent('share_copy', { entity_type: 'company', entity_id: id, company_id: id });
       this.linkCopied = true;
       setTimeout(() => { this.linkCopied = false; }, 2000);
+    });
+  }
+
+  trackSnsClick(platform: string) {
+    const companyId = this.company?.id ?? this.route.snapshot.paramMap.get('id') ?? '';
+    this.analytics.trackEvent('sns_link_click', {
+      platform,
+      entity_type: 'company',
+      entity_id: companyId,
+      company_id: companyId,
     });
   }
 

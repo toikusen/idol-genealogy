@@ -8,6 +8,7 @@ import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
 import { SeoService } from '../../core/seo.service';
+import { AnalyticsService } from '../../core/analytics.service';
 import { Member, Group, Company, MemberLeaderboardEntry, GroupLeaderboardEntry, Venue, VenueCalendarEvent, VenueRegionFilter } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
@@ -80,6 +81,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   companySections: { name: string; companyId: string | null; groups: Group[]; soloMembers: Member[]; activeCount: number; disbandedCount: number }[] = [];
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private searchAnalyticsTimer: ReturnType<typeof setTimeout> | null = null;
+  private searchRequestId = 0;
+  private lastTrackedSearchTerm = '';
   private browseCatalogLoaded = false;
   private browseCatalogPromise: Promise<void> | null = null;
   browseCatalogLoading = false;
@@ -89,6 +93,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     private companyService: CompanyService,
     private googleCalendarService: GoogleCalendarService,
     private seo: SeoService,
+    private analytics: AnalyticsService,
     private route: ActivatedRoute
   ) {}
 
@@ -196,7 +201,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   async setTab(tab: 'members' | 'groups' | 'companies' | 'events' | 'venues') {
+    if (tab === this.activeTab) return;
     this.activeTab = tab;
+    this.analytics.trackEvent('home_tab_switch', { tab });
     if (tab === 'groups' || tab === 'companies') {
       await this.ensureBrowseCatalog();
     }
@@ -275,21 +282,25 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   async search() {
-    if (!this.query.trim()) {
+    const searchTerm = this.query.trim();
+    const requestId = ++this.searchRequestId;
+    if (!searchTerm) {
       this.memberResults = [];
       this.aliasResults = [];
       this.groupResults = [];
       this.companyResults = [];
+      this.clearSearchAnalyticsTimer();
       return;
     }
     this.searching = true;
     try {
       const [members, aliasHits, groups, companies] = await Promise.all([
-        this.memberService.search(this.query),
-        this.memberService.searchByAlias(this.query),
-        this.groupService.search(this.query),
-        this.companyService.search(this.query),
+        this.memberService.search(searchTerm),
+        this.memberService.searchByAlias(searchTerm),
+        this.groupService.search(searchTerm),
+        this.companyService.search(searchTerm),
       ]);
+      if (requestId !== this.searchRequestId || this.query.trim() !== searchTerm) return;
       this.memberResults = members.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
       // Exclude alias hits whose member already appears in direct results
       const directIds = new Set(this.memberResults.map(m => m.id));
@@ -298,14 +309,49 @@ export class HomeComponent implements OnInit, OnDestroy {
         .map(r => ({ ...r, member: sanitizePublicMemberRecord(r.member) }));
       this.groupResults = groups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
       this.companyResults = companies.filter(isPublicCompanyRecord).map(sanitizePublicCompanyRecord);
+      const totalResults = this.memberResults.length + this.aliasResults.length + this.groupResults.length + this.companyResults.length;
+      this.queueSearchAnalytics(searchTerm, totalResults);
     } catch {
+      if (requestId !== this.searchRequestId) return;
       this.memberResults = [];
       this.aliasResults = [];
       this.groupResults = [];
       this.companyResults = [];
     } finally {
-      this.searching = false;
+      if (requestId === this.searchRequestId) this.searching = false;
     }
+  }
+
+  private queueSearchAnalytics(searchTerm: string, totalResults: number): void {
+    this.clearSearchAnalyticsTimer();
+    if (searchTerm.length < 2 || searchTerm === this.lastTrackedSearchTerm) return;
+    this.searchAnalyticsTimer = setTimeout(() => {
+      if (this.query.trim() !== searchTerm) return;
+      this.lastTrackedSearchTerm = searchTerm;
+      this.analytics.trackEvent('search', {
+        search_term: searchTerm,
+        result_count: totalResults,
+        has_results: totalResults > 0,
+      });
+    }, 800);
+  }
+
+  private clearSearchAnalyticsTimer(): void {
+    if (!this.searchAnalyticsTimer) return;
+    clearTimeout(this.searchAnalyticsTimer);
+    this.searchAnalyticsTimer = null;
+  }
+
+  trackSearchResultClick(resultType: 'member' | 'group' | 'company', resultId: string, position: number, source: 'direct' | 'alias' | 'search'): void {
+    const searchTerm = this.query.trim();
+    if (!searchTerm) return;
+    this.analytics.trackEvent('search_result_click', {
+      search_term: searchTerm,
+      result_type: resultType,
+      result_id: resultId,
+      position,
+      source,
+    });
   }
 
   getInitial(member: Member): string {
@@ -342,6 +388,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   async onVenuePopupOpened(venueId: string): Promise<void> {
     const venue = this.venues.find(v => v.id === venueId);
     if (!venue) return;
+    this.trackVenueView(venue, 'map_popup');
     await this.loadVenueEvents(venue);
     const events = this.venueEvents.get(venueId) ?? [];
     const error  = this.venueEventsError.get(venueId) ?? '';
@@ -360,8 +407,27 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.expandedVenueIds.delete(venue.id);
     } else {
       this.expandedVenueIds.add(venue.id);
+      this.trackVenueView(venue, 'list_expand');
       void this.loadVenueEvents(venue);
     }
+  }
+
+  private trackVenueView(venue: Venue, source: 'map_popup' | 'list_expand'): void {
+    this.analytics.trackEvent('venue_view', {
+      venue_id: venue.id,
+      venue_name: venue.name,
+      source,
+    });
+  }
+
+  trackVenueEventClick(venue: Venue, event: VenueCalendarEvent, domEvent: Event): void {
+    domEvent.stopPropagation();
+    this.analytics.trackEvent('venue_event_click', {
+      venue_id: venue.id,
+      venue_name: venue.name,
+      event_id: event.id,
+      event_title: event.title,
+    });
   }
 
   venueMapUrl(address: string): string {
@@ -427,6 +493,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroyed = true;
     if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.clearSearchAnalyticsTimer();
   }
 
   get displayedGroups(): Group[] {

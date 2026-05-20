@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/supabase.service';
 import { ProposalService } from '../../core/proposal.service';
+import { AnalyticsService } from '../../core/analytics.service';
 import { CompanyService } from '../../core/company.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../core/proposal-fields.config';
 import { Company } from '../../models';
@@ -849,6 +850,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
     private companyService: CompanyService,
     public router: Router,
     private el: ElementRef,
+    private analytics: AnalyticsService,
   ) {}
 
   ngAfterViewInit() {
@@ -975,6 +977,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
           submitter_email: this.submitterEmail || null,
           submitter_note: this.submitterNote.trim() || null,
         });
+        this.analytics.trackEvent('proposal_submit', { table: this.tableName, operation: this.operation });
         this.submitted = true;
       } catch (e: any) {
         this.error = e.message ?? '送出失敗，請稍後再試';
@@ -1108,6 +1111,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
         submitter_email: this.submitterEmail.trim() || null,
         submitter_note: this.submitterNote.trim() || null,
       });
+      this.analytics.trackEvent('proposal_submit', { table: this.tableName, operation: this.operation });
       this.submitted = true;
     } catch (e: any) {
       this.error = e.message ?? '送出失敗，請稍後再試';

@@ -224,7 +224,8 @@
             ">Companies · 公司 ({{companyResults.length}})</div>
             <div style="display: flex; flex-wrap: wrap; gap: 8px;">
               @for (company of companyResults; track company.id; let i = $index) {
-                <a [routerLink]="'/company/' + company.id" class="company-result-chip">
+                <a [routerLink]="'/company/' + company.id" class="company-result-chip"
+                  (click)="trackSearchResultClick('company', company.id, i + 1, 'search')">
                   @if (company.photo_url) {
                     <img loading="lazy"
                          [src]="company.photo_url | supabaseImg:36" [alt]="company.name" width="18" height="18"
@@ -256,7 +257,8 @@
 
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 @for (member of memberResults; track member.id; let i = $index) {
-                  <a [routerLink]="'/member/' + member.id" class="member-result-card">
+                  <a [routerLink]="'/member/' + member.id" class="member-result-card"
+                    (click)="trackSearchResultClick('member', member.id, i + 1, 'direct')">
                     <div style="
                       width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
                       background: linear-gradient(135deg, rgba(232,121,160,0.15), rgba(124,108,242,0.1));
@@ -293,7 +295,8 @@
                   </a>
                 }
                 @for (r of aliasResults; track r.member.id; let i = $index) {
-                  <a [routerLink]="'/member/' + r.member.id" class="member-result-card">
+                  <a [routerLink]="'/member/' + r.member.id" class="member-result-card"
+                    (click)="trackSearchResultClick('member', r.member.id, memberResults.length + i + 1, 'alias')">
                     <div style="
                       width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
                       background: linear-gradient(135deg, rgba(232,121,160,0.15), rgba(124,108,242,0.1));
@@ -345,7 +348,8 @@
 
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 @for (group of groupResults; track group.id; let i = $index) {
-                  <a [routerLink]="'/group/' + group.id" class="group-result-card">
+                  <a [routerLink]="'/group/' + group.id" class="group-result-card"
+                    (click)="trackSearchResultClick('group', group.id, i + 1, 'search')">
                     <div style="
                       width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
                       display: flex; align-items: center; justify-content: center;
@@ -1082,7 +1086,7 @@
                       [href]="event.url || calendarUrl"
                       target="_blank"
                       rel="noopener noreferrer"
-                      (click)="$event.stopPropagation()"
+                      (click)="trackVenueEventClick(venue, event, $event)"
                       style="display:grid;grid-template-columns:74px 1fr;gap:8px;align-items:start;padding:8px 9px;border:1px solid rgba(122,90,122,0.10);border-radius:8px;background:var(--bg-surface-subtle);text-decoration:none;"
                     >
                       <span style="font-size:0.62rem;color:#7c6cf2;font-weight:600;line-height:1.35;">

@@ -400,6 +400,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         submitter_email: session?.user?.email ?? null,
         submitter_note: this.songReportNote.trim(),
       });
+      this.analytics.trackEvent('proposal_submit', { table: 'member_songs', operation: 'UPDATE' });
       this.songReportDone = true;
       setTimeout(() => { this.reportingSong = null; this.songReportDone = false; }, 2000);
     } catch (e: any) {
@@ -425,10 +426,29 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     return member.name.charAt(0).toUpperCase();
   }
 
+  setHistoryView(view: 'timeline' | 'career') {
+    this.historyView = view;
+    this.analytics.trackEvent('member_view_toggle', {
+      view,
+      member_id: this.member?.id ?? '',
+    });
+  }
+
+  trackSnsClick(platform: string) {
+    const memberId = this.member?.id ?? '';
+    this.analytics.trackEvent('sns_link_click', {
+      platform,
+      entity_type: 'member',
+      entity_id: memberId,
+      member_id: memberId,
+    });
+  }
+
   copyLink() {
     const id = this.member?.id ?? this.route.snapshot.paramMap.get('id')!;
     const url = siteUrl(memberPath(id));
     navigator.clipboard.writeText(url).then(() => {
+      this.analytics.trackEvent('share_copy', { entity_type: 'member', entity_id: id, member_id: id });
       this.linkCopied = true;
       setTimeout(() => { this.linkCopied = false; }, 2000);
     });

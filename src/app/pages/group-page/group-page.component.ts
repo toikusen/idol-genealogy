@@ -393,10 +393,21 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.viewCount.increment('group', pageData.id).catch(() => {});
   }
 
+  trackSnsClick(platform: string) {
+    const groupId = this.group?.id ?? '';
+    this.analytics.trackEvent('sns_link_click', {
+      platform,
+      entity_type: 'group',
+      entity_id: groupId,
+      group_id: groupId,
+    });
+  }
+
   copyLink() {
     const id = this.route.snapshot.paramMap.get('id')!;
     const url = siteUrl(groupPath(id));
     navigator.clipboard.writeText(url).then(() => {
+      this.analytics.trackEvent('share_copy', { entity_type: 'group', entity_id: id, group_id: id });
       this.linkCopied = true;
       setTimeout(() => { this.linkCopied = false; }, 2000);
     });
@@ -630,6 +641,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         submitter_email: session?.user?.email ?? null,
         submitter_note: this.songReportNote.trim(),
       });
+      this.analytics.trackEvent('proposal_submit', { table: 'group_songs', operation: 'UPDATE' });
       this.songReportDone = true;
       setTimeout(() => { this.reportingSong = null; this.songReportDone = false; }, 2000);
     } catch (e: any) {
