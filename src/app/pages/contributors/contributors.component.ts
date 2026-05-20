@@ -25,18 +25,22 @@ export class ContributorsComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    const pageUrl = siteUrl('/contributors');
     this.seo.setPage(
       '貢獻者排行榜 | Idol Maps',
       '查看 Idol Maps 社群貢獻者排行榜與徽章進度。',
-      siteUrl('/contributors'),
+      pageUrl,
     );
+    this.applySchemas();
     const session = await this.supabase.getSessionOnce();
     this.currentUserId = session?.user?.id ?? null;
 
     try {
       this.leaderboard = await this.proposalService.getLeaderboard();
+      this.applySchemas();
     } catch {
       this.error = true;
+      this.applySchemas();
     } finally {
       this.loading = false;
     }
@@ -57,5 +61,41 @@ export class ContributorsComponent implements OnInit {
 
   getBadgeForEntry(entry: ContributorEntry): Badge | null {
     return getBadge(entry.total);
+  }
+
+  private applySchemas(): void {
+    const pageUrl = siteUrl('/contributors');
+    const itemListElement = this.leaderboard.slice(0, 30).map((entry, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'Person',
+        name: entry.submitter_name,
+        description: `已通過提案 ${entry.total} 筆`,
+      },
+    }));
+
+    this.seo.setJsonLdGraph([
+      {
+        '@type': 'CollectionPage',
+        name: '貢獻者排行榜',
+        url: pageUrl,
+        description: 'Idol Maps 社群資料貢獻者排行榜。',
+      },
+      ...(itemListElement.length > 0 ? [{
+        '@type': 'ItemList',
+        name: 'Idol Maps 貢獻者排名',
+        numberOfItems: itemListElement.length,
+        itemListOrder: 'https://schema.org/ItemListOrderDescending',
+        itemListElement,
+      }] : []),
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: siteUrl('/') },
+          { '@type': 'ListItem', position: 2, name: '貢獻者排行榜', item: pageUrl },
+        ],
+      },
+    ]);
   }
 }

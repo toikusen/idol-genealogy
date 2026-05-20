@@ -43,6 +43,16 @@ export class KnowledgeArticleComponent implements OnInit {
       this.article.description,
       url
     );
+    const faqItems = this.article.sections
+      .filter(s => s.paragraphs.length > 0)
+      .map(s => ({
+        '@type': 'Question',
+        name: s.heading,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: s.paragraphs[0],
+        },
+      }));
     this.seo.setJsonLdGraph([
       {
         '@type': 'Article',
@@ -61,6 +71,7 @@ export class KnowledgeArticleComponent implements OnInit {
         },
         mainEntityOfPage: url,
       },
+      ...(faqItems.length > 0 ? [{ '@type': 'FAQPage', mainEntity: faqItems }] : []),
       {
         '@type': 'BreadcrumbList',
         itemListElement: [

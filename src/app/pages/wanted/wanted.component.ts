@@ -61,11 +61,13 @@ export class WantedComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
+    const pageUrl = siteUrl('/wanted');
     this.seo.setPage(
       '資料待補充 - Idol Maps',
       '查看哪些成員、團體、公司缺少資料，並幫助補充完整。',
-      siteUrl('/wanted'),
+      pageUrl,
     );
+    this.applySchemas();
 
     try {
       const [members, groups, companies, memberIdsWithHistory, links] = await Promise.all([
@@ -97,8 +99,10 @@ export class WantedComponent implements OnInit {
         .map(company => ({ company, completeness: getCompanyCompleteness(company, companyIdsWithGroups.has(company.id)) }))
         .filter(e => !e.completeness.isComplete)
         .sort((a, b) => a.completeness.score - b.completeness.score);
+      this.applySchemas();
     } catch {
       this.error = true;
+      this.applySchemas();
     } finally {
       this.loading = false;
     }
@@ -116,5 +120,70 @@ export class WantedComponent implements OnInit {
 
   getInitial(name: string): string {
     return name.charAt(0).toUpperCase();
+  }
+
+  private applySchemas(): void {
+    const pageUrl = siteUrl('/wanted');
+    const memberItems = this.wantedMembers.slice(0, 15).map((entry, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: siteUrl(`/member/${entry.member.id}`),
+      item: {
+        '@type': 'Person',
+        name: entry.member.name,
+      },
+    }));
+    const groupItems = this.wantedGroups.slice(0, 15).map((entry, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: siteUrl(`/group/${entry.group.id}`),
+      item: {
+        '@type': 'MusicGroup',
+        name: entry.group.name,
+      },
+    }));
+    const companyItems = this.wantedCompanies.slice(0, 15).map((entry, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: siteUrl(`/company/${entry.company.id}`),
+      item: {
+        '@type': 'Organization',
+        name: entry.company.name,
+      },
+    }));
+
+    this.seo.setJsonLdGraph([
+      {
+        '@type': 'CollectionPage',
+        name: '資料待補充',
+        url: pageUrl,
+        description: '列出 Idol Maps 中資料完整度不足的成員、團體與公司。',
+      },
+      ...(memberItems.length > 0 ? [{
+        '@type': 'ItemList',
+        name: '待補充成員',
+        numberOfItems: memberItems.length,
+        itemListElement: memberItems,
+      }] : []),
+      ...(groupItems.length > 0 ? [{
+        '@type': 'ItemList',
+        name: '待補充團體',
+        numberOfItems: groupItems.length,
+        itemListElement: groupItems,
+      }] : []),
+      ...(companyItems.length > 0 ? [{
+        '@type': 'ItemList',
+        name: '待補充公司',
+        numberOfItems: companyItems.length,
+        itemListElement: companyItems,
+      }] : []),
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: siteUrl('/') },
+          { '@type': 'ListItem', position: 2, name: '資料待補充', item: pageUrl },
+        ],
+      },
+    ]);
   }
 }

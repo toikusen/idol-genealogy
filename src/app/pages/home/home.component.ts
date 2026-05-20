@@ -1,4 +1,4 @@
-import { Component, NgZone, OnInit, OnDestroy, PLATFORM_ID, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, PLATFORM_ID, inject, ViewChild } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -71,12 +71,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private soloMembersLoaded = false;
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly ngZone = inject(NgZone);
   private readonly venueService = inject(VenueService);
-  private deferredHomeSectionsLoaded = false;
-  private deferredHomeSectionsPromise: Promise<void> | null = null;
-  private deferredHomeSectionsTimer: number | null = null;
-  private deferredHomeSectionsIdleId: number | null = null;
   private destroyed = false;
 
   activeGroups: Group[] = [];
@@ -104,20 +99,68 @@ export class HomeComponent implements OnInit, OnDestroy {
       '台灣地下偶像成員與團體的完整資料庫。查詢偶像成員經歷、所屬團體歷史、活動記錄。',
       siteUrl('/')
     );
-    this.seo.setJsonLd({
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'Idol Maps',
-      url: siteUrl('/'),
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: {
-          '@type': 'EntryPoint',
-          urlTemplate: `${SITE_URL}/?q={search_term_string}`
+    this.seo.setJsonLdGraph([
+      {
+        '@type': 'WebSite',
+        name: 'Idol Maps',
+        url: siteUrl('/'),
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${SITE_URL}/?q={search_term_string}`,
+          },
+          'query-input': 'required name=search_term_string',
         },
-        'query-input': 'required name=search_term_string'
-      }
-    });
+      },
+      {
+        '@type': 'Organization',
+        name: 'Idol Maps',
+        url: siteUrl('/'),
+        logo: {
+          '@type': 'ImageObject',
+          url: `${SITE_URL}/favicon-192.png`,
+        },
+        description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體與公司關係。',
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: '什麼是台灣地下偶像？',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: '台灣地下偶像（台灣地偶）是指以台灣為主要活動地區的獨立偶像藝人，通常在小型演唱會或握手會等近距離活動中演出，與主流娛樂圈有所區別。多為多人女子偶像組合，也有個人歌手或混合性別組合。',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Idol Maps 提供哪些偶像資料？',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Idol Maps 收錄台灣地下偶像的成員個人資料、所屬團體歷史、公司關係、活動歷程時間軸，以及成員間的團體關聯圖。資料來源為公開宣傳材料與官方公告，並由社群貢獻者協助維護。',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: '如何在 Idol Maps 搜尋偶像成員？',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: '在 Idol Maps 首頁的搜尋框輸入成員姓名、暱稱或藝名，即可快速找到對應的成員頁面。也可以透過成員列表頁依字母或加入日期瀏覽全部成員。',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Idol Maps 的資料如何更新？',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Idol Maps 的資料由社群貢獻者共同維護，並由編輯審核後上線。若發現資料有誤或缺漏，可透過各成員頁面的「提議修改」功能回報，或在聯絡頁面提供補充資料。',
+            },
+          },
+        ],
+      },
+    ]);
 
     // Read resolver data (populated by homePageResolver during SSR & navigation)
     const data = this.route.snapshot.data['pageData'] as HomePageData | undefined;
@@ -138,57 +181,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       await this.search();
     }
 
-    this.scheduleDeferredHomeSections();
-  }
-
-  private scheduleDeferredHomeSections(): void {
-    if (!this.isBrowser) return;
-    this.ngZone.runOutsideAngular(() => {
-      this.deferredHomeSectionsTimer = window.setTimeout(() => {
-        this.deferredHomeSectionsTimer = null;
-        if (this.destroyed) return;
-        const win = window as Window & {
-          requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-        };
-        const load = () => {
-          if (!this.destroyed) {
-            this.ngZone.run(() => void this.loadDeferredHomeSections());
-          }
-        };
-        if (win.requestIdleCallback) {
-          this.deferredHomeSectionsIdleId = win.requestIdleCallback(load, { timeout: 5000 });
-          return;
-        }
-        load();
-      }, 2500);
-    });
-  }
-
-  private async loadDeferredHomeSections(): Promise<void> {
-    if (this.destroyed) return;
-    if (this.deferredHomeSectionsLoaded) return;
-    if (this.deferredHomeSectionsPromise) return this.deferredHomeSectionsPromise;
-
-    this.deferredHomeSectionsPromise = (async () => {
-      try {
-        const [topMembers, topGroups, upcomingBirthdays] = await Promise.all([
-          this.memberService.getTopByViews(5).catch(() => [] as MemberLeaderboardEntry[]),
-          this.groupService.getTopByViews(5).catch(() => [] as GroupLeaderboardEntry[]),
-          this.memberService.getUpcomingBirthdays(30).catch(() => [] as { member: Member; daysUntil: number }[]),
-        ]);
-        if (this.destroyed) return;
-        this.topMembers = topMembers.filter(isPublicMemberRecord);
-        this.topGroups = topGroups.filter(isPublicGroupRecord);
-        this.upcomingBirthdays = upcomingBirthdays
-          .filter(entry => isPublicMemberRecord(entry.member))
-          .map(entry => ({ ...entry, member: sanitizePublicMemberRecord(entry.member) }));
-        this.deferredHomeSectionsLoaded = true;
-      } finally {
-        this.deferredHomeSectionsPromise = null;
-      }
-    })();
-
-    return this.deferredHomeSectionsPromise;
   }
 
   async setTab(tab: 'members' | 'groups' | 'companies' | 'events' | 'venues') {
@@ -423,17 +415,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroyed = true;
     if (this.searchTimer) clearTimeout(this.searchTimer);
-    if (this.deferredHomeSectionsTimer !== null) {
-      clearTimeout(this.deferredHomeSectionsTimer);
-      this.deferredHomeSectionsTimer = null;
-    }
-    const win = typeof window !== 'undefined'
-      ? window as Window & { cancelIdleCallback?: (handle: number) => void }
-      : null;
-    if (this.deferredHomeSectionsIdleId !== null && win?.cancelIdleCallback) {
-      win.cancelIdleCallback(this.deferredHomeSectionsIdleId);
-      this.deferredHomeSectionsIdleId = null;
-    }
   }
 
   get displayedGroups(): Group[] {

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TeamMemberService } from '../../core/team-member.service';
 import { SeoService } from '../../core/seo.service';
 import { TeamMember } from '../../models';
-import { siteUrl } from '../../core/public-url.utils';
+import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 
@@ -33,11 +33,23 @@ export class AboutComponent implements OnInit {
         '@type': 'AboutPage',
         name: '關於 Idol Maps',
         url: siteUrl('/about'),
+        description: '了解 Idol Maps 的成立緣起、資料來源說明、編輯方針與資料涵蓋範圍。',
       },
       {
         '@type': 'Organization',
         name: 'Idol Maps',
         url: siteUrl('/'),
+        logo: {
+          '@type': 'ImageObject',
+          url: `${SITE_URL}/favicon-192.png`,
+        },
+        description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體與公司關係。',
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer support',
+          url: siteUrl('/contact'),
+          availableLanguage: ['Chinese', 'zh-TW'],
+        },
       },
       {
         '@type': 'BreadcrumbList',

@@ -44,26 +44,13 @@ export class MembersListComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit() {
+    const pageUrl = siteUrl('/members');
     this.seo.setPage(
       '全部成員 - Idol Maps',
       '台灣地下偶像所有成員一覽。',
-      siteUrl('/members')
+      pageUrl
     );
-    this.seo.setJsonLdGraph([
-      {
-        '@type': 'CollectionPage',
-        name: '全部成員',
-        url: siteUrl('/members'),
-        description: '台灣地下偶像所有成員一覽',
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: siteUrl('/') },
-          { '@type': 'ListItem', position: 2, name: '全部成員', item: siteUrl('/members') },
-        ],
-      },
-    ]);
+    this.applySchemas();
 
     const pageData = this.route.snapshot.data['pageData'] as MembersListPageData | undefined;
     if (pageData && !pageData.error) {
@@ -104,6 +91,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
       if (!this.groupMemberIds.has(group_id)) this.groupMemberIds.set(group_id, new Set());
       this.groupMemberIds.get(group_id)!.add(member_id);
     }
+    this.applySchemas();
   }
 
   private async loadGroupLinks(members: Member[], groups: Group[]): Promise<void> {
@@ -210,5 +198,40 @@ export class MembersListComponent implements OnInit, OnDestroy {
     const b = parseInt(clean.substring(4, 6), 16) / 255;
     const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
     return luminance > 0.75 ? fallback : hex;
+  }
+
+  private applySchemas(): void {
+    const pageUrl = siteUrl('/members');
+    const itemListElement = this.allMembers.slice(0, 60).map((member, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: siteUrl(`/member/${member.id}`),
+      item: {
+        '@type': 'Person',
+        name: member.name,
+      },
+    }));
+
+    this.seo.setJsonLdGraph([
+      {
+        '@type': 'CollectionPage',
+        name: '全部成員',
+        url: pageUrl,
+        description: '台灣地下偶像所有成員一覽',
+      },
+      ...(itemListElement.length > 0 ? [{
+        '@type': 'ItemList',
+        name: '成員列表',
+        numberOfItems: this.allMembers.length,
+        itemListElement,
+      }] : []),
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Idol Maps', item: siteUrl('/') },
+          { '@type': 'ListItem', position: 2, name: '全部成員', item: pageUrl },
+        ],
+      },
+    ]);
   }
 }

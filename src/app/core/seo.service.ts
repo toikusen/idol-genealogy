@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@angular/core';
 import { Title, Meta } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
+import { siteUrl, SITE_URL } from './public-url.utils';
 
-const SITE_URL = 'https://idolmaps.com';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.png`;
 
 @Injectable({ providedIn: 'root' })
@@ -14,7 +14,8 @@ export class SeoService {
   ) {}
 
   setPage(pageTitle: string, description: string, url: string, image?: string): void {
-    const ogImage = image ?? DEFAULT_OG_IMAGE;
+    const canonicalUrl = this.toAbsoluteUrl(url);
+    const ogImage = image ? this.toAbsoluteUrl(image) : DEFAULT_OG_IMAGE;
     // Reset page-scoped SEO state so simple content pages do not inherit stale
     // robots directives or JSON-LD from a previously visited detail page.
     this.clearJsonLd();
@@ -23,7 +24,7 @@ export class SeoService {
     this.meta.updateTag({ name: 'description', content: description });
     this.meta.updateTag({ property: 'og:title', content: pageTitle });
     this.meta.updateTag({ property: 'og:description', content: description });
-    this.meta.updateTag({ property: 'og:url', content: url });
+    this.meta.updateTag({ property: 'og:url', content: canonicalUrl });
     this.meta.updateTag({ property: 'og:image', content: ogImage });
     this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
     this.meta.updateTag({ name: 'twitter:title', content: pageTitle });
@@ -41,9 +42,9 @@ export class SeoService {
       this.doc.head.appendChild(link);
     }
     if (typeof link.setAttribute === 'function') {
-      link.setAttribute('href', url);
+      link.setAttribute('href', canonicalUrl);
     } else {
-      (link as HTMLLinkElement & { href?: string }).href = url;
+      (link as HTMLLinkElement & { href?: string }).href = canonicalUrl;
     }
   }
 
@@ -94,5 +95,13 @@ export class SeoService {
       }
       this.doc.head.appendChild(tag);
     }
+  }
+
+  private toAbsoluteUrl(url: string): string {
+    const trimmed = url.trim();
+    if (!trimmed) return siteUrl('/');
+    if (/^[a-z][a-z0-9+\-.]*:/i.test(trimmed)) return trimmed;
+    if (trimmed.startsWith('//')) return `https:${trimmed}`;
+    return siteUrl(trimmed);
   }
 }

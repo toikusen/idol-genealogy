@@ -159,9 +159,29 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
       '@type': 'Organization',
       name: pageData.company.name,
       url: siteUrl(companyPath(pageData.id)),
+      ...(pageData.company.description ? { description: pageData.company.description } : {}),
+      ...(pageData.company.founded_at ? { foundingDate: pageData.company.founded_at } : {}),
       ...(pageData.company.photo_url ? { logo: pageData.company.photo_url } : {}),
       ...(sameAs.length ? { sameAs } : {}),
+      knowsAbout: ['台灣地下偶像', '偶像團體', '演藝企劃'],
     };
+    const subOrganizations = [...pageData.activeGroups, ...pageData.disbandedGroups]
+      .slice(0, 30)
+      .map(group => ({
+        '@type': 'MusicGroup',
+        name: group.name,
+        url: siteUrl(`/group/${group.id}`),
+      }));
+    if (subOrganizations.length > 0) orgSchema['subOrganization'] = subOrganizations;
+
+    const affiliatedPeople = pageData.soloMembers
+      .slice(0, 30)
+      .map(member => ({
+        '@type': 'Person',
+        name: member.name,
+        url: siteUrl(`/member/${member.id}`),
+      }));
+    if (affiliatedPeople.length > 0) orgSchema['member'] = affiliatedPeople;
 
     const breadcrumb = {
       '@type': 'BreadcrumbList',

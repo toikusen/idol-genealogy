@@ -339,17 +339,41 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       this.snsUrls.youtube,
     ].filter((v): v is string => !!v);
 
+    const styleGenres = (pageData.group.style ?? '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+
     const musicGroupSchema: Record<string, any> = {
       '@type': 'MusicGroup',
       name: displayName,
       url: siteUrl(groupPath(pageData.id)),
+      mainEntityOfPage: siteUrl(groupPath(pageData.id)),
+      description,
       ...(pageData.group.founded_at && { foundingDate: pageData.group.founded_at }),
+      ...(pageData.group.disbanded_at && { dissolutionDate: pageData.group.disbanded_at }),
       ...(pageData.group.photo_url && { image: pageData.group.photo_url }),
+      ...(styleGenres.length > 0 && { genre: styleGenres }),
       ...(sameAs.length > 0 && { sameAs }),
+      ...(pageData.companyName && {
+        parentOrganization: {
+          '@type': 'Organization',
+          name: pageData.companyName,
+          ...(pageData.group.company_id ? { url: siteUrl(`/company/${pageData.group.company_id}`) } : {}),
+        },
+      }),
     };
+    const memberIds = new Set<string>();
     const members = pageData.histories
-      .filter(h => h.member)
-      .map(h => ({ '@type': 'Person', name: h.member!.name ?? h.member!.name_roman }));
+      .filter(h => h.member && !memberIds.has(h.member.id))
+      .map(h => {
+        memberIds.add(h.member!.id);
+        return {
+          '@type': 'Person',
+          name: h.member!.name ?? h.member!.name_roman,
+          url: siteUrl(`/member/${h.member!.id}`),
+        };
+      });
     if (members.length > 0) musicGroupSchema['member'] = members;
 
     const breadcrumb = {
