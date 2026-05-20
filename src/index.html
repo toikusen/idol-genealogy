@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="content-language" content="zh-TW">
   <script>
     (function(){
       var t=localStorage.getItem('theme');
@@ -13,6 +14,7 @@
   <title>Idol Maps | 台灣地下偶像資料庫</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index, follow">
   <meta name="description" content="台灣地下偶像成員與團體的完整資料庫。查詢偶像成員經歷、所屬團體歷史、活動記錄。">
   <meta name="keywords" content="idolmaps,Idol Maps,idol maps,idolMaps,台灣地下偶像,台灣地偶,偶像族譜,台灣偶像,台灣偶像族譜,台灣偶像團體,台灣偶像團體成員,台灣偶像組合,地下偶像,偶像成員,偶像組合">
 
@@ -22,11 +24,14 @@
   <meta property="og:description" content="台灣地下偶像成員與團體的完整資料庫。查詢偶像成員經歷、所屬團體歷史、活動記錄。">
   <meta property="og:url" content="https://idolmaps.com/">
   <meta property="og:image" content="https://idolmaps.com/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:site_name" content="Idol Maps">
   <meta name="geo.region" content="TW">
   <meta name="geo.placename" content="台灣">
   <meta name="author" content="Idol Maps 編輯部">
+  <meta name="rating" content="general">
   <meta name="theme-color" content="#e879a0">
   <meta name="google-site-verification" content="ayr6mnydfXWiT0ekzXEYtyCjsvFRcUkLyewN53r_3ME" />
 
@@ -37,8 +42,11 @@
   <meta name="twitter:image" content="https://idolmaps.com/og-default.png">
 
   <!-- Preconnect to Supabase storage (member/group photos) -->
+  <link rel="dns-prefetch" href="https://ziiagdrrytyrmzoeegjk.supabase.co">
   <link rel="preconnect" href="https://ziiagdrrytyrmzoeegjk.supabase.co" crossorigin>
   <link rel="canonical" href="https://idolmaps.com/">
+  <link rel="alternate" hreflang="zh-TW" href="https://idolmaps.com/">
+  <link rel="alternate" type="application/rss+xml" title="Idol Maps 最新成員" href="/feed.xml">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
   <link rel="apple-touch-icon" href="/favicon-192.png">

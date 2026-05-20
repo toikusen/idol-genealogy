@@ -44,6 +44,9 @@ export class AboutComponent implements OnInit {
           url: `${SITE_URL}/favicon-192.png`,
         },
         description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體與公司關係。',
+        foundingDate: '2024',
+        areaServed: '台灣',
+        knowsAbout: ['台灣地下偶像', '偶像團體', '偶像成員歷程'],
         contactPoint: {
           '@type': 'ContactPoint',
           contactType: 'customer support',

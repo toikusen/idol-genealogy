@@ -160,6 +160,8 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
       name: pageData.company.name,
       url: siteUrl(companyPath(pageData.id)),
       ...(pageData.company.description ? { description: pageData.company.description } : {}),
+      ...(pageData.company.created_at ? { datePublished: pageData.company.created_at } : {}),
+      ...(pageData.company.updated_at ? { dateModified: pageData.company.updated_at } : {}),
       ...(pageData.company.founded_at ? { foundingDate: pageData.company.founded_at } : {}),
       ...(pageData.company.photo_url ? { logo: pageData.company.photo_url } : {}),
       ...(sameAs.length ? { sameAs } : {}),

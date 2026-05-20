@@ -350,6 +350,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       url: siteUrl(groupPath(pageData.id)),
       mainEntityOfPage: siteUrl(groupPath(pageData.id)),
       description,
+      ...(pageData.group.created_at && { datePublished: pageData.group.created_at }),
+      ...(pageData.group.updated_at && { dateModified: pageData.group.updated_at }),
       ...(pageData.group.founded_at && { foundingDate: pageData.group.founded_at }),
       ...(pageData.group.disbanded_at && { dissolutionDate: pageData.group.disbanded_at }),
       ...(pageData.group.photo_url && { image: pageData.group.photo_url }),

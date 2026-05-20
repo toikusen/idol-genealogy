@@ -122,6 +122,9 @@ export class HomeComponent implements OnInit, OnDestroy {
           url: `${SITE_URL}/favicon-192.png`,
         },
         description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體與公司關係。',
+        foundingDate: '2024',
+        areaServed: '台灣',
+        knowsAbout: ['台灣地下偶像', '偶像團體', '偶像成員歷程'],
       },
       {
         '@type': 'FAQPage',
@@ -131,7 +134,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             name: '什麼是台灣地下偶像？',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: '台灣地下偶像（台灣地偶）是指以台灣為主要活動地區的獨立偶像藝人，通常在小型演唱會或握手會等近距離活動中演出，與主流娛樂圈有所區別。多為多人女子偶像組合，也有個人歌手或混合性別組合。',
+              text: '台灣地下偶像（台灣地偶）是指以台灣為主要活動地區的獨立偶像藝人，通常在Live House等近距離活動中演出，與主流娛樂圈有所區別。多為多人女子偶像組合，也有個人歌手。',
             },
           },
           {
@@ -139,7 +142,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             name: 'Idol Maps 提供哪些偶像資料？',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Idol Maps 收錄台灣地下偶像的成員個人資料、所屬團體歷史、公司關係、活動歷程時間軸，以及成員間的團體關聯圖。資料來源為公開宣傳材料與官方公告，並由社群貢獻者協助維護。',
+              text: 'Idol Maps 收錄台灣地下偶像的成員個人資料、所屬團體歷史、公司關係、活動歷程時間軸，以及成員間的團體關聯圖。資料來源為公開宣傳資料與官方公告，並由社群貢獻者協助維護。',
             },
           },
           {
@@ -147,7 +150,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             name: '如何在 Idol Maps 搜尋偶像成員？',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: '在 Idol Maps 首頁的搜尋框輸入成員姓名、暱稱或藝名，即可快速找到對應的成員頁面。也可以透過成員列表頁依字母或加入日期瀏覽全部成員。',
+              text: '在 Idol Maps 首頁的搜尋框輸入成員姓名或暱稱，即可快速找到對應的成員頁面。也可以透過成員列表頁依字母或加入日期瀏覽全部成員。',
             },
           },
           {
@@ -155,7 +158,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             name: 'Idol Maps 的資料如何更新？',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Idol Maps 的資料由社群貢獻者共同維護，並由編輯審核後上線。若發現資料有誤或缺漏，可透過各成員頁面的「提議修改」功能回報，或在聯絡頁面提供補充資料。',
+              text: 'Idol Maps 的資料由社群貢獻者共同維護，並由編輯審核後上線。若發現資料有誤或缺漏，可透過各個頁面的「提議修改」功能回報，或在聯絡頁面提供補充資料。',
             },
           },
         ],

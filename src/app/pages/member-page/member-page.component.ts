@@ -250,6 +250,8 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       '@type': 'Person',
       name: displayName,
       url: siteUrl(memberPath(id)),
+      ...(member.created_at && { datePublished: member.created_at }),
+      ...(member.updated_at && { dateModified: member.updated_at }),
       ...((() => {
         const alternateNames = [hiraganaName, romanName, member.nickname].filter((v): v is string => !!v);
         return alternateNames.length > 0

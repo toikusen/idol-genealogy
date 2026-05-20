@@ -10,11 +10,13 @@
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+    Content-Language = "zh-TW"
 
 [[headers]]
   for = "/"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+    Content-Language = "zh-TW"
 
 # ── Security headers (all routes) ──
 [[headers]]
@@ -22,6 +24,7 @@
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
+    Content-Language = "zh-TW"
 
 # ── Sitemap ──
 [[headers]]

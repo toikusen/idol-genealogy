@@ -3,6 +3,106 @@ input::placeholder {
   font-family: var(--font-sans);
 }
 
+.home-snippet-answer {
+  margin: 0 auto;
+  max-width: 620px;
+  font-size: 0.92rem;
+  line-height: 1.75;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.home-howto-title {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.home-howto-list {
+  margin: 0 0 18px;
+  padding-left: 20px;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+.home-howto-list li + li {
+  margin-top: 3px;
+}
+
+.home-source-note {
+  margin: 16px 0 6px;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--text-faint-60);
+}
+
+.home-org-address {
+  margin: 0;
+  font-style: normal;
+  font-size: 0.76rem;
+  line-height: 1.75;
+  letter-spacing: 0.04em;
+  color: var(--text-faint-65);
+}
+
+.home-faq-section {
+  margin-top: 56px;
+  margin-bottom: 20px;
+  padding: 24px 28px;
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  background: var(--bg-surface);
+}
+
+.home-faq-section h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+
+.home-faq-item {
+  border-top: 1px solid var(--border-default);
+}
+
+.home-faq-item:last-child {
+  border-bottom: 1px solid var(--border-default);
+}
+
+.home-faq-item summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.home-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.home-faq-item summary::after {
+  content: "+";
+  float: right;
+  color: var(--text-pink);
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+.home-faq-item[open] summary::after {
+  content: "−";
+}
+
+.home-faq-item p {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
 /* ── Popular ranking grid ── */
 .popular-grid {
   display: grid;
@@ -54,6 +154,15 @@ input::placeholder {
     overflow: hidden;
     font-size: 0.82rem;
     line-height: 1.35;
+  }
+  .home-faq-section {
+    padding: 20px 16px;
+  }
+  .home-faq-item summary {
+    font-size: 0.84rem;
+  }
+  .home-faq-item p {
+    font-size: 0.8rem;
   }
 }
 
