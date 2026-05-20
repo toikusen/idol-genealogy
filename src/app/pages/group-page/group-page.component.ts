@@ -8,7 +8,6 @@ import { AnalyticsService } from '../../core/analytics.service';
 import { ViewCountService } from '../../core/view-count.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
 import { GroupConnectionGraphComponent } from '../../shared/group-connection-graph/group-connection-graph.component';
-import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { Group, GroupVideo, Member, Team, History, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
@@ -52,7 +51,7 @@ interface GanttRow {
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, AdBannerComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent],
   templateUrl: './group-page.component.html',
   styleUrl: './group-page.component.css',
 })

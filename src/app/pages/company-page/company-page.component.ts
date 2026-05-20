@@ -10,7 +10,6 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
-import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
 import { companyIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
@@ -20,7 +19,7 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 @Component({
   selector: 'app-company-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, AdBannerComponent, SupabaseImgPipe],
+  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe],
   templateUrl: './company-page.component.html',
   styleUrl: './company-page.component.css',
 })
