@@ -25,6 +25,7 @@ export class AppComponent {
   readonly showScrollTop = signal(false);
   readonly isNavigating = signal(false);
   readonly authReady = signal(false);
+  readonly showLoginPill = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -114,8 +115,10 @@ export class AppComponent {
           this.sessionSubject.next(session);
           if (session) {
             favorites.load(session.user.id).catch(() => {});
+            this.showLoginPill.set(false);
           } else {
             favorites.reset();
+            if (this.authReady()) this.showLoginPill.set(true);
           }
         });
       adminRole.isAdmin$.pipe(takeUntilDestroyed(this.destroyRef))
@@ -128,9 +131,15 @@ export class AppComponent {
           this.sessionSubject.next(session);
           if (session) {
             favorites.load(session.user.id).catch(() => {});
+            this.showLoginPill.set(false);
+          } else {
+            this.showLoginPill.set(true);
           }
         })
-        .catch(() => this.sessionSubject.next(null))
+        .catch(() => {
+          this.sessionSubject.next(null);
+          this.showLoginPill.set(true);
+        })
         .finally(() => this.authReady.set(true));
     });
 

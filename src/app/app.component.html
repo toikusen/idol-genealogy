@@ -59,34 +59,35 @@
       ">登出</button>
     </div>
   }
-} @else {
-  @if (authReady() && !isAdminRoute) {
-    <a routerLink="/login" style="
-      position: fixed;
-      bottom: 16px;
-      left: 16px;
-      z-index: 1000;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 14px;
-      background: rgba(255,255,255,0.82);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(232,121,160,0.2);
-      border-radius: 20px;
-      box-shadow: 0 2px 10px rgba(45,27,46,0.08);
-      font-size: 0.7rem;
-      font-family: var(--font-sans);
-      color: var(--text-faint-75);
-      text-decoration: none;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-    ">
-      <span style="width:6px;height:6px;border-radius:50%;background:rgba(232,121,160,0.5);flex-shrink:0;"></span>
-      登入
-    </a>
-  }
+}
+
+@if (showLoginPill() && !isAdminRoute) {
+  <a routerLink="/login" style="
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    min-height: 44px;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(232,121,160,0.2);
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(45,27,46,0.08);
+    font-size: 0.7rem;
+    font-family: var(--font-sans);
+    color: var(--text-faint-75);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+  ">
+    <span style="width:6px;height:6px;border-radius:50%;background:rgba(232,121,160,0.5);flex-shrink:0;"></span>
+    登入
+  </a>
 }
 
 @if ((isStaff$ | async) && !isAdminRoute) {
