@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
@@ -60,7 +60,7 @@ interface FeedEntry {
     </div>
   `,
 })
-export class FavoritesFeedComponent implements OnInit {
+export class FavoritesFeedComponent implements OnInit, OnChanges {
   @Input() filter?: string;
 
   private favService = inject(FavoritesService);
@@ -72,6 +72,12 @@ export class FavoritesFeedComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.loadFeed();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['filter'] && !changes['filter'].firstChange) {
+      this.loadFeed();
+    }
   }
 
   private async loadFeed(): Promise<void> {

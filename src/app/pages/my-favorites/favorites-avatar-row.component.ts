@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
@@ -69,8 +69,8 @@ export class FavoritesAvatarRowComponent {
   private groupService = inject(GroupService);
   private memberService = inject(MemberService);
 
-  private _groupCache = new Map<string, { name: string; photo_url: string | null }>();
-  private _memberCache = new Map<string, { name: string; photo_url: string | null }>();
+  private readonly _nameCache = signal<Record<string, string>>({});
+  private readonly _photoCache = signal<Record<string, string | null>>({});
 
   displayItems = computed(() => {
     const favs = this.favService.favorites(
@@ -78,29 +78,26 @@ export class FavoritesAvatarRowComponent {
       : this.filter === 'member' ? 'member'
       : undefined
     );
+    const names = this._nameCache();
+    const photos = this._photoCache();
     return favs.map(f => ({
       id: f.entity_id,
       isGroup: f.entity_type === 'group',
-      name: this._nameFor(f.entity_type, f.entity_id),
-      initials: this._initialsFor(f.entity_type, f.entity_id),
-      photoUrl: this._photoFor(f.entity_type, f.entity_id),
+      name: names[f.entity_id] ?? f.entity_id.slice(0, 4),
+      initials: (names[f.entity_id] ?? f.entity_id.slice(0, 4)).slice(0, 2).toUpperCase(),
+      photoUrl: photos[f.entity_id] ?? null,
       link: f.entity_type === 'group' ? `/group/${f.entity_id}` : `/member/${f.entity_id}`,
     }));
   });
 
-  private _nameFor(type: FavoriteEntityType, id: string): string {
-    if (type === 'group') return this._groupCache.get(id)?.name ?? id.slice(0, 4);
-    return this._memberCache.get(id)?.name ?? id.slice(0, 4);
-  }
-
-  private _initialsFor(type: FavoriteEntityType, id: string): string {
-    const name = this._nameFor(type, id);
-    return name.slice(0, 2).toUpperCase();
-  }
-
-  private _photoFor(type: FavoriteEntityType, id: string): string | null {
-    if (type === 'group') return this._groupCache.get(id)?.photo_url ?? null;
-    return this._memberCache.get(id)?.photo_url ?? null;
+  constructor() {
+    effect(() => {
+      const favs = this.favService.favorites();
+      if (favs.length === 0) return;
+      const groupIds = favs.filter(f => f.entity_type === 'group').map(f => f.entity_id);
+      const memberIds = favs.filter(f => f.entity_type === 'member').map(f => f.entity_id);
+      this.loadDetails(groupIds, memberIds);
+    });
   }
 
   async loadDetails(groupIds: string[], memberIds: string[]): Promise<void> {
@@ -108,7 +105,11 @@ export class FavoritesAvatarRowComponent {
       groupIds.length ? this.groupService.getAll() : Promise.resolve([]),
       memberIds.length ? this.memberService.getAll() : Promise.resolve([]),
     ]);
-    groups.forEach(g => this._groupCache.set(g.id, { name: g.name, photo_url: g.photo_url }));
-    members.forEach(m => this._memberCache.set(m.id, { name: m.name, photo_url: m.photo_url }));
+    const names: Record<string, string> = {};
+    const photos: Record<string, string | null> = {};
+    groups.forEach(g => { names[g.id] = g.name; photos[g.id] = g.photo_url; });
+    members.forEach(m => { names[m.id] = m.name; photos[m.id] = m.photo_url; });
+    this._nameCache.set({ ...this._nameCache(), ...names });
+    this._photoCache.set({ ...this._photoCache(), ...photos });
   }
 }
