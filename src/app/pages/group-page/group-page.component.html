@@ -144,7 +144,7 @@
           }
 
           <!-- Action buttons -->
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:2px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:2px;">
             <button
               (click)="showGroupProposalPanel = true"
               class="proposal-edit-btn"
@@ -163,6 +163,13 @@
                 分享連結
               }
             </button>
+            @if (isLoggedIn) {
+              <app-favorite-toggle
+                entityType="group"
+                [entityId]="group.id"
+                style="flex-shrink:0;"
+              />
+            }
           </div>
 
           <!-- Founded / disbanded dates -->

@@ -102,20 +102,34 @@ export class AppComponent {
     this.authChromePromise = Promise.all([
       import('./core/supabase.service'),
       import('./core/admin-role.service'),
-    ]).then(([{ SupabaseService }, { AdminRoleService }]) => {
+      import('./core/favorites.service'),
+    ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }]) => {
       const supabase = this.injector.get(SupabaseService);
       const adminRole = this.injector.get(AdminRoleService);
+      const favorites = this.injector.get(FavoritesService);
       this.supabase = supabase;
 
       supabase.authState$.pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(session => this.sessionSubject.next(session));
+        .subscribe(session => {
+          this.sessionSubject.next(session);
+          if (session) {
+            favorites.load(session.user.id).catch(() => {});
+          } else {
+            favorites.reset();
+          }
+        });
       adminRole.isAdmin$.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(isAdmin => this.isAdminSubject.next(isAdmin));
       adminRole.isStaff$.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(isStaff => this.isStaffSubject.next(isStaff));
 
       return supabase.getSessionOnce()
-        .then(session => this.sessionSubject.next(session))
+        .then(session => {
+          this.sessionSubject.next(session);
+          if (session) {
+            favorites.load(session.user.id).catch(() => {});
+          }
+        })
         .catch(() => this.sessionSubject.next(null))
         .finally(() => this.authReady.set(true));
     });
