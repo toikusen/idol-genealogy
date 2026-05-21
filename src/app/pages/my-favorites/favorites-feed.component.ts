@@ -110,6 +110,7 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
           .from('member_songs')
           .select('id, title, created_at, member:members(id, name)')
           .in('member_id', memberIds)
+          .eq('is_deleted', false)
           .order('created_at', { ascending: false })
           .limit(10);
         (mSongs ?? []).forEach((s: any) => entries.push({
