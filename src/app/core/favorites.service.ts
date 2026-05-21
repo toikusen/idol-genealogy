@@ -44,6 +44,9 @@ export class FavoritesService {
 
   async add(type: FavoriteEntityType, entityId: string): Promise<void> {
     if (!this._userId) return;
+    if (this.isFavorite(type, entityId)) return;
+
+    const prev = this._favorites();
     const entry: UserFavorite = {
       user_id: this._userId,
       entity_type: type,
@@ -59,9 +62,7 @@ export class FavoritesService {
     });
     if (error) {
       // Rollback
-      this._favorites.update(favs =>
-        favs.filter(f => !(f.entity_type === type && f.entity_id === entityId))
-      );
+      this._favorites.set(prev);
       throw error;
     }
   }

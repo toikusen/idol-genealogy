@@ -44,7 +44,13 @@ interface FeedEntry {
             </div>
             <div style="flex:1;">
               <div style="font-size:0.58rem;font-weight:600;color:rgba(232,121,160,1);margin-bottom:1px;">{{ item.entityName }}</div>
-              <div style="font-size:0.63rem;color:var(--text-primary);line-height:1.4;margin-bottom:2px;">{{ item.title }}</div>
+              @if (item.link) {
+                <a [routerLink]="item.link" style="display:block;font-size:0.63rem;color:var(--text-primary);line-height:1.4;margin-bottom:2px;text-decoration:none;">
+                  {{ item.title }}
+                </a>
+              } @else {
+                <div style="font-size:0.63rem;color:var(--text-primary);line-height:1.4;margin-bottom:2px;">{{ item.title }}</div>
+              }
               <div style="font-size:0.52rem;color:var(--text-faint-55);">
                 {{ formatTime(item.occurredAt) }}
                 <span [style.background]="tagBg(item.eventType)"
@@ -101,7 +107,7 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
           entityName: s.group?.name ?? '',
           title: `新增歌曲《${s.title}》`,
           occurredAt: s.created_at,
-          link: `/group/${s.group?.id}`,
+          link: s.group?.id ? `/group/${s.group.id}` : undefined,
         }));
       }
 
@@ -119,6 +125,7 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
           entityName: s.member?.name ?? '',
           title: `新增歌曲《${s.title}》`,
           occurredAt: s.created_at,
+          link: s.member?.id ? `/member/${s.member.id}` : undefined,
         }));
       }
 
@@ -136,13 +143,14 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
           entityName: h.member?.name ?? '',
           title: this.statusLabel(h.status),
           occurredAt: h.updated_at,
+          link: h.member?.id ? `/member/${h.member.id}` : undefined,
         }));
       }
 
       if (groupIds.length) {
         const { data: events } = await this.supabase.client
           .from('group_events')
-          .select('id, title, starts_at, group_id, groups(name)')
+          .select('id, title, first_seen_at, group_id, groups(name)')
           .in('group_id', groupIds)
           .order('first_seen_at', { ascending: false })
           .limit(20);
@@ -151,7 +159,8 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
           eventType: 'event',
           entityName: e.groups?.name ?? '',
           title: e.title,
-          occurredAt: e.starts_at,
+          occurredAt: e.first_seen_at,
+          link: `/group/${e.group_id}`,
         }));
       }
 

@@ -9,6 +9,11 @@ import { PushSettingsComponent } from './push-settings.component';
 
 export type FavoritesTab = 'all' | 'group' | 'member' | 'push';
 
+interface FavoritesTabOption {
+  id: FavoritesTab;
+  label: string;
+}
+
 @Component({
   selector: 'app-my-favorites',
   standalone: true,
@@ -27,6 +32,12 @@ export class MyFavoritesComponent implements OnInit {
 
   readonly activeTab = signal<FavoritesTab>('all');
   readonly showAddSheet = signal(false);
+  readonly tabs: FavoritesTabOption[] = [
+    { id: 'all', label: '全部' },
+    { id: 'group', label: '團體' },
+    { id: 'member', label: '成員' },
+    { id: 'push', label: '通知設定' },
+  ];
   displayName = '';
 
   async ngOnInit(): Promise<void> {

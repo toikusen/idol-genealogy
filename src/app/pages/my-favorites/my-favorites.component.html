@@ -13,12 +13,7 @@
 
     <!-- Tab bar -->
     <div style="display:flex;gap:0;overflow-x:auto;">
-      @for (tab of [
-        {id:'all', label:'全部'},
-        {id:'group', label:'團體'},
-        {id:'member', label:'成員'},
-        {id:'push', label:'通知設定'}
-      ]; track tab.id) {
+      @for (tab of tabs; track tab.id) {
         <button
           (click)="setTab(tab.id)"
           [style.color]="activeTab() === tab.id ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"

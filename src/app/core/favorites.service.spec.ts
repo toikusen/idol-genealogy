@@ -78,4 +78,10 @@ describe('FavoritesService', () => {
     expect(service.favoriteIds('group')).toEqual(['g-1', 'g-2']);
     expect(service.favoriteIds('member')).toEqual(['m-1']);
   });
+
+  it('add is idempotent for an already-favorited entity', async () => {
+    await service.add('group', 'g-1');
+    await service.add('group', 'g-1');
+    expect(service.favoriteIds('group')).toEqual(['g-1']);
+  });
 });
