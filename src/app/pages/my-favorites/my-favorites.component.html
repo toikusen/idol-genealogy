@@ -2,8 +2,15 @@
 
   <!-- Header -->
   <div style="padding:20px 20px 0;border-bottom:1px solid rgba(232,121,160,0.15);">
-    <div style="font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-label);margin-bottom:3px;">
-      MY FAVORITES · 我的最愛
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+      <div style="font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-label);">
+        MY FAVORITES · 我的最愛
+      </div>
+      <a routerLink="/" style="
+        display:inline-flex;align-items:center;gap:4px;
+        font-size:0.65rem;color:var(--text-faint-55);
+        text-decoration:none;letter-spacing:0.04em;
+      ">← 首頁</a>
     </div>
     @if (displayName) {
       <div style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;">

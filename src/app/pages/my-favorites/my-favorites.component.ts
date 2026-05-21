@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
 import { SupabaseService } from '../../core/supabase.service';
 import { FavoritesAvatarRowComponent } from './favorites-avatar-row.component';
@@ -19,6 +20,7 @@ interface FavoritesTabOption {
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     FavoritesAvatarRowComponent,
     FavoritesFeedComponent,
     FavoritesAddSheetComponent,
