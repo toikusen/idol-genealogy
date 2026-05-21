@@ -42,7 +42,7 @@ Push Notifications Layer
   觸發機制：
     活動推播  → Scheduled Edge Function（cron polling）
     新歌推播  → Database Webhook → Edge Function（group_songs / member_songs INSERT）
-    成員異動  → Database Webhook → Edge Function（member_history INSERT，status 欄位改變）
+    成員異動  → Database Webhook → Edge Function（history INSERT OR UPDATE，status 欄位改變）
 
 Navigation
   未登入左下角           → 「登入」pill（Google OAuth）
@@ -172,7 +172,7 @@ shared/
 
 ### Feed 動態
 
-資料來源：`group_events`（活動）、`group_songs` / `member_songs`（新歌）、`member_history`（成員異動）
+資料來源：`group_events`（活動）、`group_songs` / `member_songs`（新歌）、`history`（成員異動）
 
 每則動態顯示：emoji icon + 團體/成員名稱 + 事件描述 + 時間 + 顏色標籤
 
@@ -180,7 +180,7 @@ shared/
 |----------|----------|-------------------------------------------------|
 | 活動     | 粉色     | `group_events`（cron 同步後寫入）               |
 | 新歌     | 藍色     | `group_songs` / `member_songs` INSERT           |
-| 成員異動 | 紫色     | `member_history` INSERT，status 欄位為 graduated / withdrawn / hiatus / active |
+| 成員異動 | 紫色     | `history` INSERT OR UPDATE，status 欄位為 graduated / withdrawn / hiatus / active |
 
 > **不監聽** `members.updated_at`，避免資料更新噪音觸發不必要推播。
 
@@ -223,7 +223,7 @@ shared/
 | 最愛團體新活動 | Scheduled Edge Function（cron）                 | `group_events.notified_at IS NULL`，新增後寫入 `notified_at` |
 | 最愛團體新歌   | Database Webhook → Edge Function                | `group_songs` INSERT                          |
 | 最愛成員新歌   | Database Webhook → Edge Function                | `member_songs` INSERT                         |
-| 最愛成員狀態異動 | Database Webhook → Edge Function              | `member_history` INSERT，`status IN ('graduated','withdrawn','hiatus','active')` |
+| 最愛成員狀態異動 | Database Webhook → Edge Function              | `history` INSERT OR UPDATE；INSERT: `status IN ('graduated','withdrawn','hiatus','active')`；UPDATE: `old.status IS DISTINCT FROM new.status AND new.status IN ('graduated','withdrawn','hiatus','active')` |
 
 ### 活動同步 Edge Function（cron）
 
@@ -240,10 +240,12 @@ shared/
   → 失效端點從 push_subscriptions 刪除
 ```
 
+> **首次同步 backfill 防護**：功能上線時執行一次性 migration，將所有現有 `group_events` 的 `notified_at` 設為 `now()`。之後 cron 只推播 `first_seen_at >= 上線時間 AND notified_at IS NULL` 的新活動，避免把既有活動全部重推一遍。
+
 ### 新歌 / 成員異動 Edge Function（Database Webhook）
 
 ```
-Database Webhook 觸發（group_songs / member_songs / member_history INSERT）
+Database Webhook 觸發（group_songs / member_songs INSERT；history INSERT OR UPDATE）
   → 查 user_favorites 找追蹤此 entity 的 user_id
   → 查 push_subscriptions 取得端點
   → 用 web-push + VAPID 私鑰逐一送出
