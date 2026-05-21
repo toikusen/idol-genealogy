@@ -24,6 +24,7 @@ export class AppComponent {
   readonly isStaff$ = this.isStaffSubject.asObservable();
   readonly showScrollTop = signal(false);
   readonly isNavigating = signal(false);
+  readonly authReady = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -54,6 +55,8 @@ export class AppComponent {
       ).subscribe(show => this.showScrollTop.set(show));
 
       this.scheduleAuthChromeLoad();
+    } else {
+      this.authReady.set(true);
     }
   }
 
@@ -110,6 +113,11 @@ export class AppComponent {
         .subscribe(isAdmin => this.isAdminSubject.next(isAdmin));
       adminRole.isStaff$.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(isStaff => this.isStaffSubject.next(isStaff));
+
+      return supabase.getSessionOnce()
+        .then(session => this.sessionSubject.next(session))
+        .catch(() => this.sessionSubject.next(null))
+        .finally(() => this.authReady.set(true));
     });
 
     return this.authChromePromise;

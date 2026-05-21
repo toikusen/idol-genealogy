@@ -60,7 +60,7 @@
     </div>
   }
 } @else {
-  @if (!isAdminRoute) {
+  @if (authReady() && !isAdminRoute) {
     <a routerLink="/login" style="
       position: fixed;
       bottom: 16px;
