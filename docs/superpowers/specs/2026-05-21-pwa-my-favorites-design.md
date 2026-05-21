@@ -1,7 +1,7 @@
 # PWA + 我的最愛 設計文件
 
 Date: 2026-05-21
-Status: Approved
+Status: Revised (incorporated Codex review 2026-05-21)
 
 ## 概覽
 
@@ -12,6 +12,7 @@ Status: Approved
 - **PWA**：`@angular/pwa`（manifest + service worker），手動補 iOS meta tags
 - **最愛資料**：Supabase DB（跨裝置同步）
 - **推播**：Web Push API + VAPID + Supabase Edge Function
+- **活動同步**：Scheduled Edge Function（cron 輪詢 Google Calendar / TimeTree）→ upsert `group_events`
 - **快取策略**：App shell prefetch，Supabase API 不快取（資料永遠最新）
 
 ## 整體架構
@@ -27,11 +28,21 @@ Favorites Layer
   FavoritesService       → Angular Signal 狀態管理（singleton）
   /my-favorites route    → 取代左下角 pill 的 /my-contributions 連結
 
+Event Sync Layer（新增）
+  Scheduled Edge Function（cron）
+    → 定期抓 Google Calendar / TimeTree
+    → 依 group 比對活動，upsert 到 group_events
+    → 新增事件（notified_at IS NULL）→ 觸發 push 並寫 notified_at
+  Feed 從 group_events 讀取（不再直接呼叫外部 API）
+
 Push Notifications Layer
-  VAPID key pair         → 公私鑰（私鑰存環境變數）
+  VAPID key pair         → 公私鑰（私鑰存 Supabase secrets）
   push_subscriptions     → Supabase DB 儲存訂閱端點
   SW push handler        → service worker 接收並顯示通知
-  Supabase Edge Function → 監聽 DB insert，對訂閱用戶發送 Web Push
+  觸發機制：
+    活動推播  → Scheduled Edge Function（cron polling）
+    新歌推播  → Database Webhook → Edge Function（group_songs / member_songs INSERT）
+    成員異動  → Database Webhook → Edge Function（member_history INSERT，status 欄位改變）
 
 Navigation
   未登入左下角           → 「登入」pill（Google OAuth）
@@ -40,6 +51,27 @@ Navigation
 ```
 
 ## 資料庫 Schema
+
+### `group_events`（新增 — 外部活動快取表）
+
+| 欄位             | 型別        | 說明                                        |
+|------------------|-------------|---------------------------------------------|
+| id               | uuid        | DEFAULT gen_random_uuid() PK                |
+| group_id         | uuid        | references groups                           |
+| source           | text        | CHECK IN ('google_calendar', 'timetree')    |
+| source_event_id  | text        | 外部平台的原始 event ID                      |
+| title            | text        | 活動標題                                    |
+| starts_at        | timestamptz |                                             |
+| ends_at          | timestamptz |                                             |
+| location         | text        |                                             |
+| url              | text        |                                             |
+| content_hash     | text        | SHA-256(title + starts_at + location)，判斷內容是否變更 |
+| first_seen_at    | timestamptz | DEFAULT now()                               |
+| last_seen_at     | timestamptz | 每次 cron 同步時更新                         |
+| notified_at      | timestamptz | NULL = 尚未推播；有值 = 已推播過             |
+
+- UNIQUE: `(source, source_event_id, group_id)` — 防重複
+- RLS: 公開可讀（feed 用途）；Edge Function service role 可寫
 
 ### `user_favorites`
 
@@ -51,21 +83,23 @@ Navigation
 | created_at   | timestamptz | DEFAULT now()               |
 
 - PRIMARY KEY: `(user_id, entity_type, entity_id)` — 防重複
-- RLS: `auth.uid() = user_id`，只能讀寫自己的資料
+- RLS: `auth.uid() = user_id`
 
 ### `push_subscriptions`
 
-| 欄位       | 型別        | 說明                  |
-|------------|-------------|----------------------|
-| id         | uuid        | DEFAULT gen_random_uuid() PK |
-| user_id    | uuid        | references auth.users |
-| endpoint   | text        | 瀏覽器推播端點         |
-| p256dh     | text        | 加密公鑰              |
-| auth_key   | text        | 驗證金鑰              |
-| created_at | timestamptz | DEFAULT now()         |
+| 欄位       | 型別        | 說明                          |
+|------------|-------------|-------------------------------|
+| id         | uuid        | DEFAULT gen_random_uuid() PK  |
+| user_id    | uuid        | references auth.users         |
+| endpoint   | text        | 瀏覽器推播端點                 |
+| p256dh     | text        | 加密公鑰                      |
+| auth_key   | text        | 驗證金鑰                      |
+| created_at | timestamptz | DEFAULT now()                 |
 
 - UNIQUE: `(user_id, endpoint)` — 同一瀏覽器不重複訂閱
 - RLS: `auth.uid() = user_id`
+
+> **通知設定範圍（MVP）**：全域推播開/關，不做各 entity 的細粒度開關。如日後有需求，再新增 `favorite_notification_settings` 表。
 
 ## PWA 設定
 
@@ -116,12 +150,12 @@ shared/
 
 ### Tab 行為
 
-| Tab     | 頭像列         | Feed 內容          |
-|---------|----------------|--------------------|
-| 全部    | 所有追蹤       | 全部動態            |
-| 團體    | 只顯示團體     | 只顯示團體相關動態  |
-| 成員    | 只顯示成員     | 只顯示成員相關動態  |
-| 通知設定 | 隱藏          | Push 開關（全域 + 各 entity）|
+| Tab      | 頭像列         | 主要內容                              |
+|----------|----------------|---------------------------------------|
+| 全部     | 所有追蹤       | 全部動態                              |
+| 團體     | 只顯示團體     | 只顯示團體相關動態                    |
+| 成員     | 只顯示成員     | 只顯示成員相關動態                    |
+| 通知設定 | 隱藏           | 全域推播開關 + 訂閱狀態 + iOS 提示    |
 
 ### 頭像橫列
 
@@ -138,14 +172,17 @@ shared/
 
 ### Feed 動態
 
+資料來源：`group_events`（活動）、`group_songs` / `member_songs`（新歌）、`member_history`（成員異動）
+
 每則動態顯示：emoji icon + 團體/成員名稱 + 事件描述 + 時間 + 顏色標籤
 
-| 事件類型 | 顏色標籤 | 觸發來源               |
-|----------|----------|------------------------|
-| 活動     | 粉色     | groups_events INSERT   |
-| 新歌     | 藍色     | songs INSERT           |
-| 成員     | 綠色     | members UPDATE         |
-| 異動     | 紫色     | members 狀態欄位變更   |
+| 事件類型 | 顏色標籤 | 資料來源                                        |
+|----------|----------|-------------------------------------------------|
+| 活動     | 粉色     | `group_events`（cron 同步後寫入）               |
+| 新歌     | 藍色     | `group_songs` / `member_songs` INSERT           |
+| 成員異動 | 紫色     | `member_history` INSERT，status 欄位為 graduated / withdrawn / hiatus / active |
+
+> **不監聽** `members.updated_at`，避免資料更新噪音觸發不必要推播。
 
 ### FavoritesService
 
@@ -179,43 +216,58 @@ shared/
 
 ## 推播通知
 
-### 觸發時機
+### 觸發時機與機制
 
-- 最愛**團體**有新活動（活動掛在團體下，成員本身無獨立 events）
-- 最愛**團體**有新歌
-- 最愛**成員**有成員異動（加入 / 畢業 / 離隊）或成員資料更新
+| 事件         | 觸發機制                                          | 條件                                          |
+|--------------|---------------------------------------------------|-----------------------------------------------|
+| 最愛團體新活動 | Scheduled Edge Function（cron）                 | `group_events.notified_at IS NULL`，新增後寫入 `notified_at` |
+| 最愛團體新歌   | Database Webhook → Edge Function                | `group_songs` INSERT                          |
+| 最愛成員新歌   | Database Webhook → Edge Function                | `member_songs` INSERT                         |
+| 最愛成員狀態異動 | Database Webhook → Edge Function              | `member_history` INSERT，`status IN ('graduated','withdrawn','hiatus','active')` |
+
+### 活動同步 Edge Function（cron）
+
+```
+定期執行（建議間隔：每 30 分鐘）
+  → 抓 Google Calendar / TimeTree API
+  → 依 group_id 比對，計算 content_hash
+  → upsert 到 group_events（UNIQUE on source + source_event_id + group_id）
+  → 查出 notified_at IS NULL 的新增事件
+  → 查 user_favorites 找追蹤此 group 的 user_id
+  → 查 push_subscriptions 取得端點
+  → 用 web-push + VAPID 私鑰逐一送出
+  → 寫入 notified_at，防止重複推播
+  → 失效端點從 push_subscriptions 刪除
+```
+
+### 新歌 / 成員異動 Edge Function（Database Webhook）
+
+```
+Database Webhook 觸發（group_songs / member_songs / member_history INSERT）
+  → 查 user_favorites 找追蹤此 entity 的 user_id
+  → 查 push_subscriptions 取得端點
+  → 用 web-push + VAPID 私鑰逐一送出
+  → 失效端點從 push_subscriptions 刪除
+```
 
 ### 通知格式
 
 ```
-標題：{team_name} 新增活動
-內文：{event_name}
-點擊：/group/:id 或 /member/:id
+活動：標題「{group_name} 新增活動」/ 內文「{event_title}」/ 點擊 /group/:id
+新歌：標題「{group_name} 新增歌曲」/ 內文「{song_title}」/ 點擊 /group/:id
+成員：標題「{member_name} 狀態更新」/ 內文「{status}」/ 點擊 /member/:id
 ```
-
-### Edge Function 流程
-
-```
-DB INSERT / UPDATE (songs / members)
-  → Edge Function 觸發
-  → 查 user_favorites，找追蹤此 entity 的 user_id
-  → 查 push_subscriptions，取得端點
-  → 用 web-push + VAPID 私鑰逐一送出
-  → 失效端點從 DB 刪除
-```
-
-> **注意**：專案目前活動資料來自 Google Calendar / TimeTree 外部 API，無 Supabase DB INSERT 可直接監聽。活動推播的觸發機制需要在實作階段確認：選項為（a）改為定期 Edge Function cron job 輪詢外部 API 差異，或（b）活動新增時同步寫一份記錄到 Supabase。
 
 ### 推播訂閱流程（前端）
 
-1. 使用者登入後，`/my-favorites` 通知設定 tab 顯示「開啟推播通知」
+1. 使用者登入後，通知設定 tab 顯示「開啟推播通知」按鈕
 2. 點擊呼叫 `Notification.requestPermission()`
 3. 取得 Permission 後用 VAPID 公鑰呼叫 `pushManager.subscribe()`
 4. 訂閱物件（endpoint + keys）存入 `push_subscriptions`
 
 ### iOS 限制
 
-Web Push 需要 iOS 16.4+ 且 PWA 已加到主畫面。通知設定頁面顯示提示說明。
+Web Push 需要 iOS 16.4+ 且 PWA 已加到主畫面。通知設定 tab 顯示說明提示。
 
 ## 導覽調整
 
@@ -225,7 +277,7 @@ Web Push 需要 iOS 16.4+ 且 PWA 已加到主畫面。通知設定頁面顯示�
 
 ### 登入後（左下角）
 
-將 `routerLink` 從 `/my-contributions` 改為 `/my-favorites`，顯示文字改為使用者名稱（連結到我的最愛）。
+將 `routerLink` 從 `/my-contributions` 改為 `/my-favorites`，顯示文字保持使用者名稱。
 
 ### `/my-contributions` 路由
 
@@ -234,11 +286,14 @@ Web Push 需要 iOS 16.4+ 且 PWA 已加到主畫面。通知設定頁面顯示�
 ## 開發順序建議
 
 1. PWA manifest + iOS meta tags（可立即上線，獨立功能）
-2. Supabase table migration + RLS
-3. FavoritesService + favorite-toggle 元件
-4. /my-favorites 頁面（tab + 頭像列 + feed）
+2. Supabase migration：`group_events`、`user_favorites`、`push_subscriptions` + RLS
+3. `FavoritesService` + `favorite-toggle` 元件
+4. `/my-favorites` 頁面（tab + 頭像列 + feed，feed 先 mock 資料）
 5. Bottom sheet（新增最愛）
 6. 導覽調整（未登入登入 pill + 已登入改連結）
-7. VAPID key 生成 + push_subscriptions 訂閱流程
-8. Supabase Edge Function（推播發送）
-9. SW push handler（顯示通知）
+7. 活動同步 Scheduled Edge Function（cron polling → upsert group_events）
+8. Feed 接 group_events 真實資料
+9. VAPID key 生成 + push_subscriptions 訂閱流程
+10. 活動推播（cron 同步時一併送 push）
+11. 新歌 / 成員異動 Database Webhook → Edge Function
+12. SW push handler（顯示通知 + 點擊導頁）
