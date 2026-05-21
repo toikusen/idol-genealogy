@@ -68,11 +68,28 @@ function parseIcal(ical: string): CalendarEvent[] {
 }
 
 function parseIcalDate(dateStr: string): string {
-  const clean = dateStr.replace(/[TZ]/g, '');
+  // Remove trailing Z if present (we'll handle timezone separately)
+  const isUtc = dateStr.endsWith('Z');
+  const clean = dateStr.replace(/[Z]/g, '');
+
   if (clean.length === 8) {
+    // Date-only format: YYYYMMDD — treat as midnight UTC
     return `${clean.slice(0,4)}-${clean.slice(4,6)}-${clean.slice(6,8)}T00:00:00Z`;
   }
-  return `${clean.slice(0,4)}-${clean.slice(4,6)}-${clean.slice(6,8)}T${clean.slice(8,10)}:${clean.slice(10,12)}:${clean.slice(12,14)}Z`;
+
+  const year = clean.slice(0, 4);
+  const month = clean.slice(4, 6);
+  const day = clean.slice(6, 8);
+  const hour = clean.slice(9, 11);
+  const min = clean.slice(11, 13);
+  const sec = clean.slice(13, 15) || '00';
+
+  if (isUtc) {
+    return `${year}-${month}-${day}T${hour}:${min}:${sec}Z`;
+  }
+  // No timezone info — assume JST (UTC+9) since TimeTree is a Japanese service
+  const localDate = new Date(`${year}-${month}-${day}T${hour}:${min}:${sec}+09:00`);
+  return localDate.toISOString();
 }
 
 serve(async (req) => {

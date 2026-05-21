@@ -31,12 +31,13 @@ export class PushNotificationService {
     });
 
     const json = sub.toJSON();
-    await this.db.from('push_subscriptions').upsert({
+    const { error: upsertError } = await this.db.from('push_subscriptions').upsert({
       user_id: session.user.id,
       endpoint: sub.endpoint,
       p256dh: json.keys?.['p256dh'] ?? '',
       auth_key: json.keys?.['auth'] ?? '',
     }, { onConflict: 'user_id,endpoint' });
+    if (upsertError) throw new Error(upsertError.message);
   }
 
   async unsubscribe(): Promise<void> {

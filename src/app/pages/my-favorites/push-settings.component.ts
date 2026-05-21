@@ -60,11 +60,16 @@ export class PushSettingsComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly _permission = signal<NotificationPermission | 'default'>('default');
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this._permission.set(Notification.permission);
+    }
+  }
 
   permission(): NotificationPermission | 'default' {
-    return this.pushService.permission;
+    return this._permission();
   }
 
   permissionLabel(): string {
@@ -77,6 +82,9 @@ export class PushSettingsComponent implements OnInit {
     this.error.set('');
     try {
       await this.pushService.subscribe();
+      if (isPlatformBrowser(this.platformId)) {
+        this._permission.set(Notification.permission);
+      }
     } catch (e: any) {
       this.error.set(e?.message ?? '訂閱失敗，請稍後再試');
     } finally {
@@ -89,6 +97,9 @@ export class PushSettingsComponent implements OnInit {
     this.error.set('');
     try {
       await this.pushService.unsubscribe();
+      if (isPlatformBrowser(this.platformId)) {
+        this._permission.set(Notification.permission);
+      }
     } catch (e: any) {
       this.error.set(e?.message ?? '取消失敗，請稍後再試');
     } finally {

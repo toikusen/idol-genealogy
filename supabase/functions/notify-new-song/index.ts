@@ -9,6 +9,9 @@ serve(async (req) => {
   const record = payload.record;
   if (!record) return new Response("no record", { status: 400 });
 
+  // Only trigger on INSERT events
+  if (payload.type !== "INSERT") return new Response("not insert", { status: 200 });
+
   const isGroupSong = payload.table === "group_songs";
   const entityType = isGroupSong ? "group" : "member";
   const entityId = isGroupSong ? record.group_id : record.member_id;
