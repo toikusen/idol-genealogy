@@ -65,11 +65,13 @@
 
   <!-- Main content area (shared) -->
   <main class="mf-main">
-    @if (activeTab() !== 'push') {
-      <app-favorites-feed [filter]="activeTab() === 'all' ? undefined : activeTab()" />
-    } @else {
-      <app-push-settings />
-    }
+    <div class="mf-content-inner">
+      @if (activeTab() !== 'push') {
+        <app-favorites-feed [filter]="activeTab() === 'all' ? undefined : activeTab()" />
+      } @else {
+        <app-push-settings />
+      }
+    </div>
   </main>
 
 </div>
