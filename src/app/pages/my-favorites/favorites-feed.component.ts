@@ -25,43 +25,43 @@ interface HistoryStatusAudit {
   imports: [CommonModule, RouterLink],
   template: `
     <div style="padding:10px 20px 0;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-size:0.55rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);">最新動態</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);">最新動態</div>
         @if (newCount() > 0) {
-          <span style="font-size:0.52rem;padding:1px 7px;background:rgba(232,121,160,0.12);border:1px solid rgba(232,121,160,0.22);border-radius:10px;color:rgba(232,121,160,1);">
+          <span style="font-size:0.68rem;padding:2px 8px;background:rgba(232,121,160,0.12);border:1px solid rgba(232,121,160,0.22);border-radius:10px;color:rgba(232,121,160,1);">
             ● {{ newCount() }} 則新動態
           </span>
         }
       </div>
 
       @if (loading()) {
-        <div style="text-align:center;padding:40px 0;color:var(--text-faint-40);font-size:0.8rem;">載入中…</div>
+        <div style="text-align:center;padding:40px 0;color:var(--text-faint-40);font-size:0.875rem;">載入中…</div>
       } @else if (items().length === 0) {
-        <div style="text-align:center;padding:40px 0;color:var(--text-faint-40);font-size:0.8rem;">
+        <div style="text-align:center;padding:40px 0;color:var(--text-faint-40);font-size:0.875rem;">
           還沒有動態，先追蹤一些團體或成員吧！
         </div>
       } @else {
         @for (item of items(); track item.id) {
-          <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(232,121,160,0.07);align-items:flex-start;">
+          <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid rgba(232,121,160,0.07);align-items:flex-start;">
             <div [style.background]="iconBg(item.eventType)"
                  [style.border]="'1px solid ' + iconBorder(item.eventType)"
-                 style="width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.65rem;">
+                 style="width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.8rem;">
               {{ iconEmoji(item.eventType) }}
             </div>
             <div style="flex:1;">
-              <div style="font-size:0.58rem;font-weight:600;color:rgba(232,121,160,1);margin-bottom:1px;">{{ item.entityName }}</div>
+              <div style="font-size:0.75rem;font-weight:600;color:rgba(232,121,160,1);margin-bottom:2px;">{{ item.entityName }}</div>
               @if (item.link) {
-                <a [routerLink]="item.link" style="display:block;font-size:0.63rem;color:var(--text-primary);line-height:1.4;margin-bottom:2px;text-decoration:none;">
+                <a [routerLink]="item.link" style="display:block;font-size:0.85rem;color:var(--text-primary);line-height:1.45;margin-bottom:3px;text-decoration:none;">
                   {{ item.title }}
                 </a>
               } @else {
-                <div style="font-size:0.63rem;color:var(--text-primary);line-height:1.4;margin-bottom:2px;">{{ item.title }}</div>
+                <div style="font-size:0.85rem;color:var(--text-primary);line-height:1.45;margin-bottom:3px;">{{ item.title }}</div>
               }
-              <div style="font-size:0.52rem;color:var(--text-faint-55);">
+              <div style="font-size:0.7rem;color:var(--text-faint-55);">
                 {{ formatTime(item.occurredAt) }}
                 <span [style.background]="tagBg(item.eventType)"
                       [style.color]="tagColor(item.eventType)"
-                      style="margin-left:4px;font-size:0.5rem;padding:0 5px;border-radius:5px;border:1px solid currentColor;">
+                      style="margin-left:5px;font-size:0.65rem;padding:0 6px;border-radius:5px;border:1px solid currentColor;">
                   {{ tagLabel(item.eventType) }}
                 </span>
               </div>

@@ -11,8 +11,8 @@ import { FavoriteEntityType } from '../../models';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div style="padding:12px 20px 8px;border-bottom:1px solid rgba(232,121,160,0.08);">
-      <div style="font-size:0.55rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);margin-bottom:10px;">
+    <div style="padding:12px 20px 10px;border-bottom:1px solid rgba(232,121,160,0.08);">
+      <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);margin-bottom:12px;">
         已追蹤
       </div>
       <div
@@ -20,21 +20,21 @@ import { FavoriteEntityType } from '../../models';
         [style.display]="'flex'"
         [style.flex-wrap]="layout() === 'grid' ? 'wrap' : 'nowrap'"
         [style.overflow-x]="layout() === 'grid' ? 'hidden' : 'auto'"
-        [style.gap]="'10px'"
+        [style.gap]="'12px'"
         [style.padding-bottom]="layout() === 'grid' ? '0' : '4px'"
       >
 
         @for (item of displayItems(); track item.id) {
-          <a [routerLink]="item.link" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;text-decoration:none;">
+          <a [routerLink]="item.link" style="display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;text-decoration:none;">
             <div [style.background]="item.isGroup
                 ? 'linear-gradient(135deg,rgba(232,121,160,0.35),rgba(192,80,128,0.45))'
                 : 'linear-gradient(135deg,rgba(134,239,172,0.35),rgba(74,222,128,0.5))'"
               [style.border-color]="item.isGroup ? 'rgba(232,121,160,0.5)' : 'rgba(134,239,172,0.55)'"
               style="
-                width:44px;height:44px;border-radius:50%;
+                width:48px;height:48px;border-radius:50%;
                 border:2px solid;
                 display:flex;align-items:center;justify-content:center;
-                font-size:0.6rem;font-weight:600;color:white;
+                font-size:0.7rem;font-weight:600;color:white;
                 overflow:hidden;
               "
             >
@@ -44,7 +44,7 @@ import { FavoriteEntityType } from '../../models';
                 {{ item.initials }}
               }
             </div>
-            <span style="font-size:0.52rem;color:var(--text-faint-55);max-width:48px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <span style="font-size:0.7rem;color:var(--text-faint-55);max-width:54px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
               {{ item.name }}
             </span>
           </a>
@@ -52,16 +52,16 @@ import { FavoriteEntityType } from '../../models';
 
         <!-- Add button -->
         <button (click)="addClicked.emit()" style="
-          display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;
+          display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;
           background:transparent;border:none;cursor:pointer;padding:0;
         ">
           <div style="
-            width:44px;height:44px;border-radius:50%;
+            width:48px;height:48px;border-radius:50%;
             border:1.5px dashed rgba(232,121,160,0.4);
             display:flex;align-items:center;justify-content:center;
-            font-size:1.1rem;color:rgba(232,121,160,0.5);
+            font-size:1.2rem;color:rgba(232,121,160,0.5);
           ">+</div>
-          <span style="font-size:0.52rem;color:rgba(232,121,160,0.5);">新增</span>
+          <span style="font-size:0.7rem;color:rgba(232,121,160,0.5);">新增</span>
         </button>
 
       </div>

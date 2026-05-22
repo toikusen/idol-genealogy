@@ -30,13 +30,13 @@
   <div class="mf-mobile-header">
     <div class="mf-mobile-header-inner">
       <div style="margin-bottom:3px;">
-        <a routerLink="/" style="display:inline-flex;align-items:center;gap:4px;font-size:0.65rem;color:var(--text-faint-55);text-decoration:none;letter-spacing:0.04em;margin-bottom:6px;">← 首頁</a>
+        <a routerLink="/" style="display:inline-flex;align-items:center;gap:4px;font-size:0.8rem;color:var(--text-faint-55);text-decoration:none;letter-spacing:0.04em;margin-bottom:6px;">← 首頁</a>
       </div>
-      <div style="font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-label);margin-bottom:3px;">
+      <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-label);margin-bottom:3px;">
         MY FAVORITES · 我的最愛
       </div>
       @if (displayName) {
-        <div style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;">
           Hi, {{ displayName }} ♥
         </div>
       }
@@ -46,7 +46,7 @@
             (click)="setTab(tab.id)"
             [style.color]="activeTab() === tab.id ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
             [style.border-bottom]="activeTab() === tab.id ? '2px solid rgba(232,121,160,1)' : '2px solid transparent'"
-            style="padding:6px 14px 10px;font-size:0.62rem;background:transparent;border:none;border-radius:0;cursor:pointer;white-space:nowrap;font-family:var(--font-sans);letter-spacing:0.04em;font-weight:600;"
+            style="padding:8px 16px 12px;font-size:0.82rem;background:transparent;border:none;border-radius:0;cursor:pointer;white-space:nowrap;font-family:var(--font-sans);letter-spacing:0.04em;font-weight:600;"
           >{{ tab.label }}</button>
         }
       </div>
