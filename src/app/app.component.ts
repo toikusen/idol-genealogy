@@ -24,6 +24,8 @@ export class AppComponent {
   readonly isStaff$ = this.isStaffSubject.asObservable();
   readonly showScrollTop = signal(false);
   readonly isNavigating = signal(false);
+  readonly authReady = signal(false);
+  readonly showLoginPill = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -54,6 +56,8 @@ export class AppComponent {
       ).subscribe(show => this.showScrollTop.set(show));
 
       this.scheduleAuthChromeLoad();
+    } else {
+      this.authReady.set(true);
     }
   }
 
@@ -99,17 +103,44 @@ export class AppComponent {
     this.authChromePromise = Promise.all([
       import('./core/supabase.service'),
       import('./core/admin-role.service'),
-    ]).then(([{ SupabaseService }, { AdminRoleService }]) => {
+      import('./core/favorites.service'),
+    ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }]) => {
       const supabase = this.injector.get(SupabaseService);
       const adminRole = this.injector.get(AdminRoleService);
+      const favorites = this.injector.get(FavoritesService);
       this.supabase = supabase;
 
       supabase.authState$.pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(session => this.sessionSubject.next(session));
+        .subscribe(session => {
+          this.sessionSubject.next(session);
+          if (session) {
+            favorites.load(session.user.id).catch(() => {});
+            this.showLoginPill.set(false);
+          } else {
+            favorites.reset();
+            if (this.authReady()) this.showLoginPill.set(true);
+          }
+        });
       adminRole.isAdmin$.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(isAdmin => this.isAdminSubject.next(isAdmin));
       adminRole.isStaff$.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(isStaff => this.isStaffSubject.next(isStaff));
+
+      return supabase.getSessionOnce()
+        .then(session => {
+          this.sessionSubject.next(session);
+          if (session) {
+            favorites.load(session.user.id).catch(() => {});
+            this.showLoginPill.set(false);
+          } else {
+            this.showLoginPill.set(true);
+          }
+        })
+        .catch(() => {
+          this.sessionSubject.next(null);
+          this.showLoginPill.set(true);
+        })
+        .finally(() => this.authReady.set(true));
     });
 
     return this.authChromePromise;

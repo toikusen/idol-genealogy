@@ -233,3 +233,23 @@ export interface VenueCalendarEvent {
   url: string | null;
   isAllDay: boolean;
 }
+
+export type FavoriteEntityType = 'group' | 'member';
+
+export interface UserFavorite {
+  user_id: string;
+  entity_type: FavoriteEntityType;
+  entity_id: string;
+  created_at: string;
+}
+
+export interface FeedItem {
+  id: string;
+  entity_type: FavoriteEntityType;
+  entity_id: string;
+  entity_name: string;
+  event_type: 'event' | 'song' | 'member_change';
+  title: string;
+  occurred_at: string;
+  url?: string;
+}
