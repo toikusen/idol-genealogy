@@ -1,64 +1,78 @@
-<div style="position:fixed;inset:0;z-index:200;background:var(--bg-base,#fdf6fa);overflow-y:auto;">
-<div style="max-width:680px;margin:0 auto;padding:0 0 80px;">
+<div class="mf-root">
 
-  <!-- Header -->
-  <div style="padding:20px 20px 0;border-bottom:1px solid rgba(232,121,160,0.15);">
-    <div style="margin-bottom:3px;">
-      <a routerLink="/" style="
-        display:inline-flex;align-items:center;gap:4px;
-        font-size:0.65rem;color:var(--text-faint-55);
-        text-decoration:none;letter-spacing:0.04em;
-        margin-bottom:6px;
-      ">← 首頁</a>
-    </div>
-    <div style="font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-label);margin-bottom:3px;">
-      MY FAVORITES · 我的最愛
-    </div>
-    @if (displayName) {
-      <div style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;">
-        Hi, {{ displayName }} ♥
-      </div>
-    }
-
-    <!-- Tab bar -->
-    <div style="display:flex;gap:0;overflow-x:auto;">
-      @for (tab of tabs; track tab.id) {
-        <button
-          (click)="setTab(tab.id)"
-          [style.color]="activeTab() === tab.id ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
-          [style.border-bottom]="activeTab() === tab.id ? '2px solid rgba(232,121,160,1)' : '2px solid transparent'"
-          style="
-            padding:6px 14px 10px;
-            font-size:0.62rem;
-            background:transparent;
-            border:none;
-            border-radius:0;
-            cursor:pointer;
-            white-space:nowrap;
-            font-family:var(--font-sans);
-            letter-spacing:0.04em;
-            font-weight:600;
-          "
-        >{{ tab.label }}</button>
+  <!-- Desktop sidebar (display:none on mobile via CSS) -->
+  <aside class="mf-sidebar">
+    <a routerLink="/" class="mf-back-link">← 首頁</a>
+    <div>
+      <div class="mf-sidebar-label">MY FAVORITES · 我的最愛</div>
+      @if (displayName) {
+        <div class="mf-sidebar-greeting">Hi, {{ displayName }} ♥</div>
       }
     </div>
-  </div>
-
-  <!-- Tab content -->
-  @if (activeTab() !== 'push') {
     <app-favorites-avatar-row
+      [layout]="'grid'"
       [filter]="activeTab() === 'all' ? undefined : activeTab()"
       (addClicked)="openAddSheet()"
     />
-    <app-favorites-feed [filter]="activeTab() === 'all' ? undefined : activeTab()" />
-  } @else {
-    <app-push-settings />
-  }
+    <nav class="mf-filter-nav">
+      @for (tab of tabs; track tab.id) {
+        <button
+          (click)="setTab(tab.id)"
+          class="mf-filter-btn"
+          [class.mf-filter-active]="activeTab() === tab.id"
+        >{{ tab.label }}</button>
+      }
+    </nav>
+  </aside>
+
+  <!-- Mobile header (display:none on desktop via CSS) -->
+  <div class="mf-mobile-header">
+    <div class="mf-mobile-header-inner">
+      <div style="margin-bottom:3px;">
+        <a routerLink="/" style="display:inline-flex;align-items:center;gap:4px;font-size:0.65rem;color:var(--text-faint-55);text-decoration:none;letter-spacing:0.04em;margin-bottom:6px;">← 首頁</a>
+      </div>
+      <div style="font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-label);margin-bottom:3px;">
+        MY FAVORITES · 我的最愛
+      </div>
+      @if (displayName) {
+        <div style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;">
+          Hi, {{ displayName }} ♥
+        </div>
+      }
+      <div style="display:flex;gap:0;overflow-x:auto;">
+        @for (tab of tabs; track tab.id) {
+          <button
+            (click)="setTab(tab.id)"
+            [style.color]="activeTab() === tab.id ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
+            [style.border-bottom]="activeTab() === tab.id ? '2px solid rgba(232,121,160,1)' : '2px solid transparent'"
+            style="padding:6px 14px 10px;font-size:0.62rem;background:transparent;border:none;border-radius:0;cursor:pointer;white-space:nowrap;font-family:var(--font-sans);letter-spacing:0.04em;font-weight:600;"
+          >{{ tab.label }}</button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile avatar row (display:none on desktop via CSS) -->
+  <div class="mf-mobile-avatars">
+    @if (activeTab() !== 'push') {
+      <app-favorites-avatar-row
+        [filter]="activeTab() === 'all' ? undefined : activeTab()"
+        (addClicked)="openAddSheet()"
+      />
+    }
+  </div>
+
+  <!-- Main content area (shared) -->
+  <main class="mf-main">
+    @if (activeTab() !== 'push') {
+      <app-favorites-feed [filter]="activeTab() === 'all' ? undefined : activeTab()" />
+    } @else {
+      <app-push-settings />
+    }
+  </main>
 
 </div>
-</div>
 
-<!-- Bottom sheet -->
 @if (showAddSheet()) {
-  <app-favorites-add-sheet (close)="closeAddSheet()" />
+  <app-favorites-add-sheet [initialTab]="addSheetInitialTab" (close)="closeAddSheet()" />
 }

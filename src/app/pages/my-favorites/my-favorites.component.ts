@@ -27,6 +27,7 @@ interface FavoritesTabOption {
     PushSettingsComponent,
   ],
   templateUrl: './my-favorites.component.html',
+  styleUrl: './my-favorites.component.css',
 })
 export class MyFavoritesComponent implements OnInit {
   private favService = inject(FavoritesService);
@@ -34,6 +35,7 @@ export class MyFavoritesComponent implements OnInit {
 
   readonly activeTab = signal<FavoritesTab>('all');
   readonly showAddSheet = signal(false);
+  addSheetInitialTab: 'group' | 'member' = 'group';
   readonly tabs: FavoritesTabOption[] = [
     { id: 'all', label: '全部' },
     { id: 'group', label: '團體' },
@@ -55,6 +57,8 @@ export class MyFavoritesComponent implements OnInit {
   }
 
   openAddSheet(): void {
+    const t = this.activeTab();
+    this.addSheetInitialTab = t === 'member' ? 'member' : 'group';
     this.showAddSheet.set(true);
   }
 
