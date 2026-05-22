@@ -91,14 +91,14 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   color: var(--text-faint-55);
   text-decoration: none;
   letter-spacing: 0.04em;
 }
 
 .mf-sidebar-label {
-  font-size: 0.58rem;
+  font-size: 0.65rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--text-label);
@@ -106,7 +106,7 @@
 }
 
 .mf-sidebar-greeting {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -119,8 +119,8 @@
 }
 
 .mf-filter-btn {
-  padding: 7px 10px;
-  font-size: 0.65rem;
+  padding: 8px 12px;
+  font-size: 0.8rem;
   background: transparent;
   border: none;
   border-radius: 6px;
