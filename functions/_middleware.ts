@@ -20,7 +20,7 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
   }
 
   const response = await next();
-  const cacheControl = cacheControlForPath(url.pathname);
+  const cacheControl = cacheControlForPath(url.pathname, response.status);
   if (!cacheControl) return response;
 
   const headers = new Headers(response.headers);
@@ -32,7 +32,15 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
   });
 };
 
-function cacheControlForPath(pathname: string): string | null {
+function cacheControlForPath(pathname: string, status: number): string | null {
+  if (status !== 200 && /\.(?:js|css|woff2|png|ico|webp)$/.test(pathname)) {
+    return 'no-store';
+  }
+
+  if (status !== 200) {
+    return null;
+  }
+
   if (/\.(?:js|css|woff2)$/.test(pathname)) {
     return 'public, max-age=31536000, immutable';
   }
