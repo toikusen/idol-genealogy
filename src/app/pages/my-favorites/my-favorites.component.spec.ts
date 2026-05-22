@@ -44,7 +44,7 @@ describe('MyFavoritesComponent desktop structure', () => {
   });
 
   it('sidebar filter nav has all four tabs', () => {
-    const buttons = fixture.nativeElement.querySelectorAll('.mf-filter-btn');
+    const buttons = fixture.nativeElement.querySelectorAll('.mf-filter-nav .mf-filter-btn');
     expect(buttons.length).toBe(4);
   });
 });

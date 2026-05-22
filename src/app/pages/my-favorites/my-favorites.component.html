@@ -1,7 +1,7 @@
 <div class="mf-root">
 
   <!-- Desktop sidebar (display:none on mobile via CSS) -->
-  <aside class="mf-sidebar">
+  <aside class="mf-sidebar" aria-label="我的最愛側邊欄">
     <a routerLink="/" class="mf-back-link">← 首頁</a>
     <div>
       <div class="mf-sidebar-label">MY FAVORITES · 我的最愛</div>
@@ -9,12 +9,13 @@
         <div class="mf-sidebar-greeting">Hi, {{ displayName }} ♥</div>
       }
     </div>
+    <!-- Always shown in sidebar regardless of activeTab — desktop shows avatars even during push settings -->
     <app-favorites-avatar-row
       [layout]="'grid'"
       [filter]="activeTab() === 'all' ? undefined : activeTab()"
       (addClicked)="openAddSheet()"
     />
-    <nav class="mf-filter-nav">
+    <nav class="mf-filter-nav" aria-label="篩選分類">
       @for (tab of tabs; track tab.id) {
         <button
           (click)="setTab(tab.id)"
