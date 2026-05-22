@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "dev": "concurrently \"ng serve\" \"wrangler pages dev . --port 8788\"",
     "build": "node scripts/generate-routes.mjs && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
@@ -32,6 +33,9 @@
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@parcel/watcher", "esbuild", "lmdb", "msgpackr-extract", "sharp", "workerd"]
+  },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.2.5",
     "@angular/cli": "^19.2.5",
@@ -41,6 +45,7 @@
     "@types/leaflet": "^1.9.21",
     "@types/node": "^18.18.0",
     "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
@@ -50,6 +55,7 @@
     "postcss": "^8.5.8",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.19",
-    "typescript": "~5.7.2"
+    "typescript": "~5.7.2",
+    "wrangler": "^4.93.0"
   }
 }
