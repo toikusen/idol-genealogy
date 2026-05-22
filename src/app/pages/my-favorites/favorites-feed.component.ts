@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
@@ -6,11 +6,17 @@ import { SupabaseService } from '../../core/supabase.service';
 
 interface FeedEntry {
   id: string;
-  eventType: 'event' | 'song' | 'member_change';
+  eventType: 'event' | 'song' | 'member_change' | 'member_join' | 'group_change';
   entityName: string;
   title: string;
   occurredAt: string;
   link?: string;
+}
+
+interface HistoryStatusAudit {
+  oldStatus: string | null;
+  newStatus: string | null;
+  changedAt: string;
 }
 
 @Component({
@@ -76,8 +82,20 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
   readonly items = signal<FeedEntry[]>([]);
   readonly newCount = signal(0);
 
+  private _effectReady = false;
+
+  constructor() {
+    effect(() => {
+      // Establish reactive dependency — re-run when favorites change
+      this.favService.favoriteIds('group');
+      this.favService.favoriteIds('member');
+      if (this._effectReady) void this.loadFeed();
+    });
+  }
+
   async ngOnInit(): Promise<void> {
     await this.loadFeed();
+    this._effectReady = true;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -132,19 +150,46 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
       if (memberIds.length) {
         const { data: hist } = await this.supabase.client
           .from('history')
-          .select('id, status, updated_at, member:members(id, name)')
+          .select('id, status, created_at, updated_at, external_group_name, external_country, member:members(id, name), group:groups(id, name)')
           .in('member_id', memberIds)
-          .in('status', ['active', 'graduated', 'withdrawn', 'hiatus'])
-          .order('updated_at', { ascending: false })
-          .limit(10);
-        (hist ?? []).forEach((h: any) => entries.push({
-          id: `hist-${h.id}`,
-          eventType: 'member_change',
-          entityName: h.member?.name ?? '',
-          title: this.statusLabel(h.status),
-          occurredAt: h.updated_at,
-          link: h.member?.id ? `/member/${h.member.id}` : undefined,
-        }));
+          .order('created_at', { ascending: false })
+          .limit(20);
+        const historyRows = hist ?? [];
+        const statusAudits = await this.loadHistoryStatusAudits(historyRows.map((h: any) => h.id));
+        historyRows.forEach((h: any) => {
+          const groupName = h.group?.name ?? h.external_group_name ?? undefined;
+          const isNewMembership =
+            new Date(h.updated_at).getTime() - new Date(h.created_at).getTime() < 2000;
+          if (isNewMembership) {
+            entries.push({
+              id: `join-${h.id}`,
+              eventType: 'member_join',
+              entityName: h.member?.name ?? '',
+              title: `新增紀錄：${this.statusLabel(h.status, groupName, { isNewMembership })}`,
+              occurredAt: h.created_at,
+              link: h.member?.id ? `/member/${h.member.id}` : undefined,
+            });
+          } else if (h.status !== 'active') {
+            entries.push({
+              id: `hist-${h.id}`,
+              eventType: 'member_change',
+              entityName: h.member?.name ?? '',
+              title: `編輯記錄：${this.statusLabel(h.status, groupName)}`,
+              occurredAt: h.updated_at,
+              link: h.member?.id ? `/member/${h.member.id}` : undefined,
+            });
+          } else {
+            const audit = statusAudits.get(h.id);
+            entries.push({
+              id: `hist-${h.id}`,
+              eventType: 'member_change',
+              entityName: h.member?.name ?? '',
+              title: `編輯記錄：${this.statusLabel('active', groupName, { audit })}`,
+              occurredAt: audit?.changedAt ?? h.updated_at,
+              link: h.member?.id ? `/member/${h.member.id}` : undefined,
+            });
+          }
+        });
       }
 
       if (groupIds.length) {
@@ -162,6 +207,20 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
           occurredAt: e.first_seen_at,
           link: `/group/${e.group_id}`,
         }));
+
+        const { data: disbanded } = await this.supabase.client
+          .from('groups')
+          .select('id, name, disbanded_at')
+          .in('id', groupIds)
+          .not('disbanded_at', 'is', null);
+        (disbanded ?? []).forEach((g: any) => entries.push({
+          id: `disbanded-${g.id}`,
+          eventType: 'group_change',
+          entityName: g.name,
+          title: '團體宣告解散',
+          occurredAt: g.disbanded_at,
+          link: `/group/${g.id}`,
+        }));
       }
 
       entries.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
@@ -174,26 +233,40 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
   }
 
   iconEmoji(type: string): string {
-    return type === 'event' ? '📅' : type === 'song' ? '🎵' : '⚡';
+    if (type === 'event') return '📅';
+    if (type === 'song') return '🎵';
+    if (type === 'group_change') return '🏳️';
+    if (type === 'member_join') return '✨';
+    return '⚡';
   }
   iconBg(type: string): string {
-    return type === 'event' ? 'rgba(232,121,160,0.12)'
-      : type === 'song' ? 'rgba(147,197,253,0.15)'
-      : 'rgba(192,132,252,0.12)';
+    if (type === 'event') return 'rgba(232,121,160,0.12)';
+    if (type === 'song') return 'rgba(147,197,253,0.15)';
+    if (type === 'group_change') return 'rgba(148,163,184,0.15)';
+    if (type === 'member_join') return 'rgba(52,211,153,0.12)';
+    return 'rgba(192,132,252,0.12)';
   }
   iconBorder(type: string): string {
-    return type === 'event' ? 'rgba(232,121,160,0.25)'
-      : type === 'song' ? 'rgba(147,197,253,0.35)'
-      : 'rgba(192,132,252,0.3)';
+    if (type === 'event') return 'rgba(232,121,160,0.25)';
+    if (type === 'song') return 'rgba(147,197,253,0.35)';
+    if (type === 'group_change') return 'rgba(148,163,184,0.35)';
+    if (type === 'member_join') return 'rgba(52,211,153,0.3)';
+    return 'rgba(192,132,252,0.3)';
   }
   tagBg(type: string): string { return 'transparent'; }
   tagColor(type: string): string {
-    return type === 'event' ? 'rgba(232,121,160,0.8)'
-      : type === 'song' ? '#3b82f6'
-      : '#7c3aed';
+    if (type === 'event') return 'rgba(232,121,160,0.8)';
+    if (type === 'song') return '#3b82f6';
+    if (type === 'group_change') return '#64748b';
+    if (type === 'member_join') return '#10b981';
+    return '#7c3aed';
   }
   tagLabel(type: string): string {
-    return type === 'event' ? '活動' : type === 'song' ? '新歌' : '異動';
+    if (type === 'event') return '活動';
+    if (type === 'song') return '新歌';
+    if (type === 'group_change') return '團體';
+    if (type === 'member_join') return '新增';
+    return '異動';
   }
   formatTime(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
@@ -204,10 +277,65 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
     if (d < 7) return `${d} 天前`;
     return new Date(iso).toLocaleDateString('zh-TW');
   }
-  private statusLabel(status: string): string {
+  private async loadHistoryStatusAudits(historyIds: string[]): Promise<Map<string, HistoryStatusAudit>> {
+    if (historyIds.length === 0) return new Map();
+    const { data, error } = await this.supabase.client
+      .from('audit_log')
+      .select('record_id, created_at, old_data, new_data')
+      .eq('table_name', 'history')
+      .eq('operation', 'UPDATE')
+      .in('record_id', historyIds)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    const audits = new Map<string, HistoryStatusAudit>();
+    if (error) return audits;
+
+    (data ?? []).forEach((log: any) => {
+      if (audits.has(log.record_id)) return;
+      const oldStatus = log.old_data?.status ?? null;
+      const newStatus = log.new_data?.status ?? null;
+      if (oldStatus === newStatus) return;
+      audits.set(log.record_id, {
+        oldStatus,
+        newStatus,
+        changedAt: log.created_at,
+      });
+    });
+    return audits;
+  }
+
+  private statusLabel(
+    status: string,
+    groupName?: string,
+    context: { isNewMembership?: boolean; audit?: HistoryStatusAudit } = {},
+  ): string {
+    const g = groupName ? `《${groupName}》` : '';
+    const solo = !groupName;
+    if (status === 'active') {
+      if (context.isNewMembership) return solo ? '個人出道' : `在${g}正常在籍`;
+      if (context.audit?.oldStatus === 'hiatus' && context.audit.newStatus === 'active') return solo ? '個人復歸' : `從${g}復歸`;
+      return solo ? '個人活動中' : `更新為${g}正常在籍`;
+    }
+    if (solo) {
+      const soloMap: Record<string, string> = {
+        graduated: '結束個人活動',
+        withdrawn: '結束個人活動',
+        hiatus: '個人活休',
+        transferred: '結束個人活動',
+        concurrent: '兼任其他組合',
+        support: '支援其他組合',
+      };
+      return soloMap[status] ?? status;
+    }
     const map: Record<string, string> = {
-      graduated: '畢業', withdrawn: '退出', hiatus: '休息', active: '復歸'
+      graduated: `從${g}畢業`,
+      withdrawn: `從${g}退出`,
+      hiatus: `在${g}活休`,
+      transferred: `從${g}轉組`,
+      concurrent: `兼任${g}`,
+      support: `支援${g}`,
     };
-    return `成員狀態更新：${map[status] ?? status}`;
+    return map[status] ?? status;
   }
 }

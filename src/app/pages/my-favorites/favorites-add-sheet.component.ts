@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FavoritesService } from '../../core/favorites.service';
@@ -23,7 +23,7 @@ type SheetTab = 'group' | 'member';
     <div style="
       position:fixed;bottom:0;left:0;right:0;z-index:1200;
       background:var(--surface, #fff);border-radius:20px 20px 0 0;
-      max-height:80vh;display:flex;flex-direction:column;
+      height:80vh;display:flex;flex-direction:column;
       box-shadow:0 -4px 30px rgba(45,27,46,0.15);
       animation:slideUp 0.25s ease-out;
     ">
@@ -97,6 +97,7 @@ type SheetTab = 'group' | 'member';
   `],
 })
 export class FavoritesAddSheetComponent implements OnInit {
+  @Input() initialTab: 'group' | 'member' = 'group';
   @Output() close = new EventEmitter<void>();
 
   private favService = inject(FavoritesService);
@@ -111,6 +112,7 @@ export class FavoritesAddSheetComponent implements OnInit {
   private allMembers: Member[] = [];
 
   async ngOnInit(): Promise<void> {
+    this.tab.set(this.initialTab);
     const [groups, members] = await Promise.all([
       this.groupService.getAll(),
       this.memberService.getAll(),
