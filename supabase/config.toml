@@ -1,2 +1,5 @@
 [functions.ig-photo]
 verify_jwt = false
+
+[functions.sync-group-events]
+verify_jwt = false
