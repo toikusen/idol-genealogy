@@ -1,8 +1,22 @@
-export const onRequest: PagesFunction = async ({ request, next }) => {
+function isSpaRoute(pathname: string): boolean {
+  if (pathname === '/login' || pathname === '/login/') return true;
+  if (pathname === '/my-contributions' || pathname === '/my-contributions/') return true;
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) return true;
+  if (pathname.startsWith('/@')) return true;
+  return false;
+}
+
+export const onRequest: PagesFunction = async ({ request, next, env }) => {
   const url = new URL(request.url);
   if (url.hostname === 'idol-genealogy.pages.dev') {
     url.hostname = 'idolmaps.com';
     return Response.redirect(url.toString(), 301);
+  }
+
+  if (isSpaRoute(url.pathname)) {
+    const shellUrl = new URL('/index.csr.html', url.origin);
+    const shell = await (env as any).ASSETS.fetch(new Request(shellUrl.toString()));
+    return new Response(shell.body, { status: 200, headers: shell.headers });
   }
 
   const response = await next();

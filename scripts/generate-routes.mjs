@@ -4,6 +4,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { writeFileSync } from 'fs';
+import WebSocket from 'ws';
 import {
   memberIndexabilitySignals,
   groupIndexabilitySignals,
@@ -17,7 +18,9 @@ const SITE_URL = 'https://idolmaps.com';
 const SUPABASE_URL = process.env['SUPABASE_URL'] ?? 'https://ziiagdrrytyrmzoeegjk.supabase.co';
 const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'] ?? 'sb_publishable_PtKb4LIJeJN3cECUJllW7w_UFRVTbTv';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  realtime: { transport: WebSocket },
+});
 
 const KNOWLEDGE_ROUTES = [
   '/learn/how-to-read-idol-history',
