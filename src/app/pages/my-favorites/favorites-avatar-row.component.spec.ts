@@ -37,6 +37,6 @@ describe('FavoritesAvatarRowComponent', () => {
     fixture.detectChanges();
     const container: HTMLElement = fixture.nativeElement.querySelector('[data-avatar-container]');
     expect(container.style.flexWrap).toBe('wrap');
-    expect(container.style.overflowX).not.toBe('auto');
+    expect(container.style.overflowX).toBe('hidden');
   });
 });

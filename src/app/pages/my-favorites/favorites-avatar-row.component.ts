@@ -19,7 +19,7 @@ import { FavoriteEntityType } from '../../models';
         data-avatar-container
         [style.display]="'flex'"
         [style.flex-wrap]="layout() === 'grid' ? 'wrap' : 'nowrap'"
-        [style.overflow-x]="layout() === 'grid' ? 'visible' : 'auto'"
+        [style.overflow-x]="layout() === 'grid' ? 'hidden' : 'auto'"
         [style.gap]="'10px'"
         [style.padding-bottom]="layout() === 'grid' ? '0' : '4px'"
       >
