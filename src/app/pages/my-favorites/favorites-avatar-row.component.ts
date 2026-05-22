@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, computed, effect, signal } from '@angular/core';
+import { Component, Output, EventEmitter, inject, computed, effect, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
@@ -15,7 +15,14 @@ import { FavoriteEntityType } from '../../models';
       <div style="font-size:0.55rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);margin-bottom:10px;">
         已追蹤
       </div>
-      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;">
+      <div
+        data-avatar-container
+        [style.display]="'flex'"
+        [style.flex-wrap]="layout() === 'grid' ? 'wrap' : 'nowrap'"
+        [style.overflow-x]="layout() === 'grid' ? 'visible' : 'auto'"
+        [style.gap]="'10px'"
+        [style.padding-bottom]="layout() === 'grid' ? '0' : '4px'"
+      >
 
         @for (item of displayItems(); track item.id) {
           <a [routerLink]="item.link" style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;text-decoration:none;">
@@ -62,7 +69,8 @@ import { FavoriteEntityType } from '../../models';
   `,
 })
 export class FavoritesAvatarRowComponent {
-  @Input() filter?: string;
+  filter = input<string | undefined>();
+  layout = input<'row' | 'grid'>('row');
   @Output() addClicked = new EventEmitter<void>();
 
   private favService = inject(FavoritesService);
@@ -73,9 +81,10 @@ export class FavoritesAvatarRowComponent {
   private readonly _photoCache = signal<Record<string, string | null>>({});
 
   displayItems = computed(() => {
+    const f = this.filter();
     const favs = this.favService.favorites(
-      this.filter === 'group' ? 'group'
-      : this.filter === 'member' ? 'member'
+      f === 'group' ? 'group'
+      : f === 'member' ? 'member'
       : undefined
     );
     const names = this._nameCache();
