@@ -3,6 +3,12 @@ import { createClient, SupabaseClient, Session } from '@supabase/supabase-js';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+const serverRealtimeTransport = class {
+  constructor() {
+    throw new Error('Supabase realtime is not available during server prerendering.');
+  }
+} as unknown as typeof WebSocket;
+
 @Injectable({ providedIn: 'root' })
 export class SupabaseService implements OnDestroy {
   private readonly isBrowser = typeof window !== 'undefined';
@@ -18,7 +24,8 @@ export class SupabaseService implements OnDestroy {
         // Bypass Navigator.locks to prevent "lock immediately failed" console errors
         // during Angular hydration when two async paths race on the same lock.
         lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => fn(),
-      }
+      },
+      ...(this.isBrowser ? {} : { realtime: { transport: serverRealtimeTransport } }),
     }
   );
 
