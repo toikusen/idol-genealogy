@@ -46,6 +46,15 @@ serve(async (req) => {
     const userIds = (favUsers ?? []).map((f: any) => f.user_id);
     if (userIds.length === 0) return;
 
+    const { data: optedOutRows, error: prefsError } = await supabase
+      .from("push_notification_prefs")
+      .select("user_id")
+      .in("user_id", userIds)
+      .eq("notify_birthday", false);
+    const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
+    const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
+    if (filteredIds.length === 0) return;
+
     await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
       method: "POST",
       headers: {
@@ -53,7 +62,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${serviceKey}`,
       },
       body: JSON.stringify({
-        user_ids: userIds,
+        user_ids: filteredIds,
         notification: {
           title: `${member.name} 生日快樂！`,
           body: `今天是 ${member.name} 的生日`,
@@ -70,8 +79,8 @@ serve(async (req) => {
       }),
     });
 
-    notified += userIds.length;
-    console.log(`[notify-birthdays] ${member.name} — notified ${userIds.length} user(s)`);
+    notified += filteredIds.length;
+    console.log(`[notify-birthdays] ${member.name} — notified ${filteredIds.length} user(s)`);
   }));
 
   return new Response(JSON.stringify({ notified, members: members.length }), {
