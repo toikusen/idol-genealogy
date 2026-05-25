@@ -83,9 +83,17 @@ describe('NotificationPrefsService', () => {
     setup(null);
     await service.load('u-1');
     await service.save('notify_birthday', false);
-    const upsertArg = mockDb.from('push_notification_prefs').upsert.calls.mostRecent().args[0];
+    expect(mockDb.upsert).toHaveBeenCalled();
+    const upsertArg = mockDb.upsert.calls.mostRecent().args[0];
     expect(upsertArg.user_id).toBe('u-1');
     expect(upsertArg.notify_birthday).toBeFalse();
     expect(typeof upsertArg.updated_at).toBe('string');
+  });
+
+  it('load() re-fetches when called with a different userId', async () => {
+    setup(null);
+    await service.load('u-1');
+    await service.load('u-2');
+    expect(mockDb.from).toHaveBeenCalledTimes(2);
   });
 });

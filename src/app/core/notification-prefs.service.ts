@@ -19,23 +19,29 @@ export class NotificationPrefsService {
   async load(userId: string): Promise<void> {
     if (this._loaded && this._userId === userId) return;
     this._userId = userId;
-    const { data } = await this.db
+    const { data, error } = await this.db
       .from('push_notification_prefs')
       .select('notify_event,notify_new_song,notify_status,notify_birthday,notify_disbanded')
       .eq('user_id', userId)
       .maybeSingle();
+    if (error) throw error;
     this._prefs.set(data ?? { ...DEFAULT_NOTIFICATION_PREFS });
     this._loaded = true;
   }
 
   async save(key: keyof NotificationPrefs, value: boolean): Promise<void> {
     if (!this._userId) return;
-    const updated: NotificationPrefs = { ...this._prefs(), [key]: value };
+    const prev = this._prefs();
+    const updated: NotificationPrefs = { ...prev, [key]: value };
     this._prefs.set(updated);
-    await this.db.from('push_notification_prefs').upsert(
+    const { error } = await this.db.from('push_notification_prefs').upsert(
       { user_id: this._userId, ...updated, updated_at: new Date().toISOString() },
       { onConflict: 'user_id' }
     );
+    if (error) {
+      this._prefs.set(prev);
+      throw error;
+    }
   }
 
   reset(): void {
