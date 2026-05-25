@@ -3,6 +3,11 @@
 # Git worktrees
 idol-genealogy.worktrees/
 
+# Auto-generated build artifacts
+/public/feed.xml
+/public/sitemap.xml
+/prerender-routes.txt
+
 # Compiled output
 /dist
 /tmp
