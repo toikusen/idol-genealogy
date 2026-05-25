@@ -177,7 +177,7 @@ import { NotificationPrefs } from '../../models';
           </div>
 
           @if (permission() !== 'granted') {
-            <div style="margin-top:12px;font-size:0.74px;color:var(--text-faint-40);display:flex;align-items:flex-start;gap:6px;line-height:1.55;font-size:0.74rem;">
+            <div style="margin-top:12px;color:var(--text-faint-40);display:flex;align-items:flex-start;gap:6px;line-height:1.55;font-size:0.74rem;">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--text-faint-40)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
@@ -225,7 +225,11 @@ export class PushSettingsComponent implements OnInit {
 
   async toggle(key: keyof NotificationPrefs, event: Event): Promise<void> {
     const checked = (event.target as HTMLInputElement).checked;
-    await this.prefsService.save(key, checked);
+    try {
+      await this.prefsService.save(key, checked);
+    } catch {
+      this.error.set('儲存設定失敗，請稍後再試');
+    }
   }
 
   async subscribe(): Promise<void> {
