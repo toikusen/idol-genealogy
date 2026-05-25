@@ -228,20 +228,29 @@ serve(async (req) => {
 
     const userIds = (favUsers ?? []).map((f: any) => f.user_id);
     if (userIds.length > 0) {
-      const targetUrl = count === 1 && firstUrl ? firstUrl : `/group/${groupId}`;
-      await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
-        body: JSON.stringify({
-          user_ids: userIds,
-          notification: {
-            title: `${groupName} 新增活動`,
-            body: count === 1 ? firstTitle : `${count} 個新活動`,
-            icon: "/icons/icon-192x192.png",
-            data: { onActionClick: { default: { operation: "navigateLastFocusedOrOpen", url: targetUrl } } },
-          },
-        }),
-      });
+      const { data: optedOutRows, error: prefsError } = await supabase
+        .from("push_notification_prefs")
+        .select("user_id")
+        .in("user_id", userIds)
+        .eq("notify_event", false);
+      const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
+      const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
+      if (filteredIds.length > 0) {
+        const targetUrl = count === 1 && firstUrl ? firstUrl : `/group/${groupId}`;
+        await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+          body: JSON.stringify({
+            user_ids: filteredIds,
+            notification: {
+              title: `${groupName} 新增活動`,
+              body: count === 1 ? firstTitle : `${count} 個新活動`,
+              icon: "/icons/icon-192x192.png",
+              data: { onActionClick: { default: { operation: "navigateLastFocusedOrOpen", url: targetUrl } } },
+            },
+          }),
+        });
+      }
     }
 
     await supabase
