@@ -253,3 +253,19 @@ export interface FeedItem {
   occurred_at: string;
   url?: string;
 }
+
+export interface NotificationPrefs {
+  notify_event: boolean;
+  notify_new_song: boolean;
+  notify_status: boolean;
+  notify_birthday: boolean;
+  notify_disbanded: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
+  notify_event: true,
+  notify_new_song: true,
+  notify_status: true,
+  notify_birthday: true,
+  notify_disbanded: true,
+};

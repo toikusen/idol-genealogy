@@ -32,12 +32,22 @@ serve(async (req) => {
   const userIds = (favUsers ?? []).map((f: any) => f.user_id);
   if (userIds.length === 0) return new Response("no subscribers", { status: 200 });
 
+  const { data: optedOutRows, error: prefsError } = await supabase
+    .from("push_notification_prefs")
+    .select("user_id")
+    .in("user_id", userIds)
+    .eq("notify_new_song", false);
+  if (prefsError) console.error(`[notify-new-song] prefs query error: ${prefsError.message}`);
+  const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
+  const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
+  if (filteredIds.length === 0) return new Response("all opted out", { status: 200 });
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
     body: JSON.stringify({
-      user_ids: userIds,
+      user_ids: filteredIds,
       notification: {
         title: `${entityName} 新增歌曲`,
         body: record.title ?? "新歌上線",

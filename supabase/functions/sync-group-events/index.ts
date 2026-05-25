@@ -193,14 +193,14 @@ serve(async (req) => {
   // Push notifications — group unnotified events by group_id to minimise queries
   const { data: unnotified } = await supabase
     .from("group_events")
-    .select("id, group_id, title, groups(name)")
+    .select("id, group_id, title, url, groups(name)")
     .is("notified_at", null);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   // Group by group_id
-  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; count: number }>();
+  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; firstUrl: string | null; count: number }>();
   for (const evt of unnotified ?? []) {
     const entry = byGroup.get(evt.group_id);
     if (entry) {
@@ -211,6 +211,7 @@ serve(async (req) => {
         ids: [evt.id],
         groupName: (evt as any).groups?.name ?? '',
         firstTitle: evt.title,
+        firstUrl: evt.url ?? null,
         count: 1,
       });
     }
@@ -218,7 +219,7 @@ serve(async (req) => {
 
   console.log(`Pending push notifications: ${unnotified?.length ?? 0} events across ${byGroup.size} groups`);
 
-  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, count }]) => {
+  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, firstUrl, count }]) => {
     const { data: favUsers } = await supabase
       .from("user_favorites")
       .select("user_id")
@@ -227,19 +228,30 @@ serve(async (req) => {
 
     const userIds = (favUsers ?? []).map((f: any) => f.user_id);
     if (userIds.length > 0) {
-      await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
-        body: JSON.stringify({
-          user_ids: userIds,
-          notification: {
-            title: `${groupName} 新增活動`,
-            body: count === 1 ? firstTitle : `${count} 個新活動`,
-            icon: "/icons/icon-192x192.png",
-            data: { onActionClick: { default: { operation: "navigateLastFocusedOrOpen", url: `/group/${groupId}` } } },
-          },
-        }),
-      });
+      const { data: optedOutRows, error: prefsError } = await supabase
+        .from("push_notification_prefs")
+        .select("user_id")
+        .in("user_id", userIds)
+        .eq("notify_event", false);
+      if (prefsError) console.error(`[sync-group-events] prefs query error: ${prefsError.message}`);
+      const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
+      const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
+      if (filteredIds.length > 0) {
+        const targetUrl = count === 1 && firstUrl ? firstUrl : `/group/${groupId}`;
+        await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+          body: JSON.stringify({
+            user_ids: filteredIds,
+            notification: {
+              title: `${groupName} 新增活動`,
+              body: count === 1 ? firstTitle : `${count} 個新活動`,
+              icon: "/icons/icon-192x192.png",
+              data: { onActionClick: { default: { operation: "navigateLastFocusedOrOpen", url: targetUrl } } },
+            },
+          }),
+        });
+      }
     }
 
     await supabase
@@ -247,6 +259,18 @@ serve(async (req) => {
       .update({ notified_at: now })
       .in("id", ids);
   }));
+
+  // Cleanup expired events (starts_at older than 3 months)
+  const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  const { error: cleanupError, count: cleanupCount } = await supabase
+    .from("group_events")
+    .delete({ count: "exact" })
+    .lt("starts_at", threeMonthsAgo);
+  if (cleanupError) {
+    console.error(`[sync] cleanup error: ${cleanupError.message}`);
+  } else {
+    console.log(`[sync] cleaned up ${cleanupCount ?? 0} expired events`);
+  }
 
   return new Response(
     JSON.stringify({ newEvents: totalNew, pushed: unnotified?.length ?? 0 }),
