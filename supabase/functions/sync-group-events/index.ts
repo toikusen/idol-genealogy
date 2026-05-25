@@ -233,6 +233,7 @@ serve(async (req) => {
         .select("user_id")
         .in("user_id", userIds)
         .eq("notify_event", false);
+      if (prefsError) console.error(`[sync-group-events] prefs query error: ${prefsError.message}`);
       const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
       const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
       if (filteredIds.length > 0) {

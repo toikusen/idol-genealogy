@@ -51,6 +51,7 @@ serve(async (req) => {
       .select("user_id")
       .in("user_id", userIds)
       .eq("notify_birthday", false);
+    if (prefsError) console.error(`[notify-birthdays] prefs query error: ${prefsError.message}`);
     const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
     const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
     if (filteredIds.length === 0) return;
