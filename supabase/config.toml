@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.sync-group-events]
 verify_jwt = false
+
+[functions.notify-birthdays]
+verify_jwt = false
