@@ -75,6 +75,28 @@ export class GoogleCalendarService {
     return promise;
   }
 
+  async getEventsForDate(date: Date): Promise<VenueCalendarEvent[]> {
+    if (!this.isConfigured()) return [];
+    const timeMin = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const timeMax = new Date(timeMin);
+    timeMax.setDate(timeMax.getDate() + 1);
+    const params = new URLSearchParams({
+      key: this.apiKey,
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      timeMin: timeMin.toISOString(),
+      timeMax: timeMax.toISOString(),
+      maxResults: '50',
+    });
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(this.calendarId)}/events?${params}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Google Calendar API: ${resp.status}`);
+    const data = await resp.json() as { items?: GoogleCalendarEventResource[] };
+    return (data.items ?? [])
+      .filter(e => e.status !== 'cancelled' && !!e.start)
+      .map(e => this.toVenueEvent(e));
+  }
+
   getUpcomingMemberEvents(member: Member, daysAhead = 90): Promise<VenueCalendarEvent[]> {
     if (!this.isConfigured()) return Promise.resolve([]);
     const cacheKey = `member:${member.id}:${daysAhead}`;

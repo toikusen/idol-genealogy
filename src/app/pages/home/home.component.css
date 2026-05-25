@@ -824,3 +824,494 @@ input::placeholder {
 :host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-tw   { color: rgba(20, 184, 166, 0.92); }
 :host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-en   { color: rgba(20, 184, 166, 0.58); }
 :host-context([data-theme="dark"]) .tab-venues.tab-active .nav-tab-count { background: rgba(20, 184, 166, 0.22); color: rgba(20, 184, 166, 0.75); }
+
+/* ════════════════════════════════════════════
+   TODAY'S EVENTS panel
+   ════════════════════════════════════════════ */
+
+.today-events-panel {
+  border: 1px solid rgba(200,112,106,0.18);
+  border-radius: 12px;
+  background: var(--bg-card);
+  overflow: hidden;
+  margin-bottom: 0;
+  box-shadow: 0 2px 16px rgba(160,80,72,0.05);
+}
+
+/* Panel header */
+.today-events-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid rgba(200,112,106,0.09);
+  background: rgba(200,112,106,0.03);
+}
+
+.today-events-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--section-event, rgba(200,112,106,0.85));
+  margin-bottom: 5px;
+}
+
+.today-events-date {
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+
+.today-events-count-badge {
+  font-size: 0.7rem;
+  color: rgba(200,112,106,0.65);
+  background: rgba(200,112,106,0.07);
+  border: 1px solid rgba(200,112,106,0.18);
+  border-radius: 20px;
+  padding: 5px 13px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Timeline container */
+.today-timeline {
+  padding: 4px 0 8px;
+}
+
+/* Individual timeline item */
+.timeline-item {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 14px 24px 14px 20px;
+  position: relative;
+}
+
+.timeline-item:not(:last-child) {
+  border-bottom: 1px solid rgba(200,112,106,0.06);
+}
+
+/* Time column */
+.timeline-time-col {
+  width: 68px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-right: 16px;
+  position: relative;
+  gap: 2px;
+}
+
+.timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(200,112,106,0.65);
+  flex-shrink: 0;
+  margin: 3px 0 3px auto;
+  margin-right: -4px;
+  position: relative;
+  z-index: 1;
+}
+
+
+.timeline-time-start {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: rgba(200,112,106,0.9);
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.timeline-time-end {
+  font-size: 0.62rem;
+  color: var(--text-faint-45, rgba(120,80,80,0.45));
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Event card */
+.timeline-event-card {
+  flex: 1;
+  padding: 11px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(200,112,106,0.12);
+  background: var(--bg-surface);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  display: block;
+  min-width: 0;
+}
+
+.timeline-event-card:hover {
+  background: rgba(200,112,106,0.05);
+  border-color: rgba(200,112,106,0.28);
+  box-shadow: 0 2px 12px rgba(200,112,106,0.08);
+  transform: translateX(2px);
+}
+
+.timeline-event-card--no-link {
+  cursor: default;
+}
+
+.timeline-event-card--no-link:hover {
+  transform: none;
+  background: var(--bg-surface);
+  border-color: rgba(200,112,106,0.12);
+  box-shadow: none;
+}
+
+.timeline-event-title {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.45;
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+
+.timeline-event-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.03em;
+}
+
+.timeline-event-location svg {
+  flex-shrink: 0;
+  color: rgba(200,112,106,0.55);
+}
+
+/* Empty state */
+.today-empty {
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.today-empty-icon {
+  font-size: 1.5rem;
+  color: rgba(200,112,106,0.15);
+  margin-bottom: 10px;
+  letter-spacing: 0.5em;
+}
+
+.today-empty-text {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--text-faint-45, rgba(120,80,80,0.45));
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+
+/* ── All-day section ── */
+.allday-section {
+  padding: 12px 20px 14px;
+  background: rgba(200,112,106,0.035);
+  border-bottom: 1px solid rgba(200,112,106,0.09);
+}
+
+.allday-label {
+  font-size: 0.57rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(200,112,106,0.5);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.allday-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.allday-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px 7px 8px;
+  border-radius: 6px;
+  background: rgba(200,112,106,0.06);
+  border: 1px solid rgba(200,112,106,0.13);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.allday-chip:hover {
+  background: rgba(200,112,106,0.1);
+  border-color: rgba(200,112,106,0.25);
+}
+
+.allday-chip--no-link {
+  cursor: default;
+}
+
+.allday-chip--no-link:hover {
+  background: rgba(200,112,106,0.06);
+  border-color: rgba(200,112,106,0.13);
+}
+
+.allday-chip-bar {
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background: rgba(200,112,106,0.55);
+  flex-shrink: 0;
+}
+
+.allday-chip-title {
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.allday-chip-arrow {
+  flex-shrink: 0;
+  color: rgba(200,112,106,0.45);
+}
+
+/* ── Carryover section (昨夜延續) ── */
+.carryover-section {
+  padding: 12px 20px 14px;
+  background: rgba(70,85,155,0.04);
+  border-bottom: 1px solid rgba(70,85,155,0.09);
+}
+
+.carryover-label {
+  font-size: 0.57rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(70,85,155,0.5);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.carryover-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.carryover-chip {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(70,85,155,0.05);
+  border: 1px solid rgba(70,85,155,0.11);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+  cursor: pointer;
+}
+
+.carryover-chip:hover {
+  background: rgba(70,85,155,0.09);
+  border-color: rgba(70,85,155,0.22);
+}
+
+.carryover-time-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  padding-right: 10px;
+  flex-shrink: 0;
+  min-width: 56px;
+}
+
+.carryover-day-prefix {
+  font-size: 0.52rem;
+  color: rgba(70,85,155,0.5);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.carryover-start-time {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(70,85,155,0.75);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.carryover-arrow {
+  font-size: 0.6rem;
+  color: rgba(70,85,155,0.3);
+  line-height: 1;
+}
+
+.carryover-end-time {
+  font-size: 0.72rem;
+  color: rgba(70,85,155,0.5);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.carryover-bar {
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(70,85,155,0.35);
+  flex-shrink: 0;
+  margin-right: 12px;
+  align-self: stretch;
+}
+
+.carryover-info {
+  flex: 1;
+  min-width: 0;
+  padding: 1px 0;
+}
+
+.carryover-title {
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.carryover-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.carryover-location svg {
+  color: rgba(70,85,155,0.45);
+  flex-shrink: 0;
+}
+
+/* ── Overnight variants ── */
+.timeline-time-start--overnight {
+  color: rgba(100,80,180,0.85);
+}
+
+.timeline-dot--overnight {
+  background: rgba(100,80,180,0.55);
+  box-shadow: 0 0 0 3px rgba(100,80,180,0.08);
+}
+
+
+.timeline-end-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.overnight-next-label {
+  font-size: 0.5rem;
+  color: rgba(100,80,180,0.6);
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  line-height: 1;
+  text-align: right;
+}
+
+.timeline-time-end--overnight {
+  color: rgba(100,80,180,0.65);
+}
+
+.timeline-event-card--overnight {
+  border-color: rgba(100,80,180,0.14);
+  background: rgba(100,80,180,0.025);
+}
+
+.timeline-event-card--overnight:hover {
+  border-color: rgba(100,80,180,0.28);
+  background: rgba(100,80,180,0.055);
+  box-shadow: 0 2px 12px rgba(100,80,180,0.08);
+}
+
+.overnight-moon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  float: right;
+  margin: 0 0 5px 8px;
+  font-size: 0.58rem;
+  color: rgba(100,80,180,0.6);
+  background: rgba(100,80,180,0.07);
+  border: 1px solid rgba(100,80,180,0.14);
+  border-radius: 10px;
+  padding: 2px 7px 2px 5px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.overnight-moon-badge svg {
+  color: rgba(100,80,180,0.65);
+}
+
+/* ── Item overnight state ── */
+.timeline-item--overnight .timeline-time-col {
+  /* no changes needed, handled by child classes */
+}
+
+/* Dark mode adjustments */
+:host-context([data-theme="dark"]) .today-events-panel {
+  border-color: rgba(200,112,106,0.22);
+  background: var(--bg-card);
+}
+
+:host-context([data-theme="dark"]) .today-events-header {
+  background: rgba(200,112,106,0.05);
+  border-color: rgba(200,112,106,0.12);
+}
+
+:host-context([data-theme="dark"]) .timeline-event-card {
+  background: var(--bg-surface);
+  border-color: rgba(200,112,106,0.14);
+}
+
+:host-context([data-theme="dark"]) .timeline-event-card:hover {
+  background: rgba(200,112,106,0.08);
+  border-color: rgba(200,112,106,0.3);
+}
+
+@media (max-width: 540px) {
+  .today-events-header {
+    padding: 14px 16px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .today-events-date {
+    font-size: 0.92rem;
+  }
+  .timeline-item {
+    padding: 12px 16px 12px 14px;
+  }
+  .timeline-time-col {
+    width: 56px;
+    padding-right: 12px;
+  }
+  .timeline-time-start {
+    font-size: 0.78rem;
+  }
+  .timeline-event-card {
+    padding: 9px 12px;
+  }
+  .timeline-event-title {
+    font-size: 0.82rem;
+  }
+}

@@ -2,85 +2,85 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://idolmaps.com/</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/members</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/about</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/contributors</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/wanted</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/guide</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/learn</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/learn/how-to-read-idol-history</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/learn/member-group-company-relationships</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/learn/data-source-and-correction</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/learn/upcoming-events-and-venues</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/contact</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/privacy</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://idolmaps.com/terms</loc>
-    <lastmod>2026-05-20</lastmod>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -175,12 +175,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://idolmaps.com/member/c4123def-f58e-4da0-b2b5-c0df95a88c47</loc>
-    <lastmod>2026-04-03</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://idolmaps.com/member/f3ae42ec-c981-4a33-9477-1b732c1bfb83</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>monthly</changefreq>
@@ -195,6 +189,12 @@
   <url>
     <loc>https://idolmaps.com/member/c7ca7077-ac16-4daf-910b-7268a7678303</loc>
     <lastmod>2026-04-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://idolmaps.com/member/c4123def-f58e-4da0-b2b5-c0df95a88c47</loc>
+    <lastmod>2026-05-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1987,6 +1987,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://idolmaps.com/member/39bca02c-e87b-4145-a7cc-77c5810e5c77</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://idolmaps.com/member/8d545dbf-9f13-4818-adb0-48adfe1c1424</loc>
     <lastmod>2026-05-12</lastmod>
     <changefreq>monthly</changefreq>
@@ -2289,6 +2295,24 @@
   <url>
     <loc>https://idolmaps.com/member/17702671-df1f-4340-9942-9b1a86944e08</loc>
     <lastmod>2026-05-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://idolmaps.com/member/eb15c8d6-0f29-496f-ae5f-f17b18509575</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://idolmaps.com/member/524e4eeb-4624-4de3-8203-d103537f42fb</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://idolmaps.com/member/fed7d7b8-1aa3-46f5-807d-999b91124c78</loc>
+    <lastmod>2026-05-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -2793,6 +2817,12 @@
   <url>
     <loc>https://idolmaps.com/group/52a76831-f442-4594-8e4d-d75b6a035314</loc>
     <lastmod>2026-05-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://idolmaps.com/group/f56d8f8f-b35d-48c6-98ce-f1cb960f0875</loc>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

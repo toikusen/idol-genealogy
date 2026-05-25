@@ -213,6 +213,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.allSoloMembers = raw.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
       this.companySections = this.buildCompanySections();
     }
+    if (tab === 'events') {
+      void this.loadTodayEvents();
+    }
     if (tab === 'venues' && !this.venuesLoaded) {
       this.venuesLoading = true;
       try {
@@ -552,6 +555,72 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   readonly calendarUrl = 'https://calendar.google.com/calendar/u/0/embed?src=mr7kibfjcm3gu52v6t64lreras@group.calendar.google.com&ctz=Asia/Taipei&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0&bgcolor=%23FDF8FF';
+
+  todayDisplayDate = '';
+  todayEvents: VenueCalendarEvent[] = [];
+  todayEventsLoading = false;
+  private todayTargetDate: Date | null = null;
+
+  private async loadTodayEvents(): Promise<void> {
+    if (this.todayEventsLoading || this.todayEvents.length > 0) return;
+    this.todayEventsLoading = true;
+    try {
+      const now = new Date();
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      this.todayTargetDate = target;
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+      this.todayDisplayDate = `${target.getFullYear()}年${target.getMonth() + 1}月${target.getDate()}日（週${weekdays[target.getDay()]}）`;
+      this.todayEvents = await this.googleCalendarService.getEventsForDate(target);
+    } catch (err) {
+      console.warn('[今日活動] 載入失敗，顯示空狀態', err);
+      this.todayEvents = [];
+    } finally {
+      this.todayEventsLoading = false;
+    }
+  }
+
+  get todayAllDayEvents(): VenueCalendarEvent[] {
+    return this.todayEvents.filter(e => e.isAllDay);
+  }
+
+  /** 昨夜延續：start 在目標日期之前（昨天開始、今天結束的跨夜活動） */
+  get todayCarryoverEvents(): VenueCalendarEvent[] {
+    return this.todayEvents.filter(e => !e.isAllDay && this.isCarryoverEvent(e));
+  }
+
+  /** 主時間軸：今天開始的活動 */
+  get todayTimedEvents(): VenueCalendarEvent[] {
+    return this.todayEvents.filter(e => !e.isAllDay && !this.isCarryoverEvent(e));
+  }
+
+  /** 活動開始日期早於今日（從昨天延伸進今天的跨夜場） */
+  isCarryoverEvent(event: VenueCalendarEvent): boolean {
+    if (!this.todayTargetDate) return false;
+    const start = new Date(event.start);
+    const t = this.todayTargetDate;
+    return (
+      start.getFullYear() < t.getFullYear() ||
+      (start.getFullYear() === t.getFullYear() && start.getMonth() < t.getMonth()) ||
+      (start.getFullYear() === t.getFullYear() && start.getMonth() === t.getMonth() && start.getDate() < t.getDate())
+    );
+  }
+
+  /** 今天開始、明天結束的跨夜活動 */
+  isOvernightEvent(event: VenueCalendarEvent): boolean {
+    if (!event.end || event.isAllDay) return false;
+    const start = new Date(event.start);
+    const end = new Date(event.end);
+    return start.getDate() !== end.getDate() ||
+           start.getMonth() !== end.getMonth() ||
+           start.getFullYear() !== end.getFullYear();
+  }
+
+  formatTodayEventTime(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
 
   get hasResults(): boolean {
     return this.memberResults.length > 0 || this.aliasResults.length > 0 || this.groupResults.length > 0 || this.companyResults.length > 0;
