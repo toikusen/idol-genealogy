@@ -30,6 +30,15 @@ serve(async (req) => {
   const userIds = (favUsers ?? []).map((f: any) => f.user_id);
   if (userIds.length === 0) return new Response("no subscribers", { status: 200 });
 
+  const { data: optedOutRows, error: prefsError } = await supabase
+    .from("push_notification_prefs")
+    .select("user_id")
+    .in("user_id", userIds)
+    .eq("notify_disbanded", false);
+  const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
+  const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
+  if (filteredIds.length === 0) return new Response("all opted out", { status: 200 });
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
     method: "POST",
@@ -38,7 +47,7 @@ serve(async (req) => {
       "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
     },
     body: JSON.stringify({
-      user_ids: userIds,
+      user_ids: filteredIds,
       notification: {
         title: `${groupName} 發布解散公告`,
         body: `預定解散日期：${record.disbanded_at}`,
@@ -55,7 +64,7 @@ serve(async (req) => {
     }),
   });
 
-  console.log(`[notify-group-disbanded] ${groupName} — notified ${userIds.length} user(s)`);
+  console.log(`[notify-group-disbanded] ${groupName} — notified ${filteredIds.length} user(s)`);
   return new Response(JSON.stringify({ notified: userIds.length }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
