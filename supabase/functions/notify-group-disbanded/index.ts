@@ -65,7 +65,7 @@ serve(async (req) => {
   });
 
   console.log(`[notify-group-disbanded] ${groupName} — notified ${filteredIds.length} user(s)`);
-  return new Response(JSON.stringify({ notified: userIds.length }), {
+  return new Response(JSON.stringify({ notified: filteredIds.length }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
