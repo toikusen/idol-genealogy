@@ -181,7 +181,7 @@ serve(async (req) => {
 
     const { error } = await supabase
       .from("group_events")
-      .upsert(rows, { onConflict: "source,source_event_id,group_id", ignoreDuplicates: false });
+      .upsert(rows, { onConflict: "source,source_event_id,group_id", ignoreDuplicates: true });
 
     if (error) {
       console.error(`[${group.name}] upsert error: ${error.message}`);
