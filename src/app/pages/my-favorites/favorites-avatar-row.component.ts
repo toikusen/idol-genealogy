@@ -4,7 +4,13 @@ import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
 import { GroupService } from '../../core/group.service';
 import { MemberService } from '../../core/member.service';
+import { SupabaseService } from '../../core/supabase.service';
 import { FavoriteEntityType } from '../../models';
+
+interface ActivityData {
+  count: number;
+  lastAt: string;
+}
 
 @Component({
   selector: 'app-favorites-avatar-row',
@@ -12,8 +18,14 @@ import { FavoriteEntityType } from '../../models';
   imports: [CommonModule, RouterLink],
   template: `
     <div style="padding:12px 20px 10px;border-bottom:1px solid rgba(232,121,160,0.08);">
-      <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);margin-bottom:12px;">
-        已追蹤
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);">已追蹤</div>
+        @if (displayItems().length > 0) {
+          <button (click)="editMode.set(!editMode())"
+            style="font-size:0.65rem;padding:2px 8px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:var(--text-faint-55);cursor:pointer;font-family:var(--font-sans);">
+            {{ editMode() ? '完成' : '管理' }}
+          </button>
+        }
       </div>
       <div
         data-avatar-container
@@ -21,48 +33,72 @@ import { FavoriteEntityType } from '../../models';
         [style.flex-wrap]="layout() === 'grid' ? 'wrap' : 'nowrap'"
         [style.overflow-x]="layout() === 'grid' ? 'hidden' : 'auto'"
         [style.gap]="'12px'"
-        [style.padding-bottom]="layout() === 'grid' ? '0' : '4px'"
+        [style.padding-top]="'6px'"
+        [style.padding-bottom]="layout() === 'grid' ? '6px' : '4px'"
       >
 
         @for (item of displayItems(); track item.id) {
-          <a [routerLink]="item.link" style="display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;text-decoration:none;">
-            <div [style.background]="item.isGroup
-                ? 'linear-gradient(135deg,rgba(232,121,160,0.35),rgba(192,80,128,0.45))'
-                : 'linear-gradient(135deg,rgba(134,239,172,0.35),rgba(74,222,128,0.5))'"
-              [style.border-color]="item.isGroup ? 'rgba(232,121,160,0.5)' : 'rgba(134,239,172,0.55)'"
-              style="
-                width:48px;height:48px;border-radius:50%;
-                border:2px solid;
-                display:flex;align-items:center;justify-content:center;
-                font-size:0.7rem;font-weight:600;color:white;
-                overflow:hidden;
-              "
-            >
-              @if (item.photoUrl) {
-                <img [src]="item.photoUrl" [alt]="item.name" style="width:100%;height:100%;object-fit:cover;">
-              } @else {
-                {{ item.initials }}
-              }
-            </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;position:relative;">
+
+            @if (editMode()) {
+              <!-- Remove button overlay -->
+              <button (click)="removeFav(item.id, item.entityType)"
+                style="position:absolute;top:-4px;right:-4px;z-index:2;width:18px;height:18px;border-radius:50%;background:rgba(232,121,160,0.9);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">
+                <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+                  <line x1="2" y1="2" x2="8" y2="8"/><line x1="8" y1="2" x2="2" y2="8"/>
+                </svg>
+              </button>
+            } @else if (item.badgeCount > 0) {
+              <!-- Activity badge -->
+              <span style="position:absolute;top:-3px;right:-3px;z-index:2;min-width:16px;height:16px;padding:0 4px;background:rgba(232,121,160,1);border-radius:8px;font-size:0.58rem;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;line-height:1;">
+                {{ item.badgeCount > 9 ? '9+' : item.badgeCount }}
+              </span>
+            }
+
+            <a [routerLink]="editMode() ? null : item.link"
+               [style.pointer-events]="editMode() ? 'none' : 'auto'"
+               style="display:block;text-decoration:none;">
+              <div [style.background]="item.isGroup
+                  ? 'linear-gradient(135deg,rgba(232,121,160,0.35),rgba(192,80,128,0.45))'
+                  : 'linear-gradient(135deg,rgba(134,239,172,0.35),rgba(74,222,128,0.5))'"
+                [style.border-color]="item.isGroup ? 'rgba(232,121,160,0.5)' : 'rgba(134,239,172,0.55)'"
+                [style.opacity]="editMode() ? '0.7' : '1'"
+                style="
+                  width:48px;height:48px;border-radius:50%;
+                  border:2px solid;
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:0.7rem;font-weight:600;color:white;
+                  overflow:hidden;transition:opacity 0.15s;
+                "
+              >
+                @if (item.photoUrl) {
+                  <img [src]="item.photoUrl" [alt]="item.name" style="width:100%;height:100%;object-fit:cover;">
+                } @else {
+                  {{ item.initials }}
+                }
+              </div>
+            </a>
             <span style="font-size:0.7rem;color:var(--text-faint-55);max-width:54px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
               {{ item.name }}
             </span>
-          </a>
+          </div>
         }
 
-        <!-- Add button -->
-        <button (click)="addClicked.emit()" style="
-          display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;
-          background:transparent;border:none;cursor:pointer;padding:0;
-        ">
-          <div style="
-            width:48px;height:48px;border-radius:50%;
-            border:1.5px dashed rgba(232,121,160,0.4);
-            display:flex;align-items:center;justify-content:center;
-            font-size:1.2rem;color:rgba(232,121,160,0.5);
-          ">+</div>
-          <span style="font-size:0.7rem;color:rgba(232,121,160,0.5);">新增</span>
-        </button>
+        <!-- Add button (hidden in edit mode) -->
+        @if (!editMode()) {
+          <button (click)="addClicked.emit()" style="
+            display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;
+            background:transparent;border:none;cursor:pointer;padding:0;
+          ">
+            <div style="
+              width:48px;height:48px;border-radius:50%;
+              border:1.5px dashed rgba(232,121,160,0.4);
+              display:flex;align-items:center;justify-content:center;
+              font-size:1.2rem;color:rgba(232,121,160,0.5);
+            ">+</div>
+            <span style="font-size:0.7rem;color:rgba(232,121,160,0.5);">新增</span>
+          </button>
+        }
 
       </div>
     </div>
@@ -76,9 +112,13 @@ export class FavoritesAvatarRowComponent {
   private favService = inject(FavoritesService);
   private groupService = inject(GroupService);
   private memberService = inject(MemberService);
+  private supabase = inject(SupabaseService);
 
   private readonly _nameCache = signal<Record<string, string>>({});
   private readonly _photoCache = signal<Record<string, string | null>>({});
+  private readonly _activity = signal<Record<string, ActivityData>>({});
+
+  readonly editMode = signal(false);
 
   displayItems = computed(() => {
     const f = this.filter();
@@ -89,24 +129,43 @@ export class FavoritesAvatarRowComponent {
     );
     const names = this._nameCache();
     const photos = this._photoCache();
-    return favs.map(f => ({
-      id: f.entity_id,
-      isGroup: f.entity_type === 'group',
-      name: names[f.entity_id] ?? f.entity_id.slice(0, 4),
-      initials: (names[f.entity_id] ?? f.entity_id.slice(0, 4)).slice(0, 2).toUpperCase(),
-      photoUrl: photos[f.entity_id] ?? null,
-      link: f.entity_type === 'group' ? `/group/${f.entity_id}` : `/member/${f.entity_id}`,
+    const activity = this._activity();
+
+    const items = favs.map(fav => ({
+      id: fav.entity_id,
+      entityType: fav.entity_type as FavoriteEntityType,
+      isGroup: fav.entity_type === 'group',
+      name: names[fav.entity_id] ?? fav.entity_id.slice(0, 4),
+      initials: (names[fav.entity_id] ?? fav.entity_id.slice(0, 4)).slice(0, 2).toUpperCase(),
+      photoUrl: photos[fav.entity_id] ?? null,
+      link: fav.entity_type === 'group' ? `/group/${fav.entity_id}` : `/member/${fav.entity_id}`,
+      badgeCount: activity[fav.entity_id]?.count ?? 0,
+      lastAt: activity[fav.entity_id]?.lastAt ?? '',
     }));
+
+    // Sort: entities with recent activity first (by lastAt desc), rest maintain order
+    return items.sort((a, b) => {
+      if (a.lastAt && b.lastAt) return b.lastAt.localeCompare(a.lastAt);
+      if (a.lastAt) return -1;
+      if (b.lastAt) return 1;
+      return 0;
+    });
   });
 
   constructor() {
     effect(() => {
       const favs = this.favService.favorites();
-      if (favs.length === 0) return;
+      if (favs.length === 0) { this.editMode.set(false); return; }
       const groupIds = favs.filter(f => f.entity_type === 'group').map(f => f.entity_id);
       const memberIds = favs.filter(f => f.entity_type === 'member').map(f => f.entity_id);
       this.loadDetails(groupIds, memberIds);
+      void this.loadActivity(groupIds, memberIds);
     });
+  }
+
+  async removeFav(entityId: string, entityType: FavoriteEntityType): Promise<void> {
+    await this.favService.remove(entityType, entityId);
+    if (this.favService.favorites().length === 0) this.editMode.set(false);
   }
 
   async loadDetails(groupIds: string[], memberIds: string[]): Promise<void> {
@@ -120,5 +179,46 @@ export class FavoritesAvatarRowComponent {
     members.forEach(m => { names[m.id] = m.name; photos[m.id] = m.photo_url; });
     this._nameCache.set({ ...this._nameCache(), ...names });
     this._photoCache.set({ ...this._photoCache(), ...photos });
+  }
+
+  private async loadActivity(groupIds: string[], memberIds: string[]): Promise<void> {
+    const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    const activity: Record<string, ActivityData> = {};
+
+    const merge = (id: string, at: string) => {
+      const prev = activity[id];
+      activity[id] = {
+        count: (prev?.count ?? 0) + 1,
+        lastAt: !prev || at > prev.lastAt ? at : prev.lastAt,
+      };
+    };
+
+    await Promise.all([
+      groupIds.length ? (async () => {
+        const { data: songs } = await this.supabase.client
+          .from('group_songs').select('group_id, created_at')
+          .in('group_id', groupIds).gt('created_at', weekAgo).eq('is_deleted', false);
+        (songs ?? []).forEach((r: any) => merge(r.group_id, r.created_at));
+
+        const { data: evts } = await this.supabase.client
+          .from('group_events').select('group_id, first_seen_at')
+          .in('group_id', groupIds).gt('first_seen_at', weekAgo);
+        (evts ?? []).forEach((r: any) => merge(r.group_id, r.first_seen_at));
+      })() : Promise.resolve(),
+
+      memberIds.length ? (async () => {
+        const { data: songs } = await this.supabase.client
+          .from('member_songs').select('member_id, created_at')
+          .in('member_id', memberIds).gt('created_at', weekAgo).eq('is_deleted', false);
+        (songs ?? []).forEach((r: any) => merge(r.member_id, r.created_at));
+
+        const { data: hist } = await this.supabase.client
+          .from('history').select('member_id, updated_at')
+          .in('member_id', memberIds).gt('updated_at', weekAgo);
+        (hist ?? []).forEach((r: any) => merge(r.member_id, r.updated_at));
+      })() : Promise.resolve(),
+    ]);
+
+    this._activity.set(activity);
   }
 }

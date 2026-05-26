@@ -1,4 +1,4 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { SwPush } from '@angular/service-worker';
 import { firstValueFrom } from 'rxjs';
@@ -12,6 +12,8 @@ export class PushNotificationService {
   private swPush = inject(SwPush);
   private supabase = inject(SupabaseService);
   private platformId = inject(PLATFORM_ID);
+
+  readonly isSubscribed = signal(false);
 
   private get db() { return this.supabase.client; }
 
@@ -30,6 +32,12 @@ export class PushNotificationService {
   get permission(): NotificationPermission | 'default' {
     if (!isPlatformBrowser(this.platformId)) return 'default';
     return Notification.permission;
+  }
+
+  async checkSubscription(): Promise<void> {
+    if (!this.isSupported()) { this.isSubscribed.set(false); return; }
+    const sub = await firstValueFrom(this.swPush.subscription);
+    this.isSubscribed.set(!!sub);
   }
 
   async subscribe(): Promise<void> {
@@ -54,6 +62,7 @@ export class PushNotificationService {
       auth_key: json.keys?.['auth'] ?? '',
     }, { onConflict: 'user_id,endpoint' });
     if (upsertError) throw new Error(upsertError.message);
+    this.isSubscribed.set(true);
   }
 
   async unsubscribe(): Promise<void> {
@@ -62,12 +71,13 @@ export class PushNotificationService {
     if (!session) return;
 
     const sub = await firstValueFrom(this.swPush.subscription);
-    if (!sub) return;
-
-    await sub.unsubscribe();
-    await this.db.from('push_subscriptions')
-      .delete()
-      .eq('user_id', session.user.id)
-      .eq('endpoint', sub.endpoint);
+    if (sub) {
+      await sub.unsubscribe();
+      await this.db.from('push_subscriptions')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('endpoint', sub.endpoint);
+    }
+    this.isSubscribed.set(false);
   }
 }

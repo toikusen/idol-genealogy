@@ -26,12 +26,12 @@ import { NotificationPrefs } from '../../models';
             <div style="font-size:0.9rem;font-weight:600;color:var(--text-primary);">推播通知</div>
             <div style="font-size:0.78rem;color:var(--text-faint-55);margin-top:3px;">{{ permissionLabel() }}</div>
           </div>
-          @if (permission() === 'granted') {
+          @if (pushService.isSubscribed()) {
             <button (click)="unsubscribe()" [disabled]="loading()"
               style="font-size:0.8rem;padding:6px 14px;border-radius:10px;border:1px solid rgba(232,121,160,0.3);background:transparent;cursor:pointer;color:var(--text-faint-75);font-family:var(--font-sans);">
               {{ loading() ? '處理中…' : '取消訂閱' }}
             </button>
-          } @else {
+          } @else if (permission() !== 'denied') {
             <button (click)="subscribe()" [disabled]="loading()"
               style="font-size:0.8rem;padding:6px 14px;border-radius:10px;border:none;background:rgba(232,121,160,1);color:white;cursor:pointer;font-family:var(--font-sans);font-weight:600;">
               {{ loading() ? '處理中…' : '開啟通知' }}
@@ -214,6 +214,7 @@ export class PushSettingsComponent implements OnInit {
     if (session) {
       await this.prefsService.load(session.user.id);
     }
+    await this.pushService.checkSubscription();
   }
 
   permission(): NotificationPermission | 'default' {
@@ -254,9 +255,6 @@ export class PushSettingsComponent implements OnInit {
     this.error.set('');
     try {
       await this.pushService.unsubscribe();
-      if (isPlatformBrowser(this.platformId)) {
-        this._permission.set(Notification.permission);
-      }
     } catch (e: any) {
       this.error.set(e?.message ?? '取消失敗，請稍後再試');
     } finally {

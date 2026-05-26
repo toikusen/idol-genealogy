@@ -1,9 +1,10 @@
-import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FavoritesService } from '../../core/favorites.service';
 import { GroupService } from '../../core/group.service';
 import { MemberService } from '../../core/member.service';
+import { SupabaseService } from '../../core/supabase.service';
 import { Group, Member } from '../../models';
 
 type SheetTab = 'group' | 'member';
@@ -27,124 +28,220 @@ type SheetTab = 'group' | 'member';
       box-shadow:0 -4px 30px rgba(45,27,46,0.15);
       animation:slideUp 0.25s ease-out;
     ">
+      <!-- Handle -->
       <div style="display:flex;justify-content:center;padding:10px 0 4px;">
         <div style="width:36px;height:4px;border-radius:2px;background:rgba(45,27,46,0.15);"></div>
       </div>
+
+      <!-- Title + close -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 0;">
         <div style="font-size:0.9rem;font-weight:700;color:var(--text-primary);">新增最愛</div>
         <button (click)="close.emit()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-faint-55);">✕</button>
       </div>
+
+      <!-- Tabs -->
       <div style="display:flex;border-bottom:1px solid rgba(232,121,160,0.15);padding:0 20px;">
-        <button (click)="tab.set('group')"
+        <button (click)="switchTab('group')"
           [style.color]="tab() === 'group' ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
           [style.border-bottom]="tab() === 'group' ? '2px solid rgba(232,121,160,1)' : '2px solid transparent'"
           style="padding:6px 14px 10px;background:none;border:none;cursor:pointer;font-size:0.62rem;font-weight:600;font-family:var(--font-sans);"
         >團體</button>
-        <button (click)="tab.set('member')"
+        <button (click)="switchTab('member')"
           [style.color]="tab() === 'member' ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
           [style.border-bottom]="tab() === 'member' ? '2px solid rgba(232,121,160,1)' : '2px solid transparent'"
           style="padding:6px 14px 10px;background:none;border:none;cursor:pointer;font-size:0.62rem;font-weight:600;font-family:var(--font-sans);"
         >成員</button>
       </div>
+
+      <!-- Search input -->
       <div style="padding:10px 20px 6px;">
-        <input [(ngModel)]="query" [placeholder]="tab() === 'group' ? '搜尋團體名稱…' : '搜尋成員名稱…'"
-          style="width:100%;box-sizing:border-box;padding:7px 12px;border-radius:10px;border:1px solid rgba(232,121,160,0.22);background:rgba(232,121,160,0.05);font-size:0.65rem;font-family:var(--font-sans);outline:none;color:var(--text-primary);">
+        <input #searchInput
+          [value]="query()"
+          (input)="onInput(searchInput.value)"
+          [placeholder]="tab() === 'group' ? '搜尋團體名稱…' : '搜尋成員名稱…'"
+          style="width:100%;box-sizing:border-box;padding:7px 12px;border-radius:10px;border:1px solid rgba(232,121,160,0.22);background:rgba(232,121,160,0.05);font-size:16px;font-family:var(--font-sans);outline:none;color:var(--text-primary);">
       </div>
+
+      <!-- Content -->
       <div style="overflow-y:auto;flex:1;padding:0 20px 20px;">
-        @if (loading()) {
-          <div style="text-align:center;padding:30px 0;color:var(--text-faint-40);font-size:0.8rem;">載入中…</div>
-        }
-        @if (tab() === 'group') {
-          @for (g of filteredGroups(); track g.id) {
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(232,121,160,0.07);">
-              <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,rgba(232,121,160,0.4),rgba(192,80,128,0.55));border:1.5px solid rgba(232,121,160,0.4);display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:600;color:white;overflow:hidden;">
-                @if (g.photo_url) { <img [src]="g.photo_url" [alt]="g.name" style="width:100%;height:100%;object-fit:cover;"> }
-                @else { {{ g.name.slice(0,2) }} }
-              </div>
-              <div style="flex:1;">
-                <div style="font-size:0.65rem;font-weight:600;color:var(--text-primary);">{{ g.name }}</div>
-                <div style="font-size:0.54rem;color:var(--text-faint-55);">{{ g.company ?? '' }}</div>
-              </div>
-              <button (click)="toggleGroup(g)" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(232,121,160,0.3);font-size:0.85rem;"
-                [style.background]="isFav('group', g.id) ? 'rgba(232,121,160,0.12)' : 'transparent'"
-              >{{ isFav('group', g.id) ? '♥' : '♡' }}</button>
+
+        @if (query().length < 2) {
+          <!-- Already following section -->
+          @if (favDetails().length > 0) {
+            <div style="font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-faint-40);padding:10px 0 6px;">已追蹤</div>
+            @for (item of favDetails(); track item.id) {
+              <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: item }"></ng-container>
+            }
+          } @else if (!loadingFavs()) {
+            <div style="text-align:center;padding:30px 0;color:var(--text-faint-40);font-size:0.8rem;">
+              尚未追蹤任何{{ tab() === 'group' ? '團體' : '成員' }}
             </div>
           }
-        }
-        @if (tab() === 'member') {
-          @for (m of filteredMembers(); track m.id) {
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(232,121,160,0.07);">
-              <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,rgba(134,239,172,0.4),rgba(74,222,128,0.55));border:1.5px solid rgba(134,239,172,0.4);display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:600;color:white;overflow:hidden;">
-                @if (m.photo_url) { <img [src]="m.photo_url" [alt]="m.name" style="width:100%;height:100%;object-fit:cover;"> }
-                @else { {{ m.name.slice(0,2) }} }
-              </div>
-              <div style="flex:1;">
-                <div style="font-size:0.65rem;font-weight:600;color:var(--text-primary);">{{ m.name }}</div>
-                <div style="font-size:0.54rem;color:var(--text-faint-55);">{{ m.name_roman ?? '' }}</div>
-              </div>
-              <button (click)="toggleMember(m)" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(134,239,172,0.3);font-size:0.85rem;"
-                [style.background]="isFav('member', m.id) ? 'rgba(134,239,172,0.12)' : 'transparent'"
-              >{{ isFav('member', m.id) ? '♥' : '♡' }}</button>
+          @if (loadingFavs()) {
+            <div style="text-align:center;padding:20px 0;color:var(--text-faint-40);font-size:0.8rem;">載入中…</div>
+          }
+          <div style="text-align:center;padding:16px 0 4px;color:var(--text-faint-40);font-size:0.75rem;">
+            輸入名稱搜尋更多{{ tab() === 'group' ? '團體' : '成員' }}
+          </div>
+
+        } @else {
+          <!-- Search results -->
+          @if (searching()) {
+            <div style="text-align:center;padding:30px 0;color:var(--text-faint-40);font-size:0.8rem;">搜尋中…</div>
+          } @else if (searchResults().length === 0) {
+            <div style="text-align:center;padding:30px 0;color:var(--text-faint-40);font-size:0.8rem;">
+              找不到「{{ query() }}」
             </div>
+          } @else {
+            @for (item of searchResults(); track item.id) {
+              <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: item }"></ng-container>
+            }
           }
         }
       </div>
     </div>
+
+    <!-- Row template -->
+    <ng-template #rowTpl let-item>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(232,121,160,0.07);">
+        <div [style.background]="tab() === 'group'
+            ? 'linear-gradient(135deg,rgba(232,121,160,0.4),rgba(192,80,128,0.55))'
+            : 'linear-gradient(135deg,rgba(134,239,172,0.4),rgba(74,222,128,0.55))'"
+          [style.border-color]="tab() === 'group' ? 'rgba(232,121,160,0.4)' : 'rgba(134,239,172,0.4)'"
+          style="width:36px;height:36px;border-radius:50%;flex-shrink:0;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:600;color:white;overflow:hidden;">
+          @if (item.photo_url) { <img [src]="item.photo_url" [alt]="item.name" style="width:100%;height:100%;object-fit:cover;"> }
+          @else { {{ item.name.slice(0, 2) }} }
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.65rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ item.name }}</div>
+          <div style="font-size:0.54rem;color:var(--text-faint-55);">{{ subtitle(item) }}</div>
+        </div>
+        <button (click)="toggle(item)"
+          style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.85rem;flex-shrink:0;"
+          [style.background]="isFav(item.id) ? 'rgba(232,121,160,0.12)' : 'transparent'"
+          [style.border]="tab() === 'group' ? '1px solid rgba(232,121,160,0.3)' : '1px solid rgba(134,239,172,0.3)'"
+        >{{ isFav(item.id) ? '♥' : '♡' }}</button>
+      </div>
+    </ng-template>
   `,
   styles: [`
     @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
     @keyframes slideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
   `],
 })
-export class FavoritesAddSheetComponent implements OnInit {
+export class FavoritesAddSheetComponent implements OnInit, OnDestroy {
   @Input() initialTab: 'group' | 'member' = 'group';
   @Output() close = new EventEmitter<void>();
 
   private favService = inject(FavoritesService);
   private groupService = inject(GroupService);
   private memberService = inject(MemberService);
+  private supabase = inject(SupabaseService);
 
   readonly tab = signal<SheetTab>('group');
-  readonly loading = signal(true);
-  query = '';
+  readonly query = signal('');
+  readonly loadingFavs = signal(true);
+  readonly searching = signal(false);
 
-  private allGroups: Group[] = [];
-  private allMembers: Member[] = [];
+  private _favGroups = signal<Group[]>([]);
+  private _favMembers = signal<Member[]>([]);
+  private _searchGroups = signal<Group[]>([]);
+  private _searchMembers = signal<Member[]>([]);
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  readonly favDetails = computed<(Group | Member)[]>(() =>
+    this.tab() === 'group' ? this._favGroups() : this._favMembers()
+  );
+
+  readonly searchResults = computed<(Group | Member)[]>(() =>
+    this.tab() === 'group' ? this._searchGroups() : this._searchMembers()
+  );
 
   async ngOnInit(): Promise<void> {
     this.tab.set(this.initialTab);
+    await this.loadFavDetails();
+    this.loadingFavs.set(false);
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+  }
+
+  switchTab(t: SheetTab): void {
+    this.tab.set(t);
+    this.query.set('');
+    this._searchGroups.set([]);
+    this._searchMembers.set([]);
+  }
+
+  onInput(value: string): void {
+    this.query.set(value);
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    if (value.length < 2) return;
+    this.searching.set(true);
+    this.searchTimer = setTimeout(() => void this.doSearch(value), 300);
+  }
+
+  isFav(id: string): boolean {
+    return this.favService.isFavorite(this.tab(), id);
+  }
+
+  subtitle(item: any): string {
+    if (this.tab() === 'group') return (item as Group).company ?? '';
+    return (item as Member).name_roman ?? '';
+  }
+
+  async toggle(item: Group | Member): Promise<void> {
+    const t = this.tab();
+    if (this.isFav(item.id)) {
+      await this.favService.remove(t, item.id);
+      // Remove from fav details list
+      if (t === 'group') this._favGroups.update(list => list.filter(g => g.id !== item.id));
+      else this._favMembers.update(list => list.filter(m => m.id !== item.id));
+    } else {
+      await this.favService.add(t, item.id);
+      // Add to fav details list if not already there
+      if (t === 'group') {
+        if (!this._favGroups().find(g => g.id === item.id))
+          this._favGroups.update(list => [item as Group, ...list]);
+      } else {
+        if (!this._favMembers().find(m => m.id === item.id))
+          this._favMembers.update(list => [item as Member, ...list]);
+      }
+    }
+  }
+
+  private async loadFavDetails(): Promise<void> {
+    const groupIds = this.favService.favoriteIds('group');
+    const memberIds = this.favService.favoriteIds('member');
+
     const [groups, members] = await Promise.all([
-      this.groupService.getAll(),
-      this.memberService.getAll(),
+      groupIds.length
+        ? this.supabase.client.from('groups').select('id, name, photo_url, company, company_id, color, name_jp, founded_at, disbanded_at, notes, is_trainee, style, instagram, facebook, x, youtube, timetree_url, updated_at, created_at').in('id', groupIds)
+        : Promise.resolve({ data: [] }),
+      memberIds.length
+        ? this.supabase.client.from('members').select('id, name, name_roman, name_hiragana, photo_url, birthdate, color, color_name, nickname, emoji, instagram, facebook, x, maid_url, no_sns, notes, company_id, updated_at, created_at').in('id', memberIds)
+        : Promise.resolve({ data: [] }),
     ]);
-    this.allGroups = groups;
-    this.allMembers = members;
-    this.loading.set(false);
+
+    this._favGroups.set((groups.data ?? []) as Group[]);
+    this._favMembers.set((members.data ?? []) as Member[]);
   }
 
-  filteredGroups(): Group[] {
-    const q = this.query.toLowerCase();
-    return q ? this.allGroups.filter(g => g.name.toLowerCase().includes(q)) : this.allGroups;
-  }
-
-  filteredMembers(): Member[] {
-    const q = this.query.toLowerCase();
-    return q ? this.allMembers.filter(m => m.name.toLowerCase().includes(q) || (m.name_roman ?? '').toLowerCase().includes(q)) : this.allMembers;
-  }
-
-  isFav(type: 'group' | 'member', id: string): boolean {
-    return this.favService.isFavorite(type, id);
-  }
-
-  async toggleGroup(g: Group): Promise<void> {
-    this.isFav('group', g.id)
-      ? await this.favService.remove('group', g.id)
-      : await this.favService.add('group', g.id);
-  }
-
-  async toggleMember(m: Member): Promise<void> {
-    this.isFav('member', m.id)
-      ? await this.favService.remove('member', m.id)
-      : await this.favService.add('member', m.id);
+  private async doSearch(q: string): Promise<void> {
+    try {
+      if (this.tab() === 'group') {
+        const results = await this.groupService.search(q);
+        this._searchGroups.set(results);
+      } else {
+        const results = await this.memberService.search(q);
+        this._searchMembers.set(results);
+      }
+    } catch {
+      // silently ignore search errors
+    } finally {
+      this.searching.set(false);
+    }
   }
 }
