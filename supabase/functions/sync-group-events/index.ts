@@ -190,25 +190,29 @@ serve(async (req) => {
     }
   }));
 
-  // Push notifications — group unnotified events by group_id to minimise queries
-  const { data: unnotified } = await supabase
+  // Atomically claim unnotified events — UPDATE...RETURNING in a single statement prevents
+  // concurrent invocations from both seeing the same NULL rows and double-notifying.
+  const { data: claimed, error: claimError } = await supabase
     .from("group_events")
-    .select("id, group_id, title, url, groups(name)")
-    .is("notified_at", null);
+    .update({ notified_at: now })
+    .is("notified_at", null)
+    .select("id, group_id, title, url, groups(name)");
+
+  if (claimError) {
+    console.error(`[sync-group-events] claim error: ${claimError.message}`);
+  }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // Group by group_id
-  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; firstUrl: string | null; count: number }>();
-  for (const evt of unnotified ?? []) {
+  // Group claimed events by group_id
+  const byGroup = new Map<string, { groupName: string; firstTitle: string; firstUrl: string | null; count: number }>();
+  for (const evt of claimed ?? []) {
     const entry = byGroup.get(evt.group_id);
     if (entry) {
-      entry.ids.push(evt.id);
       entry.count++;
     } else {
       byGroup.set(evt.group_id, {
-        ids: [evt.id],
         groupName: (evt as any).groups?.name ?? '',
         firstTitle: evt.title,
         firstUrl: evt.url ?? null,
@@ -217,9 +221,9 @@ serve(async (req) => {
     }
   }
 
-  console.log(`Pending push notifications: ${unnotified?.length ?? 0} events across ${byGroup.size} groups`);
+  console.log(`Pending push notifications: ${claimed?.length ?? 0} events across ${byGroup.size} groups`);
 
-  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, firstUrl, count }]) => {
+  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { groupName, firstTitle, firstUrl, count }]) => {
     const { data: favUsers } = await supabase
       .from("user_favorites")
       .select("user_id")
@@ -227,44 +231,41 @@ serve(async (req) => {
       .eq("entity_id", groupId);
 
     const userIds = (favUsers ?? []).map((f: any) => f.user_id);
-    if (userIds.length > 0) {
-      const { data: optedOutRows, error: prefsError } = await supabase
-        .from("push_notification_prefs")
-        .select("user_id")
-        .in("user_id", userIds)
-        .eq("notify_event", false);
-      if (prefsError) console.error(`[sync-group-events] prefs query error: ${prefsError.message}`);
-      const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
-      const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
-      if (filteredIds.length > 0) {
-        const targetUrl = count === 1 && firstUrl ? firstUrl : `/group/${groupId}`;
-        try {
-          await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
-            body: JSON.stringify({
-              user_ids: filteredIds,
-              notification: {
-                title: `${groupName} 新增活動`,
-                body: count === 1 ? firstTitle : `${count} 個新活動`,
-                icon: "/icons/icon-192x192.png",
-                data: { onActionClick: { default: { operation: "navigateLastFocusedOrOpen", url: targetUrl } } },
-              },
-            }),
-          });
-        } catch (sendErr) {
-          console.error(`[sync-group-events] send push failed for group ${groupId}: ${sendErr}`);
-        }
-      }
-    }
+    if (userIds.length === 0) return;
 
-    const { error: notifyUpdateErr } = await supabase
-      .from("group_events")
-      .update({ notified_at: now })
-      .in("id", ids);
-    if (notifyUpdateErr) {
-      console.error(`[sync-group-events] failed to mark events notified for group ${groupId}: ${notifyUpdateErr.message}`);
+    const { data: optedOutRows, error: prefsError } = await supabase
+      .from("push_notification_prefs")
+      .select("user_id")
+      .in("user_id", userIds)
+      .eq("notify_event", false);
+    if (prefsError) console.error(`[sync-group-events] prefs query error: ${prefsError.message}`);
+    const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
+    const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
+    if (filteredIds.length === 0) return;
+
+    const targetUrl = count === 1 && firstUrl ? firstUrl : `/group/${groupId}`;
+    try {
+      const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+        body: JSON.stringify({
+          user_ids: filteredIds,
+          notification: {
+            title: `${groupName} 新增活動`,
+            body: count === 1 ? firstTitle : `${count} 個新活動`,
+            icon: "/icons/icon-192x192.png",
+            data: { onActionClick: { default: { operation: "navigateLastFocusedOrOpen", url: targetUrl } } },
+          },
+        }),
+      });
+      if (!pushRes.ok) {
+        const body = await pushRes.text().catch(() => '');
+        console.error(`[sync-group-events] send-push-notification HTTP ${pushRes.status} for group ${groupId}: ${body}`);
+      }
+    } catch (sendErr) {
+      console.error(`[sync-group-events] send push failed for group ${groupId}: ${sendErr}`);
     }
+    // notified_at already set in the atomic claim above — no second UPDATE needed
   }));
 
   // Cleanup expired events (starts_at older than 3 months)
@@ -280,7 +281,7 @@ serve(async (req) => {
   }
 
   return new Response(
-    JSON.stringify({ newEvents: totalNew, pushed: unnotified?.length ?? 0 }),
+    JSON.stringify({ newEvents: totalNew, pushed: claimed?.length ?? 0 }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
 });
