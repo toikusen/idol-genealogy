@@ -244,6 +244,8 @@ serve(async (req) => {
     if (filteredIds.length === 0) return;
 
     const targetUrl = count === 1 && firstUrl ? firstUrl : `/group/${groupId}`;
+    const notifBody = count === 1 ? firstTitle : `${count} 個新活動`;
+    console.log(`[sync-group-events] sending push for ${groupName}: "${notifBody}" to ${filteredIds.length} user(s)`);
     try {
       const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
         method: "POST",
@@ -252,7 +254,7 @@ serve(async (req) => {
           user_ids: filteredIds,
           notification: {
             title: `${groupName} 新增活動`,
-            body: count === 1 ? firstTitle : `${count} 個新活動`,
+            body: notifBody,
             icon: "/icons/icon-192x192.png",
             data: { onActionClick: { default: { operation: "navigateLastFocusedOrOpen", url: targetUrl } } },
           },
