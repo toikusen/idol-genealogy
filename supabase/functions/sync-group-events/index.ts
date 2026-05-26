@@ -167,6 +167,9 @@ serve(async (req) => {
     const activeEvents = events.filter(e => e.starts_at >= threeMonthsAgo);
     const expiredCount = events.length - activeEvents.length;
     console.log(`[${group.name}] fetched ${events.length}, filtered ${expiredCount} expired, upsert ${activeEvents.length}`);
+    if (activeEvents.length > 0) {
+      console.log(`[${group.name}] titles: ${activeEvents.map(e => e.title).join(' | ')}`);
+    }
     if (activeEvents.length === 0) return;
 
     const rows = activeEvents.map(event => ({
