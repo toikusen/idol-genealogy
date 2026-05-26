@@ -159,14 +159,17 @@ serve(async (req) => {
 
   let totalNew = 0;
   const now = new Date().toISOString();
+  const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
   // Fetch all groups in parallel, then upsert per group
   await Promise.all((groups ?? []).map(async (group) => {
     const events = await fetchTimetreeEvents(group.timetree_url);
-    console.log(`[${group.name}] fetched ${events.length} events`);
-    if (events.length === 0) return;
+    const activeEvents = events.filter(e => e.starts_at >= threeMonthsAgo);
+    const expiredCount = events.length - activeEvents.length;
+    console.log(`[${group.name}] fetched ${events.length}, filtered ${expiredCount} expired, upsert ${activeEvents.length}`);
+    if (activeEvents.length === 0) return;
 
-    const rows = events.map(event => ({
+    const rows = activeEvents.map(event => ({
       group_id: group.id,
       source: "timetree",
       source_event_id: event.id,
@@ -192,10 +195,12 @@ serve(async (req) => {
 
   // Atomically claim unnotified events — UPDATE...RETURNING in a single statement prevents
   // concurrent invocations from both seeing the same NULL rows and double-notifying.
+  // Also guard starts_at >= threeMonthsAgo as second layer to skip any expired rows that slipped through.
   const { data: claimed, error: claimError } = await supabase
     .from("group_events")
     .update({ notified_at: now })
     .is("notified_at", null)
+    .gte("starts_at", threeMonthsAgo)
     .select("id, group_id, title, url, groups(name)");
 
   if (claimError) {
@@ -270,8 +275,7 @@ serve(async (req) => {
     // notified_at already set in the atomic claim above — no second UPDATE needed
   }));
 
-  // Cleanup expired events (starts_at older than 3 months)
-  const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  // Cleanup expired events (starts_at older than 3 months) — safety net in case anything slipped through
   const { error: cleanupError, count: cleanupCount } = await supabase
     .from("group_events")
     .delete({ count: "exact" })
