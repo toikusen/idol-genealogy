@@ -24,7 +24,7 @@ interface VenueCalendarEvent {
 }
 
 const cache = new Map<string, { data: VenueCalendarEvent[]; expiresAt: number }>();
-const CACHE_TTL_MS = 30 * 60 * 1000;
+const CACHE_TTL_MS = 5 * 60 * 1000;
 const MAX_PAGES = 5;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
