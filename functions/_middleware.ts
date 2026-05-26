@@ -6,6 +6,14 @@ function isSpaRoute(pathname: string): boolean {
   return false;
 }
 
+function isDynamicRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith('/group/') ||
+    pathname.startsWith('/member/') ||
+    pathname.startsWith('/company/')
+  );
+}
+
 export const onRequest: PagesFunction = async ({ request, next, env }) => {
   const url = new URL(request.url);
   if (url.hostname === 'idol-genealogy.pages.dev') {
@@ -20,6 +28,13 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
   }
 
   const response = await next();
+
+  if (response.status === 404 && isDynamicRoute(url.pathname)) {
+    const shellUrl = new URL('/index.csr.html', url.origin);
+    const shell = await (env as any).ASSETS.fetch(new Request(shellUrl.toString()));
+    return new Response(shell.body, { status: 200, headers: shell.headers });
+  }
+
   const cacheControl = cacheControlForPath(url.pathname, response.status);
   if (!cacheControl) return response;
 
