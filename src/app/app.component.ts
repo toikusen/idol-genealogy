@@ -76,24 +76,22 @@ export class AppComponent {
   }
 
   private scheduleAuthChromeLoad(): void {
-    const scheduleIdle = () => {
+    const loadWhenIdle = () => {
       const win = window as Window & {
         requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
       };
-      window.setTimeout(() => {
-        if (win.requestIdleCallback) {
-          win.requestIdleCallback(() => void this.loadAuthChrome(), { timeout: 6000 });
-          return;
-        }
+      if (win.requestIdleCallback) {
+        win.requestIdleCallback(() => void this.loadAuthChrome(), { timeout: 1500 });
+      } else {
         void this.loadAuthChrome();
-      }, 4500);
+      }
     };
 
     if (document.readyState === 'complete') {
-      scheduleIdle();
+      loadWhenIdle();
       return;
     }
-    window.addEventListener('load', scheduleIdle, { once: true });
+    window.addEventListener('load', loadWhenIdle, { once: true });
   }
 
   private loadAuthChrome(): Promise<void> {
