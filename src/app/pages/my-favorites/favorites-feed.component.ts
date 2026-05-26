@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, inject, signal, effect } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
@@ -72,7 +72,7 @@ interface HistoryStatusAudit {
     </div>
   `,
 })
-export class FavoritesFeedComponent implements OnInit, OnChanges {
+export class FavoritesFeedComponent implements OnChanges {
   @Input() filter?: string;
 
   private favService = inject(FavoritesService);
@@ -82,20 +82,13 @@ export class FavoritesFeedComponent implements OnInit, OnChanges {
   readonly items = signal<FeedEntry[]>([]);
   readonly newCount = signal(0);
 
-  private _effectReady = false;
-
   constructor() {
     effect(() => {
-      // Establish reactive dependency — re-run when favorites change
+      // Re-run whenever favorites change (covers both initial load and add/remove)
       this.favService.favoriteIds('group');
       this.favService.favoriteIds('member');
-      if (this._effectReady) void this.loadFeed();
+      void this.loadFeed();
     });
-  }
-
-  async ngOnInit(): Promise<void> {
-    await this.loadFeed();
-    this._effectReady = true;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
