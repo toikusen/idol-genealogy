@@ -193,14 +193,6 @@ serve(async (req) => {
     }
   }));
 
-  // Diagnostic: count rows with notified_at IS NULL before atomic claim
-  const { count: preClaimNull } = await supabase
-    .from("group_events")
-    .select("id", { count: "exact", head: true })
-    .is("notified_at", null)
-    .gte("starts_at", threeMonthsAgo);
-  console.log(`[sync] PRE-CLAIM: ${preClaimNull ?? 0} active rows with notified_at IS NULL`);
-
   // Atomically claim unnotified events — UPDATE...RETURNING in a single statement prevents
   // concurrent invocations from both seeing the same NULL rows and double-notifying.
   // Also guard starts_at >= threeMonthsAgo as second layer to skip any expired rows that slipped through.
@@ -209,20 +201,7 @@ serve(async (req) => {
     .update({ notified_at: now })
     .is("notified_at", null)
     .gte("starts_at", threeMonthsAgo)
-    .select("id, group_id, title, url, starts_at, groups(name)");
-
-  // Diagnostic: verify notified_at was actually persisted
-  const { count: postClaimNull } = await supabase
-    .from("group_events")
-    .select("id", { count: "exact", head: true })
-    .is("notified_at", null)
-    .gte("starts_at", threeMonthsAgo);
-  console.log(`[sync] POST-CLAIM: ${postClaimNull ?? 0} active rows with notified_at IS NULL (claimed ${claimed?.length ?? 0})`);
-  if (claimed && claimed.length > 0) {
-    for (const ev of claimed) {
-      console.log(`[sync] claimed event id=${ev.id} group=${(ev as any).groups?.name} starts_at=${(ev as any).starts_at} title="${ev.title}"`);
-    }
-  }
+    .select("id, group_id, title, url, groups(name)");
 
   if (claimError) {
     console.error(`[sync-group-events] claim error: ${claimError.message}`);
