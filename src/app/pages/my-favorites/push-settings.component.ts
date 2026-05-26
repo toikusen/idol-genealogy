@@ -15,8 +15,9 @@ import { NotificationPrefs } from '../../models';
 
       @if (!pushService.isSupported()) {
         <div style="padding:16px;background:rgba(253,224,71,0.1);border:1px solid rgba(253,224,71,0.5);border-radius:12px;font-size:0.85rem;color:var(--text-primary);line-height:1.6;">
-          ⚠️ 你的環境不支援推播通知。<br>
-          iOS 用戶請先<strong>「加入主畫面」</strong>後開啟（需 iOS 16.4+）。
+          📲 推播通知需在<strong>安裝後的 App</strong> 中開啟。<br>
+          iOS 請用 Safari 開啟，點「分享」→「加入主畫面」後再設定（需 iOS 16.4+）。<br>
+          Android 請用 Chrome 開啟，點「安裝應用程式」後再設定。
         </div>
       } @else {
         <!-- Permission row -->
@@ -187,9 +188,10 @@ import { NotificationPrefs } from '../../models';
         </div>
       }
 
-      <!-- iOS tip -->
+      <!-- Install tip -->
       <div style="margin-top:12px;padding:14px 16px;background:rgba(147,197,253,0.08);border:1px solid rgba(147,197,253,0.25);border-radius:10px;font-size:0.82rem;color:var(--text-faint-75);line-height:1.7;">
-        📱 <strong>iOS 推播說明</strong>：需使用 Safari 開啟，並「加入主畫面」後才能啟用推播（iOS 16.4+）。
+        📱 <strong>iOS</strong>：Safari →「分享」→「加入主畫面」（iOS 16.4+）<br>
+        🤖 <strong>Android</strong>：Chrome →「安裝應用程式」
       </div>
     </div>
   `,

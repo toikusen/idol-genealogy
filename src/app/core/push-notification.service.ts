@@ -1,8 +1,11 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { SwPush } from '@angular/service-worker';
+import { firstValueFrom } from 'rxjs';
 import { SupabaseService } from './supabase.service';
 import { environment } from '../../environments/environment';
+
+const SUBSCRIBE_TIMEOUT_MS = 15_000;
 
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService {
@@ -12,8 +15,16 @@ export class PushNotificationService {
 
   private get db() { return this.supabase.client; }
 
+  private isPwa(): boolean {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true
+    );
+  }
+
   isSupported(): boolean {
-    return isPlatformBrowser(this.platformId) && this.swPush.isEnabled;
+    if (!isPlatformBrowser(this.platformId)) return false;
+    return this.swPush.isEnabled && this.isPwa();
   }
 
   get permission(): NotificationPermission | 'default' {
@@ -26,9 +37,14 @@ export class PushNotificationService {
     const session = await this.supabase.getSessionOnce();
     if (!session) throw new Error('Not logged in');
 
-    const sub = await this.swPush.requestSubscription({
-      serverPublicKey: environment.vapidPublicKey,
-    });
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('訂閱逾時，請稍後再試')), SUBSCRIBE_TIMEOUT_MS),
+    );
+
+    const sub = await Promise.race([
+      this.swPush.requestSubscription({ serverPublicKey: environment.vapidPublicKey }),
+      timeout,
+    ]);
 
     const json = sub.toJSON();
     const { error: upsertError } = await this.db.from('push_subscriptions').upsert({
@@ -45,7 +61,7 @@ export class PushNotificationService {
     const session = await this.supabase.getSessionOnce();
     if (!session) return;
 
-    const sub = await this.swPush.subscription.toPromise();
+    const sub = await firstValueFrom(this.swPush.subscription);
     if (!sub) return;
 
     await sub.unsubscribe();
