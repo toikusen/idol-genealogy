@@ -21,8 +21,49 @@ export class FavoritesService {
       .select('*')
       .eq('user_id', userId);
     if (error) throw error;
-    this._favorites.set(data ?? []);
+    const raw = data ?? [];
+    const valid = await this.pruneDeleted(userId, raw);
+    this._favorites.set(valid);
     this._loaded = true;
+  }
+
+  /** Remove favorites whose group/member no longer exists in the DB. */
+  private async pruneDeleted(userId: string, favs: UserFavorite[]): Promise<UserFavorite[]> {
+    const groupIds = favs.filter(f => f.entity_type === 'group').map(f => f.entity_id);
+    const memberIds = favs.filter(f => f.entity_type === 'member').map(f => f.entity_id);
+
+    const [groupRes, memberRes] = await Promise.all([
+      groupIds.length
+        ? this.db.from('groups').select('id').in('id', groupIds)
+        : Promise.resolve({ data: [] }),
+      memberIds.length
+        ? this.db.from('members').select('id').in('id', memberIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const liveGroups = new Set((groupRes.data ?? []).map((r: { id: string }) => r.id));
+    const liveMembers = new Set((memberRes.data ?? []).map((r: { id: string }) => r.id));
+
+    const stale = favs.filter(f =>
+      (f.entity_type === 'group' && !liveGroups.has(f.entity_id)) ||
+      (f.entity_type === 'member' && !liveMembers.has(f.entity_id))
+    );
+
+    if (stale.length > 0) {
+      // Fire-and-forget: clean up stale rows; don't block the UI
+      stale.forEach(f => {
+        void this.db.from('user_favorites')
+          .delete()
+          .eq('user_id', userId)
+          .eq('entity_type', f.entity_type)
+          .eq('entity_id', f.entity_id);
+      });
+    }
+
+    return favs.filter(f =>
+      (f.entity_type === 'group' && liveGroups.has(f.entity_id)) ||
+      (f.entity_type === 'member' && liveMembers.has(f.entity_id))
+    );
   }
 
   isFavorite(type: FavoriteEntityType, entityId: string): boolean {
