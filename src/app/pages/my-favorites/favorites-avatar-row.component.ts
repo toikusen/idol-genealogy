@@ -154,7 +154,7 @@ export class FavoritesAvatarRowComponent {
       if (favs.length === 0) { this.editMode.set(false); return; }
       const groupIds = favs.filter(f => f.entity_type === 'group').map(f => f.entity_id);
       const memberIds = favs.filter(f => f.entity_type === 'member').map(f => f.entity_id);
-      this.loadDetails(groupIds, memberIds);
+      void this.loadDetails(groupIds, memberIds);
       void this.loadActivity(groupIds, memberIds);
     });
   }

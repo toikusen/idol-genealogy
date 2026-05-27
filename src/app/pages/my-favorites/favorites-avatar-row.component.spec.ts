@@ -40,9 +40,13 @@ describe('FavoritesAvatarRowComponent', () => {
 describe('FavoritesAvatarRowComponent — loadDetails fetches only needed IDs', () => {
   it('calls supabase .in() with the favorited group ids, not getAll()', async () => {
     const groupIds = ['g-1', 'g-2'];
-    const inSpy = jasmine.createSpy('in').and.returnValue(
-      Promise.resolve({ data: [{ id: 'g-1', name: 'Group One', photo_url: null }, { id: 'g-2', name: 'Group Two', photo_url: null }] })
-    );
+    const inSpy = jasmine.createSpy('in').and.callFake(() => {
+      const p = Promise.resolve({ data: [{ id: 'g-1', name: 'Group One', photo_url: null }, { id: 'g-2', name: 'Group Two', photo_url: null }] });
+      return Object.assign(p, {
+        gt: () => ({ eq: () => Promise.resolve({ data: [] }) }),
+        eq: () => Promise.resolve({ data: [] }),
+      });
+    });
     const selectSpy = jasmine.createSpy('select').and.returnValue({ in: inSpy });
     const fromSpy = jasmine.createSpy('from').and.returnValue({ select: selectSpy });
     const mockSupa = { client: { from: fromSpy } };
