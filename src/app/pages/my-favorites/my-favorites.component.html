@@ -45,7 +45,7 @@
         @for (tab of tabs; track tab.id) {
           <button
             role="tab"
-            [attr.aria-selected]="activeTab() === tab.id"
+            [attr.aria-selected]="activeTab() === tab.id ? 'true' : 'false'"
             [attr.id]="'mob-tab-' + tab.id"
             [attr.aria-controls]="'tab-panel-main'"
             (click)="setTab(tab.id)"
@@ -69,7 +69,7 @@
   </div>
 
   <!-- Main content area (shared) -->
-  <main class="mf-main" role="tabpanel" id="tab-panel-main" [attr.aria-labelledby]="'mob-tab-' + activeTab()">
+  <main class="mf-main" role="tabpanel" id="tab-panel-main" aria-label="最愛內容" [attr.aria-labelledby]="'mob-tab-' + activeTab()">
     <div class="mf-content-inner">
       @if (activeTab() !== 'push') {
         <app-favorites-feed [filter]="activeTab() === 'all' ? undefined : activeTab()" />
