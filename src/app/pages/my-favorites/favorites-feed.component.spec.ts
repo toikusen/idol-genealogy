@@ -75,3 +75,83 @@ describe('FavoritesFeedComponent', () => {
     expect(fixture.componentInstance.loading()).toBe(false);
   }));
 });
+
+describe('FavoritesFeedComponent — pagination and race guard', () => {
+  const _favs2 = signal<{ user_id: string; entity_type: FavoriteEntityType; entity_id: string; created_at: string }[]>([
+    { user_id: 'u1', entity_type: 'group', entity_id: 'g1', created_at: '' },
+  ]);
+
+  function makeChainFixed(rows: unknown[]) {
+    const p = Promise.resolve({ data: rows, error: null });
+    const chain: any = { then: p.then.bind(p), catch: p.catch.bind(p), finally: p.finally.bind(p) };
+    ['select', 'in', 'eq', 'not', 'is', 'order', 'lt', 'limit'].forEach(m => (chain[m] = () => chain));
+    return chain;
+  }
+
+  const mockFavs2 = {
+    favoriteIds: (type: FavoriteEntityType) => _favs2().filter(f => f.entity_type === type).map(f => f.entity_id),
+    favorites: (type?: FavoriteEntityType) => type ? _favs2().filter(f => f.entity_type === type) : _favs2(),
+  };
+
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('hasMore is false when all tables return fewer than PAGE_LIMIT (20) rows', fakeAsync(() => {
+    const rows = [{
+      id: '1', title: 'T', created_at: '2024-01-01', first_seen_at: '2024-01-01',
+      group_id: 'g1', group: { id: 'g1', name: 'G', photo_url: null },
+      groups: { id: 'g1', name: 'G', photo_url: null },
+      disbanded_at: '2024-01-01', name: 'Group 1', photo_url: null,
+    }];
+    const channelMock2: any = { on: () => channelMock2, subscribe: () => channelMock2 };
+    const mockSupa2 = { client: { from: (_: string) => makeChainFixed(rows), channel: () => channelMock2, removeChannel: () => {} } };
+
+    TestBed.configureTestingModule({
+      imports: [FavoritesFeedComponent],
+      providers: [
+        provideRouter([]),
+        { provide: FavoritesService, useValue: mockFavs2 },
+        { provide: SupabaseService, useValue: mockSupa2 },
+      ],
+    }).compileComponents();
+
+    const f2 = TestBed.createComponent(FavoritesFeedComponent);
+    f2.detectChanges();
+    tick();
+    f2.detectChanges();
+
+    expect(f2.componentInstance.hasMore()).toBeFalse();
+  }));
+
+  it('hasMore is true when a table returns exactly 20 rows', fakeAsync(() => {
+    const rows = Array.from({ length: 20 }, (_, i) => ({
+      id: String(i),
+      title: `Song ${i}`,
+      created_at: `2024-01-${String(i % 28 + 1).padStart(2, '0')}`,
+      first_seen_at: `2024-01-${String(i % 28 + 1).padStart(2, '0')}`,
+      group_id: 'g1',
+      group: { id: 'g1', name: 'G', photo_url: null },
+      groups: { id: 'g1', name: 'G', photo_url: null },
+      disbanded_at: `2024-01-${String(i % 28 + 1).padStart(2, '0')}`,
+      name: `Group ${i}`,
+      photo_url: null,
+    }));
+    const channelMock: any = { on: () => channelMock, subscribe: () => channelMock };
+    const mockSupa3 = { client: { from: (_: string) => makeChainFixed(rows), channel: () => channelMock, removeChannel: () => {} } };
+
+    TestBed.configureTestingModule({
+      imports: [FavoritesFeedComponent],
+      providers: [
+        provideRouter([]),
+        { provide: FavoritesService, useValue: mockFavs2 },
+        { provide: SupabaseService, useValue: mockSupa3 },
+      ],
+    }).compileComponents();
+
+    const f3 = TestBed.createComponent(FavoritesFeedComponent);
+    f3.detectChanges();
+    tick();
+    f3.detectChanges();
+
+    expect(f3.componentInstance.hasMore()).toBeTrue();
+  }));
+});

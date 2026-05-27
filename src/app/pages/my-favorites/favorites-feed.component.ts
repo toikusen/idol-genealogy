@@ -260,6 +260,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
 
   private realtimeChannel: RealtimeChannel | null = null;
   private _tableCursors: TableCursors = {};
+  private _loadSeq = 0;
 
   readonly groupedItems = computed<FeedGroup[]>(() => {
     const entries = this.items();
@@ -360,6 +361,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   }
 
   private async loadFeed(): Promise<void> {
+    const seq = ++this._loadSeq;
     this.loading.set(true);
     this.error.set(false);
     this.hasMore.set(false);
@@ -374,10 +376,12 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     if (!memberIds.length) this.birthdayItems.set([]);
 
     try {
-      const [entries] = await Promise.all([
+      const [{ entries, mightHaveMore }] = await Promise.all([
         this.fetchEntries(groupIds, memberIds),
         memberIds.length ? this.loadBirthdays(memberIds) : Promise.resolve(),
       ]);
+
+      if (seq !== this._loadSeq) return;
 
       if (previousVisit) {
         let count = 0;
@@ -388,13 +392,14 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       }
 
       this.items.set(entries);
-      this.hasMore.set(entries.length > 0);
+      this.hasMore.set(mightHaveMore);
       this.subscribeRealtime();
     } catch {
+      if (seq !== this._loadSeq) return;
       this.error.set(true);
       this.items.set([]);
     } finally {
-      this.loading.set(false);
+      if (seq === this._loadSeq) this.loading.set(false);
     }
   }
 
@@ -403,12 +408,12 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     try {
       const groupIds = this.filter === 'member' ? [] : this.favService.favoriteIds('group');
       const memberIds = this.filter === 'group' ? [] : this.favService.favoriteIds('member');
-      const entries = await this.fetchEntries(groupIds, memberIds);
+      const { entries, mightHaveMore } = await this.fetchEntries(groupIds, memberIds);
       if (entries.length === 0) { this.hasMore.set(false); return; }
       const existingIds = new Set(this.items().map(e => e.id));
       const fresh = entries.filter(e => !existingIds.has(e.id));
       this.items.update(prev => [...prev, ...fresh]);
-      this.hasMore.set(fresh.length > 0);
+      this.hasMore.set(mightHaveMore && fresh.length > 0);
     } catch {
       // silently ignore
     } finally {
@@ -453,8 +458,9 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     return Math.round((next.getTime() - todayStart.getTime()) / 86_400_000);
   }
 
-  private async fetchEntries(groupIds: string[], memberIds: string[]): Promise<FeedEntry[]> {
+  private async fetchEntries(groupIds: string[], memberIds: string[]): Promise<{ entries: FeedEntry[]; mightHaveMore: boolean }> {
     const entries: FeedEntry[] = [];
+    let mightHaveMore = false;
 
     if (groupIds.length) {
       let q = this.supabase.client
@@ -467,6 +473,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       if (this._tableCursors.groupSongs) q = q.lt('created_at', this._tableCursors.groupSongs);
       const { data: songs } = await q;
       if (songs?.length) this._tableCursors.groupSongs = songs[songs.length - 1].created_at;
+      if ((songs ?? []).length === PAGE_LIMIT) mightHaveMore = true;
       (songs ?? []).forEach((s: any) => entries.push({
         id: `song-${s.id}`, eventType: 'song',
         entityId: s.group?.id ?? '', entityType: 'group',
@@ -487,6 +494,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       if (this._tableCursors.memberSongs) q = q.lt('created_at', this._tableCursors.memberSongs);
       const { data: mSongs } = await q;
       if (mSongs?.length) this._tableCursors.memberSongs = mSongs[mSongs.length - 1].created_at;
+      if ((mSongs ?? []).length === PAGE_LIMIT) mightHaveMore = true;
       (mSongs ?? []).forEach((s: any) => entries.push({
         id: `msong-${s.id}`, eventType: 'song',
         entityId: s.member?.id ?? '', entityType: 'member',
@@ -507,6 +515,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       const { data: hist } = await q;
       const historyRows = hist ?? [];
       if (historyRows.length) this._tableCursors.history = historyRows[historyRows.length - 1].created_at;
+      if (historyRows.length === PAGE_LIMIT) mightHaveMore = true;
       const statusAudits = await this.loadHistoryStatusAudits(historyRows.map((h: any) => h.id));
       historyRows.forEach((h: any) => {
         const groupName = h.group?.name ?? h.external_group_name ?? undefined;
@@ -545,6 +554,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       if (this._tableCursors.groupEvents) q = q.lt('first_seen_at', this._tableCursors.groupEvents);
       const { data: events } = await q;
       if (events?.length) this._tableCursors.groupEvents = events[events.length - 1].first_seen_at;
+      if ((events ?? []).length === PAGE_LIMIT) mightHaveMore = true;
       (events ?? []).forEach((e: any) => entries.push({
         id: `evt-${e.id}`, eventType: 'event',
         entityId: e.group_id, entityType: 'group',
@@ -563,6 +573,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       if (this._tableCursors.disbanded) dq = dq.lt('disbanded_at', this._tableCursors.disbanded);
       const { data: disbanded } = await dq;
       if (disbanded?.length) this._tableCursors.disbanded = disbanded[disbanded.length - 1].disbanded_at;
+      if ((disbanded ?? []).length === PAGE_LIMIT) mightHaveMore = true;
       (disbanded ?? []).forEach((g: any) => entries.push({
         id: `disbanded-${g.id}`, eventType: 'group_change',
         entityId: g.id, entityType: 'group',
@@ -573,7 +584,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     }
 
     entries.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
-    return entries;
+    return { entries, mightHaveMore };
   }
 
   private subscribeRealtime(): void {
