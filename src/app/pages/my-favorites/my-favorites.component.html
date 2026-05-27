@@ -21,6 +21,7 @@
           (click)="setTab(tab.id)"
           class="mf-filter-btn"
           [class.mf-filter-active]="activeTab() === tab.id"
+          [attr.aria-current]="activeTab() === tab.id ? 'true' : null"
         >{{ tab.label }}</button>
       }
     </nav>
@@ -40,9 +41,13 @@
           Hi, {{ displayName }} ♥
         </div>
       }
-      <div style="display:flex;gap:0;overflow-x:auto;">
+      <div role="tablist" aria-label="內容分類" style="display:flex;gap:0;overflow-x:auto;">
         @for (tab of tabs; track tab.id) {
           <button
+            role="tab"
+            [attr.aria-selected]="activeTab() === tab.id"
+            [attr.id]="'mob-tab-' + tab.id"
+            [attr.aria-controls]="'tab-panel-main'"
             (click)="setTab(tab.id)"
             [style.color]="activeTab() === tab.id ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
             [style.border-bottom]="activeTab() === tab.id ? '2px solid rgba(232,121,160,1)' : '2px solid transparent'"
@@ -64,7 +69,7 @@
   </div>
 
   <!-- Main content area (shared) -->
-  <main class="mf-main">
+  <main class="mf-main" role="tabpanel" id="tab-panel-main" [attr.aria-labelledby]="'mob-tab-' + activeTab()">
     <div class="mf-content-inner">
       @if (activeTab() !== 'push') {
         <app-favorites-feed [filter]="activeTab() === 'all' ? undefined : activeTab()" />
