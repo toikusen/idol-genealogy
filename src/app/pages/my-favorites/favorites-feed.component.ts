@@ -405,6 +405,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
 
   private async appendPage(): Promise<void> {
     this.loadingMore.set(true);
+    const savedCursors = { ...this._tableCursors };  // snapshot before fetch
     try {
       const groupIds = this.filter === 'member' ? [] : this.favService.favoriteIds('group');
       const memberIds = this.filter === 'group' ? [] : this.favService.favoriteIds('member');
@@ -415,7 +416,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       this.items.update(prev => [...prev, ...fresh]);
       this.hasMore.set(mightHaveMore && fresh.length > 0);
     } catch {
-      // silently ignore
+      this._tableCursors = savedCursors;  // restore on failure
     } finally {
       this.loadingMore.set(false);
     }
