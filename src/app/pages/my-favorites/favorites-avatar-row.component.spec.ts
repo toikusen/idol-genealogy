@@ -2,12 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { FavoritesAvatarRowComponent } from './favorites-avatar-row.component';
 import { FavoritesService } from '../../core/favorites.service';
-import { GroupService } from '../../core/group.service';
-import { MemberService } from '../../core/member.service';
+import { SupabaseService } from '../../core/supabase.service';
 
 const mockFavoritesService = { favorites: () => [], favoriteIds: () => [] };
-const mockGroupService = { getAll: async () => [] };
-const mockMemberService = { getAll: async () => [] };
 
 describe('FavoritesAvatarRowComponent', () => {
   let fixture: ComponentFixture<FavoritesAvatarRowComponent>;
@@ -18,8 +15,7 @@ describe('FavoritesAvatarRowComponent', () => {
       providers: [
         provideRouter([]),
         { provide: FavoritesService, useValue: mockFavoritesService },
-        { provide: GroupService, useValue: mockGroupService },
-        { provide: MemberService, useValue: mockMemberService },
+        { provide: SupabaseService, useValue: { client: { from: () => ({ select: () => ({ in: () => Promise.resolve({ data: [] }) }) }) } } },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(FavoritesAvatarRowComponent);
@@ -38,5 +34,38 @@ describe('FavoritesAvatarRowComponent', () => {
     const container: HTMLElement = fixture.nativeElement.querySelector('[data-avatar-container]');
     expect(container.style.flexWrap).toBe('wrap');
     expect(container.style.overflowX).toBe('hidden');
+  });
+});
+
+describe('FavoritesAvatarRowComponent — loadDetails fetches only needed IDs', () => {
+  it('calls supabase .in() with the favorited group ids, not getAll()', async () => {
+    const groupIds = ['g-1', 'g-2'];
+    const inSpy = jasmine.createSpy('in').and.returnValue(
+      Promise.resolve({ data: [{ id: 'g-1', name: 'Group One', photo_url: null }, { id: 'g-2', name: 'Group Two', photo_url: null }] })
+    );
+    const selectSpy = jasmine.createSpy('select').and.returnValue({ in: inSpy });
+    const fromSpy = jasmine.createSpy('from').and.returnValue({ select: selectSpy });
+    const mockSupa = { client: { from: fromSpy } };
+    const mockFavs = {
+      favorites: () => groupIds.map(id => ({ entity_id: id, entity_type: 'group' as const, user_id: 'u1', created_at: '' })),
+      favoriteIds: () => groupIds,
+    };
+
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [FavoritesAvatarRowComponent],
+      providers: [
+        provideRouter([]),
+        { provide: FavoritesService, useValue: mockFavs },
+        { provide: SupabaseService, useValue: mockSupa },
+      ],
+    }).compileComponents();
+
+    const fixture2 = TestBed.createComponent(FavoritesAvatarRowComponent);
+    fixture2.detectChanges();
+    await fixture2.whenStable();
+
+    expect(fromSpy).toHaveBeenCalledWith('groups');
+    expect(inSpy).toHaveBeenCalledWith('id', groupIds);
   });
 });

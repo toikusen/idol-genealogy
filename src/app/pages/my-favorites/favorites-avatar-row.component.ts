@@ -2,8 +2,6 @@ import { Component, Output, EventEmitter, inject, computed, effect, signal, inpu
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
-import { GroupService } from '../../core/group.service';
-import { MemberService } from '../../core/member.service';
 import { SupabaseService } from '../../core/supabase.service';
 import { FavoriteEntityType } from '../../models';
 
@@ -110,8 +108,6 @@ export class FavoritesAvatarRowComponent {
   @Output() addClicked = new EventEmitter<void>();
 
   private favService = inject(FavoritesService);
-  private groupService = inject(GroupService);
-  private memberService = inject(MemberService);
   private supabase = inject(SupabaseService);
 
   private readonly _nameCache = signal<Record<string, string>>({});
@@ -169,14 +165,25 @@ export class FavoritesAvatarRowComponent {
   }
 
   async loadDetails(groupIds: string[], memberIds: string[]): Promise<void> {
-    const [groups, members] = await Promise.all([
-      groupIds.length ? this.groupService.getAll() : Promise.resolve([]),
-      memberIds.length ? this.memberService.getAll() : Promise.resolve([]),
+    const [groupRes, memberRes] = await Promise.all([
+      groupIds.length
+        ? this.supabase.client.from('groups').select('id,name,photo_url').in('id', groupIds)
+        : Promise.resolve({ data: [] }),
+      memberIds.length
+        ? this.supabase.client.from('members').select('id,name,photo_url').in('id', memberIds)
+        : Promise.resolve({ data: [] }),
     ]);
+
     const names: Record<string, string> = {};
     const photos: Record<string, string | null> = {};
-    groups.forEach(g => { names[g.id] = g.name; photos[g.id] = g.photo_url; });
-    members.forEach(m => { names[m.id] = m.name; photos[m.id] = m.photo_url; });
+    (groupRes.data ?? []).forEach((g: { id: string; name: string; photo_url: string | null }) => {
+      names[g.id] = g.name;
+      photos[g.id] = g.photo_url;
+    });
+    (memberRes.data ?? []).forEach((m: { id: string; name: string; photo_url: string | null }) => {
+      names[m.id] = m.name;
+      photos[m.id] = m.photo_url;
+    });
     this._nameCache.set({ ...this._nameCache(), ...names });
     this._photoCache.set({ ...this._photoCache(), ...photos });
   }
