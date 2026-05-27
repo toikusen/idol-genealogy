@@ -154,4 +154,47 @@ describe('FavoritesFeedComponent — pagination and race guard', () => {
 
     expect(f3.componentInstance.hasMore()).toBeTrue();
   }));
+
+  it('loadingMore resets to false and stale appendPage is discarded when concurrent loadFeed fires', fakeAsync(() => {
+    const singleRow = [{
+      id: '1', title: 'T', created_at: '2024-01-01', first_seen_at: '2024-01-01',
+      group_id: 'g1', group: { id: 'g1', name: 'G', photo_url: null },
+      groups: { id: 'g1', name: 'G', photo_url: null },
+      disbanded_at: '2024-01-01', name: 'Group 1', photo_url: null,
+    }];
+    const channelMock4: any = { on: () => channelMock4, subscribe: () => channelMock4 };
+    const mockSupa4 = { client: { from: (_: string) => makeChainFixed(singleRow), channel: () => channelMock4, removeChannel: () => {} } };
+
+    TestBed.configureTestingModule({
+      imports: [FavoritesFeedComponent],
+      providers: [
+        provideRouter([]),
+        { provide: FavoritesService, useValue: mockFavs2 },
+        { provide: SupabaseService, useValue: mockSupa4 },
+      ],
+    }).compileComponents();
+
+    const f4 = TestBed.createComponent(FavoritesFeedComponent);
+    f4.detectChanges();
+    tick(); // settle initial loadFeed
+    f4.detectChanges();
+
+    // Simulate: user enables hasMore so loadMore() can run
+    f4.componentInstance.hasMore.set(true);
+
+    // appendPage fires first, then loadFeed fires before appendPage resolves
+    // Both are queued as microtasks; loadFeed increments _loadSeq synchronously
+    f4.componentInstance.loadMore();   // appendPage start — captures seq N
+    f4.componentInstance.retryLoad();  // loadFeed start — _loadSeq becomes N+1 immediately
+
+    tick(); // flush both Promise chains
+    f4.detectChanges();
+
+    // appendPage's finally must have run (no exception swallowed)
+    expect(f4.componentInstance.loadingMore()).toBeFalse();
+    // loadFeed completed cleanly
+    expect(f4.componentInstance.loading()).toBeFalse();
+    // items reflects fresh loadFeed result, not a mix with stale appendPage
+    expect(f4.componentInstance.hasMore()).toBeFalse();
+  }));
 });

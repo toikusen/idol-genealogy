@@ -365,23 +365,22 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     this.loading.set(true);
     this.error.set(false);
     this.hasMore.set(false);
-    this._tableCursors = {};
-
     const previousVisit = this.isBrowser ? localStorage.getItem(LAST_VISITED_KEY) : null;
     if (this.isBrowser) localStorage.setItem(LAST_VISITED_KEY, new Date().toISOString());
 
     const groupIds = this.filter === 'member' ? [] : this.favService.favoriteIds('group');
     const memberIds = this.filter === 'group' ? [] : this.favService.favoriteIds('member');
 
-    if (!memberIds.length) this.birthdayItems.set([]);
-
     try {
-      const [{ entries, mightHaveMore }] = await Promise.all([
-        this.fetchEntries(groupIds, memberIds),
-        memberIds.length ? this.loadBirthdays(memberIds) : Promise.resolve(),
+      const [{ entries, mightHaveMore, nextCursors }, birthdayData] = await Promise.all([
+        this.fetchEntries(groupIds, memberIds, {}),
+        memberIds.length ? this.fetchBirthdays(memberIds) : Promise.resolve([] as BirthdayItem[]),
       ]);
 
       if (seq !== this._loadSeq) return;
+
+      this._tableCursors = nextCursors;
+      this.birthdayItems.set(birthdayData);
 
       if (previousVisit) {
         let count = 0;
@@ -404,25 +403,27 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   }
 
   private async appendPage(): Promise<void> {
+    const seq = this._loadSeq;
     this.loadingMore.set(true);
-    const savedCursors = { ...this._tableCursors };  // snapshot before fetch
     try {
       const groupIds = this.filter === 'member' ? [] : this.favService.favoriteIds('group');
       const memberIds = this.filter === 'group' ? [] : this.favService.favoriteIds('member');
-      const { entries, mightHaveMore } = await this.fetchEntries(groupIds, memberIds);
+      const { entries, mightHaveMore, nextCursors } = await this.fetchEntries(groupIds, memberIds, { ...this._tableCursors });
+      if (seq !== this._loadSeq) return;
       if (entries.length === 0) { this.hasMore.set(false); return; }
       const existingIds = new Set(this.items().map(e => e.id));
       const fresh = entries.filter(e => !existingIds.has(e.id));
+      this._tableCursors = nextCursors;
       this.items.update(prev => [...prev, ...fresh]);
       this.hasMore.set(mightHaveMore && fresh.length > 0);
     } catch {
-      this._tableCursors = savedCursors;  // restore on failure
+      // nextCursors was never committed — no rollback needed
     } finally {
       this.loadingMore.set(false);
     }
   }
 
-  private async loadBirthdays(memberIds: string[]): Promise<void> {
+  private async fetchBirthdays(memberIds: string[]): Promise<BirthdayItem[]> {
     const { data } = await this.supabase.client
       .from('members')
       .select('id, name, photo_url, birthdate')
@@ -446,7 +447,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
         });
       }
     }
-    this.birthdayItems.set(items.sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 3));
+    return items.sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 3);
   }
 
   private calcDaysUntilBirthday(birthdate: string, todayStart: Date): number | null {
@@ -459,9 +460,10 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     return Math.round((next.getTime() - todayStart.getTime()) / 86_400_000);
   }
 
-  private async fetchEntries(groupIds: string[], memberIds: string[]): Promise<{ entries: FeedEntry[]; mightHaveMore: boolean }> {
+  private async fetchEntries(groupIds: string[], memberIds: string[], cursors: TableCursors): Promise<{ entries: FeedEntry[]; mightHaveMore: boolean; nextCursors: TableCursors }> {
     const entries: FeedEntry[] = [];
     let mightHaveMore = false;
+    const nextCursors: TableCursors = { ...cursors };
 
     if (groupIds.length) {
       let q = this.supabase.client
@@ -471,9 +473,9 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })
         .limit(PAGE_LIMIT);
-      if (this._tableCursors.groupSongs) q = q.lt('created_at', this._tableCursors.groupSongs);
+      if (cursors.groupSongs) q = q.lt('created_at', cursors.groupSongs);
       const { data: songs } = await q;
-      if (songs?.length) this._tableCursors.groupSongs = songs[songs.length - 1].created_at;
+      if (songs?.length) nextCursors.groupSongs = songs[songs.length - 1].created_at;
       if ((songs ?? []).length === PAGE_LIMIT) mightHaveMore = true;
       (songs ?? []).forEach((s: any) => entries.push({
         id: `song-${s.id}`, eventType: 'song',
@@ -492,9 +494,9 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })
         .limit(PAGE_LIMIT);
-      if (this._tableCursors.memberSongs) q = q.lt('created_at', this._tableCursors.memberSongs);
+      if (cursors.memberSongs) q = q.lt('created_at', cursors.memberSongs);
       const { data: mSongs } = await q;
-      if (mSongs?.length) this._tableCursors.memberSongs = mSongs[mSongs.length - 1].created_at;
+      if (mSongs?.length) nextCursors.memberSongs = mSongs[mSongs.length - 1].created_at;
       if ((mSongs ?? []).length === PAGE_LIMIT) mightHaveMore = true;
       (mSongs ?? []).forEach((s: any) => entries.push({
         id: `msong-${s.id}`, eventType: 'song',
@@ -512,10 +514,10 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
         .in('member_id', memberIds)
         .order('created_at', { ascending: false })
         .limit(PAGE_LIMIT);
-      if (this._tableCursors.history) q = q.lt('created_at', this._tableCursors.history);
+      if (cursors.history) q = q.lt('created_at', cursors.history);
       const { data: hist } = await q;
       const historyRows = hist ?? [];
-      if (historyRows.length) this._tableCursors.history = historyRows[historyRows.length - 1].created_at;
+      if (historyRows.length) nextCursors.history = historyRows[historyRows.length - 1].created_at;
       if (historyRows.length === PAGE_LIMIT) mightHaveMore = true;
       const statusAudits = await this.loadHistoryStatusAudits(historyRows.map((h: any) => h.id));
       historyRows.forEach((h: any) => {
@@ -552,9 +554,9 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
         .in('group_id', groupIds)
         .order('first_seen_at', { ascending: false })
         .limit(PAGE_LIMIT);
-      if (this._tableCursors.groupEvents) q = q.lt('first_seen_at', this._tableCursors.groupEvents);
+      if (cursors.groupEvents) q = q.lt('first_seen_at', cursors.groupEvents);
       const { data: events } = await q;
-      if (events?.length) this._tableCursors.groupEvents = events[events.length - 1].first_seen_at;
+      if (events?.length) nextCursors.groupEvents = events[events.length - 1].first_seen_at;
       if ((events ?? []).length === PAGE_LIMIT) mightHaveMore = true;
       (events ?? []).forEach((e: any) => entries.push({
         id: `evt-${e.id}`, eventType: 'event',
@@ -571,9 +573,9 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
         .not('disbanded_at', 'is', null)
         .order('disbanded_at', { ascending: false })
         .limit(PAGE_LIMIT);
-      if (this._tableCursors.disbanded) dq = dq.lt('disbanded_at', this._tableCursors.disbanded);
+      if (cursors.disbanded) dq = dq.lt('disbanded_at', cursors.disbanded);
       const { data: disbanded } = await dq;
-      if (disbanded?.length) this._tableCursors.disbanded = disbanded[disbanded.length - 1].disbanded_at;
+      if (disbanded?.length) nextCursors.disbanded = disbanded[disbanded.length - 1].disbanded_at;
       if ((disbanded ?? []).length === PAGE_LIMIT) mightHaveMore = true;
       (disbanded ?? []).forEach((g: any) => entries.push({
         id: `disbanded-${g.id}`, eventType: 'group_change',
@@ -585,7 +587,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     }
 
     entries.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
-    return { entries, mightHaveMore };
+    return { entries, mightHaveMore, nextCursors };
   }
 
   private subscribeRealtime(): void {
