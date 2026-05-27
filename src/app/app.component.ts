@@ -2,12 +2,14 @@ import { Component, DestroyRef, inject, Injector, PLATFORM_ID, signal } from '@a
 import { RouterOutlet, RouterLink, Router, NavigationEnd, NavigationStart, NavigationCancel, NavigationError } from '@angular/router';
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, fromEvent, map, distinctUntilChanged } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { Session } from '@supabase/supabase-js';
 import type { SupabaseService } from './core/supabase.service';
 import { AnalyticsService } from './core/analytics.service';
 import { CookieBannerComponent } from './shared/cookie-banner/cookie-banner.component';
 import { ThemeService } from './core/theme.service';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
@@ -26,9 +28,11 @@ export class AppComponent {
   readonly isNavigating = signal(false);
   readonly authReady = signal(false);
   readonly showLoginPill = signal(false);
+  readonly updateAvailable = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly swUpdate = inject(SwUpdate, { optional: true });
   private authChromePromise: Promise<void> | null = null;
   private supabase: SupabaseService | null = null;
 
@@ -55,6 +59,20 @@ export class AppComponent {
         distinctUntilChanged(),
       ).subscribe(show => this.showScrollTop.set(show));
 
+      const swUpdate = this.swUpdate;
+      if (swUpdate?.isEnabled) {
+        swUpdate.versionUpdates.pipe(
+          takeUntilDestroyed(this.destroyRef),
+          filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'),
+        ).subscribe(() => this.updateAvailable.set(true));
+
+        void swUpdate.checkForUpdate().catch(() => {});
+        const updateCheckId = window.setInterval(() => {
+          void swUpdate.checkForUpdate().catch(() => {});
+        }, 30 * 60 * 1000);
+        this.destroyRef.onDestroy(() => window.clearInterval(updateCheckId));
+      }
+
       this.scheduleAuthChromeLoad();
     } else {
       this.authReady.set(true);
@@ -73,6 +91,10 @@ export class AppComponent {
 
   scrollToTop(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  applyUpdate(): void {
+    document.location.reload();
   }
 
   private scheduleAuthChromeLoad(): void {

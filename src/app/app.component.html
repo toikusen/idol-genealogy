@@ -171,4 +171,42 @@
   }
 </button>
 
+@if (updateAvailable()) {
+  <div style="
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(232,121,160,0.3);
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(45,27,46,0.12);
+    font-size: 0.75rem;
+    font-family: var(--font-sans);
+    color: var(--text-faint-85);
+    white-space: nowrap;
+  ">
+    <span style="width:6px;height:6px;border-radius:50%;background:rgba(232,121,160,0.8);flex-shrink:0;"></span>
+    新版本已就緒
+    <button (click)="applyUpdate()" style="
+      padding: 4px 12px;
+      border: 1px solid rgba(232,121,160,0.4);
+      border-radius: 12px;
+      background: rgba(232,121,160,0.1);
+      font-size: 0.72rem;
+      font-family: var(--font-sans);
+      color: var(--text-faint-85);
+      cursor: pointer;
+      letter-spacing: 0.04em;
+    ">立即更新</button>
+  </div>
+}
+
 <app-cookie-banner />
