@@ -10,7 +10,7 @@ describe('GuideComponent', () => {
       imports: [GuideComponent],
       providers: [
         provideRouter([]),
-        { provide: SeoService, useValue: { setPage: jasmine.createSpy() } },
+        { provide: SeoService, useValue: { setPage: jasmine.createSpy(), setJsonLdGraph: jasmine.createSpy() } },
       ],
     }).compileComponents();
   });
