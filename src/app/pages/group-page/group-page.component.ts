@@ -133,7 +133,15 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
     }
-    return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
+    if (this.lastProposal.operation === 'INSERT') {
+      const isSong = this.lastProposal.table_name === 'member_songs' || this.lastProposal.table_name === 'group_songs';
+      if (isSong) {
+        const title = this.lastProposal.proposed_data?.['title'];
+        return `${relative} · ${submitter} 新增歌曲${title ? `《${title}》` : ''}`;
+      }
+      return `${relative} · ${submitter} 建立頁面`;
+    }
+    return `${relative} · ${submitter} 補充`;
   }
 
   get editorialSuggestions(): string[] {
