@@ -60,10 +60,17 @@ export class RecordEditHistoryComponent implements OnInit {
 
   async ngOnInit() {
     try {
-      const [mainProposals, historyAuditLogs] = await Promise.all([
+      const songsTable = this.relatedHistoryField === 'member_id' ? 'member_songs'
+        : this.relatedHistoryField === 'group_id' ? 'group_songs'
+        : null;
+
+      const [mainProposals, historyAuditLogs, songAuditLogs] = await Promise.all([
         this.proposalService.getApprovedByRecord(this.tableName, this.recordId),
         this.relatedHistoryField
           ? this.auditLogService.getHistoryLogsByField(this.relatedHistoryField, this.recordId).catch(() => [] as AuditLog[])
+          : Promise.resolve([] as AuditLog[]),
+        (this.relatedHistoryField && songsTable)
+          ? this.auditLogService.getSongLogsByField(songsTable, this.relatedHistoryField, this.recordId).catch(() => [] as AuditLog[])
           : Promise.resolve([] as AuditLog[]),
       ]);
 
@@ -72,6 +79,18 @@ export class RecordEditHistoryComponent implements OnInit {
         this.relatedHistoryField ? this.loadMemberMap().catch(() => {}) : Promise.resolve(),
         this.relatedHistoryField ? this.loadGroupMap().catch(() => {}) : Promise.resolve(),
       ]);
+
+      const toEntry = (log: AuditLog): DisplayEntry => ({
+        id: log.id,
+        table_name: log.table_name,
+        record_id: log.record_id,
+        operation: log.operation,
+        proposed_data: log.new_data ?? {},
+        original_data: log.old_data,
+        reviewed_data: null,
+        submitter_name: '管理員',
+        reviewed_at: log.created_at,
+      });
 
       const proposalEntries: DisplayEntry[] = mainProposals.map(p => ({
         id: p.id,
@@ -85,19 +104,11 @@ export class RecordEditHistoryComponent implements OnInit {
         reviewed_at: p.reviewed_at,
       }));
 
-      const auditEntries: DisplayEntry[] = historyAuditLogs.map(log => ({
-        id: log.id,
-        table_name: log.table_name,
-        record_id: log.record_id,
-        operation: log.operation,
-        proposed_data: log.new_data ?? {},
-        original_data: log.old_data,
-        reviewed_data: null,
-        submitter_name: '管理員',
-        reviewed_at: log.created_at,
-      }));
-
-      const merged = [...proposalEntries, ...auditEntries];
+      const merged = [
+        ...proposalEntries,
+        ...historyAuditLogs.map(toEntry),
+        ...songAuditLogs.map(toEntry),
+      ];
       merged.sort((a, b) =>
         new Date(b.reviewed_at ?? '').getTime() -
         new Date(a.reviewed_at ?? '').getTime()

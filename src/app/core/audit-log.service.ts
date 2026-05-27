@@ -55,6 +55,16 @@ export class AuditLogService {
 
   private get db() { return this.supabase.client; }
 
+  async getSongLogsByField(songTable: 'member_songs' | 'group_songs', field: 'member_id' | 'group_id', value: string): Promise<AuditLog[]> {
+    const { data, error } = await this.db.rpc('get_songs_audit_logs_by_field', {
+      p_table: songTable,
+      p_field: field,
+      p_value: value,
+    });
+    if (error) throw error;
+    return (data ?? []) as AuditLog[];
+  }
+
   async getHistoryLogsByField(field: 'member_id' | 'group_id', value: string): Promise<AuditLog[]> {
     const { data, error } = await this.db.rpc('get_history_audit_logs_by_field', {
       p_field: field,

@@ -162,10 +162,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.currentLoadId = memberId;
     this.deferredLoading = true;
     try {
-      const [groups, proposals, historyLogs, songs] = await Promise.all([
+      const [groups, proposals, historyLogs, songLogs, songs] = await Promise.all([
         this.groupService.getAll().catch(() => []),
         this.proposalService.getApprovedByRecord('members', memberId).catch(() => []),
         this.auditLogService.getHistoryLogsByField('member_id', memberId).catch(() => []),
+        this.auditLogService.getSongLogsByField('member_songs', 'member_id', memberId).catch(() => []),
         this.memberSongService.getByMember(memberId).catch(() => []),
       ]);
       if (this.currentLoadId === memberId && !this.routeDataSub?.closed) {
@@ -174,33 +175,26 @@ export class MemberPageComponent implements OnInit, OnDestroy {
           .map(g => ({ id: g.id, name: g.name }))
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
 
-        const latestProposal: LastEditEntry | null = proposals[0]
-          ? { ...proposals[0], submitter_name: proposals[0].submitter_name || '貢獻者' }
-          : null;
-        const latestHistoryLog: LastEditEntry | null = historyLogs[0]
-          ? {
-              table_name: historyLogs[0].table_name,
-              record_id: historyLogs[0].record_id,
-              operation: historyLogs[0].operation,
-              proposed_data: historyLogs[0].new_data ?? {},
-              original_data: historyLogs[0].old_data,
-              reviewed_data: null,
-              submitter_name: '管理員',
-              reviewed_at: historyLogs[0].created_at,
-            }
-          : null;
+        const toEntry = (log: import('../../models').AuditLog): LastEditEntry => ({
+          table_name: log.table_name,
+          record_id: log.record_id,
+          operation: log.operation,
+          proposed_data: log.new_data ?? {},
+          original_data: log.old_data,
+          reviewed_data: null,
+          submitter_name: '管理員',
+          reviewed_at: log.created_at,
+        });
 
-        if (!latestProposal && !latestHistoryLog) {
-          this.lastProposal = null;
-        } else if (!latestProposal) {
-          this.lastProposal = latestHistoryLog;
-        } else if (!latestHistoryLog) {
-          this.lastProposal = latestProposal;
-        } else {
-          const propTime = new Date(latestProposal.reviewed_at ?? '').getTime();
-          const logTime = new Date(latestHistoryLog.reviewed_at ?? '').getTime();
-          this.lastProposal = logTime > propTime ? latestHistoryLog : latestProposal;
-        }
+        const candidates: LastEditEntry[] = [
+          ...(proposals[0] ? [{ ...proposals[0], submitter_name: proposals[0].submitter_name || '貢獻者' }] : []),
+          ...(historyLogs[0] ? [toEntry(historyLogs[0])] : []),
+          ...(songLogs[0] ? [toEntry(songLogs[0])] : []),
+        ];
+        candidates.sort((a, b) =>
+          new Date(b.reviewed_at ?? '').getTime() - new Date(a.reviewed_at ?? '').getTime()
+        );
+        this.lastProposal = candidates[0] ?? null;
 
         this.memberSongs = songs;
         if (this.pendingEditSongId) {

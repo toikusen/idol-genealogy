@@ -14,6 +14,12 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
     'status', 'joined_at', 'left_at',
     'external_group_name', 'external_country',
   ],
+  member_songs: [
+    'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger', 'notes',
+  ],
+  group_songs: [
+    'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger', 'notes',
+  ],
   companies: [
     'name', 'description', 'founded_at', 'website', 'instagram', 'facebook', 'x', 'youtube', 'photo_url',
   ],
@@ -44,6 +50,14 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
   companies: {
     name: '公司名稱', description: '簡介', founded_at: '成立日期', website: '官網',
     instagram: 'Instagram', facebook: 'Facebook', x: 'X (Twitter)', youtube: 'YouTube', photo_url: '頭像圖片',
+  },
+  member_songs: {
+    title: '歌曲名稱', release_date: '發行日期', youtube_url: 'YouTube 連結',
+    composer: '作曲', lyricist: '作詞', arranger: '編曲', notes: '備注',
+  },
+  group_songs: {
+    title: '歌曲名稱', release_date: '發行日期', youtube_url: 'YouTube 連結',
+    composer: '作曲', lyricist: '作詞', arranger: '編曲', notes: '備注',
   },
   venues: {
     name: '場地名稱', address: '地址', type: '類型', region: '區域',
