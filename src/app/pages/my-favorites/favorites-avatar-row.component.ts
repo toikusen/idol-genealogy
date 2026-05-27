@@ -41,8 +41,9 @@ interface ActivityData {
             @if (editMode()) {
               <!-- Remove button overlay -->
               <button (click)="removeFav(item.id, item.entityType)"
+                [attr.aria-label]="'移除 ' + item.name + ' 的最愛'"
                 style="position:absolute;top:-4px;right:-4px;z-index:2;width:18px;height:18px;border-radius:50%;background:rgba(232,121,160,0.9);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">
-                <svg viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+                <svg aria-hidden="true" viewBox="0 0 10 10" width="8" height="8" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
                   <line x1="2" y1="2" x2="8" y2="8"/><line x1="8" y1="2" x2="2" y2="8"/>
                 </svg>
               </button>

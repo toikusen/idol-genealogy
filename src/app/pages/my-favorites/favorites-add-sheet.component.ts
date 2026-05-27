@@ -18,16 +18,22 @@ type SheetTab = 'group' | 'member';
     <div (click)="close.emit()" style="
       position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:1100;
       backdrop-filter:blur(2px);animation:fadeIn 0.2s;
-    "></div>
+    " aria-hidden="true"></div>
 
     <!-- Sheet -->
-    <div style="
-      position:fixed;bottom:0;left:0;right:0;z-index:1200;
-      background:var(--surface, #fff);border-radius:20px 20px 0 0;
-      height:80vh;display:flex;flex-direction:column;
-      box-shadow:0 -4px 30px rgba(45,27,46,0.15);
-      animation:slideUp 0.25s ease-out;
-    ">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-sheet-title"
+      (keydown.escape)="close.emit()"
+      (keydown.tab)="onTabKey($event)"
+      style="
+        position:fixed;bottom:0;left:0;right:0;z-index:1200;
+        background:var(--surface, #fff);border-radius:20px 20px 0 0;
+        height:80vh;display:flex;flex-direction:column;
+        box-shadow:0 -4px 30px rgba(45,27,46,0.15);
+        animation:slideUp 0.25s ease-out;
+      ">
       <!-- Handle -->
       <div style="display:flex;justify-content:center;padding:10px 0 4px;">
         <div style="width:36px;height:4px;border-radius:2px;background:rgba(45,27,46,0.15);"></div>
@@ -35,8 +41,9 @@ type SheetTab = 'group' | 'member';
 
       <!-- Title + close -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 0;">
-        <div style="font-size:0.9rem;font-weight:700;color:var(--text-primary);">新增最愛</div>
-        <button (click)="close.emit()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-faint-55);">✕</button>
+        <div id="add-sheet-title" data-sheet-title tabindex="-1"
+             style="font-size:0.9rem;font-weight:700;color:var(--text-primary);outline:none;">新增最愛</div>
+        <button (click)="close.emit()" aria-label="關閉" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-faint-55);">✕</button>
       </div>
 
       <!-- Tabs -->
@@ -117,6 +124,7 @@ type SheetTab = 'group' | 'member';
           <div style="font-size:0.54rem;color:var(--text-faint-55);">{{ subtitle(item) }}</div>
         </div>
         <button (click)="toggle(item)"
+          [attr.aria-label]="isFav(item.id) ? ('移除 ' + item.name + ' 的最愛') : ('加入 ' + item.name + ' 的最愛')"
           style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.85rem;flex-shrink:0;"
           [style.background]="isFav(item.id) ? 'rgba(232,121,160,0.12)' : 'transparent'"
           [style.border]="tab() === 'group' ? '1px solid rgba(232,121,160,0.3)' : '1px solid rgba(134,239,172,0.3)'"
@@ -149,6 +157,7 @@ export class FavoritesAddSheetComponent implements OnInit, OnDestroy {
   private _searchMembers = signal<Member[]>([]);
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private _triggerEl: Element | null = null;
 
   readonly favDetails = computed<(Group | Member)[]>(() =>
     this.tab() === 'group' ? this._favGroups() : this._favMembers()
@@ -159,13 +168,33 @@ export class FavoritesAddSheetComponent implements OnInit, OnDestroy {
   );
 
   async ngOnInit(): Promise<void> {
+    this._triggerEl = document.activeElement;
     this.tab.set(this.initialTab);
     await this.loadFavDetails();
     this.loadingFavs.set(false);
+    const heading = document.querySelector<HTMLElement>('[data-sheet-title]');
+    heading?.focus();
   }
 
   ngOnDestroy(): void {
     if (this.searchTimer) clearTimeout(this.searchTimer);
+    if (this._triggerEl instanceof HTMLElement) this._triggerEl.focus();
+  }
+
+  onTabKey(event: KeyboardEvent): void {
+    const focusable = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const sheet = event.currentTarget as HTMLElement;
+    const els = Array.from(sheet.querySelectorAll<HTMLElement>(focusable)).filter(
+      el => !el.hasAttribute('disabled') && el.offsetParent !== null
+    );
+    if (!els.length) return;
+    const first = els[0];
+    const last = els[els.length - 1];
+    if (event.shiftKey) {
+      if (document.activeElement === first) { event.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
   }
 
   switchTab(t: SheetTab): void {

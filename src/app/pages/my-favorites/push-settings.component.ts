@@ -64,6 +64,7 @@ import { NotificationPrefs } from '../../models';
             <label style="position:relative;width:44px;height:26px;flex-shrink:0;margin-left:14px;display:inline-block;">
               <input type="checkbox" [checked]="prefsService.prefs().notify_event"
                 (change)="toggle('notify_event', $event)"
+                aria-label="活動通知"
                 style="opacity:0;width:0;height:0;position:absolute;">
               <span [style.background]="prefsService.prefs().notify_event ? 'rgba(232,121,160,1)' : 'rgba(122,90,122,0.15)'"
                 style="position:absolute;inset:0;border-radius:13px;transition:background 0.25s;cursor:pointer;">
@@ -90,6 +91,7 @@ import { NotificationPrefs } from '../../models';
             <label style="position:relative;width:44px;height:26px;flex-shrink:0;margin-left:14px;display:inline-block;">
               <input type="checkbox" [checked]="prefsService.prefs().notify_new_song"
                 (change)="toggle('notify_new_song', $event)"
+                aria-label="新增歌曲通知"
                 style="opacity:0;width:0;height:0;position:absolute;">
               <span [style.background]="prefsService.prefs().notify_new_song ? 'rgba(232,121,160,1)' : 'rgba(122,90,122,0.15)'"
                 style="position:absolute;inset:0;border-radius:13px;transition:background 0.25s;cursor:pointer;">
@@ -116,6 +118,7 @@ import { NotificationPrefs } from '../../models';
             <label style="position:relative;width:44px;height:26px;flex-shrink:0;margin-left:14px;display:inline-block;">
               <input type="checkbox" [checked]="prefsService.prefs().notify_status"
                 (change)="toggle('notify_status', $event)"
+                aria-label="狀態異動通知"
                 style="opacity:0;width:0;height:0;position:absolute;">
               <span [style.background]="prefsService.prefs().notify_status ? 'rgba(232,121,160,1)' : 'rgba(122,90,122,0.15)'"
                 style="position:absolute;inset:0;border-radius:13px;transition:background 0.25s;cursor:pointer;">
@@ -142,6 +145,7 @@ import { NotificationPrefs } from '../../models';
             <label style="position:relative;width:44px;height:26px;flex-shrink:0;margin-left:14px;display:inline-block;">
               <input type="checkbox" [checked]="prefsService.prefs().notify_birthday"
                 (change)="toggle('notify_birthday', $event)"
+                aria-label="生日提醒通知"
                 style="opacity:0;width:0;height:0;position:absolute;">
               <span [style.background]="prefsService.prefs().notify_birthday ? 'rgba(232,121,160,1)' : 'rgba(122,90,122,0.15)'"
                 style="position:absolute;inset:0;border-radius:13px;transition:background 0.25s;cursor:pointer;">
@@ -168,6 +172,7 @@ import { NotificationPrefs } from '../../models';
             <label style="position:relative;width:44px;height:26px;flex-shrink:0;margin-left:14px;display:inline-block;">
               <input type="checkbox" [checked]="prefsService.prefs().notify_disbanded"
                 (change)="toggle('notify_disbanded', $event)"
+                aria-label="解散公告通知"
                 style="opacity:0;width:0;height:0;position:absolute;">
               <span [style.background]="prefsService.prefs().notify_disbanded ? 'rgba(232,121,160,1)' : 'rgba(122,90,122,0.15)'"
                 style="position:absolute;inset:0;border-radius:13px;transition:background 0.25s;cursor:pointer;">
