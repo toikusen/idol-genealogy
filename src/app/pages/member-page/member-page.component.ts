@@ -11,6 +11,7 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { Member, History, Proposal, MemberSong, Group } from '../../models';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { ProposalService } from '../../core/proposal.service';
+import { AuditLogService } from '../../core/audit-log.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
@@ -25,6 +26,17 @@ import { MemberPageData } from '../../core/page-data.resolvers';
 import { memberIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
+
+interface LastEditEntry {
+  table_name: string;
+  record_id: string | null;
+  operation: 'INSERT' | 'UPDATE' | 'DELETE';
+  proposed_data: Record<string, any>;
+  original_data: Record<string, any> | null;
+  reviewed_data: Record<string, any> | null;
+  submitter_name: string;
+  reviewed_at: string | null;
+}
 
 @Component({
   selector: 'app-member-page',
@@ -47,7 +59,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   showOverseasPanel = false;
   historyToDelete: History | null = null;
   allGroupsList: { id: string; name: string }[] = [];
-  lastProposal: Proposal | null = null;
+  lastProposal: LastEditEntry | null = null;
   showEditHistory = false;
   linkCopied = false;
   companyName: string | null = null;
@@ -78,7 +90,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   private currentLoadId: string | null = null;
 
   get lastProposalDiffFields(): DiffField[] {
-    return this.lastProposal ? getDiffFields(this.lastProposal) : [];
+    return this.lastProposal ? getDiffFields(this.lastProposal as Proposal) : [];
   }
 
   formatRelativeTime(date: string | null): string {
@@ -110,6 +122,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private seo: SeoService,
     private proposalService: ProposalService,
+    private auditLogService: AuditLogService,
     private analytics: AnalyticsService,
     private viewCount: ViewCountService,
     private memberSongService: MemberSongService,
@@ -149,9 +162,10 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.currentLoadId = memberId;
     this.deferredLoading = true;
     try {
-      const [groups, proposals, songs] = await Promise.all([
+      const [groups, proposals, historyLogs, songs] = await Promise.all([
         this.groupService.getAll().catch(() => []),
         this.proposalService.getApprovedByRecord('members', memberId).catch(() => []),
+        this.auditLogService.getHistoryLogsByField('member_id', memberId).catch(() => []),
         this.memberSongService.getByMember(memberId).catch(() => []),
       ]);
       if (this.currentLoadId === memberId && !this.routeDataSub?.closed) {
@@ -159,7 +173,35 @@ export class MemberPageComponent implements OnInit, OnDestroy {
           .filter(isPublicGroupRecord)
           .map(g => ({ id: g.id, name: g.name }))
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-        this.lastProposal = proposals[0] ?? null;
+
+        const latestProposal: LastEditEntry | null = proposals[0]
+          ? { ...proposals[0], submitter_name: proposals[0].submitter_name || '貢獻者' }
+          : null;
+        const latestHistoryLog: LastEditEntry | null = historyLogs[0]
+          ? {
+              table_name: historyLogs[0].table_name,
+              record_id: historyLogs[0].record_id,
+              operation: historyLogs[0].operation,
+              proposed_data: historyLogs[0].new_data ?? {},
+              original_data: historyLogs[0].old_data,
+              reviewed_data: null,
+              submitter_name: '管理員',
+              reviewed_at: historyLogs[0].created_at,
+            }
+          : null;
+
+        if (!latestProposal && !latestHistoryLog) {
+          this.lastProposal = null;
+        } else if (!latestProposal) {
+          this.lastProposal = latestHistoryLog;
+        } else if (!latestHistoryLog) {
+          this.lastProposal = latestProposal;
+        } else {
+          const propTime = new Date(latestProposal.reviewed_at ?? '').getTime();
+          const logTime = new Date(latestHistoryLog.reviewed_at ?? '').getTime();
+          this.lastProposal = logTime > propTime ? latestHistoryLog : latestProposal;
+        }
+
         this.memberSongs = songs;
         if (this.pendingEditSongId) {
           const song = this.memberSongs.find(s => s.id === this.pendingEditSongId);
