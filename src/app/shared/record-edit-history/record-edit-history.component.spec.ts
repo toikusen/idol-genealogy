@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RecordEditHistoryComponent } from './record-edit-history.component';
 import { ProposalService } from '../../core/proposal.service';
+import { AuditLogService } from '../../core/audit-log.service';
 import { CompanyService } from '../../core/company.service';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
@@ -28,6 +29,7 @@ describe('RecordEditHistoryComponent', () => {
       imports: [RecordEditHistoryComponent],
       providers: [
         { provide: ProposalService, useValue: proposalServiceSpy },
+        { provide: AuditLogService, useValue: { getHistoryLogsByField: () => Promise.resolve([]) } },
         { provide: CompanyService, useValue: { getAll: () => Promise.resolve([]) } },
         { provide: MemberService, useValue: { getAll: () => Promise.resolve([]) } },
         { provide: GroupService, useValue: { getAll: () => Promise.resolve([]) } },
@@ -45,11 +47,11 @@ describe('RecordEditHistoryComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load proposals on init', async () => {
+  it('should load entries on init', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(proposalServiceSpy.getApprovedByRecord).toHaveBeenCalledWith('members', 'm1');
-    expect(component.proposals.length).toBe(1);
+    expect(component.entries.length).toBe(1);
     expect(component.loading).toBeFalse();
     expect(component.error).toBeFalse();
   });

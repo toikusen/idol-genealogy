@@ -55,6 +55,15 @@ export class AuditLogService {
 
   private get db() { return this.supabase.client; }
 
+  async getHistoryLogsByField(field: 'member_id' | 'group_id', value: string): Promise<AuditLog[]> {
+    const { data, error } = await this.db.rpc('get_history_audit_logs_by_field', {
+      p_field: field,
+      p_value: value,
+    });
+    if (error) throw error;
+    return (data ?? []) as AuditLog[];
+  }
+
   async getAll(filter?: { table_name?: string; operation?: string }): Promise<AuditLog[]> {
     let query = this.db.from('audit_log').select('*');
     if (filter?.table_name) query = (query as any).eq('table_name', filter.table_name);
