@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, signal, inject, computed, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FavoritesService } from '../../core/favorites.service';
 import { GroupService } from '../../core/group.service';
@@ -41,7 +41,7 @@ type SheetTab = 'group' | 'member';
 
       <!-- Title + close -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 0;">
-        <div id="add-sheet-title" data-sheet-title tabindex="-1"
+        <div id="add-sheet-title" #sheetTitleRef data-sheet-title tabindex="-1"
              style="font-size:0.9rem;font-weight:700;color:var(--text-primary);outline:none;">新增最愛</div>
         <button (click)="close.emit()" aria-label="關閉" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-faint-55);">✕</button>
       </div>
@@ -137,7 +137,7 @@ type SheetTab = 'group' | 'member';
     @keyframes slideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
   `],
 })
-export class FavoritesAddSheetComponent implements OnInit, OnDestroy {
+export class FavoritesAddSheetComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() initialTab: 'group' | 'member' = 'group';
   @Output() close = new EventEmitter<void>();
 
@@ -156,6 +156,11 @@ export class FavoritesAddSheetComponent implements OnInit, OnDestroy {
   private _searchGroups = signal<Group[]>([]);
   private _searchMembers = signal<Member[]>([]);
 
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
+
+  @ViewChild('sheetTitleRef') private sheetTitleRef?: ElementRef<HTMLElement>;
+
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private _triggerEl: Element | null = null;
 
@@ -168,12 +173,16 @@ export class FavoritesAddSheetComponent implements OnInit, OnDestroy {
   );
 
   async ngOnInit(): Promise<void> {
-    this._triggerEl = document.activeElement;
+    if (this.isBrowser) this._triggerEl = document.activeElement;
     this.tab.set(this.initialTab);
     await this.loadFavDetails();
     this.loadingFavs.set(false);
-    const heading = document.querySelector<HTMLElement>('[data-sheet-title]');
-    heading?.focus();
+  }
+
+  ngAfterViewInit(): void {
+    if (this.isBrowser) {
+      this.sheetTitleRef?.nativeElement.focus();
+    }
   }
 
   ngOnDestroy(): void {
