@@ -1,6 +1,8 @@
 {
+  "id": "/",
   "name": "IdolMaps",
   "short_name": "IdolMaps",
+  "description": "台灣地下偶像成員與團體的完整資料庫",
   "theme_color": "#e879a0",
   "background_color": "#fdf6fa",
   "display": "standalone",

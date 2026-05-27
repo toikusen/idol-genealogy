@@ -64,9 +64,9 @@ const BIRTHDAY_DAYS = 14;
     .skel {
       background: linear-gradient(
         90deg,
-        rgba(255,255,255,0.04) 25%,
-        rgba(255,255,255,0.09) 50%,
-        rgba(255,255,255,0.04) 75%
+        var(--skel-from) 25%,
+        var(--skel-to)   50%,
+        var(--skel-from) 75%
       );
       background-size: 200% 100%;
       animation: shimmer 1.6s infinite;

@@ -12,7 +12,7 @@
     <!-- Always shown in sidebar regardless of activeTab — desktop shows avatars even during push settings -->
     <app-favorites-avatar-row
       [layout]="'grid'"
-      [filter]="activeTab() === 'all' ? undefined : activeTab()"
+      [filter]="(activeTab() === 'all' || activeTab() === 'push') ? undefined : activeTab()"
       (addClicked)="openAddSheet()"
     />
     <nav class="mf-filter-nav" aria-label="篩選分類">
