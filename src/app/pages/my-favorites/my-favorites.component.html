@@ -9,15 +9,6 @@
         <div class="mf-sidebar-greeting">Hi, {{ displayName }} ♥</div>
       }
     </div>
-    @if (activeTab() !== 'push') {
-      <app-favorites-avatar-row
-        [layout]="'grid'"
-        [filter]="activeTab() === 'all' ? undefined : activeTab()"
-        [selectedId]="spotlightEntity()?.id"
-        (addClicked)="openAddSheet()"
-        (entitySelect)="onEntitySelect($event)"
-      />
-    }
     <nav class="mf-filter-nav" aria-label="篩選分類">
       @for (tab of tabs; track tab.id) {
         <button
@@ -28,6 +19,15 @@
         >{{ tab.label }}</button>
       }
     </nav>
+    @if (activeTab() !== 'push') {
+      <app-favorites-avatar-row
+        [layout]="'grid'"
+        [filter]="activeTab() === 'all' ? undefined : activeTab()"
+        [selectedId]="spotlightEntity()?.id"
+        (addClicked)="openAddSheet()"
+        (entitySelect)="onEntitySelect($event)"
+      />
+    }
   </aside>
 
   <!-- Mobile header (display:none on desktop via CSS) -->
