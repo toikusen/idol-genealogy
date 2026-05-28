@@ -140,12 +140,16 @@ BEGIN
       OR (new_data->>'group_id')::uuid = p_group_id
     )
   ORDER BY created_at DESC, id DESC
-  LIMIT p_limit;
+  LIMIT least(greatest(p_limit, 1), 101);
 END;
 $$;
 
--- Only authenticated users may call this function; inline check further
--- restricts to admin/superadmin/editor roles.
+-- Remove default PUBLIC execute, then grant only to authenticated.
+-- Inline role check further restricts to admin/superadmin/editor.
+REVOKE ALL ON FUNCTION get_audit_logs_paginated(
+  text, text, uuid, uuid, timestamptz, timestamptz, timestamptz, uuid, int
+) FROM PUBLIC;
+
 GRANT EXECUTE ON FUNCTION get_audit_logs_paginated(
   text, text, uuid, uuid, timestamptz, timestamptz, timestamptz, uuid, int
 ) TO authenticated;
