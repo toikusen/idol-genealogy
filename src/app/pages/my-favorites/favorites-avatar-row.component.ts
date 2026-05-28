@@ -4,6 +4,9 @@ import { FavoritesService } from '../../core/favorites.service';
 import { SupabaseService } from '../../core/supabase.service';
 import { FavoriteEntityType, SpotlightEntity } from '../../models';
 
+const FAV_SEEN_KEY = (id: string) => `fav_seen_${id}`;
+const FAV_SEEN_FALLBACK_DAYS = 7;
+
 interface ActivityData {
   count: number;
   lastAt: string;
@@ -171,11 +174,25 @@ export class FavoritesAvatarRowComponent {
 
   toggleSelect(item: { id: string; entityType: FavoriteEntityType; name: string; link: string }): void {
     if (this.editMode()) return;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(FAV_SEEN_KEY(item.id), new Date().toISOString());
+    }
+    this._activity.update(prev => {
+      if (!prev[item.id]) return prev;
+      return { ...prev, [item.id]: { ...prev[item.id], count: 0 } };
+    });
     if (this.selectedId() === item.id) {
       this.entitySelect.emit(null);
     } else {
       this.entitySelect.emit({ id: item.id, entityType: item.entityType, name: item.name, link: item.link });
     }
+  }
+
+  refreshActivity(): void {
+    const favs = this.favService.favorites();
+    const groupIds = favs.filter(f => f.entity_type === 'group').map(f => f.entity_id);
+    const memberIds = favs.filter(f => f.entity_type === 'member').map(f => f.entity_id);
+    void this.loadActivity(groupIds, memberIds);
   }
 
   async removeFav(entityId: string, entityType: FavoriteEntityType): Promise<void> {
@@ -208,10 +225,22 @@ export class FavoritesAvatarRowComponent {
   }
 
   private async loadActivity(groupIds: string[], memberIds: string[]): Promise<void> {
-    const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    const isBrowser = typeof window !== 'undefined';
+    const fallback = new Date(Date.now() - FAV_SEEN_FALLBACK_DAYS * 86_400_000).toISOString();
+    const allIds = [...groupIds, ...memberIds];
+
+    const entityLastSeen: Record<string, string> = {};
+    for (const id of allIds) {
+      entityLastSeen[id] = (isBrowser && localStorage.getItem(FAV_SEEN_KEY(id))) || fallback;
+    }
+    const oldestCutoff = allIds.length
+      ? allIds.reduce((min, id) => entityLastSeen[id] < min ? entityLastSeen[id] : min, new Date().toISOString())
+      : fallback;
+
     const activity: Record<string, ActivityData> = {};
 
     const merge = (id: string, at: string) => {
+      if (at <= (entityLastSeen[id] ?? fallback)) return;
       const prev = activity[id];
       activity[id] = {
         count: (prev?.count ?? 0) + 1,
@@ -223,24 +252,24 @@ export class FavoritesAvatarRowComponent {
       groupIds.length ? (async () => {
         const { data: songs } = await this.supabase.client
           .from('group_songs').select('group_id, created_at')
-          .in('group_id', groupIds).gt('created_at', weekAgo).eq('is_deleted', false);
+          .in('group_id', groupIds).gt('created_at', oldestCutoff).eq('is_deleted', false);
         (songs ?? []).forEach((r: any) => merge(r.group_id, r.created_at));
 
         const { data: evts } = await this.supabase.client
           .from('group_events').select('group_id, first_seen_at')
-          .in('group_id', groupIds).gt('first_seen_at', weekAgo);
+          .in('group_id', groupIds).gt('first_seen_at', oldestCutoff);
         (evts ?? []).forEach((r: any) => merge(r.group_id, r.first_seen_at));
       })() : Promise.resolve(),
 
       memberIds.length ? (async () => {
         const { data: songs } = await this.supabase.client
           .from('member_songs').select('member_id, created_at')
-          .in('member_id', memberIds).gt('created_at', weekAgo).eq('is_deleted', false);
+          .in('member_id', memberIds).gt('created_at', oldestCutoff).eq('is_deleted', false);
         (songs ?? []).forEach((r: any) => merge(r.member_id, r.created_at));
 
         const { data: hist } = await this.supabase.client
           .from('history').select('member_id, updated_at')
-          .in('member_id', memberIds).gt('updated_at', weekAgo);
+          .in('member_id', memberIds).gt('updated_at', oldestCutoff);
         (hist ?? []).forEach((r: any) => merge(r.member_id, r.updated_at));
       })() : Promise.resolve(),
     ]);

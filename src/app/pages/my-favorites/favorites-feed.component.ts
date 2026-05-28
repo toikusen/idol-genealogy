@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, PLATFORM_ID, SimpleChanges, inject, signal, effect, computed, input } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, Output, EventEmitter, PLATFORM_ID, SimpleChanges, inject, signal, effect, computed, input } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -250,6 +250,7 @@ const BIRTHDAY_DAYS = 14;
 })
 export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   @Input() filter?: string;
+  @Output() allRead = new EventEmitter<void>();
   readonly spotlightEntity = input<SpotlightEntity | null>(null);
 
   private favService = inject(FavoritesService);
@@ -383,9 +384,18 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   }
 
   markAllRead(): void {
-    if (this.isBrowser) localStorage.setItem(LAST_VISITED_KEY, new Date().toISOString());
+    if (this.isBrowser) {
+      const now = new Date().toISOString();
+      localStorage.setItem(LAST_VISITED_KEY, now);
+      const allIds = [
+        ...this.favService.favoriteIds('group'),
+        ...this.favService.favoriteIds('member'),
+      ];
+      allIds.forEach(id => localStorage.setItem(`fav_seen_${id}`, now));
+    }
     this.newCount.set(0);
     this.items.update(list => list.map(item => ({ ...item, isNew: false })));
+    this.allRead.emit();
   }
 
   loadMore(): void {

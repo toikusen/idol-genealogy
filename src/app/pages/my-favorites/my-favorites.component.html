@@ -78,9 +78,10 @@
     <div class="mf-content-inner">
       @if (activeTab() !== 'push') {
         <app-favorites-feed
-        [filter]="activeTab() === 'all' ? undefined : activeTab()"
-        [spotlightEntity]="spotlightEntity()"
-      />
+          [filter]="activeTab() === 'all' ? undefined : activeTab()"
+          [spotlightEntity]="spotlightEntity()"
+          (allRead)="onAllRead()"
+        />
       } @else {
         <app-push-settings />
       }

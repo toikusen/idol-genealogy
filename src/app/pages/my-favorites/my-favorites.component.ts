@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
@@ -33,6 +33,8 @@ interface FavoritesTabOption {
 export class MyFavoritesComponent implements OnInit {
   private favService = inject(FavoritesService);
   private supabase = inject(SupabaseService);
+
+  @ViewChildren(FavoritesAvatarRowComponent) avatarRows!: QueryList<FavoritesAvatarRowComponent>;
 
   readonly activeTab = signal<FavoritesTab>('all');
   readonly showAddSheet = signal(false);
@@ -71,5 +73,9 @@ export class MyFavoritesComponent implements OnInit {
 
   closeAddSheet(): void {
     this.showAddSheet.set(false);
+  }
+
+  onAllRead(): void {
+    this.avatarRows.forEach(row => row.refreshActivity());
   }
 }
