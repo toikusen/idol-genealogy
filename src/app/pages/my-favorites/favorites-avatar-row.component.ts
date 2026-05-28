@@ -1,11 +1,10 @@
-import { Component, Output, EventEmitter, inject, computed, effect, signal, input, output } from '@angular/core';
+import { Component, Output, EventEmitter, inject, computed, effect, signal, input, output, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FavoritesService } from '../../core/favorites.service';
 import { SupabaseService } from '../../core/supabase.service';
 import { FavoriteEntityType, SpotlightEntity } from '../../models';
 
 const FAV_SEEN_KEY = (id: string) => `fav_seen_${id}`;
-const FAV_SEEN_FALLBACK_DAYS = 7;
 
 interface ActivityData {
   count: number;
@@ -117,6 +116,7 @@ export class FavoritesAvatarRowComponent {
   filter = input<string | undefined>();
   layout = input<'row' | 'grid'>('row');
   selectedId = input<string | undefined>();
+  @Input() activityCounts: Record<string, ActivityData> = {};
   @Output() addClicked = new EventEmitter<void>();
   readonly entitySelect = output<SpotlightEntity | null>();
 
@@ -125,7 +125,6 @@ export class FavoritesAvatarRowComponent {
 
   private readonly _nameCache = signal<Record<string, string>>({});
   private readonly _photoCache = signal<Record<string, string | null>>({});
-  private readonly _activity = signal<Record<string, ActivityData>>({});
 
   readonly editMode = signal(false);
 
@@ -138,7 +137,7 @@ export class FavoritesAvatarRowComponent {
     );
     const names = this._nameCache();
     const photos = this._photoCache();
-    const activity = this._activity();
+    const activity = this.activityCounts;
 
     const items = favs.map(fav => ({
       id: fav.entity_id,
@@ -168,7 +167,6 @@ export class FavoritesAvatarRowComponent {
       const groupIds = favs.filter(f => f.entity_type === 'group').map(f => f.entity_id);
       const memberIds = favs.filter(f => f.entity_type === 'member').map(f => f.entity_id);
       void this.loadDetails(groupIds, memberIds);
-      void this.loadActivity(groupIds, memberIds);
     });
   }
 
@@ -177,22 +175,11 @@ export class FavoritesAvatarRowComponent {
     if (typeof window !== 'undefined') {
       localStorage.setItem(FAV_SEEN_KEY(item.id), new Date().toISOString());
     }
-    this._activity.update(prev => {
-      if (!prev[item.id]) return prev;
-      return { ...prev, [item.id]: { ...prev[item.id], count: 0 } };
-    });
     if (this.selectedId() === item.id) {
       this.entitySelect.emit(null);
     } else {
       this.entitySelect.emit({ id: item.id, entityType: item.entityType, name: item.name, link: item.link });
     }
-  }
-
-  refreshActivity(): void {
-    const favs = this.favService.favorites();
-    const groupIds = favs.filter(f => f.entity_type === 'group').map(f => f.entity_id);
-    const memberIds = favs.filter(f => f.entity_type === 'member').map(f => f.entity_id);
-    void this.loadActivity(groupIds, memberIds);
   }
 
   async removeFav(entityId: string, entityType: FavoriteEntityType): Promise<void> {
@@ -224,56 +211,4 @@ export class FavoritesAvatarRowComponent {
     this._photoCache.set({ ...this._photoCache(), ...photos });
   }
 
-  private async loadActivity(groupIds: string[], memberIds: string[]): Promise<void> {
-    const isBrowser = typeof window !== 'undefined';
-    const fallback = new Date(Date.now() - FAV_SEEN_FALLBACK_DAYS * 86_400_000).toISOString();
-    const allIds = [...groupIds, ...memberIds];
-
-    const entityLastSeen: Record<string, string> = {};
-    for (const id of allIds) {
-      entityLastSeen[id] = (isBrowser && localStorage.getItem(FAV_SEEN_KEY(id))) || fallback;
-    }
-    const oldestCutoff = allIds.length
-      ? allIds.reduce((min, id) => entityLastSeen[id] < min ? entityLastSeen[id] : min, new Date().toISOString())
-      : fallback;
-
-    const activity: Record<string, ActivityData> = {};
-
-    const merge = (id: string, at: string) => {
-      if (at <= (entityLastSeen[id] ?? fallback)) return;
-      const prev = activity[id];
-      activity[id] = {
-        count: (prev?.count ?? 0) + 1,
-        lastAt: !prev || at > prev.lastAt ? at : prev.lastAt,
-      };
-    };
-
-    await Promise.all([
-      groupIds.length ? (async () => {
-        const { data: songs } = await this.supabase.client
-          .from('group_songs').select('group_id, created_at')
-          .in('group_id', groupIds).gt('created_at', oldestCutoff).eq('is_deleted', false);
-        (songs ?? []).forEach((r: any) => merge(r.group_id, r.created_at));
-
-        const { data: evts } = await this.supabase.client
-          .from('group_events').select('group_id, first_seen_at')
-          .in('group_id', groupIds).gt('first_seen_at', oldestCutoff);
-        (evts ?? []).forEach((r: any) => merge(r.group_id, r.first_seen_at));
-      })() : Promise.resolve(),
-
-      memberIds.length ? (async () => {
-        const { data: songs } = await this.supabase.client
-          .from('member_songs').select('member_id, created_at')
-          .in('member_id', memberIds).gt('created_at', oldestCutoff).eq('is_deleted', false);
-        (songs ?? []).forEach((r: any) => merge(r.member_id, r.created_at));
-
-        const { data: hist } = await this.supabase.client
-          .from('history').select('member_id, updated_at')
-          .in('member_id', memberIds).gt('updated_at', oldestCutoff);
-        (hist ?? []).forEach((r: any) => merge(r.member_id, r.updated_at));
-      })() : Promise.resolve(),
-    ]);
-
-    this._activity.set(activity);
-  }
 }

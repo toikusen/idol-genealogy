@@ -24,6 +24,7 @@
         [layout]="'grid'"
         [filter]="activeTab() === 'all' ? undefined : activeTab()"
         [selectedId]="spotlightEntity()?.id"
+        [activityCounts]="activityCounts()"
         (addClicked)="openAddSheet()"
         (entitySelect)="onEntitySelect($event)"
       />
@@ -67,6 +68,7 @@
       <app-favorites-avatar-row
         [filter]="activeTab() === 'all' ? undefined : activeTab()"
         [selectedId]="spotlightEntity()?.id"
+        [activityCounts]="activityCounts()"
         (addClicked)="openAddSheet()"
         (entitySelect)="onEntitySelect($event)"
       />
@@ -80,7 +82,7 @@
         <app-favorites-feed
           [filter]="activeTab() === 'all' ? undefined : activeTab()"
           [spotlightEntity]="spotlightEntity()"
-          (allRead)="onAllRead()"
+          (activityCounts)="onActivityCounts($event)"
         />
       } @else {
         <app-push-settings />

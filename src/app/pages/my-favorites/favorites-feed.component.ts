@@ -46,6 +46,7 @@ interface TableCursors {
   groupSongs?: string;
   memberSongs?: string;
   history?: string;
+  groupHistory?: string;
   groupEvents?: string;
   disbanded?: string;
 }
@@ -250,7 +251,7 @@ const BIRTHDAY_DAYS = 14;
 })
 export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   @Input() filter?: string;
-  @Output() allRead = new EventEmitter<void>();
+  @Output() activityCounts = new EventEmitter<Record<string, { count: number; lastAt: string }>>();
   readonly spotlightEntity = input<SpotlightEntity | null>(null);
 
   private favService = inject(FavoritesService);
@@ -342,10 +343,9 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
         items: g.items.filter(item => {
           if (tf === 'event') return item.eventType === 'event';
           if (tf === 'song') return item.eventType === 'song';
-          if (tf === 'member') return item.eventType === 'member_change' || item.eventType === 'member_join';
-          if (tf === 'group_change') return item.eventType === 'group_change' || (
-            (item.eventType === 'member_join' || item.eventType === 'member_change') && !!item.relatedGroupId
-          );
+          if (tf === 'member') return (item.eventType === 'member_change' || item.eventType === 'member_join') && item.entityType === 'member';
+          if (tf === 'group_change') return item.eventType === 'group_change' ||
+            ((item.eventType === 'member_join' || item.eventType === 'member_change') && item.entityType === 'group');
           return true;
         }),
       }))
@@ -388,6 +388,19 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     void this.loadFeed();
   }
 
+  private emitActivityCounts(): void {
+    const counts: Record<string, { count: number; lastAt: string }> = {};
+    for (const item of this.items()) {
+      if (!item.isNew) continue;
+      const prev = counts[item.entityId];
+      counts[item.entityId] = {
+        count: (prev?.count ?? 0) + 1,
+        lastAt: !prev || item.occurredAt > prev.lastAt ? item.occurredAt : prev.lastAt,
+      };
+    }
+    this.activityCounts.emit(counts);
+  }
+
   markAllRead(): void {
     if (this.isBrowser) {
       const now = new Date().toISOString();
@@ -400,7 +413,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     }
     this.newCount.set(0);
     this.items.update(list => list.map(item => ({ ...item, isNew: false })));
-    this.allRead.emit();
+    this.activityCounts.emit({});
   }
 
   loadMore(): void {
@@ -441,16 +454,18 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       this._tableCursors = nextCursors;
       this.birthdayItems.set(birthdayData);
 
-      if (previousVisit) {
+      if (previousVisit || this.isBrowser) {
         let count = 0;
         for (const e of entries) {
-          if (e.occurredAt > previousVisit) { e.isNew = true; count++; }
+          const entitySeen = (this.isBrowser && localStorage.getItem(`fav_seen_${e.entityId}`)) || previousVisit;
+          if (entitySeen && e.occurredAt > entitySeen) { e.isNew = true; count++; }
         }
         this.newCount.set(count);
       }
 
       this.items.set(entries);
       this.hasMore.set(mightHaveMore);
+      this.emitActivityCounts();
       this.subscribeRealtime();
     } catch {
       if (seq !== this._loadSeq) return;
@@ -475,6 +490,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       this._tableCursors = nextCursors;
       this.items.update(prev => [...prev, ...fresh]);
       this.hasMore.set(mightHaveMore && fresh.length > 0);
+      this.emitActivityCounts();
     } catch {
       // nextCursors was never committed — no rollback needed
     } finally {
@@ -603,6 +619,56 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
             title: `編輯歷程：${this.statusLabel('active', groupName, { audit })}`,
             occurredAt: audit?.changedAt ?? h.updated_at,
             link: h.member?.id ? `/member/${h.member.id}` : undefined, isNew: false, relatedGroupId });
+        }
+      });
+    }
+
+    if (groupIds.length) {
+      const seenHistIds = new Set(entries.map(e => {
+        if (e.id.startsWith('join-')) return e.id.slice(5);
+        if (e.id.startsWith('hist-')) return e.id.slice(5);
+        return null;
+      }).filter(Boolean));
+
+      let ghq = this.supabase.client
+        .from('history')
+        .select('id, status, created_at, updated_at, member:members(id, name, photo_url), group:groups(id, name, photo_url)')
+        .in('group_id', groupIds)
+        .order('created_at', { ascending: false })
+        .limit(PAGE_LIMIT);
+      if (cursors.groupHistory) ghq = ghq.lt('created_at', cursors.groupHistory);
+      const { data: ghist } = await ghq;
+      const rawGroupHist = ghist ?? [];
+      if (rawGroupHist.length) nextCursors.groupHistory = rawGroupHist[rawGroupHist.length - 1].created_at;
+      if (rawGroupHist.length === PAGE_LIMIT) mightHaveMore = true;
+      const groupHistRows = rawGroupHist.filter((h: any) => !seenHistIds.has(h.id));
+      const groupHistAudits = await this.loadHistoryStatusAudits(groupHistRows.map((h: any) => h.id));
+      groupHistRows.forEach((h: any) => {
+        const groupId = h.group?.id ?? '';
+        if (!groupId) return;
+        const memberName = h.member?.name ?? '';
+        const isNewMembership = new Date(h.updated_at).getTime() - new Date(h.created_at).getTime() < 2000;
+        if (isNewMembership) {
+          entries.push({ id: `gjoin-${h.id}`, eventType: 'member_join',
+            entityId: groupId, entityType: 'group',
+            entityName: h.group?.name ?? '', photoUrl: h.group?.photo_url ?? null,
+            title: `${memberName} 加入`,
+            occurredAt: h.created_at, link: `/group/${groupId}`, isNew: false, relatedGroupId: groupId });
+        } else if (h.status !== 'active') {
+          const labelMap: Record<string, string> = { graduated: '畢業', withdrawn: '退出', hiatus: '活休', transferred: '移籍', concurrent: '兼任', support: '支援' };
+          entries.push({ id: `ghist-${h.id}`, eventType: 'member_change',
+            entityId: groupId, entityType: 'group',
+            entityName: h.group?.name ?? '', photoUrl: h.group?.photo_url ?? null,
+            title: `${memberName} ${labelMap[h.status] ?? h.status}`,
+            occurredAt: h.updated_at, link: `/group/${groupId}`, isNew: false, relatedGroupId: groupId });
+        } else {
+          const audit = groupHistAudits.get(h.id);
+          const label = audit?.oldStatus === 'hiatus' && audit.newStatus === 'active' ? '復歸' : '歷程更新';
+          entries.push({ id: `ghist-${h.id}`, eventType: 'member_change',
+            entityId: groupId, entityType: 'group',
+            entityName: h.group?.name ?? '', photoUrl: h.group?.photo_url ?? null,
+            title: `${memberName} ${label}`,
+            occurredAt: audit?.changedAt ?? h.updated_at, link: `/group/${groupId}`, isNew: false, relatedGroupId: groupId });
         }
       });
     }
