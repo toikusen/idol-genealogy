@@ -69,6 +69,18 @@ describe('AuditLogService', () => {
     expect(result.data[0].id).toBe('log-0');
   });
 
+  it('getAll() returns { data: all 50, hasMore: false } when RPC returns exactly 50 rows', async () => {
+    const fiftyLogs = Array.from({ length: 50 }, (_, i) =>
+      makeLog({ id: `log-${i}`, created_at: `2026-01-0${(i % 9) + 1}T00:00:00Z` })
+    );
+    dbSpy.rpc.and.resolveTo({ data: fiftyLogs, error: null });
+
+    const result = await service.getAll();
+
+    expect(result.data.length).toBe(50);
+    expect(result.hasMore).toBe(false);
+  });
+
   it('getAll() passes all filter params to RPC', async () => {
     dbSpy.rpc.and.resolveTo({ data: [], error: null });
     const cursor = { created_at: '2025-05-01T00:00:00Z', id: 'cursor-id' };
