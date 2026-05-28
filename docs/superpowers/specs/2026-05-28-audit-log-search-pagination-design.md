@@ -85,23 +85,36 @@ function toUtcRangeEnd(dateStr: string): string {
 ### RPC 函數定義（migration `064_get_audit_logs_paginated.sql`）
 
 ```sql
--- Admin-only RPC for paginated audit log with composite cursor,
+-- Admin/editor-only RPC for paginated audit log with composite cursor,
 -- date range, and member/group search via record_id + JSONB fields.
 -- Returns user_email for display in the admin panel.
--- SECURITY DEFINER bypasses audit_log RLS.
+-- SECURITY DEFINER bypasses audit_log RLS; inline role check enforces access control.
 CREATE OR REPLACE FUNCTION get_audit_logs_paginated(
-  p_table_name      text        DEFAULT NULL,
-  p_operation       text        DEFAULT NULL,
-  p_member_id       uuid        DEFAULT NULL,
-  p_group_id        uuid        DEFAULT NULL,
-  p_date_from       timestamptz DEFAULT NULL,
-  p_date_to         timestamptz DEFAULT NULL,
+  p_table_name        text        DEFAULT NULL,
+  p_operation         text        DEFAULT NULL,
+  p_member_id         uuid        DEFAULT NULL,
+  p_group_id          uuid        DEFAULT NULL,
+  p_date_from         timestamptz DEFAULT NULL,
+  p_date_to           timestamptz DEFAULT NULL,
   p_cursor_created_at timestamptz DEFAULT NULL,
-  p_cursor_id       uuid        DEFAULT NULL,
-  p_limit           int         DEFAULT 51
+  p_cursor_id         uuid        DEFAULT NULL,
+  p_limit             int         DEFAULT 51
 )
 RETURNS SETOF audit_log
-LANGUAGE sql STABLE SECURITY DEFINER AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Inline permission check: caller must be admin, superadmin, or editor
+  IF NOT EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE email = auth.email()
+      AND role IN ('admin', 'superadmin', 'editor')
+  ) THEN
+    RAISE EXCEPTION '無查詢變更記錄的權限';
+  END IF;
+
+  RETURN QUERY
   SELECT *
   FROM audit_log
   WHERE
@@ -128,7 +141,14 @@ LANGUAGE sql STABLE SECURITY DEFINER AS $$
     )
   ORDER BY created_at DESC, id DESC
   LIMIT p_limit;
+END;
 $$;
+
+-- Only authenticated users may call this function; inline check further
+-- restricts to admin/superadmin/editor roles.
+GRANT EXECUTE ON FUNCTION get_audit_logs_paginated(
+  text, text, uuid, uuid, timestamptz, timestamptz, timestamptz, uuid, int
+) TO authenticated;
 
 -- Pagination index (created_at, id) for ORDER BY and keyset cursor
 CREATE INDEX IF NOT EXISTS audit_log_created_at_id_idx
@@ -137,7 +157,7 @@ CREATE INDEX IF NOT EXISTS audit_log_created_at_id_idx
 
 > **注意：** 成員/團體搜尋的預期行為：同時包含「成員/團體本身的變更」（`record_id` 命中）與「關聯 history/songs 的變更」（JSONB 欄位命中）。這是刻意設計，讓使用者能一次看到一個成員/團體的全部相關紀錄。
 >
-> `audit_log_history_member_id_idx` 與 `audit_log_history_group_id_idx`（`061` migration）已涵蓋 history JSONB 欄位搜尋。`record_id` 欄位若未來資料量大，可另行評估是否補 index。
+> `audit_log_history_member_id_idx` 與 `audit_log_history_group_id_idx`（`061` migration）只涵蓋 history 的 `new_data` 欄位查詢，`old_data` 與 songs 資料表不在這兩個 index 內。完整效能 index 依未來資料量另行評估。
 
 ### Service 層
 
