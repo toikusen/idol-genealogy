@@ -16,6 +16,7 @@ interface FeedEntry {
   occurredAt: string;
   link?: string;
   isNew: boolean;
+  relatedGroupId?: string;
 }
 
 interface FeedGroup {
@@ -38,7 +39,7 @@ interface HistoryStatusAudit {
   changedAt: string;
 }
 
-type TypeFilter = 'all' | 'event' | 'song' | 'member';
+type TypeFilter = 'all' | 'event' | 'song' | 'member' | 'group_change';
 
 interface TableCursors {
   groupSongs?: string;
@@ -257,6 +258,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     { value: 'event', label: '活動' },
     { value: 'song', label: '新歌' },
     { value: 'member', label: '成員動態' },
+    { value: 'group_change', label: '團體動態' },
   ];
 
   private realtimeChannel: RealtimeChannel | null = null;
@@ -296,14 +298,16 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     const groups = this.groupedItems();
     if (tf === 'all') return groups;
 
-    const memberTypes = new Set(['member_change', 'member_join', 'group_change']);
     return groups
       .map(g => ({
         ...g,
         items: g.items.filter(item => {
           if (tf === 'event') return item.eventType === 'event';
           if (tf === 'song') return item.eventType === 'song';
-          if (tf === 'member') return memberTypes.has(item.eventType);
+          if (tf === 'member') return item.eventType === 'member_change' || item.eventType === 'member_join';
+          if (tf === 'group_change') return item.eventType === 'group_change' || (
+            (item.eventType === 'member_join' || item.eventType === 'member_change') && !!item.relatedGroupId
+          );
           return true;
         }),
       }))
@@ -524,18 +528,19 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       historyRows.forEach((h: any) => {
         const groupName = h.group?.name ?? h.external_group_name ?? undefined;
         const isNewMembership = new Date(h.updated_at).getTime() - new Date(h.created_at).getTime() < 2000;
+        const relatedGroupId = h.group?.id ?? undefined;
         if (isNewMembership) {
           entries.push({ id: `join-${h.id}`, eventType: 'member_join',
             entityId: h.member?.id ?? '', entityType: 'member',
             entityName: h.member?.name ?? '', photoUrl: h.member?.photo_url ?? null,
             title: `新增歷程：${this.statusLabel(h.status, groupName, { isNewMembership })}`,
-            occurredAt: h.created_at, link: h.member?.id ? `/member/${h.member.id}` : undefined, isNew: false });
+            occurredAt: h.created_at, link: h.member?.id ? `/member/${h.member.id}` : undefined, isNew: false, relatedGroupId });
         } else if (h.status !== 'active') {
           entries.push({ id: `hist-${h.id}`, eventType: 'member_change',
             entityId: h.member?.id ?? '', entityType: 'member',
             entityName: h.member?.name ?? '', photoUrl: h.member?.photo_url ?? null,
             title: `編輯歷程：${this.statusLabel(h.status, groupName)}`,
-            occurredAt: h.updated_at, link: h.member?.id ? `/member/${h.member.id}` : undefined, isNew: false });
+            occurredAt: h.updated_at, link: h.member?.id ? `/member/${h.member.id}` : undefined, isNew: false, relatedGroupId });
         } else {
           const audit = statusAudits.get(h.id);
           entries.push({ id: `hist-${h.id}`, eventType: 'member_change',
@@ -543,7 +548,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
             entityName: h.member?.name ?? '', photoUrl: h.member?.photo_url ?? null,
             title: `編輯歷程：${this.statusLabel('active', groupName, { audit })}`,
             occurredAt: audit?.changedAt ?? h.updated_at,
-            link: h.member?.id ? `/member/${h.member.id}` : undefined, isNew: false });
+            link: h.member?.id ? `/member/${h.member.id}` : undefined, isNew: false, relatedGroupId });
         }
       });
     }
