@@ -18,6 +18,7 @@ export interface AutocompleteItem {
   photo_url?: string | null;
 }
 
+// Local midnight: lets admins filter by the date shown in their browser locale, not UTC midnight.
 export function toUtcRangeStart(dateStr: string): string {
   return new Date(dateStr + 'T00:00:00').toISOString();
 }
