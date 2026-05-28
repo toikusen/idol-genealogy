@@ -569,7 +569,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
 
       let dq = this.supabase.client
         .from('groups')
-        .select('id, name, disbanded_at, photo_url')
+        .select('id, name, disbanded_at, disbanded_announced_at, photo_url')
         .in('id', groupIds)
         .not('disbanded_at', 'is', null)
         .order('disbanded_at', { ascending: false })
@@ -578,13 +578,44 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       const { data: disbanded } = await dq;
       if (disbanded?.length) nextCursors.disbanded = disbanded[disbanded.length - 1].disbanded_at;
       if ((disbanded ?? []).length === PAGE_LIMIT) mightHaveMore = true;
-      (disbanded ?? []).forEach((g: any) => entries.push({
-        id: `disbanded-${g.id}`, eventType: 'group_change',
-        entityId: g.id, entityType: 'group',
-        entityName: g.name, photoUrl: g.photo_url ?? null,
-        title: '團體宣告解散',
-        occurredAt: g.disbanded_at, link: `/group/${g.id}`, isNew: false,
-      }));
+      const todayStr = new Date().toISOString().slice(0, 10);
+      (disbanded ?? []).forEach((g: any) => {
+        const isFuture = g.disbanded_at > todayStr;
+        const announcedAt: string | null = g.disbanded_announced_at ?? null;
+
+        if (isFuture) {
+          // Future dissolution: show announcement entry only (requires announcedAt to surface in feed)
+          if (announcedAt) {
+            entries.push({
+              id: `disbanded-announce-${g.id}`, eventType: 'group_change',
+              entityId: g.id, entityType: 'group',
+              entityName: g.name, photoUrl: g.photo_url ?? null,
+              title: `宣告將於 ${new Date(g.disbanded_at).toLocaleDateString('zh-TW')} 解散`,
+              occurredAt: announcedAt,
+              link: `/group/${g.id}`, isNew: false,
+            });
+          }
+        } else {
+          // Past or today: show dissolution entry
+          // announcedDate < disbanded_at → pre-announced, event date is disbanded_at
+          // announcedDate >= disbanded_at → backfill, surface at data-entry time
+          let occurredAt: string;
+          if (announcedAt) {
+            const announcedDateStr = new Date(announcedAt).toISOString().slice(0, 10);
+            occurredAt = announcedDateStr < g.disbanded_at ? g.disbanded_at : announcedAt;
+          } else {
+            occurredAt = g.disbanded_at; // legacy: no announcedAt, use disbanded_at
+          }
+          entries.push({
+            id: `disbanded-${g.id}`, eventType: 'group_change',
+            entityId: g.id, entityType: 'group',
+            entityName: g.name, photoUrl: g.photo_url ?? null,
+            title: '已解散',
+            occurredAt,
+            link: `/group/${g.id}`, isNew: false,
+          });
+        }
+      });
     }
 
     entries.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
@@ -640,6 +671,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   }
   formatTime(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 0) return new Date(iso).toLocaleDateString('zh-TW');
     const h = Math.floor(diff / 3_600_000);
     if (h < 1) return '剛才';
     if (h < 24) return `${h} 小時前`;

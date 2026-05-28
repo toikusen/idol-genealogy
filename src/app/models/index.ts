@@ -30,6 +30,7 @@ export interface Group {
   company_id: string | null;
   founded_at: string | null;
   disbanded_at: string | null;
+  disbanded_announced_at: string | null;
   notes: string | null;
   is_trainee: boolean;
   style: string | null;

@@ -100,7 +100,7 @@ describe('FavoritesFeedComponent — pagination and race guard', () => {
       id: '1', title: 'T', created_at: '2024-01-01', first_seen_at: '2024-01-01',
       group_id: 'g1', group: { id: 'g1', name: 'G', photo_url: null },
       groups: { id: 'g1', name: 'G', photo_url: null },
-      disbanded_at: '2024-01-01', name: 'Group 1', photo_url: null,
+      disbanded_at: '2024-01-01', disbanded_announced_at: null, name: 'Group 1', photo_url: null,
     }];
     const channelMock2: any = { on: () => channelMock2, subscribe: () => channelMock2 };
     const mockSupa2 = { client: { from: (_: string) => makeChainFixed(rows), channel: () => channelMock2, removeChannel: () => {} } };
@@ -132,6 +132,7 @@ describe('FavoritesFeedComponent — pagination and race guard', () => {
       group: { id: 'g1', name: 'G', photo_url: null },
       groups: { id: 'g1', name: 'G', photo_url: null },
       disbanded_at: `2024-01-${String(i % 28 + 1).padStart(2, '0')}`,
+      disbanded_announced_at: null,
       name: `Group ${i}`,
       photo_url: null,
     }));
@@ -160,7 +161,7 @@ describe('FavoritesFeedComponent — pagination and race guard', () => {
       id: '1', title: 'T', created_at: '2024-01-01', first_seen_at: '2024-01-01',
       group_id: 'g1', group: { id: 'g1', name: 'G', photo_url: null },
       groups: { id: 'g1', name: 'G', photo_url: null },
-      disbanded_at: '2024-01-01', name: 'Group 1', photo_url: null,
+      disbanded_at: '2024-01-01', disbanded_announced_at: null, name: 'Group 1', photo_url: null,
     }];
     const channelMock4: any = { on: () => channelMock4, subscribe: () => channelMock4 };
     const mockSupa4 = { client: { from: (_: string) => makeChainFixed(singleRow), channel: () => channelMock4, removeChannel: () => {} } };

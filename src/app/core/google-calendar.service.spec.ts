@@ -14,7 +14,7 @@ function mockMember(id: string, overrides: Partial<Member> = {}): Member {
 
 const baseGroup: Group = {
   id: 'g1', name: 'Group 1', name_jp: null, photo_url: null, color: '#000',
-  company: null, company_id: null, founded_at: null, disbanded_at: null,
+  company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null,
   notes: null, is_trainee: false, style: null, instagram: null, facebook: null,
   x: null, youtube: null, timetree_url: null, updated_at: '2026-01-01', created_at: '2026-01-01',
 };
