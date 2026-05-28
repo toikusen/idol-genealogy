@@ -42,6 +42,7 @@ interface AuditDiff {
 })
 export class AdminAuditLogComponent implements OnInit {
   logs: AuditLog[] = [];
+  hasMore = false;
   loading = true;
   error = '';
   filterTable = '';
@@ -282,7 +283,9 @@ export class AdminAuditLogComponent implements OnInit {
       const filter: any = {};
       if (this.filterTable) filter.table_name = this.filterTable;
       if (this.filterOperation) filter.operation = this.filterOperation;
-      this.logs = await this.auditLog.getAll(filter);
+      const { data, hasMore } = await this.auditLog.getAll(filter);
+      this.logs = data;
+      this.hasMore = hasMore;
     } catch (e: any) {
       this.error = e.message || '載入失敗';
     } finally {
