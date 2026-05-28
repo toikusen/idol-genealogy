@@ -391,6 +391,7 @@ export class AdminAuditLogComponent implements OnInit {
   }
 
   async clearDateFilter(): Promise<void> {
+    if (!this.dateFrom && !this.dateTo) return;
     this.dateFrom = '';
     this.dateTo   = '';
     this.resetPagination();
