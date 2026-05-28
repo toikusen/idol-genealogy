@@ -11,7 +11,7 @@
 <router-outlet />
 
 @if ((session$ | async); as session) {
-  @if (!isAdminRoute) {
+  @if (!isAdminRoute && !isFavoritesRoute) {
     <div class="user-pill" style="
       position: fixed;
       bottom: 16px;

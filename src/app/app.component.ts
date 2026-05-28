@@ -83,6 +83,10 @@ export class AppComponent {
     return this.router.url.startsWith('/admin');
   }
 
+  get isFavoritesRoute(): boolean {
+    return this.router.url.startsWith('/my-favorites');
+  }
+
   signOut() {
     this.loadAuthChrome().then(() => {
       this.supabase?.signOut().then(() => this.router.navigate(['/']));
