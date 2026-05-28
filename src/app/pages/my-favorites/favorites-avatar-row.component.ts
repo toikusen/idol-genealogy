@@ -14,8 +14,8 @@ interface ActivityData {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div style="padding:12px 20px 10px;border-bottom:1px solid rgba(232,121,160,0.08);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div style="padding:12px 10px 10px;border-bottom:1px solid rgba(232,121,160,0.08);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 4px;">
         <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);">已追蹤</div>
         @if (displayItems().length > 0) {
           <button (click)="editMode.set(!editMode())"
