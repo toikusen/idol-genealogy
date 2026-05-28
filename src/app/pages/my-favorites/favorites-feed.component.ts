@@ -759,7 +759,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       const m: Record<string, string> = { graduated: '結束個人活動', withdrawn: '結束個人活動', hiatus: '個人活休', transferred: '結束個人活動', concurrent: '兼任其他組合', support: '支援其他組合' };
       return m[status] ?? status;
     }
-    const m: Record<string, string> = { graduated: `從${g}畢業`, withdrawn: `從${g}退出`, hiatus: `在${g}活休`, transferred: `從${g}轉組`, concurrent: `兼任${g}`, support: `支援${g}` };
+    const m: Record<string, string> = { graduated: `從${g}畢業`, withdrawn: `從${g}退出`, hiatus: `在${g}活休`, transferred: `從${g}移籍`, concurrent: `兼任${g}`, support: `支援${g}` };
     return m[status] ?? status;
   }
 }
