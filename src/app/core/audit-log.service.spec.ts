@@ -135,6 +135,16 @@ describe('AuditLogService', () => {
     );
   });
 
+  it('getAll() clamps limit > 100 to 100 and passes p_limit 101 to RPC', async () => {
+    dbSpy.rpc.and.resolveTo({ data: [], error: null });
+
+    await service.getAll({ limit: 200 });
+
+    expect(dbSpy.rpc).toHaveBeenCalledWith('get_audit_logs_paginated',
+      jasmine.objectContaining({ p_limit: 101 })
+    );
+  });
+
   it('canRevertLog() allows admins', async () => {
     adminRoleSpy.isAdmin.and.resolveTo(true);
     await expectAsync(service.canRevertLog(makeLog())).toBeResolvedTo(true);

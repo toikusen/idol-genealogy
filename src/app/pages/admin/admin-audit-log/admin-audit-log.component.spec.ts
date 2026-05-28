@@ -38,6 +38,7 @@ function makeLog(overrides: Partial<AuditLog> = {}): AuditLog {
 
 describe('AdminAuditLogComponent — pagination', () => {
   let component: AdminAuditLogComponent;
+  let fixture: any;
   let auditLogSpy: jasmine.SpyObj<AuditLogService>;
 
   beforeEach(async () => {
@@ -55,7 +56,7 @@ describe('AdminAuditLogComponent — pagination', () => {
       ],
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(AdminAuditLogComponent);
+    fixture = TestBed.createComponent(AdminAuditLogComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
     auditLogSpy.getAll.calls.reset();
@@ -120,6 +121,19 @@ describe('AdminAuditLogComponent — pagination', () => {
 
     expect(component.cursorStack).toEqual([]);
     expect(component.currentCursor).toBeNull();
+  });
+
+  it('renders 較舊 button when hasMore=true even if displayLogs is empty', async () => {
+    component.logs = [];
+    component.hasMore = true;
+    component.loading = false;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const allButtons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
+    const olderBtn = allButtons.find((b: HTMLButtonElement) => b.textContent?.includes('較舊'));
+    expect(olderBtn).toBeTruthy();
+    expect(olderBtn?.disabled).toBeFalse();
   });
 });
 
