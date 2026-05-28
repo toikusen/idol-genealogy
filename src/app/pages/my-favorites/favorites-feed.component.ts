@@ -258,6 +258,8 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
+  private readonly _filter = signal<string | undefined>(undefined);
+
   readonly loading = signal(true);
   readonly loadingMore = signal(false);
   readonly error = signal(false);
@@ -311,7 +313,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
 
   readonly visibleTypeChips = computed(() => {
     const spotlight = this.spotlightEntity();
-    const entityType = spotlight?.entityType ?? this.filter;
+    const entityType = spotlight?.entityType ?? this._filter();
     if (entityType === 'member') {
       return this.typeChips.filter(c => ['all', 'event', 'song', 'member'].includes(c.value));
     }
@@ -369,9 +371,12 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['filter'] && !changes['filter'].firstChange) {
-      this.typeFilter.set('all');
-      this.loadFeed();
+    if (changes['filter']) {
+      this._filter.set(this.filter);
+      if (!changes['filter'].firstChange) {
+        this.typeFilter.set('all');
+        this.loadFeed();
+      }
     }
   }
 
