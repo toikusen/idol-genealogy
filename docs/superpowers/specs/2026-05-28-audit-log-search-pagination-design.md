@@ -49,7 +49,13 @@ Row 2: [開始日期] ～ [結束日期] [清除]              顯示 50 筆
 
 ---
 
-## `AuditLogService.getAll()` 擴充
+## 查詢層：RPC 取代 chained client filters
+
+### 為什麼用 RPC
+
+Composite keyset cursor（`(created_at, id)` 排序）與成員/團體 JSONB OR 條件若以 Supabase JS client 的 `.or()` 多次 append 實作，生成的 URL params 行為是 AND 語意，技術上可行，但 JSONB 欄位在 `.or()` filter string 內的語法缺乏官方明確文件，實作時易出錯。改用 RPC 可在 SQL 裡完整且無歧義地表達所有條件。
+
+現有 `revert_audit_log` 和 `get_history_audit_logs_by_field` 已採用相同模式，新增 RPC 是一致的做法。
 
 ### Cursor 型別
 
@@ -60,11 +66,9 @@ interface AuditLogCursor {
 }
 ```
 
-使用 `{ created_at, id }` composite cursor，避免同毫秒多筆紀錄時 `lt(created_at)` 跳過資料。
-
 ### 日期範圍轉換（Component 層負責）
 
-`input[type=date]` 回傳純日期字串（如 `"2025-05-28"`）。**Component** 在呼叫 `getAll()` 前將其轉換為 UTC timestamp，以正確反映本地時區（台灣 UTC+8）：
+`input[type=date]` 回傳純日期字串（如 `"2025-05-28"`）。**Component** 在呼叫 service 前轉換為 UTC timestamp，以正確反映使用者本地時區：
 
 ```typescript
 function toUtcRangeStart(dateStr: string): string {
@@ -74,13 +78,68 @@ function toUtcRangeStart(dateStr: string): string {
 function toUtcRangeEnd(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + 1);
-  return d.toISOString();   // 本地隔日 00:00 → UTC，搭配 lt 使用
+  return d.toISOString();   // 本地隔日 00:00 → UTC，RPC 用 < 判斷
 }
 ```
 
-Service 的 `date_from` 對應 `gte`，`date_to` 對應 `lt`（非 `lte`）。
+### RPC 函數定義（migration `064_get_audit_logs_paginated.sql`）
 
-### Filter 介面
+```sql
+-- Admin-only RPC for paginated audit log with composite cursor,
+-- date range, and member/group search via record_id + JSONB fields.
+-- Returns user_email for display in the admin panel.
+-- SECURITY DEFINER bypasses audit_log RLS.
+CREATE OR REPLACE FUNCTION get_audit_logs_paginated(
+  p_table_name      text        DEFAULT NULL,
+  p_operation       text        DEFAULT NULL,
+  p_member_id       uuid        DEFAULT NULL,
+  p_group_id        uuid        DEFAULT NULL,
+  p_date_from       timestamptz DEFAULT NULL,
+  p_date_to         timestamptz DEFAULT NULL,
+  p_cursor_created_at timestamptz DEFAULT NULL,
+  p_cursor_id       uuid        DEFAULT NULL,
+  p_limit           int         DEFAULT 51
+)
+RETURNS SETOF audit_log
+LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT *
+  FROM audit_log
+  WHERE
+    (p_table_name IS NULL OR table_name = p_table_name)
+    AND (p_operation IS NULL OR operation = p_operation)
+    AND (p_date_from IS NULL OR created_at >= p_date_from)
+    AND (p_date_to   IS NULL OR created_at <  p_date_to)
+    AND (
+      p_cursor_created_at IS NULL
+      OR created_at < p_cursor_created_at
+      OR (created_at = p_cursor_created_at AND id < p_cursor_id)
+    )
+    AND (
+      p_member_id IS NULL
+      OR record_id = p_member_id
+      OR (old_data->>'member_id')::uuid = p_member_id
+      OR (new_data->>'member_id')::uuid = p_member_id
+    )
+    AND (
+      p_group_id IS NULL
+      OR record_id = p_group_id
+      OR (old_data->>'group_id')::uuid = p_group_id
+      OR (new_data->>'group_id')::uuid = p_group_id
+    )
+  ORDER BY created_at DESC, id DESC
+  LIMIT p_limit;
+$$;
+
+-- Pagination index (created_at, id) for ORDER BY and keyset cursor
+CREATE INDEX IF NOT EXISTS audit_log_created_at_id_idx
+  ON audit_log (created_at DESC, id DESC);
+```
+
+> **注意：** 成員/團體搜尋的預期行為：同時包含「成員/團體本身的變更」（`record_id` 命中）與「關聯 history/songs 的變更」（JSONB 欄位命中）。這是刻意設計，讓使用者能一次看到一個成員/團體的全部相關紀錄。
+>
+> `audit_log_history_member_id_idx` 與 `audit_log_history_group_id_idx`（`061` migration）已涵蓋 history JSONB 欄位搜尋。`record_id` 欄位若未來資料量大，可另行評估是否補 index。
+
+### Service 層
 
 ```typescript
 interface AuditLogFilter {
@@ -88,59 +147,27 @@ interface AuditLogFilter {
   operation?: string;
   member_id?: string;
   group_id?: string;
-  date_from?: string;          // UTC ISO string，gte
-  date_to?: string;            // UTC ISO string，lt（已含隔日偏移，由 component 算好傳入）
-  cursor?: AuditLogCursor;     // 上一頁最後一筆的 { created_at, id }
-  limit?: number;              // 預設 50
+  date_from?: string;         // UTC ISO string（component 算好傳入）
+  date_to?: string;           // UTC ISO string，RPC 用 < 判斷
+  cursor?: AuditLogCursor;
+  limit?: number;             // 預設 50，service 傳 limit+1 給 RPC
 }
-```
 
-### 查詢邏輯
-
-```typescript
 async getAll(filter?: AuditLogFilter): Promise<{ data: AuditLog[]; hasMore: boolean }> {
   const limit = filter?.limit ?? 50;
-  let query = this.db.from('audit_log').select('*');
-
-  if (filter?.table_name) query = query.eq('table_name', filter.table_name);
-  if (filter?.operation)  query = query.eq('operation', filter.operation);
-  if (filter?.date_from)  query = query.gte('created_at', filter.date_from);
-  if (filter?.date_to)    query = query.lt('created_at', filter.date_to);
-
-  if (filter?.cursor) {
-    const { created_at, id } = filter.cursor;
-    // keyset pagination：同 timestamp 時用 id 打破平手
-    query = query.or(
-      `created_at.lt.${created_at},` +
-      `and(created_at.eq.${created_at},id.lt.${id})`
-    );
-  }
-
-  if (filter?.member_id) {
-    // 預期行為：同時查詢「成員本身的變更」（record_id 命中）
-    // 以及「與該成員相關的 history/songs 變更」（JSONB 欄位命中）
-    query = query.or(
-      `record_id.eq.${filter.member_id},` +
-      `old_data->>member_id.eq.${filter.member_id},` +
-      `new_data->>member_id.eq.${filter.member_id}`
-    );
-  }
-  if (filter?.group_id) {
-    // 預期行為：同時查詢「團體本身的變更」與「與該團體相關的 history/songs 變更」
-    query = query.or(
-      `record_id.eq.${filter.group_id},` +
-      `old_data->>group_id.eq.${filter.group_id},` +
-      `new_data->>group_id.eq.${filter.group_id}`
-    );
-  }
-
-  const { data, error } = await query
-    .order('created_at', { ascending: false })
-    .order('id', { ascending: false })   // composite sort，確保 keyset stable
-    .limit(limit + 1);
-
+  const { data, error } = await this.db.rpc('get_audit_logs_paginated', {
+    p_table_name:       filter?.table_name       ?? null,
+    p_operation:        filter?.operation        ?? null,
+    p_member_id:        filter?.member_id        ?? null,
+    p_group_id:         filter?.group_id         ?? null,
+    p_date_from:        filter?.date_from        ?? null,
+    p_date_to:          filter?.date_to          ?? null,
+    p_cursor_created_at: filter?.cursor?.created_at ?? null,
+    p_cursor_id:         filter?.cursor?.id         ?? null,
+    p_limit:            limit + 1,
+  });
   if (error) throw error;
-  const rows = data ?? [];
+  const rows = (data ?? []) as AuditLog[];
   const hasMore = rows.length > limit;
   return { data: hasMore ? rows.slice(0, limit) : rows, hasMore };
 }
@@ -187,33 +214,18 @@ interface AutocompleteItem {
   cursorStack = [], currentCursor = null → load()
 
 「較舊」按鈕：
-  cursorStack.push(currentCursor)              // 推入本頁使用的 cursor，供「較新」還原
+  cursorStack.push(currentCursor)
   currentCursor = { created_at: logs[last].created_at, id: logs[last].id }
   load()
 
 「較新」按鈕：
-  currentCursor = cursorStack.pop() ?? null    // 還原到上一頁的查詢 cursor
+  currentCursor = cursorStack.pop() ?? null
   load()
   // 若 cursorStack 為空，較新按鈕 disabled
 
 任何篩選條件改變：
   cursorStack = [], currentCursor = null → load()
 ```
-
-> **說明：** cursor stack 儲存的是「抵達當前頁時使用的 cursor 值」（含 null 代表第一頁）。往較新翻就是把 cursor 還原到上一次的值重新查詢，不需後端支援逆向翻頁。
-
----
-
-## 資料庫 Index（需補 migration）
-
-目前 `audit_log` 沒有 `created_at` index。分頁排序是 `created_at desc, id desc`，建議補：
-
-```sql
-create index if not exists audit_log_created_at_id_idx
-  on audit_log (created_at desc, id desc);
-```
-
-此 migration 需加入 `supabase/migrations/` 目錄作為本次變更的一部分。
 
 ---
 
@@ -230,8 +242,8 @@ create index if not exists audit_log_created_at_id_idx
 
 | 檔案 | 變更類型 |
 |---|---|
-| `supabase/migrations/<timestamp>_audit_log_created_at_id_idx.sql` | 新增（DB index） |
-| `src/app/core/audit-log.service.ts` | 擴充 `getAll()` 簽章與查詢邏輯 |
+| `supabase/migrations/064_get_audit_logs_paginated.sql` | 新增（RPC 函數 + DB index） |
+| `src/app/core/audit-log.service.ts` | 改用 `rpc('get_audit_logs_paginated')`，新回傳型別 |
 | `src/app/core/audit-log.service.spec.ts` | 更新測試：配合新回傳型別 `{ data, hasMore }` |
 | `src/app/pages/admin/admin-audit-log/admin-audit-log.component.ts` | 新增狀態、分頁邏輯、autocomplete、日期轉換 |
 | `src/app/pages/admin/admin-audit-log/admin-audit-log.component.html` | 新增篩選列、autocomplete dropdown、分頁按鈕 |
