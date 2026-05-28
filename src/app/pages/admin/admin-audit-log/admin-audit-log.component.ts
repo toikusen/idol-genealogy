@@ -335,6 +335,76 @@ export class AdminAuditLogComponent implements OnInit {
     this.currentCursor = null;
   }
 
+  computeAutocompleteResults(): AutocompleteItem[] {
+    const q = this.autocompleteQuery.trim().toLowerCase();
+    if (!q) return [];
+    const memberResults: AutocompleteItem[] = this.members
+      .filter(m =>
+        (m.name ?? '').toLowerCase().includes(q) ||
+        (m.name_roman ?? '').toLowerCase().includes(q)
+      )
+      .slice(0, 5)
+      .map(m => ({ type: 'member' as const, id: m.id, name: m.name ?? m.name_roman ?? m.id, photo_url: m.photo_url }));
+
+    const groupResults: AutocompleteItem[] = this.groups
+      .filter(g =>
+        g.name.toLowerCase().includes(q) ||
+        (g.name_jp ?? '').toLowerCase().includes(q)
+      )
+      .slice(0, 5)
+      .map(g => ({ type: 'group' as const, id: g.id, name: g.name_jp ?? g.name, photo_url: g.photo_url }));
+
+    return [...memberResults, ...groupResults];
+  }
+
+  onAutocompleteInput(): void {
+    this.autocompleteResults = this.computeAutocompleteResults();
+    this.showAutocomplete = this.autocompleteResults.length > 0;
+  }
+
+  onAutocompleteBlur(): void {
+    setTimeout(() => { this.showAutocomplete = false; }, 150);
+  }
+
+  async selectAutocomplete(item: AutocompleteItem): Promise<void> {
+    this.autocompleteQuery = item.name;
+    this.showAutocomplete = false;
+    this.selectedMemberId = item.type === 'member' ? item.id : null;
+    this.selectedGroupId  = item.type === 'group'  ? item.id : null;
+    this.resetPagination();
+    await this.load();
+  }
+
+  async clearAutocomplete(): Promise<void> {
+    this.autocompleteQuery = '';
+    this.autocompleteResults = [];
+    this.showAutocomplete = false;
+    this.selectedMemberId = null;
+    this.selectedGroupId  = null;
+    this.resetPagination();
+    await this.load();
+  }
+
+  async onFilterChange(): Promise<void> {
+    this.resetPagination();
+    await this.load();
+  }
+
+  async clearDateFilter(): Promise<void> {
+    this.dateFrom = '';
+    this.dateTo   = '';
+    this.resetPagination();
+    await this.load();
+  }
+
+  get autocompleteMembers(): AutocompleteItem[] {
+    return this.autocompleteResults.filter(r => r.type === 'member');
+  }
+
+  get autocompleteGroups(): AutocompleteItem[] {
+    return this.autocompleteResults.filter(r => r.type === 'group');
+  }
+
   async load() {
     this.loading = true;
     this.error = '';

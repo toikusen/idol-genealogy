@@ -5,7 +5,7 @@ import { AdminRoleService } from '../../../core/admin-role.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { CompanyService } from '../../../core/company.service';
-import { AuditLog } from '../../../models';
+import { AuditLog, Member, Group } from '../../../models';
 
 describe('audit log date utils', () => {
   it('toUtcRangeEnd is exactly 24 hours after toUtcRangeStart for the same date', () => {
@@ -120,5 +120,96 @@ describe('AdminAuditLogComponent — pagination', () => {
 
     expect(component.cursorStack).toEqual([]);
     expect(component.currentCursor).toBeNull();
+  });
+});
+
+describe('AdminAuditLogComponent — autocomplete', () => {
+  let component: AdminAuditLogComponent;
+  let auditLogSpy: jasmine.SpyObj<AuditLogService>;
+
+  const mockMembers: Member[] = [
+    { id: 'm1', name: '木村咲子', name_roman: null, name_hiragana: null, emoji: null, photo_url: null, color: null, color_name: null, birthdate: null, nickname: null, instagram: null, facebook: null, x: null, maid_url: null, notes: null, company_id: null, no_sns: false, updated_at: '', created_at: '' },
+    { id: 'm2', name: '山田花子', name_roman: 'Hanako', name_hiragana: null, emoji: null, photo_url: null, color: null, color_name: null, birthdate: null, nickname: null, instagram: null, facebook: null, x: null, maid_url: null, notes: null, company_id: null, no_sns: false, updated_at: '', created_at: '' },
+  ];
+  const mockGroups: Group[] = [
+    { id: 'g1', name: 'AKB48', name_jp: null, photo_url: null, color: '#fff', company: null, company_id: null, founded_at: null, disbanded_at: null, notes: null, is_trainee: false, style: null, instagram: null, facebook: null, x: null, youtube: null, timetree_url: null, updated_at: '', created_at: '' },
+  ];
+
+  beforeEach(async () => {
+    auditLogSpy = jasmine.createSpyObj('AuditLogService', ['getAll', 'canRevertLog', 'revert', 'getRecord', 'updateRecord']);
+    auditLogSpy.getAll.and.resolveTo({ data: [], hasMore: false });
+
+    const memberSpy = jasmine.createSpyObj('MemberService', { getAll: Promise.resolve(mockMembers), invalidateCache: undefined });
+    const groupSpy  = jasmine.createSpyObj('GroupService',  { getAll: Promise.resolve(mockGroups), getTeamsByGroup: Promise.resolve([]), invalidateCache: undefined });
+
+    await TestBed.configureTestingModule({
+      imports: [AdminAuditLogComponent],
+      providers: [
+        { provide: AuditLogService, useValue: auditLogSpy },
+        { provide: AdminRoleService, useValue: jasmine.createSpyObj('AdminRoleService', { getCurrentRole: Promise.resolve(null), getAll: Promise.resolve([]) }) },
+        { provide: MemberService,  useValue: memberSpy },
+        { provide: GroupService,   useValue: groupSpy },
+        { provide: CompanyService, useValue: jasmine.createSpyObj('CompanyService', { getAll: Promise.resolve([]), invalidateCache: undefined }) },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(AdminAuditLogComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
+
+  it('computeAutocompleteResults filters members by name', () => {
+    component.autocompleteQuery = '木村';
+    const results = component.computeAutocompleteResults();
+    expect(results.length).toBe(1);
+    expect(results[0].id).toBe('m1');
+    expect(results[0].type).toBe('member');
+  });
+
+  it('computeAutocompleteResults filters members by name_roman', () => {
+    component.autocompleteQuery = 'Hana';
+    const results = component.computeAutocompleteResults();
+    const memberResult = results.find(r => r.type === 'member');
+    expect(memberResult?.id).toBe('m2');
+  });
+
+  it('computeAutocompleteResults includes groups', () => {
+    component.autocompleteQuery = 'AKB';
+    const results = component.computeAutocompleteResults();
+    expect(results.length).toBe(1);
+    expect(results[0].type).toBe('group');
+  });
+
+  it('computeAutocompleteResults returns empty for blank query', () => {
+    component.autocompleteQuery = '';
+    expect(component.computeAutocompleteResults()).toEqual([]);
+  });
+
+  it('selectAutocomplete sets selectedMemberId and resets pagination', async () => {
+    const item: AutocompleteItem = { type: 'member', id: 'm1', name: '木村咲子' };
+    await component.selectAutocomplete(item);
+    expect(component.selectedMemberId).toBe('m1');
+    expect(component.selectedGroupId).toBeNull();
+    expect(component.cursorStack.length).toBe(0);
+    expect(component.currentCursor).toBeNull();
+  });
+
+  it('selectAutocomplete sets selectedGroupId and clears selectedMemberId', async () => {
+    component.selectedMemberId = 'm1';
+    const item: AutocompleteItem = { type: 'group', id: 'g1', name: 'AKB48' };
+    await component.selectAutocomplete(item);
+    expect(component.selectedGroupId).toBe('g1');
+    expect(component.selectedMemberId).toBeNull();
+  });
+
+  it('clearAutocomplete resets selection and reloads', async () => {
+    component.selectedMemberId = 'm1';
+    component.autocompleteQuery = '木村';
+    await component.clearAutocomplete();
+    expect(component.selectedMemberId).toBeNull();
+    expect(component.selectedGroupId).toBeNull();
+    expect(component.autocompleteQuery).toBe('');
+    expect(auditLogSpy.getAll).toHaveBeenCalled();
   });
 });
