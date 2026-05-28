@@ -8,7 +8,7 @@ CREATE OR REPLACE FUNCTION get_audit_logs_paginated(
   p_member_id         uuid        DEFAULT NULL,
   p_group_id          uuid        DEFAULT NULL,
   p_date_from         timestamptz DEFAULT NULL,
-  p_date_to           timestamptz DEFAULT NULL,
+  p_date_to           timestamptz DEFAULT NULL,  -- exclusive upper bound (caller adds 1 day for inclusive date)
   p_cursor_created_at timestamptz DEFAULT NULL,
   p_cursor_id         uuid        DEFAULT NULL,
   p_limit             int         DEFAULT 51
@@ -26,6 +26,10 @@ BEGIN
     RAISE EXCEPTION '無查詢變更記錄的權限';
   END IF;
 
+  IF (p_cursor_created_at IS NULL) <> (p_cursor_id IS NULL) THEN
+    RAISE EXCEPTION 'cursor fields must both be null or both be non-null';
+  END IF;
+
   RETURN QUERY
   SELECT *
   FROM audit_log
@@ -39,12 +43,14 @@ BEGIN
       OR created_at < p_cursor_created_at
       OR (created_at = p_cursor_created_at AND id < p_cursor_id)
     )
+    -- member_id values in old_data/new_data come from the audit trigger and are always valid UUIDs
     AND (
       p_member_id IS NULL
       OR record_id = p_member_id
       OR (old_data->>'member_id')::uuid = p_member_id
       OR (new_data->>'member_id')::uuid = p_member_id
     )
+    -- group_id values in old_data/new_data come from the audit trigger and are always valid UUIDs
     AND (
       p_group_id IS NULL
       OR record_id = p_group_id
