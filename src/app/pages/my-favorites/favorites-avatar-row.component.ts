@@ -65,17 +65,21 @@ interface ActivityData {
               <div [style.background]="item.isGroup
                   ? 'linear-gradient(135deg,rgba(232,121,160,0.35),rgba(192,80,128,0.45))'
                   : 'linear-gradient(135deg,rgba(134,239,172,0.35),rgba(74,222,128,0.5))'"
-                [style.border-color]="item.isGroup ? 'rgba(232,121,160,0.5)' : 'rgba(134,239,172,0.55)'"
+                [style.border-color]="selectedId() === item.id
+                  ? 'rgba(255,255,255,0.7)'
+                  : (item.isGroup ? 'rgba(232,121,160,0.5)' : 'rgba(134,239,172,0.55)')"
                 [style.opacity]="editMode() ? '0.7' : '1'"
                 [style.box-shadow]="selectedId() === item.id
-                  ? '0 0 0 2px var(--bg-surface), 0 0 0 4px rgba(232,121,160,0.85)'
-                  : 'none'"
+                  ? '0 0 0 3px rgba(255,255,255,0.82), 0 0 14px rgba(255,255,255,0.18), 0 4px 10px rgba(0,0,0,0.25)'
+                  : '0 2px 6px rgba(0,0,0,0.12)'"
+                [style.transform]="selectedId() === item.id ? 'scale(1.1) translateY(-2px)' : 'scale(1) translateY(0)'"
                 style="
                   width:48px;height:48px;border-radius:50%;
                   border:2px solid;
                   display:flex;align-items:center;justify-content:center;
                   font-size:0.7rem;font-weight:600;color:white;
-                  overflow:hidden;transition:opacity 0.15s, box-shadow 0.2s;
+                  overflow:hidden;
+                  transition:opacity 0.15s, box-shadow 0.22s cubic-bezier(0.34,1.56,0.64,1), transform 0.22s cubic-bezier(0.34,1.56,0.64,1), border-color 0.15s;
                 "
               >
                 @if (item.photoUrl) {
@@ -85,8 +89,9 @@ interface ActivityData {
                 }
               </div>
             </button>
-            <span [style.color]="selectedId() === item.id ? 'rgba(232,121,160,0.9)' : 'var(--text-faint-55)'"
-                  style="font-size:0.7rem;max-width:54px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.15s;">
+            <span [style.color]="selectedId() === item.id ? 'var(--text-primary)' : 'var(--text-faint-55)'"
+                  [style.font-weight]="selectedId() === item.id ? '600' : '400'"
+                  style="font-size:0.7rem;max-width:54px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.15s,font-weight 0.15s;">
               {{ item.name }}
             </span>
           </div>
