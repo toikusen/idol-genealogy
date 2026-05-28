@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuditLogService } from '../../../core/audit-log.service';
+import { AuditLogService, AuditLogFilter, AuditLogCursor } from '../../../core/audit-log.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
@@ -10,6 +10,23 @@ import { FIELD_LABELS } from '../../../core/proposal-fields.config';
 import { AuditLog, Company, Group, Member, Team } from '../../../models';
 import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 import { SupabaseImgPipe } from '../../../shared/supabase-img.pipe';
+
+export interface AutocompleteItem {
+  type: 'member' | 'group';
+  id: string;
+  name: string;
+  photo_url?: string | null;
+}
+
+export function toUtcRangeStart(dateStr: string): string {
+  return new Date(dateStr + 'T00:00:00').toISOString();
+}
+
+export function toUtcRangeEnd(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + 1);
+  return d.toISOString();
+}
 
 type AuditEditFieldType = 'text' | 'textarea' | 'date' | 'url' | 'number' | 'select' | 'checkbox';
 
@@ -47,6 +64,21 @@ export class AdminAuditLogComponent implements OnInit {
   error = '';
   filterTable = '';
   filterOperation = '';
+
+  // Autocomplete
+  autocompleteQuery = '';
+  autocompleteResults: AutocompleteItem[] = [];
+  showAutocomplete = false;
+  selectedMemberId: string | null = null;
+  selectedGroupId: string | null = null;
+
+  // Date filter (local date strings)
+  dateFrom = '';
+  dateTo = '';
+
+  // Pagination
+  currentCursor: AuditLogCursor | null = null;
+  cursorStack: (AuditLogCursor | null)[] = [];
   currentUserEmail = '';
   isEditorOnly = false;
   expandedId: string | null = null;
@@ -276,13 +308,46 @@ export class AdminAuditLogComponent implements OnInit {
     }
   }
 
+  get canGoNewer(): boolean {
+    return this.cursorStack.length > 0;
+  }
+
+  get displayCount(): string {
+    const n = this.displayLogs.length;
+    return this.hasMore ? `顯示 ${n} 筆（還有更多）` : `顯示 ${n} 筆`;
+  }
+
+  async goOlder(): Promise<void> {
+    const last = this.logs[this.logs.length - 1];
+    if (!last) return;
+    this.cursorStack.push(this.currentCursor);
+    this.currentCursor = { created_at: last.created_at, id: last.id };
+    await this.load();
+  }
+
+  async goNewer(): Promise<void> {
+    this.currentCursor = this.cursorStack.pop() ?? null;
+    await this.load();
+  }
+
+  resetPagination(): void {
+    this.cursorStack = [];
+    this.currentCursor = null;
+  }
+
   async load() {
     this.loading = true;
     this.error = '';
     try {
-      const filter: any = {};
-      if (this.filterTable) filter.table_name = this.filterTable;
-      if (this.filterOperation) filter.operation = this.filterOperation;
+      const filter: AuditLogFilter = {};
+      if (this.filterTable)       filter.table_name = this.filterTable;
+      if (this.filterOperation)   filter.operation  = this.filterOperation;
+      if (this.selectedMemberId)  filter.member_id  = this.selectedMemberId;
+      if (this.selectedGroupId)   filter.group_id   = this.selectedGroupId;
+      if (this.dateFrom)          filter.date_from  = toUtcRangeStart(this.dateFrom);
+      if (this.dateTo)            filter.date_to    = toUtcRangeEnd(this.dateTo);
+      if (this.currentCursor)     filter.cursor     = this.currentCursor;
+
       const { data, hasMore } = await this.auditLog.getAll(filter);
       this.logs = data;
       this.hasMore = hasMore;
