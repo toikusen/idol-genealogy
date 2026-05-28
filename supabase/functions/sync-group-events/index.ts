@@ -196,13 +196,15 @@ serve(async (req) => {
     }
   }));
 
-  // Atomically claim unnotified events — UPDATE...RETURNING in a single statement prevents
-  // concurrent invocations from both seeing the same NULL rows and double-notifying.
+  // Atomically claim unnotified events without marking them delivered yet. A stale
+  // claim can be retried after 15 minutes if the push send fails mid-flight.
   // Also guard starts_at >= threeMonthsAgo as second layer to skip any expired rows that slipped through.
+  const claimCutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
   const { data: claimed, error: claimError } = await supabase
     .from("group_events")
-    .update({ notified_at: now })
+    .update({ notify_claimed_at: now })
     .is("notified_at", null)
+    .or(`notify_claimed_at.is.null,notify_claimed_at.lt.${claimCutoff}`)
     .gte("starts_at", threeMonthsAgo)
     .select("id, group_id, title, url, groups(name)");
 
@@ -214,13 +216,15 @@ serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   // Group claimed events by group_id
-  const byGroup = new Map<string, { groupName: string; firstTitle: string; firstUrl: string | null; count: number }>();
+  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; firstUrl: string | null; count: number }>();
   for (const evt of claimed ?? []) {
     const entry = byGroup.get(evt.group_id);
     if (entry) {
       entry.count++;
+      entry.ids.push(evt.id);
     } else {
       byGroup.set(evt.group_id, {
+        ids: [evt.id],
         groupName: (evt as any).groups?.name ?? '',
         firstTitle: evt.title,
         firstUrl: evt.url ?? null,
@@ -231,7 +235,7 @@ serve(async (req) => {
 
   console.log(`Pending push notifications: ${claimed?.length ?? 0} events across ${byGroup.size} groups`);
 
-  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { groupName, firstTitle, firstUrl, count }]) => {
+  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, firstUrl, count }]) => {
     const { data: favUsers } = await supabase
       .from("user_favorites")
       .select("user_id")
@@ -239,7 +243,10 @@ serve(async (req) => {
       .eq("entity_id", groupId);
 
     const userIds = (favUsers ?? []).map((f: any) => f.user_id);
-    if (userIds.length === 0) return;
+    if (userIds.length === 0) {
+      await supabase.from("group_events").update({ notified_at: now, notify_claimed_at: null }).in("id", ids);
+      return;
+    }
 
     const { data: optedOutRows, error: prefsError } = await supabase
       .from("push_notification_prefs")
@@ -249,7 +256,10 @@ serve(async (req) => {
     if (prefsError) console.error(`[sync-group-events] prefs query error: ${prefsError.message}`);
     const optedOut = prefsError ? new Set<string>() : new Set((optedOutRows ?? []).map((p: any) => p.user_id));
     const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
-    if (filteredIds.length === 0) return;
+    if (filteredIds.length === 0) {
+      await supabase.from("group_events").update({ notified_at: now, notify_claimed_at: null }).in("id", ids);
+      return;
+    }
 
     const targetUrl = count === 1 && firstUrl ? firstUrl : `/group/${groupId}`;
     const notifBody = count === 1 ? firstTitle : `${count} 個新活動`;
@@ -271,11 +281,12 @@ serve(async (req) => {
       if (!pushRes.ok) {
         const body = await pushRes.text().catch(() => '');
         console.error(`[sync-group-events] send-push-notification HTTP ${pushRes.status} for group ${groupId}: ${body}`);
+        return;
       }
+      await supabase.from("group_events").update({ notified_at: now, notify_claimed_at: null }).in("id", ids);
     } catch (sendErr) {
       console.error(`[sync-group-events] send push failed for group ${groupId}: ${sendErr}`);
     }
-    // notified_at already set in the atomic claim above — no second UPDATE needed
   }));
 
   // Cleanup expired events (starts_at older than 3 months) — safety net in case anything slipped through

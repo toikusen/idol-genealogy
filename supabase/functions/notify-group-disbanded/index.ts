@@ -41,7 +41,7 @@ serve(async (req) => {
   if (filteredIds.length === 0) return new Response("all opted out", { status: 200 });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+  const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -64,6 +64,10 @@ serve(async (req) => {
       },
     }),
   });
+  if (!pushRes.ok) {
+    const body = await pushRes.text().catch(() => "");
+    console.error(`[notify-group-disbanded] send-push HTTP ${pushRes.status}: ${body}`);
+  }
 
   console.log(`[notify-group-disbanded] ${groupName} — notified ${filteredIds.length} user(s)`);
   return new Response(JSON.stringify({ notified: filteredIds.length }), {

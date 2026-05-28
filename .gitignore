@@ -68,7 +68,6 @@ docs/ai/
 supabase/.temp/
 supabase/member.html
 supabase/seeds/
-supabase/migrations/
 
 # Local scripts
 scripts/parse-member-html.mjs

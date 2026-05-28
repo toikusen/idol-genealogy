@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject, signal, effect, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, OnChanges, OnDestroy, PLATFORM_ID, SimpleChanges, inject, signal, effect, computed } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { FavoritesService } from '../../core/favorites.service';
@@ -223,7 +223,7 @@ const BIRTHDAY_DAYS = 14;
         @if (hasMore()) {
           <div style="text-align:center;padding:18px 0 8px;">
             <button (click)="loadMore()" [disabled]="loadingMore()"
-              style="font-size:0.8rem;padding:7px 22px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text-faint-55);cursor:pointer;font-family:var(--font-sans);"
+              style="font-size:0.8rem;padding:7px 22px;background:var(--mauve-04);border:1px solid var(--mauve-12);border-radius:8px;color:var(--text-faint-55);cursor:pointer;font-family:var(--font-sans);"
               [style.opacity]="loadingMore() ? '0.5' : '1'">
               {{ loadingMore() ? '載入中…' : '載入更多' }}
             </button>
@@ -238,7 +238,8 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
 
   private favService = inject(FavoritesService);
   private supabase = inject(SupabaseService);
-  private readonly isBrowser = typeof window !== 'undefined';
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   readonly loading = signal(true);
   readonly loadingMore = signal(false);

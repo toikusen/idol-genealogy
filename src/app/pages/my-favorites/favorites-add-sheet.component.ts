@@ -26,7 +26,7 @@ type SheetTab = 'group' | 'member';
       aria-modal="true"
       aria-labelledby="add-sheet-title"
       (keydown.escape)="close.emit()"
-      (keydown.tab)="onTabKey($event)"
+      (keydown.tab)="onTabKey($any($event))"
       style="
         position:fixed;bottom:0;left:0;right:0;z-index:1200;
         background:var(--surface, #fff);border-radius:20px 20px 0 0;
@@ -163,6 +163,7 @@ export class FavoritesAddSheetComponent implements OnInit, AfterViewInit, OnDest
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private _triggerEl: Element | null = null;
+  private _searchSeq = 0;
 
   readonly favDetails = computed<(Group | Member)[]>(() =>
     this.tab() === 'group' ? this._favGroups() : this._favMembers()
@@ -207,8 +208,10 @@ export class FavoritesAddSheetComponent implements OnInit, AfterViewInit, OnDest
   }
 
   switchTab(t: SheetTab): void {
+    this._searchSeq++;
     this.tab.set(t);
     this.query.set('');
+    this.searching.set(false);
     this._searchGroups.set([]);
     this._searchMembers.set([]);
   }
@@ -216,9 +219,14 @@ export class FavoritesAddSheetComponent implements OnInit, AfterViewInit, OnDest
   onInput(value: string): void {
     this.query.set(value);
     if (this.searchTimer) clearTimeout(this.searchTimer);
-    if (value.length < 2) return;
+    const seq = ++this._searchSeq;
+    if (value.length < 2) {
+      this.searching.set(false);
+      return;
+    }
     this.searching.set(true);
-    this.searchTimer = setTimeout(() => void this.doSearch(value), 300);
+    const tab = this.tab();
+    this.searchTimer = setTimeout(() => void this.doSearch(value, tab, seq), 300);
   }
 
   isFav(id: string): boolean {
@@ -256,10 +264,10 @@ export class FavoritesAddSheetComponent implements OnInit, AfterViewInit, OnDest
 
     const [groups, members] = await Promise.all([
       groupIds.length
-        ? this.supabase.client.from('groups').select('id, name, photo_url, company, company_id, color, name_jp, founded_at, disbanded_at, notes, is_trainee, style, instagram, facebook, x, youtube, timetree_url, updated_at, created_at').in('id', groupIds)
+        ? this.supabase.client.from('groups').select('id, name, photo_url, company').in('id', groupIds)
         : Promise.resolve({ data: [] }),
       memberIds.length
-        ? this.supabase.client.from('members').select('id, name, name_roman, name_hiragana, photo_url, birthdate, color, color_name, nickname, emoji, instagram, facebook, x, maid_url, no_sns, notes, company_id, updated_at, created_at').in('id', memberIds)
+        ? this.supabase.client.from('members').select('id, name, name_roman, photo_url').in('id', memberIds)
         : Promise.resolve({ data: [] }),
     ]);
 
@@ -267,19 +275,21 @@ export class FavoritesAddSheetComponent implements OnInit, AfterViewInit, OnDest
     this._favMembers.set((members.data ?? []) as Member[]);
   }
 
-  private async doSearch(q: string): Promise<void> {
+  private async doSearch(q: string, tab: SheetTab, seq: number): Promise<void> {
     try {
-      if (this.tab() === 'group') {
+      if (tab === 'group') {
         const results = await this.groupService.search(q);
+        if (seq !== this._searchSeq || this.tab() !== tab || this.query() !== q) return;
         this._searchGroups.set(results);
       } else {
         const results = await this.memberService.search(q);
+        if (seq !== this._searchSeq || this.tab() !== tab || this.query() !== q) return;
         this._searchMembers.set(results);
       }
     } catch {
       // silently ignore search errors
     } finally {
-      this.searching.set(false);
+      if (seq === this._searchSeq) this.searching.set(false);
     }
   }
 }

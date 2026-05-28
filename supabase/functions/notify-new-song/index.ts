@@ -43,7 +43,7 @@ serve(async (req) => {
   if (filteredIds.length === 0) return new Response("all opted out", { status: 200 });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+  const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
     body: JSON.stringify({
@@ -56,6 +56,10 @@ serve(async (req) => {
       },
     }),
   });
+  if (!pushRes.ok) {
+    const body = await pushRes.text().catch(() => "");
+    console.error(`[notify-new-song] send-push HTTP ${pushRes.status}: ${body}`);
+  }
 
   return new Response("ok", { status: 200 });
 });

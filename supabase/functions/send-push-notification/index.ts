@@ -70,13 +70,18 @@ serve(async (req) => {
 
   const payload = JSON.stringify({ notification: body.notification });
   const expiredEndpoints: string[] = [];
+  let failed = 0;
 
   await Promise.allSettled(
     (subs ?? []).map(async (sub) => {
       try {
         await sendWebPush(sub, payload, vapidPublicKey, vapidPrivateKey, vapidSubject);
       } catch (err: any) {
-        if (err?.statusCode === 410) expiredEndpoints.push(sub.endpoint);
+        if (err?.statusCode === 404 || err?.statusCode === 410) expiredEndpoints.push(sub.endpoint);
+        else {
+          failed++;
+          console.error(`[send-push-notification] send failed for ${sub.endpoint}: ${err?.message ?? err}`);
+        }
       }
     }),
   );
@@ -88,8 +93,16 @@ serve(async (req) => {
       .in("endpoint", expiredEndpoints);
   }
 
+  const total = subs?.length ?? 0;
+  const sent = total - expiredEndpoints.length - failed;
+  const status = total > 0 && sent === 0 && failed > 0 ? 502 : 200;
+
   return new Response(
-    JSON.stringify({ sent: (subs?.length ?? 0) - expiredEndpoints.length, cleaned: expiredEndpoints.length }),
-    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    JSON.stringify({
+      sent,
+      cleaned: expiredEndpoints.length,
+      failed,
+    }),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
 });

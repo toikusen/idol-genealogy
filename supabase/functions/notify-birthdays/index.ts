@@ -15,6 +15,7 @@ serve(async (req) => {
   const month = String(taiwanDate.getUTCMonth() + 1).padStart(2, "0");
   const day = String(taiwanDate.getUTCDate()).padStart(2, "0");
   const today = `${month}-${day}`;
+  const birthdayOn = `${taiwanDate.getUTCFullYear()}-${month}-${day}`;
 
   const { data: members, error } = await supabase
     .from("members")
@@ -56,14 +57,27 @@ serve(async (req) => {
     const filteredIds = userIds.filter((id: string) => !optedOut.has(id));
     if (filteredIds.length === 0) return;
 
-    await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+    const claimedIds: string[] = [];
+    await Promise.all(filteredIds.map(async (userId: string) => {
+      const { error: claimError } = await supabase
+        .from("birthday_push_notifications")
+        .insert({ user_id: userId, member_id: member.id, birthday_on: birthdayOn });
+      if (!claimError) claimedIds.push(userId);
+      else if (claimError.code !== "23505") {
+        console.error(`[notify-birthdays] claim error for ${member.id}/${userId}: ${claimError.message}`);
+      }
+    }));
+
+    if (claimedIds.length === 0) return;
+
+    const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${serviceKey}`,
       },
       body: JSON.stringify({
-        user_ids: filteredIds,
+        user_ids: claimedIds,
         notification: {
           title: `${member.name} 生日快樂！`,
           body: `今天是 ${member.name} 的生日`,
@@ -80,8 +94,27 @@ serve(async (req) => {
       }),
     });
 
-    notified += filteredIds.length;
-    console.log(`[notify-birthdays] ${member.name} — notified ${filteredIds.length} user(s)`);
+    if (!pushRes.ok) {
+      const body = await pushRes.text().catch(() => "");
+      console.error(`[notify-birthdays] send-push HTTP ${pushRes.status}: ${body}`);
+      await supabase
+        .from("birthday_push_notifications")
+        .delete()
+        .eq("member_id", member.id)
+        .eq("birthday_on", birthdayOn)
+        .in("user_id", claimedIds);
+      return;
+    }
+
+    await supabase
+      .from("birthday_push_notifications")
+      .update({ delivered_at: new Date().toISOString() })
+      .eq("member_id", member.id)
+      .eq("birthday_on", birthdayOn)
+      .in("user_id", claimedIds);
+
+    notified += claimedIds.length;
+    console.log(`[notify-birthdays] ${member.name} — notified ${claimedIds.length} user(s)`);
   }));
 
   return new Response(JSON.stringify({ notified, members: members.length }), {

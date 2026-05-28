@@ -30,5 +30,33 @@
       }
     }
   ],
-  "dataGroups": []
+  "dataGroups": [
+    {
+      "name": "supabase-public-api",
+      "urls": [
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/groups**",
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/members**",
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/companies**",
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/group_events**"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 100,
+        "maxAge": "6h",
+        "timeout": "3s"
+      }
+    },
+    {
+      "name": "supabase-public-storage",
+      "urls": [
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/object/public/**",
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/render/image/public/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 200,
+        "maxAge": "30d"
+      }
+    }
+  ]
 }

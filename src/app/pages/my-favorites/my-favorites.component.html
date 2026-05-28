@@ -9,12 +9,13 @@
         <div class="mf-sidebar-greeting">Hi, {{ displayName }} ♥</div>
       }
     </div>
-    <!-- Always shown in sidebar regardless of activeTab — desktop shows avatars even during push settings -->
-    <app-favorites-avatar-row
-      [layout]="'grid'"
-      [filter]="(activeTab() === 'all' || activeTab() === 'push') ? undefined : activeTab()"
-      (addClicked)="openAddSheet()"
-    />
+    @if (activeTab() !== 'push') {
+      <app-favorites-avatar-row
+        [layout]="'grid'"
+        [filter]="activeTab() === 'all' ? undefined : activeTab()"
+        (addClicked)="openAddSheet()"
+      />
+    }
     <nav class="mf-filter-nav" aria-label="篩選分類">
       @for (tab of tabs; track tab.id) {
         <button

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { PushNotificationService } from '../../core/push-notification.service';
 import { NotificationPrefsService } from '../../core/notification-prefs.service';
@@ -201,7 +201,7 @@ import { NotificationPrefs } from '../../models';
     </div>
   `,
 })
-export class PushSettingsComponent implements OnInit {
+export class PushSettingsComponent implements OnInit, OnDestroy {
   readonly pushService = inject(PushNotificationService);
   readonly prefsService = inject(NotificationPrefsService);
   private supabase = inject(SupabaseService);
@@ -210,16 +210,29 @@ export class PushSettingsComponent implements OnInit {
   readonly loading = signal(false);
   readonly error = signal('');
   readonly _permission = signal<NotificationPermission | 'default'>('default');
+  private readonly syncPermission = () => {
+    if (!isPlatformBrowser(this.platformId)) return;
+    this._permission.set(Notification.permission);
+    void this.pushService.checkSubscription();
+  };
 
   async ngOnInit(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {
       this._permission.set(Notification.permission);
+      document.addEventListener('visibilitychange', this.syncPermission);
+      window.addEventListener('focus', this.syncPermission);
     }
     const session = await this.supabase.getSessionOnce();
     if (session) {
       await this.prefsService.load(session.user.id);
     }
     await this.pushService.checkSubscription();
+  }
+
+  ngOnDestroy(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    document.removeEventListener('visibilitychange', this.syncPermission);
+    window.removeEventListener('focus', this.syncPermission);
   }
 
   permission(): NotificationPermission | 'default' {

@@ -9,3 +9,9 @@ verify_jwt = false
 
 [functions.notify-group-disbanded]
 verify_jwt = false
+
+[functions.notify-new-song]
+verify_jwt = false
+
+[functions.notify-status-change]
+verify_jwt = false
