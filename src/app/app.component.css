@@ -70,6 +70,11 @@
   color: rgba(210, 175, 210, 0.65);
 }
 
+/* ── Theme toggle icons (CSS-driven to avoid SSR hydration mismatch) ── */
+.toggle-icon--sun { display: none; }
+:host-context([data-theme="dark"]) .toggle-icon--sun { display: block; }
+:host-context([data-theme="dark"]) .toggle-icon--moon { display: none; }
+
 /* ── Theme toggle button ── */
 .theme-toggle {
   position: fixed;
