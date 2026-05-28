@@ -488,7 +488,9 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       const existingIds = new Set(this.items().map(e => e.id));
       const fresh = entries.filter(e => !existingIds.has(e.id));
       this._tableCursors = nextCursors;
-      this.items.update(prev => [...prev, ...fresh]);
+      this.items.update(prev =>
+        [...prev, ...fresh].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+      );
       this.hasMore.set(mightHaveMore && fresh.length > 0);
       this.emitActivityCounts();
     } catch {
