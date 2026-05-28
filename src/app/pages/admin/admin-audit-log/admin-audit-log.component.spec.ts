@@ -71,11 +71,11 @@ describe('AdminAuditLogComponent — pagination', () => {
 
     await component.goOlder();
 
-    expect(component.cursorStack).toEqual([null] as any);
-    expect(component.currentCursor).toEqual({
+    expect(component.cursorStack).toEqual([null]);
+    expect(component.currentCursor).toEqual(jasmine.objectContaining({
       created_at: '2026-04-01T00:00:00Z',
       id: 'last',
-    } as any);
+    }));
     expect(auditLogSpy.getAll).toHaveBeenCalled();
   });
 
@@ -87,7 +87,7 @@ describe('AdminAuditLogComponent — pagination', () => {
 
     await component.goNewer();
 
-    expect(component.currentCursor).toEqual(prevCursor as any);
+    expect(component.currentCursor).toEqual(prevCursor);
     expect(component.cursorStack.length).toBe(0);
     expect(auditLogSpy.getAll).toHaveBeenCalled();
   });
@@ -110,5 +110,15 @@ describe('AdminAuditLogComponent — pagination', () => {
   it('canGoNewer is true when cursorStack has items', () => {
     component.cursorStack = [null];
     expect(component.canGoNewer).toBeTrue();
+  });
+
+  it('resetPagination() clears cursorStack and sets currentCursor to null', () => {
+    component.cursorStack = [{ created_at: '2026-03-01T00:00:00Z', id: 'prev' }];
+    component.currentCursor = { created_at: '2026-02-01T00:00:00Z', id: 'x' };
+
+    component.resetPagination();
+
+    expect(component.cursorStack).toEqual([]);
+    expect(component.currentCursor).toBeNull();
   });
 });
