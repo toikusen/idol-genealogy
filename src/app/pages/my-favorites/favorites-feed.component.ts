@@ -654,14 +654,14 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
           entries.push({ id: `gjoin-${h.id}`, eventType: 'member_join',
             entityId: groupId, entityType: 'group',
             entityName: h.group?.name ?? '', photoUrl: h.group?.photo_url ?? null,
-            title: `${memberName} 加入`,
+            title: `新增歷程：${memberName} 加入`,
             occurredAt: h.created_at, link: `/group/${groupId}`, isNew: false, relatedGroupId: groupId });
         } else if (h.status !== 'active') {
           const labelMap: Record<string, string> = { graduated: '畢業', withdrawn: '退出', hiatus: '活休', transferred: '移籍', concurrent: '兼任', support: '支援' };
           entries.push({ id: `ghist-${h.id}`, eventType: 'member_change',
             entityId: groupId, entityType: 'group',
             entityName: h.group?.name ?? '', photoUrl: h.group?.photo_url ?? null,
-            title: `${memberName} ${labelMap[h.status] ?? h.status}`,
+            title: `編輯歷程：${memberName} ${labelMap[h.status] ?? h.status}`,
             occurredAt: h.updated_at, link: `/group/${groupId}`, isNew: false, relatedGroupId: groupId });
         } else {
           const audit = groupHistAudits.get(h.id);
@@ -669,7 +669,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
           entries.push({ id: `ghist-${h.id}`, eventType: 'member_change',
             entityId: groupId, entityType: 'group',
             entityName: h.group?.name ?? '', photoUrl: h.group?.photo_url ?? null,
-            title: `${memberName} ${label}`,
+            title: `編輯歷程：${memberName} ${label}`,
             occurredAt: audit?.changedAt ?? h.updated_at, link: `/group/${groupId}`, isNew: false, relatedGroupId: groupId });
         }
       });
