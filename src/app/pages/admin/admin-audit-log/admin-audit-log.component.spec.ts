@@ -157,6 +157,7 @@ describe('AdminAuditLogComponent — autocomplete', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
     await fixture.whenStable();
+    auditLogSpy.getAll.calls.reset();
   });
 
   it('computeAutocompleteResults filters members by name', () => {
@@ -210,6 +211,40 @@ describe('AdminAuditLogComponent — autocomplete', () => {
     expect(component.selectedMemberId).toBeNull();
     expect(component.selectedGroupId).toBeNull();
     expect(component.autocompleteQuery).toBe('');
+    expect(auditLogSpy.getAll).toHaveBeenCalled();
+  });
+
+  it('computeAutocompleteResults shows name_jp as display name when group has name_jp', () => {
+    component.groups = [
+      { id: 'g2', name: 'AKB48', name_jp: 'エイケービー48', photo_url: null } as any,
+    ];
+    component.autocompleteQuery = 'AKB';
+    const results = component.computeAutocompleteResults();
+    expect(results.length).toBe(1);
+    expect(results[0].name).toBe('エイケービー48');
+  });
+
+  it('onFilterChange() resets pagination and calls load()', async () => {
+    component.cursorStack = [{ created_at: '2026-01-01T00:00:00Z', id: 'c1' }];
+    component.currentCursor = { created_at: '2026-01-01T00:00:00Z', id: 'c2' };
+
+    await component.onFilterChange();
+
+    expect(component.cursorStack).toEqual([]);
+    expect(component.currentCursor).toBeNull();
+    expect(auditLogSpy.getAll).toHaveBeenCalled();
+  });
+
+  it('clearDateFilter() clears dateFrom and dateTo, resets pagination, and calls load()', async () => {
+    component.dateFrom = '2025-01-01';
+    component.dateTo = '2025-12-31';
+    component.cursorStack = [null];
+
+    await component.clearDateFilter();
+
+    expect(component.dateFrom).toBe('');
+    expect(component.dateTo).toBe('');
+    expect(component.cursorStack).toEqual([]);
     expect(auditLogSpy.getAll).toHaveBeenCalled();
   });
 });
