@@ -72,7 +72,7 @@ export class AuditLogService {
   private get db() { return this.supabase.client; }
 
   async getAll(filter?: AuditLogFilter): Promise<{ data: AuditLog[]; hasMore: boolean }> {
-    const limit = filter?.limit ?? 50;
+    const limit = Math.max(1, Math.min(filter?.limit ?? 50, 100));
     const { data, error } = await this.db.rpc('get_audit_logs_paginated', {
       p_table_name:          filter?.table_name          ?? null,
       p_operation:           filter?.operation           ?? null,

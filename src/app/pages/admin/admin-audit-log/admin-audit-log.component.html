@@ -264,26 +264,27 @@
       </div>
     </div>
 
-    <!-- Pagination -->
-    @if (displayLogs.length > 0 || canGoNewer) {
-      <div class="flex justify-end gap-2 mt-3">
-        <button
-          (click)="goNewer()"
-          [disabled]="!canGoNewer || loading"
-          class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          ← 較新
-        </button>
-        <button
-          (click)="goOlder()"
-          [disabled]="!hasMore || loading"
-          class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          較舊 →
-        </button>
-      </div>
-    }
   }
+
+<!-- Pagination: outside the display-filter block so hidden timestamp-only pages still allow navigation -->
+@if (hasMore || canGoNewer) {
+  <div class="flex justify-end gap-2 mt-3">
+    <button
+      (click)="goNewer()"
+      [disabled]="!canGoNewer || loading"
+      class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+    >
+      ← 較新
+    </button>
+    <button
+      (click)="goOlder()"
+      [disabled]="!hasMore || loading"
+      class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+    >
+      較舊 →
+    </button>
+  </div>
+}
 </div>
 
 @if (editLog) {
