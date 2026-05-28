@@ -29,7 +29,7 @@ interface ActivityData {
         [style.display]="layout() === 'grid' ? 'grid' : 'flex'"
         [style.grid-template-columns]="layout() === 'grid' ? 'repeat(3, 1fr)' : ''"
         [style.flex-wrap]="layout() === 'grid' ? '' : 'nowrap'"
-        [style.overflow-x]="layout() === 'grid' ? 'hidden' : 'auto'"
+        [style.overflow-x]="layout() === 'grid' ? 'visible' : 'auto'"
         [style.gap]="'12px'"
         [style.padding-top]="'6px'"
         [style.padding-bottom]="layout() === 'grid' ? '6px' : '4px'"
