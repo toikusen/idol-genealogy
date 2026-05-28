@@ -1,9 +1,8 @@
-import { Component, Output, EventEmitter, inject, computed, effect, signal, input } from '@angular/core';
+import { Component, Output, EventEmitter, inject, computed, effect, signal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
 import { SupabaseService } from '../../core/supabase.service';
-import { FavoriteEntityType } from '../../models';
+import { FavoriteEntityType, SpotlightEntity } from '../../models';
 
 interface ActivityData {
   count: number;
@@ -13,7 +12,7 @@ interface ActivityData {
 @Component({
   selector: 'app-favorites-avatar-row',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   template: `
     <div style="padding:12px 20px 10px;border-bottom:1px solid rgba(232,121,160,0.08);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -27,8 +26,9 @@ interface ActivityData {
       </div>
       <div
         data-avatar-container
-        [style.display]="'flex'"
-        [style.flex-wrap]="layout() === 'grid' ? 'wrap' : 'nowrap'"
+        [style.display]="layout() === 'grid' ? 'grid' : 'flex'"
+        [style.grid-template-columns]="layout() === 'grid' ? 'repeat(3, 1fr)' : ''"
+        [style.flex-wrap]="layout() === 'grid' ? '' : 'nowrap'"
         [style.overflow-x]="layout() === 'grid' ? 'hidden' : 'auto'"
         [style.gap]="'12px'"
         [style.padding-top]="'6px'"
@@ -54,20 +54,26 @@ interface ActivityData {
               </span>
             }
 
-            <a [routerLink]="editMode() ? null : item.link"
-               [style.pointer-events]="editMode() ? 'none' : 'auto'"
-               style="display:block;text-decoration:none;">
+            <button
+              (click)="toggleSelect(item)"
+              [attr.aria-label]="(selectedId() === item.id ? '取消篩選 ' : '篩選 ') + item.name + ' 的動態'"
+              [attr.aria-pressed]="selectedId() === item.id"
+              style="background:none;border:none;padding:0;cursor:pointer;display:block;border-radius:50%;"
+            >
               <div [style.background]="item.isGroup
                   ? 'linear-gradient(135deg,rgba(232,121,160,0.35),rgba(192,80,128,0.45))'
                   : 'linear-gradient(135deg,rgba(134,239,172,0.35),rgba(74,222,128,0.5))'"
                 [style.border-color]="item.isGroup ? 'rgba(232,121,160,0.5)' : 'rgba(134,239,172,0.55)'"
                 [style.opacity]="editMode() ? '0.7' : '1'"
+                [style.box-shadow]="selectedId() === item.id
+                  ? '0 0 0 2px var(--bg-surface), 0 0 0 4px rgba(232,121,160,0.85)'
+                  : 'none'"
                 style="
                   width:48px;height:48px;border-radius:50%;
                   border:2px solid;
                   display:flex;align-items:center;justify-content:center;
                   font-size:0.7rem;font-weight:600;color:white;
-                  overflow:hidden;transition:opacity 0.15s;
+                  overflow:hidden;transition:opacity 0.15s, box-shadow 0.2s;
                 "
               >
                 @if (item.photoUrl) {
@@ -76,8 +82,9 @@ interface ActivityData {
                   {{ item.initials }}
                 }
               </div>
-            </a>
-            <span style="font-size:0.7rem;color:var(--text-faint-55);max-width:54px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </button>
+            <span [style.color]="selectedId() === item.id ? 'rgba(232,121,160,0.9)' : 'var(--text-faint-55)'"
+                  style="font-size:0.7rem;max-width:54px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.15s;">
               {{ item.name }}
             </span>
           </div>
@@ -106,7 +113,9 @@ interface ActivityData {
 export class FavoritesAvatarRowComponent {
   filter = input<string | undefined>();
   layout = input<'row' | 'grid'>('row');
+  selectedId = input<string | undefined>();
   @Output() addClicked = new EventEmitter<void>();
+  readonly entitySelect = output<SpotlightEntity | null>();
 
   private favService = inject(FavoritesService);
   private supabase = inject(SupabaseService);
@@ -158,6 +167,15 @@ export class FavoritesAvatarRowComponent {
       void this.loadDetails(groupIds, memberIds);
       void this.loadActivity(groupIds, memberIds);
     });
+  }
+
+  toggleSelect(item: { id: string; entityType: FavoriteEntityType; name: string; link: string }): void {
+    if (this.editMode()) return;
+    if (this.selectedId() === item.id) {
+      this.entitySelect.emit(null);
+    } else {
+      this.entitySelect.emit({ id: item.id, entityType: item.entityType, name: item.name, link: item.link });
+    }
   }
 
   async removeFav(entityId: string, entityType: FavoriteEntityType): Promise<void> {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
 import { SupabaseService } from '../../core/supabase.service';
+import { SpotlightEntity } from '../../models';
 import { FavoritesAvatarRowComponent } from './favorites-avatar-row.component';
 import { FavoritesFeedComponent } from './favorites-feed.component';
 import { FavoritesAddSheetComponent } from './favorites-add-sheet.component';
@@ -35,6 +36,7 @@ export class MyFavoritesComponent implements OnInit {
 
   readonly activeTab = signal<FavoritesTab>('all');
   readonly showAddSheet = signal(false);
+  readonly spotlightEntity = signal<SpotlightEntity | null>(null);
   addSheetInitialTab: 'group' | 'member' = 'group';
   readonly tabs: FavoritesTabOption[] = [
     { id: 'all', label: '全部' },
@@ -54,6 +56,11 @@ export class MyFavoritesComponent implements OnInit {
 
   setTab(tab: FavoritesTab): void {
     this.activeTab.set(tab);
+    this.spotlightEntity.set(null);
+  }
+
+  onEntitySelect(entity: SpotlightEntity | null): void {
+    this.spotlightEntity.set(entity);
   }
 
   openAddSheet(): void {

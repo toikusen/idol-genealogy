@@ -237,6 +237,13 @@ export interface VenueCalendarEvent {
 
 export type FavoriteEntityType = 'group' | 'member';
 
+export interface SpotlightEntity {
+  id: string;
+  entityType: FavoriteEntityType;
+  name: string;
+  link: string;
+}
+
 export interface UserFavorite {
   user_id: string;
   entity_type: FavoriteEntityType;

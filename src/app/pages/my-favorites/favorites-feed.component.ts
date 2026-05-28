@@ -1,9 +1,10 @@
-import { Component, Input, OnChanges, OnDestroy, PLATFORM_ID, SimpleChanges, inject, signal, effect, computed } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, PLATFORM_ID, SimpleChanges, inject, signal, effect, computed, input } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { FavoritesService } from '../../core/favorites.service';
 import { SupabaseService } from '../../core/supabase.service';
+import { SpotlightEntity } from '../../models';
 
 interface FeedEntry {
   id: string;
@@ -86,24 +87,37 @@ const BIRTHDAY_DAYS = 14;
     <div style="padding:10px 20px 0;">
 
       <!-- Header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);">最新動態</div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          @if (newCount() > 0) {
-            <span style="font-size:0.68rem;padding:2px 8px;background:rgba(232,121,160,0.12);border:1px solid rgba(232,121,160,0.22);border-radius:10px;color:rgba(232,121,160,1);">
-              ● {{ newCount() }} 則新動態
-            </span>
-            <button (click)="markAllRead()"
-              style="font-size:0.65rem;padding:2px 8px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:var(--text-faint-55);cursor:pointer;font-family:var(--font-sans);">
-              全部已讀
-            </button>
-          }
+      @if (spotlightEntity(); as se) {
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(232,121,160,0.85);">
+            {{ se.name }} 的動態
+          </div>
+          <a [routerLink]="se.link"
+             style="font-size:0.65rem;color:var(--text-faint-55);text-decoration:none;letter-spacing:0.06em;display:flex;align-items:center;gap:3px;">
+            前往頁面
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+          </a>
         </div>
-      </div>
+      } @else {
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint-40);">最新動態</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            @if (newCount() > 0) {
+              <span style="font-size:0.68rem;padding:2px 8px;background:rgba(232,121,160,0.12);border:1px solid rgba(232,121,160,0.22);border-radius:10px;color:rgba(232,121,160,1);">
+                ● {{ newCount() }} 則新動態
+              </span>
+              <button (click)="markAllRead()"
+                style="font-size:0.65rem;padding:2px 8px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:var(--text-faint-55);cursor:pointer;font-family:var(--font-sans);">
+                全部已讀
+              </button>
+            }
+          </div>
+        </div>
+      }
 
-      <!-- Type filter chips -->
+      <!-- Type filter chips (context-aware) -->
       <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
-        @for (chip of typeChips; track chip.value) {
+        @for (chip of visibleTypeChips(); track chip.value) {
           <button (click)="typeFilter.set(chip.value)"
             [style.background]="typeFilter() === chip.value ? 'rgba(232,121,160,0.15)' : 'transparent'"
             [style.color]="typeFilter() === chip.value ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
@@ -200,7 +214,7 @@ const BIRTHDAY_DAYS = 14;
                 </div>
               </div>
               <div style="flex:1;">
-                <div style="font-size:0.75rem;font-weight:600;color:rgba(232,121,160,1);margin-bottom:2px;">{{ item.entityName }}</div>
+                <a [routerLink]="item.link ?? null" style="display:inline-block;font-size:0.75rem;font-weight:600;color:rgba(232,121,160,1);margin-bottom:2px;text-decoration:none;">{{ item.entityName }}</a>
                 @if (item.link) {
                   <a [routerLink]="item.link" style="display:block;font-size:0.85rem;color:var(--text-primary);line-height:1.45;margin-bottom:3px;text-decoration:none;">
                     {{ item.title }}
@@ -236,6 +250,7 @@ const BIRTHDAY_DAYS = 14;
 })
 export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   @Input() filter?: string;
+  readonly spotlightEntity = input<SpotlightEntity | null>(null);
 
   private favService = inject(FavoritesService);
   private supabase = inject(SupabaseService);
@@ -293,9 +308,29 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     return groups.filter(g => g.items.length > 0);
   });
 
+  readonly visibleTypeChips = computed(() => {
+    const spotlight = this.spotlightEntity();
+    const entityType = spotlight?.entityType ?? this.filter;
+    if (entityType === 'member') {
+      return this.typeChips.filter(c => ['all', 'event', 'song', 'member'].includes(c.value));
+    }
+    if (entityType === 'group') {
+      return this.typeChips.filter(c => ['all', 'event', 'song', 'group_change'].includes(c.value));
+    }
+    return this.typeChips;
+  });
+
   readonly filteredGroupedItems = computed<FeedGroup[]>(() => {
     const tf = this.typeFilter();
-    const groups = this.groupedItems();
+    const spotlight = this.spotlightEntity();
+    let groups = this.groupedItems();
+
+    if (spotlight) {
+      groups = groups
+        .map(g => ({ ...g, items: g.items.filter(item => item.entityId === spotlight.id) }))
+        .filter(g => g.items.length > 0);
+    }
+
     if (tf === 'all') return groups;
 
     return groups
@@ -325,6 +360,10 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       this.favService.favoriteIds('group');
       this.favService.favoriteIds('member');
       void this.loadFeed();
+    });
+    effect(() => {
+      this.spotlightEntity();
+      this.typeFilter.set('all');
     });
   }
 

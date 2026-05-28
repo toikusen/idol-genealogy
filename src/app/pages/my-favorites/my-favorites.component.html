@@ -13,7 +13,9 @@
       <app-favorites-avatar-row
         [layout]="'grid'"
         [filter]="activeTab() === 'all' ? undefined : activeTab()"
+        [selectedId]="spotlightEntity()?.id"
         (addClicked)="openAddSheet()"
+        (entitySelect)="onEntitySelect($event)"
       />
     }
     <nav class="mf-filter-nav" aria-label="篩選分類">
@@ -73,7 +75,10 @@
   <main class="mf-main" role="tabpanel" id="tab-panel-main" aria-label="最愛內容" [attr.aria-labelledby]="'mob-tab-' + activeTab()">
     <div class="mf-content-inner">
       @if (activeTab() !== 'push') {
-        <app-favorites-feed [filter]="activeTab() === 'all' ? undefined : activeTab()" />
+        <app-favorites-feed
+        [filter]="activeTab() === 'all' ? undefined : activeTab()"
+        [spotlightEntity]="spotlightEntity()"
+      />
       } @else {
         <app-push-settings />
       }
