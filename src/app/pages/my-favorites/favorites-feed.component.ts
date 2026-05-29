@@ -18,6 +18,7 @@ interface FeedEntry {
   link?: string;
   isNew: boolean;
   relatedGroupId?: string;
+  eventDate?: string;
 }
 
 interface FeedGroup {
@@ -222,6 +223,17 @@ const BIRTHDAY_DAYS = 14;
                   </a>
                 } @else {
                   <div style="font-size:0.85rem;color:var(--text-primary);line-height:1.45;margin-bottom:3px;">{{ item.title }}</div>
+                }
+                @if (item.eventType === 'event' && item.eventDate) {
+                  <div style="font-size:0.72rem;color:rgba(255,214,10,.8);margin-bottom:3px;display:flex;align-items:center;gap:5px;">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="rgba(255,214,10,.8)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    {{ formatEventDate(item.eventDate) }}
+                  </div>
                 }
                 <div style="font-size:0.7rem;color:var(--text-faint-55);">
                   {{ formatTime(item.occurredAt) }}
@@ -678,7 +690,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     if (groupIds.length) {
       let q = this.supabase.client
         .from('group_events')
-        .select('id, title, first_seen_at, group_id, groups(id, name, photo_url)')
+        .select('id, title, starts_at, first_seen_at, group_id, groups(id, name, photo_url)')
         .in('group_id', groupIds)
         .order('first_seen_at', { ascending: false })
         .limit(PAGE_LIMIT);
@@ -692,6 +704,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
         entityName: e.groups?.name ?? '', photoUrl: e.groups?.photo_url ?? null,
         title: e.title,
         occurredAt: e.first_seen_at, link: `/group/${e.group_id}`, isNew: false,
+        eventDate: e.starts_at ?? undefined,
       }));
 
       let dq = this.supabase.client
@@ -796,6 +809,15 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     if (type === 'member_join') return '新增';
     return '異動';
   }
+  formatEventDate(iso: string): string {
+    const d = new Date(iso);
+    const tw = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+    const month = tw.getUTCMonth() + 1;
+    const day = tw.getUTCDate();
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    return `${month}月${day}日（${weekdays[tw.getUTCDay()]}）`;
+  }
+
   formatTime(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
     if (diff < 0) return new Date(iso).toLocaleDateString('zh-TW');
