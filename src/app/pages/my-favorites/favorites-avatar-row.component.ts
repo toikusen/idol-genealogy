@@ -15,6 +15,48 @@ interface ActivityData {
   selector: 'app-favorites-avatar-row',
   standalone: true,
   imports: [CommonModule],
+  styles: [`
+    .avatar-wrap {
+      width: 48px; height: 48px; border-radius: 50%;
+      border: 2px solid;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 600; color: white;
+      overflow: hidden;
+      transition:
+        opacity 0.15s,
+        box-shadow 0.22s cubic-bezier(0.34,1.56,0.64,1),
+        transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
+        border-color 0.15s;
+    }
+    .avatar-wrap.is-group  { border-color: rgba(232,121,160,0.5); }
+    .avatar-wrap.is-member { border-color: rgba(134,239,172,0.55); }
+
+    /* Selected — dark/default: white ring */
+    .avatar-wrap.is-selected {
+      transform: scale(1.1) translateY(-2px);
+      border-color: rgba(255,255,255,0.7);
+      box-shadow:
+        0 0 0 3px rgba(255,255,255,0.82),
+        0 0 14px rgba(255,255,255,0.18),
+        0 4px 10px rgba(0,0,0,0.25);
+    }
+
+    /* Selected — light theme: entity-color ring */
+    :host-context(:not([data-theme="dark"])) .avatar-wrap.is-selected.is-group {
+      border-color: rgba(210,80,128,0.9);
+      box-shadow:
+        0 0 0 3px rgba(210,80,128,0.72),
+        0 0 0 5.5px rgba(232,121,160,0.14),
+        0 4px 14px rgba(210,80,128,0.22);
+    }
+    :host-context(:not([data-theme="dark"])) .avatar-wrap.is-selected.is-member {
+      border-color: rgba(34,197,94,0.9);
+      box-shadow:
+        0 0 0 3px rgba(34,197,94,0.65),
+        0 0 0 5.5px rgba(134,239,172,0.15),
+        0 4px 14px rgba(34,197,94,0.18);
+    }
+  `],
   template: `
     <div style="padding:12px 10px 10px;border-bottom:1px solid rgba(232,121,160,0.08);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 4px;">
@@ -33,7 +75,7 @@ interface ActivityData {
         [style.flex-wrap]="layout() === 'grid' ? '' : 'nowrap'"
         [style.overflow-x]="layout() === 'grid' ? 'visible' : 'auto'"
         [style.gap]="'12px'"
-        [style.padding-top]="'6px'"
+        [style.padding-top]="'14px'"
         [style.padding-bottom]="layout() === 'grid' ? '6px' : '4px'"
       >
 
@@ -62,25 +104,16 @@ interface ActivityData {
               [attr.aria-pressed]="selectedId() === item.id"
               style="background:none;border:none;padding:0;cursor:pointer;display:block;border-radius:50%;"
             >
-              <div [style.background]="item.isGroup
+              <div
+                class="avatar-wrap"
+                [class.is-group]="item.isGroup"
+                [class.is-member]="!item.isGroup"
+                [class.is-selected]="selectedId() === item.id"
+                [style.background]="item.isGroup
                   ? 'linear-gradient(135deg,rgba(232,121,160,0.35),rgba(192,80,128,0.45))'
                   : 'linear-gradient(135deg,rgba(134,239,172,0.35),rgba(74,222,128,0.5))'"
-                [style.border-color]="selectedId() === item.id
-                  ? 'rgba(255,255,255,0.7)'
-                  : (item.isGroup ? 'rgba(232,121,160,0.5)' : 'rgba(134,239,172,0.55)')"
                 [style.opacity]="editMode() ? '0.7' : '1'"
-                [style.box-shadow]="selectedId() === item.id
-                  ? '0 0 0 3px rgba(255,255,255,0.82), 0 0 14px rgba(255,255,255,0.18), 0 4px 10px rgba(0,0,0,0.25)'
-                  : '0 2px 6px rgba(0,0,0,0.12)'"
-                [style.transform]="selectedId() === item.id ? 'scale(1.1) translateY(-2px)' : 'scale(1) translateY(0)'"
-                style="
-                  width:48px;height:48px;border-radius:50%;
-                  border:2px solid;
-                  display:flex;align-items:center;justify-content:center;
-                  font-size:0.7rem;font-weight:600;color:white;
-                  overflow:hidden;
-                  transition:opacity 0.15s, box-shadow 0.22s cubic-bezier(0.34,1.56,0.64,1), transform 0.22s cubic-bezier(0.34,1.56,0.64,1), border-color 0.15s;
-                "
+                [style.box-shadow]="selectedId() === item.id ? null : '0 2px 6px rgba(0,0,0,0.12)'"
               >
                 @if (item.photoUrl) {
                   <img [src]="item.photoUrl" [alt]="item.name" style="width:100%;height:100%;object-fit:cover;">
