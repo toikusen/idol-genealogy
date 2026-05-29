@@ -8,12 +8,13 @@ import type { Session } from '@supabase/supabase-js';
 import type { SupabaseService } from './core/supabase.service';
 import { AnalyticsService } from './core/analytics.service';
 import { CookieBannerComponent } from './shared/cookie-banner/cookie-banner.component';
+import { PwaInstallPromptComponent } from './shared/pwa-install-prompt/pwa-install-prompt.component';
 import { ThemeService } from './core/theme.service';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent],
+  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
