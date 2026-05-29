@@ -80,6 +80,7 @@
   --section-company-muted: rgba(160, 110, 30, 0.25);
   --section-event: #a85848;
   --section-event-muted: rgba(200, 112, 106, 0.20);
+  --event-date-color: #a85848;
 
   /* ── Status colors ── */
   --status-approved: #15803d;
@@ -242,6 +243,7 @@ h1, h2, h3 {
     --section-company-muted: rgba(176, 128, 64, 0.30);
     --section-event: #c87070;
     --section-event-muted: rgba(200, 112, 106, 0.25);
+    --event-date-color: #e8956e;
 
     /* Shadows */
     --shadow-xs: 0 1px 4px rgba(0, 0, 0, 0.40);

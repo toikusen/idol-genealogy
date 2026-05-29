@@ -225,8 +225,8 @@ const BIRTHDAY_DAYS = 14;
                   <div style="font-size:0.85rem;color:var(--text-primary);line-height:1.45;margin-bottom:3px;">{{ item.title }}</div>
                 }
                 @if (item.eventType === 'event' && item.eventDate) {
-                  <div style="font-size:0.72rem;color:rgba(255,214,10,.8);margin-bottom:3px;display:flex;align-items:center;gap:5px;">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="rgba(255,214,10,.8)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <div style="font-size:0.72rem;color:var(--event-date-color);margin-bottom:3px;display:flex;align-items:center;gap:5px;">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--event-date-color)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <rect x="3" y="4" width="18" height="18" rx="2"/>
                       <line x1="16" y1="2" x2="16" y2="6"/>
                       <line x1="8" y1="2" x2="8" y2="6"/>
