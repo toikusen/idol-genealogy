@@ -1,10 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const NOTIFIABLE_STATUSES = ['active', 'graduated', 'withdrawn', 'hiatus'];
-const STATUS_LABELS: Record<string, string> = {
-  graduated: '畢業', withdrawn: '退出', hiatus: '進入休息',
-};
+const NOTIFIABLE_STATUSES = ['active', 'graduated', 'withdrawn', 'hiatus', 'concurrent', 'support', 'transferred'];
 
 function statusLabel(
   status: string,
@@ -12,12 +9,27 @@ function statusLabel(
   context: { eventType: string; oldStatus?: string | null },
 ): string {
   const g = groupName ? `《${groupName}》` : '';
+  const solo = !groupName;
+  const isInsert = context.eventType === 'INSERT';
+  const prefix = isInsert ? '新增歷程：' : '編輯歷程：';
+
   if (status === 'active') {
-    if (context.eventType === 'INSERT') return g ? `在${g}正常在籍` : '正常在籍';
-    if (context.oldStatus === 'hiatus') return `從${g}復歸`;
-    return g ? `更新為${g}正常在籍` : '更新為正常在籍';
+    if (isInsert) return solo ? '新增歷程：個人出道' : `新增歷程：加入${g}`;
+    if (context.oldStatus === 'hiatus') return solo ? '編輯歷程：個人復歸' : `編輯歷程：從${g}復歸`;
+    return solo ? '編輯歷程：個人活動中' : `編輯歷程：更新為${g}活動中`;
   }
-  return STATUS_LABELS[status] ?? status;
+  if (solo) {
+    const m: Record<string, string> = {
+      graduated: '結束個人活動', withdrawn: '結束個人活動', hiatus: '個人活休',
+      transferred: '結束個人活動', concurrent: '兼任其他組合', support: '支援其他組合',
+    };
+    return `${prefix}${m[status] ?? status}`;
+  }
+  const m: Record<string, string> = {
+    graduated: `從${g}畢業`, withdrawn: `從${g}退出`, hiatus: `在${g}活休`,
+    transferred: `從${g}移籍`, concurrent: `兼任${g}`, support: `支援${g}`,
+  };
+  return `${prefix}${m[status] ?? status}`;
 }
 
 serve(async (req) => {
@@ -68,7 +80,7 @@ serve(async (req) => {
     body: JSON.stringify({
       user_ids: filteredIds,
       notification: {
-        title: `${member.name} 狀態更新`,
+        title: payload.type === 'INSERT' ? `${member.name} 新增歷程` : `${member.name} 歷程更新`,
         body: statusLabel(newStatus, groupName, { eventType: payload.type, oldStatus }),
         icon: "/icons/icon-192x192.png",
         data: { onActionClick: { default: { operation: "navigateLastFocusedOrOpen", url: `/member/${record.member_id}` } } },

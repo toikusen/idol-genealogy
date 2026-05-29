@@ -51,7 +51,7 @@ serve(async (req) => {
       user_ids: filteredIds,
       notification: {
         title: `${groupName} 發布解散公告`,
-        body: `預定解散日期：${record.disbanded_at}`,
+        body: `預定解散日期：${new Date(record.disbanded_at).toLocaleDateString('zh-TW')}`,
         icon: "/icons/icon-192x192.png",
         data: {
           onActionClick: {
