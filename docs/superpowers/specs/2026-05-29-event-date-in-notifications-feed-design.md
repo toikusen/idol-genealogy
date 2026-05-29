@@ -39,22 +39,26 @@ Body:   {count} 個新活動
          剛才  [活動]
 ```
 
-- Uses the same stroke SVG calendar icon as `push-settings.component.ts` (line 55–57), scaled to 12×12, stroke color `rgba(255,214,10,.8)`
-- Rendered only when `eventDate` is present on a feed entry
+- Uses the same stroke SVG calendar icon as `push-settings.component.ts` (`rect x=3 y=4` calendar path), scaled to 12×12, stroke color `rgba(255,214,10,.8)`
+- No emoji — inline SVG only
+- Rendered with condition `item.eventType === 'event' && item.eventDate`
 - Font size: `0.72rem`, color: `rgba(255,214,10,.8)`
-- Only applies to `eventType === 'event'` entries
 
 ## Implementation Scope
 
 ### 1. `supabase/functions/sync-group-events/index.ts`
 
-**Query change (line 209):**  
-Add `starts_at` to the `.select()` for claimed events.
+**Claim query select:**  
+Add `starts_at` to the `.select()` on the claim query (currently selects `id, group_id, title, url, groups(name)`).
 
-**Data tracking:**  
-The `byGroup` map currently tracks `firstTitle` and `firstUrl`. Add `firstStartsAt: string | null` to track the nearest event's `starts_at`.
+**`byGroup` map — data consistency:**  
+The current `firstTitle` / `firstUrl` fields capture the first record returned by the claim query, which is not necessarily the event with the earliest `starts_at`. Fix:
 
-**Body formatting:**  
+- Track `nearestStartsAt` separately: computed as `min(starts_at)` across all claimed events in the group.
+- For the single-event case (`count === 1`), `firstTitle` and `firstStartsAt` must come from the **same record** — the one with the earliest `starts_at`. Sort or pick accordingly when building the `byGroup` entry.
+- This ensures the displayed date always matches the displayed title.
+
+**Body formatting — no emoji prefix:**
 ```ts
 function formatEventDate(isoDate: string | null, includeWeekday = true): string {
   if (!isoDate) return '';
@@ -68,36 +72,42 @@ function formatEventDate(isoDate: string | null, includeWeekday = true): string 
 }
 ```
 
-Single event body:
+Single event body (no emoji):
 ```
-{firstTitle}\n📅 {formatEventDate(firstStartsAt)}
-```
-
-Multi event body:
-```
-{count} 個新活動\n📅 最近 {formatEventDate(nearestStartsAt, false)}
+`${firstTitle}\n${formatEventDate(firstStartsAt)}`
 ```
 
-For multi-event, `nearestStartsAt` = earliest `starts_at` among claimed events in the group.
+Multi event body (no emoji):
+```
+`${count} 個新活動\n最近 ${formatEventDate(nearestStartsAt, false)}`
+```
 
 ### 2. `src/app/pages/my-favorites/favorites-feed.component.ts`
 
 **`FeedEntry` interface:** Add optional field `eventDate?: string` (ISO string of `starts_at`).
 
-**Query (line 679):** Add `starts_at` to the `group_events` select.
+**`group_events` feed query select:** Add `starts_at` to the existing `group_events` query select (currently selects `id, title, first_seen_at, group_id, groups(...)`).
 
-**Entry mapping (line 689):** Set `eventDate: e.starts_at ?? undefined`.
+**Entry mapping:** Set `eventDate: e.starts_at ?? undefined` when building event feed entries from `group_events`.
 
-**Template (line 220 area):** After the title `<a>`, add:
+**Template — inline SVG, no emoji, guarded by eventType:**
 ```html
-@if (item.eventDate) {
-  <div style="font-size:.72rem;color:rgba(255,214,10,.85);margin-bottom:3px;">
-    📅 {{ formatEventDate(item.eventDate) }}
+@if (item.eventType === 'event' && item.eventDate) {
+  <div style="font-size:.72rem;color:rgba(255,214,10,.8);margin-bottom:3px;display:flex;align-items:center;gap:5px;">
+    <svg viewBox="0 0 24 24" width="12" height="12" fill="none"
+         stroke="rgba(255,214,10,.8)" stroke-width="1.75"
+         stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+    {{ formatEventDate(item.eventDate) }}
   </div>
 }
 ```
 
-**`formatEventDate` method on component:**
+**`formatEventDate` method on component** (same UTC+8 logic as the edge function):
 ```ts
 formatEventDate(iso: string): string {
   const d = new Date(iso);
@@ -109,12 +119,22 @@ formatEventDate(iso: string): string {
 }
 ```
 
+## Test Scenarios
+
+- `formatEventDate('2026-06-14T16:00:00.000Z')` → `6月15日（一）`  
+  (UTC 16:00 = UTC+8 00:00 next day; Monday)
+- `formatEventDate('2026-06-14T00:00:00.000Z')` → `6月14日（日）`  
+  (UTC 00:00 = UTC+8 08:00 same day; Sunday)
+- Feed `group_events` query includes `starts_at` in select
+- Event feed entries render the date row; non-event entries (`song`, `member_change`, etc.) do not
+- When `count > 1`, notification date matches the event with the earliest `starts_at`, not an arbitrary record
+
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `supabase/functions/sync-group-events/index.ts` | Add `starts_at` to claim query; add `formatEventDate`; update notification body |
-| `src/app/pages/my-favorites/favorites-feed.component.ts` | Add `eventDate` to `FeedEntry`; add `starts_at` to query; update template + add `formatEventDate` |
+| `supabase/functions/sync-group-events/index.ts` | Add `starts_at` to claim query select; track `nearestStartsAt`; add `formatEventDate`; update notification body (no emoji) |
+| `src/app/pages/my-favorites/favorites-feed.component.ts` | Add `eventDate` to `FeedEntry`; add `starts_at` to `group_events` query; update template with inline SVG + `eventType` guard; add `formatEventDate` |
 
 ## Out of Scope
 
