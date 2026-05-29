@@ -27,8 +27,6 @@ import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
 import { MemberService } from '../../core/member.service';
 import { CompanyService } from '../../core/company.service';
-import { AuditLogService } from '../../core/audit-log.service';
-import { AuditLog } from '../../models';
 import {
   isPublicCompanyRecord,
   isPublicGroupRecord,
@@ -38,17 +36,6 @@ import {
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
-
-interface LastEditEntry {
-  table_name: string;
-  record_id: string | null;
-  operation: 'INSERT' | 'UPDATE' | 'DELETE';
-  proposed_data: Record<string, any>;
-  original_data: Record<string, any> | null;
-  reviewed_data: Record<string, any> | null;
-  submitter_name: string;
-  reviewed_at: string | null;
-}
 
 interface GanttSegment {
   history: History;
@@ -90,7 +77,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   showDeletePanel = false;
   proposalHistoryEntry: History | null = null;
   showNewHistoryPanel = false;
-  lastProposal: LastEditEntry | null = null;
+  lastProposal: Proposal | null = null;
   showEditHistory = false;
   linkCopied = false;
   allMembers: { id: string; name: string }[] = [];
@@ -120,7 +107,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   songReportDone = false;
 
   get lastProposalDiffFields(): DiffField[] {
-    return this.lastProposal ? getDiffFields(this.lastProposal as Proposal) : [];
+    return this.lastProposal ? getDiffFields(this.lastProposal) : [];
   }
 
   formatRelativeTime(date: string | null): string {
@@ -134,15 +121,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
     }
-    if (this.lastProposal.operation === 'INSERT') {
-      const isSong = this.lastProposal.table_name === 'member_songs' || this.lastProposal.table_name === 'group_songs';
-      if (isSong) {
-        const title = this.lastProposal.proposed_data?.['title'];
-        return `${relative} · ${submitter} 新增歌曲${title ? `《${title}》` : ''}`;
-      }
-      return `${relative} · ${submitter} 建立頁面`;
-    }
-    return `${relative} · ${submitter} 補充`;
+    return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
   }
 
   get editorialSuggestions(): string[] {
@@ -172,7 +151,6 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private seo: SeoService,
     private proposalService: ProposalService,
-    private auditLogService: AuditLogService,
     private analytics: AnalyticsService,
     private viewCount: ViewCountService,
     private groupSongService: GroupSongService,
@@ -247,10 +225,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         publicHistories.map(h => h.member_id).filter((mid): mid is string => !!mid)
       )];
 
-      const [company, proposals, songLogs, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
+      const [company, proposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
         (!this.companyName && group.company_id) ? this.companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
         this.proposalService.getApprovedByRecord('groups', id).catch(() => []),
-        this.auditLogService.getSongLogsByField('group_songs', 'group_id', id).catch(() => [] as AuditLog[]),
         this.historyService.getByMembers(memberIds).catch(() => []),
         this.memberService.getAll().catch(() => []),
         group.style ? this.groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
@@ -261,24 +238,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       if (this.currentLoadId === id && !this._routeSub?.closed) {
         const publicCompany = company && isPublicCompanyRecord(company) ? company : null;
         if (publicCompany?.name) this.companyName = publicCompany.name;
-        const toEntry = (log: AuditLog): LastEditEntry => ({
-          table_name: log.table_name,
-          record_id: log.record_id,
-          operation: log.operation,
-          proposed_data: log.new_data ?? {},
-          original_data: log.old_data,
-          reviewed_data: null,
-          submitter_name: '管理員',
-          reviewed_at: log.created_at,
-        });
-        const candidates: LastEditEntry[] = [
-          ...(proposals[0] ? [{ ...proposals[0], submitter_name: proposals[0].submitter_name || '貢獻者' }] : []),
-          ...(songLogs[0] ? [toEntry(songLogs[0])] : []),
-        ];
-        candidates.sort((a, b) =>
-          new Date(b.reviewed_at ?? '').getTime() - new Date(a.reviewed_at ?? '').getTime()
-        );
-        this.lastProposal = candidates[0] ?? null;
+        this.lastProposal = proposals[0] ?? null;
         this.allMemberHistories = allMemberHistories.filter(h =>
           (!h.member || isPublicMemberRecord(h.member)) && (!h.group || isPublicGroupRecord(h.group))
         );
@@ -316,9 +276,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.similarGroups = pageData.similarGroups;
     this.resolveSimilarGroupCompanyNames();
     this.carouselIndex = 0;
-    this.lastProposal = pageData.lastProposal
-      ? { ...pageData.lastProposal, submitter_name: pageData.lastProposal.submitter_name || '貢獻者' }
-      : null;
+    this.lastProposal = pageData.lastProposal;
     this.allMembers = pageData.allMembers;
     this.songs = pageData.songs;
     this.selectedHistory = null;

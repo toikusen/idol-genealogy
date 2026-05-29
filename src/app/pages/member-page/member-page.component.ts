@@ -11,7 +11,6 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { Member, History, Proposal, MemberSong, Group } from '../../models';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { ProposalService } from '../../core/proposal.service';
-import { AuditLogService } from '../../core/audit-log.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
@@ -27,17 +26,6 @@ import { memberIndexabilitySignals, isIndexable, isAdEligible } from '../../core
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
-
-interface LastEditEntry {
-  table_name: string;
-  record_id: string | null;
-  operation: 'INSERT' | 'UPDATE' | 'DELETE';
-  proposed_data: Record<string, any>;
-  original_data: Record<string, any> | null;
-  reviewed_data: Record<string, any> | null;
-  submitter_name: string;
-  reviewed_at: string | null;
-}
 
 @Component({
   selector: 'app-member-page',
@@ -60,7 +48,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   showOverseasPanel = false;
   historyToDelete: History | null = null;
   allGroupsList: { id: string; name: string }[] = [];
-  lastProposal: LastEditEntry | null = null;
+  lastProposal: Proposal | null = null;
   showEditHistory = false;
   linkCopied = false;
   companyName: string | null = null;
@@ -91,7 +79,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   private currentLoadId: string | null = null;
 
   get lastProposalDiffFields(): DiffField[] {
-    return this.lastProposal ? getDiffFields(this.lastProposal as Proposal) : [];
+    return this.lastProposal ? getDiffFields(this.lastProposal) : [];
   }
 
   formatRelativeTime(date: string | null): string {
@@ -105,15 +93,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
     }
-    if (this.lastProposal.operation === 'INSERT') {
-      const isSong = this.lastProposal.table_name === 'member_songs' || this.lastProposal.table_name === 'group_songs';
-      if (isSong) {
-        const title = this.lastProposal.proposed_data?.['title'];
-        return `${relative} · ${submitter} 新增歌曲${title ? `《${title}》` : ''}`;
-      }
-      return `${relative} · ${submitter} 建立頁面`;
-    }
-    return `${relative} · ${submitter} 補充`;
+    return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
   }
 
   get editorialSuggestions(): string[] {
@@ -131,7 +111,6 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private seo: SeoService,
     private proposalService: ProposalService,
-    private auditLogService: AuditLogService,
     private analytics: AnalyticsService,
     private viewCount: ViewCountService,
     private memberSongService: MemberSongService,
@@ -171,11 +150,9 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.currentLoadId = memberId;
     this.deferredLoading = true;
     try {
-      const [groups, proposals, historyLogs, songLogs, songs] = await Promise.all([
+      const [groups, proposals, songs] = await Promise.all([
         this.groupService.getAll().catch(() => []),
         this.proposalService.getApprovedByRecord('members', memberId).catch(() => []),
-        this.auditLogService.getHistoryLogsByField('member_id', memberId).catch(() => []),
-        this.auditLogService.getSongLogsByField('member_songs', 'member_id', memberId).catch(() => []),
         this.memberSongService.getByMember(memberId).catch(() => []),
       ]);
       if (this.currentLoadId === memberId && !this.routeDataSub?.closed) {
@@ -183,28 +160,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
           .filter(isPublicGroupRecord)
           .map(g => ({ id: g.id, name: g.name }))
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-
-        const toEntry = (log: import('../../models').AuditLog): LastEditEntry => ({
-          table_name: log.table_name,
-          record_id: log.record_id,
-          operation: log.operation,
-          proposed_data: log.new_data ?? {},
-          original_data: log.old_data,
-          reviewed_data: null,
-          submitter_name: '管理員',
-          reviewed_at: log.created_at,
-        });
-
-        const candidates: LastEditEntry[] = [
-          ...(proposals[0] ? [{ ...proposals[0], submitter_name: proposals[0].submitter_name || '貢獻者' }] : []),
-          ...(historyLogs[0] ? [toEntry(historyLogs[0])] : []),
-          ...(songLogs[0] ? [toEntry(songLogs[0])] : []),
-        ];
-        candidates.sort((a, b) =>
-          new Date(b.reviewed_at ?? '').getTime() - new Date(a.reviewed_at ?? '').getTime()
-        );
-        this.lastProposal = candidates[0] ?? null;
-
+        this.lastProposal = proposals[0] ?? null;
         this.memberSongs = songs;
         if (this.pendingEditSongId) {
           const song = this.memberSongs.find(s => s.id === this.pendingEditSongId);

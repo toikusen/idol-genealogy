@@ -50,12 +50,12 @@
       <div style="text-align:center;padding:40px 0;color:rgba(192,80,128,0.6);font-size:0.8rem;">
         無法載入記錄，請稍後再試
       </div>
-    } @else if (entries.length === 0) {
+    } @else if (proposals.length === 0) {
       <div style="text-align:center;padding:40px 0;color:var(--text-faint-40);font-size:0.8rem;">
         尚無核准記錄
       </div>
     } @else {
-      @for (p of entries; track p.id) {
+      @for (p of proposals; track p.id) {
         <div style="
           border-bottom:1px solid rgba(232,121,160,0.1);
           padding:14px 0;
@@ -76,14 +76,6 @@
                 background:rgba(52,211,153,0.12);color:rgba(16,130,80,0.8);
                 border:1px solid rgba(52,211,153,0.25);
               ">新增</span>
-            } @else if (p.operation === 'DELETE') {
-              <span style="
-                display:inline-flex;align-items:center;
-                font-size:0.6rem;letter-spacing:0.08em;
-                padding:2px 7px;border-radius:999px;
-                background:rgba(239,68,68,0.1);color:rgba(185,28,28,0.8);
-                border:1px solid rgba(239,68,68,0.2);
-              ">刪除</span>
             } @else {
               <span style="
                 display:inline-flex;align-items:center;
@@ -99,10 +91,6 @@
           @if (p.operation === 'INSERT') {
             <div style="font-size:0.72rem;color:var(--text-faint);font-style:italic;margin-bottom:4px;">
               新增記錄
-            </div>
-          } @else if (p.operation === 'DELETE') {
-            <div style="font-size:0.72rem;color:var(--text-faint);font-style:italic;margin-bottom:4px;">
-              刪除記錄
             </div>
           }
           @for (field of getDiffFields(p); track field.key) {
