@@ -9,38 +9,39 @@ Activity notifications and favorites feed entries show only the event title (e.g
 
 ## Approved Design
 
-### Push Notification (Option B — date on separate line)
+### Push Notification (N1 — plain text, new line, no prefix)
 
 **Single event:**
 ```
 Title:  {groupName} 新增活動
 Body:   {eventTitle}
-        📅 6月15日（日）
+        6月15日（日）
 ```
 
 **Multiple events:**
 ```
 Title:  {groupName} 新增活動
 Body:   {count} 個新活動
-        📅 最近 6月15日
+        最近 6月15日
 ```
 
+- No emoji or label prefix — plain text, second line
 - Date format: `M月D日（weekday）` for single, `最近 M月D日` for multi (weekday omitted)
 - Weekday uses Taiwan locale: 日、一、二、三、四、五、六
 - `starts_at` stored as UTC ISO string; convert to UTC+8 before formatting
 
-### Favorites Feed (Option ① — date on independent line)
+### Favorites Feed (F1 — SVG calendar icon + gold date text)
 
 ```
 [avatar] BLACKPINK
          2025 WORLD TOUR IN TAIPEI
-         📅 6月15日（日）          ← gold, 0.72rem
+         [cal-icon] 6月15日（日）   ← gold rgba(255,214,10,.8), 0.72rem
          剛才  [活動]
 ```
 
+- Uses the same stroke SVG calendar icon as `push-settings.component.ts` (line 55–57), scaled to 12×12, stroke color `rgba(255,214,10,.8)`
 - Rendered only when `eventDate` is present on a feed entry
-- Color: `rgba(255,214,10,.85)` (existing gold accent)
-- Font size: `0.72rem`
+- Font size: `0.72rem`, color: `rgba(255,214,10,.8)`
 - Only applies to `eventType === 'event'` entries
 
 ## Implementation Scope
