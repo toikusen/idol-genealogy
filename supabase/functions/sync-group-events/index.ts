@@ -206,7 +206,7 @@ serve(async (req) => {
     .is("notified_at", null)
     .or(`notify_claimed_at.is.null,notify_claimed_at.lt.${claimCutoff}`)
     .gte("starts_at", threeMonthsAgo)
-    .select("id, group_id, title, url, groups(name)");
+    .select("id, group_id, title, url, starts_at, groups(name)");
 
   if (claimError) {
     console.error(`[sync-group-events] claim error: ${claimError.message}`);
@@ -215,19 +215,37 @@ serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // Group claimed events by group_id
-  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; firstUrl: string | null; count: number }>();
+  function formatEventDate(isoDate: string | null, includeWeekday = true): string {
+    if (!isoDate) return '';
+    const d = new Date(isoDate);
+    const tw = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+    const month = tw.getUTCMonth() + 1;
+    const day = tw.getUTCDate();
+    if (!includeWeekday) return `${month}月${day}日`;
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    return `${month}月${day}日（${weekdays[tw.getUTCDay()]}）`;
+  }
+
+  // Group claimed events by group_id, tracking the earliest starts_at event so that
+  // firstTitle/firstUrl/firstStartsAt always refer to the same record.
+  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; firstUrl: string | null; firstStartsAt: string | null; count: number }>();
   for (const evt of claimed ?? []) {
     const entry = byGroup.get(evt.group_id);
     if (entry) {
       entry.count++;
       entry.ids.push(evt.id);
+      if (evt.starts_at && (!entry.firstStartsAt || evt.starts_at < entry.firstStartsAt)) {
+        entry.firstTitle = evt.title;
+        entry.firstUrl = evt.url ?? null;
+        entry.firstStartsAt = evt.starts_at;
+      }
     } else {
       byGroup.set(evt.group_id, {
         ids: [evt.id],
         groupName: (evt as any).groups?.name ?? '',
         firstTitle: evt.title,
         firstUrl: evt.url ?? null,
+        firstStartsAt: evt.starts_at ?? null,
         count: 1,
       });
     }
@@ -235,7 +253,7 @@ serve(async (req) => {
 
   console.log(`Pending push notifications: ${claimed?.length ?? 0} events across ${byGroup.size} groups`);
 
-  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, firstUrl, count }]) => {
+  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, firstUrl, firstStartsAt, count }]) => {
     const { data: favUsers } = await supabase
       .from("user_favorites")
       .select("user_id")
@@ -262,7 +280,10 @@ serve(async (req) => {
     }
 
     const targetUrl = count === 1 && firstUrl ? firstUrl : `/group/${groupId}`;
-    const notifBody = count === 1 ? firstTitle : `${count} 個新活動`;
+    const dateStr = formatEventDate(firstStartsAt, count === 1);
+    const notifBody = count === 1
+      ? (dateStr ? `${firstTitle}\n${dateStr}` : firstTitle)
+      : (dateStr ? `${count} 個新活動\n最近 ${dateStr}` : `${count} 個新活動`);
     console.log(`[sync-group-events] sending push for ${groupName}: "${notifBody}" to ${filteredIds.length} user(s)`);
     try {
       const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
