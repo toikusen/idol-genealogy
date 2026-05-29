@@ -112,7 +112,7 @@ import { NotificationPrefs } from '../../models';
               </div>
               <div>
                 <div style="font-size:0.88rem;font-weight:600;color:var(--text-primary);margin-bottom:2px;">狀態異動</div>
-                <div style="font-size:0.74rem;color:var(--text-faint-55);">畢業、退出、休息、復歸</div>
+                <div style="font-size:0.74rem;color:var(--text-faint-55);">加入、活休、畢業</div>
               </div>
             </div>
             <label style="position:relative;width:44px;height:26px;flex-shrink:0;margin-left:14px;display:inline-block;">
