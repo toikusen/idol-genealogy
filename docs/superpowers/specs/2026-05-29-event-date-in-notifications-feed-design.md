@@ -54,9 +54,8 @@ Add `starts_at` to the `.select()` on the claim query (currently selects `id, gr
 **`byGroup` map — data consistency:**  
 The current `firstTitle` / `firstUrl` fields capture the first record returned by the claim query, which is not necessarily the event with the earliest `starts_at`. Fix:
 
-- Track `nearestStartsAt` separately: computed as `min(starts_at)` across all claimed events in the group.
-- For the single-event case (`count === 1`), `firstTitle` and `firstStartsAt` must come from the **same record** — the one with the earliest `starts_at`. Sort or pick accordingly when building the `byGroup` entry.
-- This ensures the displayed date always matches the displayed title.
+- When adding each claimed event into `byGroup`, if the current event's `starts_at` is earlier than the stored one, update `firstTitle`, `firstUrl`, and `firstStartsAt` together from the same record. This keeps title, URL, and date always in sync.
+- Track `nearestStartsAt` as the same value: the `firstStartsAt` after all events in the group have been processed (i.e. the minimum `starts_at` across the group's claimed events).
 
 **Body formatting — no emoji prefix:**
 ```ts
