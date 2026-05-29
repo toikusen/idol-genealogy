@@ -159,6 +159,12 @@ export const routes: Routes = [
       import('./pages/knowledge/knowledge-article.component').then(m => m.KnowledgeArticleComponent),
   },
   {
+    path: 'my-favorites',
+    canActivate: [lazyGuard(() => import('./core/auth.guard').then(m => m.authGuard))],
+    loadComponent: () =>
+      import('./pages/my-favorites/my-favorites.component').then(m => m.MyFavoritesComponent),
+  },
+  {
     path: 'my-contributions',
     loadComponent: () =>
       import('./pages/my-contributions/my-contributions.component').then(m => m.MyContributionsComponent),

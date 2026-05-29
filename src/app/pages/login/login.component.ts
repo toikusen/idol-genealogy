@@ -17,7 +17,7 @@ export class LoginComponent {
   ) {
     this.supabase.authState$.pipe(takeUntilDestroyed()).subscribe(session => {
       if (session) {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/admin/members';
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/';
         this.router.navigateByUrl(returnUrl);
       }
     });

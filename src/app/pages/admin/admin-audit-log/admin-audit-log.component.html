@@ -2,24 +2,109 @@
   <h1 class="font-['Shippori_Mincho'] text-2xl font-semibold text-gray-800 mb-6">變更記錄</h1>
 
   <!-- Filters -->
-  <div class="flex flex-wrap gap-4 mb-4">
-    <select [(ngModel)]="filterTable" (change)="load()"
-      class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300">
-      <option value="">全部資料表</option>
-      @for (t of tableOptions; track t) {
-        <option [value]="t">{{ tableLabel(t) }}</option>
+  <div class="flex flex-col gap-2 mb-4">
+    <!-- Row 1: autocomplete + table + operation -->
+    <div class="flex flex-wrap gap-2 items-center">
+      <!-- Autocomplete -->
+      <div class="relative flex-1 min-w-[200px]">
+        @if (selectedMemberId || selectedGroupId) {
+          <div class="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1.5 bg-white text-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400 flex-shrink-0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span class="text-gray-700 text-xs">{{ autocompleteQuery }}</span>
+            <span class="ml-1 px-1.5 py-0.5 bg-pink-100 text-pink-600 rounded-full text-xs">
+              {{ selectedMemberId ? '成員' : '團體' }}
+            </span>
+            <button (click)="clearAutocomplete()" class="ml-auto text-gray-400 hover:text-gray-600 transition-colors" aria-label="清除搜尋">✕</button>
+          </div>
+        } @else {
+          <div class="relative">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+              type="text"
+              [(ngModel)]="autocompleteQuery"
+              (input)="onAutocompleteInput()"
+              (focus)="onAutocompleteInput()"
+              (blur)="onAutocompleteBlur()"
+              placeholder="搜尋成員或團體…"
+              class="w-full border border-gray-200 rounded-md pl-8 pr-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-pink-300"
+            />
+          </div>
+        }
+
+        <!-- Dropdown -->
+        @if (showAutocomplete && autocompleteResults.length > 0) {
+          <div class="absolute z-20 left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-lg shadow-lg overflow-hidden">
+            @if (autocompleteMembers.length > 0) {
+              <div class="px-3 py-1.5 text-xs text-gray-400 font-semibold bg-gray-50 uppercase tracking-wide">成員</div>
+              @for (item of autocompleteMembers; track item.id) {
+                <button
+                  type="button"
+                  (mousedown)="selectAutocomplete(item)"
+                  class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-pink-50 transition-colors text-left"
+                >
+                  <span>{{ item.name }}</span>
+                </button>
+              }
+            }
+            @if (autocompleteGroups.length > 0) {
+              <div class="px-3 py-1.5 text-xs text-gray-400 font-semibold bg-gray-50 uppercase tracking-wide border-t border-gray-100">團體</div>
+              @for (item of autocompleteGroups; track item.id) {
+                <button
+                  type="button"
+                  (mousedown)="selectAutocomplete(item)"
+                  class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-pink-50 transition-colors text-left"
+                >
+                  <span>{{ item.name }}</span>
+                </button>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <select [(ngModel)]="filterTable" (change)="onFilterChange()"
+        class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300">
+        <option value="">全部資料表</option>
+        @for (t of tableOptions; track t) {
+          <option [value]="t">{{ tableLabel(t) }}</option>
+        }
+      </select>
+
+      <select [(ngModel)]="filterOperation" (change)="onFilterChange()"
+        class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300">
+        <option value="">全部操作</option>
+        @for (op of operationOptions; track op) {
+          <option [value]="op">{{ operationLabel(op) }}</option>
+        }
+      </select>
+
+      <button (click)="onFilterChange()" class="px-3 py-1.5 text-sm text-gray-500 hover:text-pink-600 transition-colors">
+        重新載入
+      </button>
+    </div>
+
+    <!-- Row 2: date range + count -->
+    <div class="flex flex-wrap gap-2 items-center">
+      <input
+        type="date"
+        [(ngModel)]="dateFrom"
+        (change)="onFilterChange()"
+        class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300"
+      />
+      <span class="text-sm text-gray-400">～</span>
+      <input
+        type="date"
+        [(ngModel)]="dateTo"
+        (change)="onFilterChange()"
+        class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300"
+      />
+      @if (dateFrom || dateTo) {
+        <button (click)="clearDateFilter()" class="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          清除
+        </button>
       }
-    </select>
-    <select [(ngModel)]="filterOperation" (change)="load()"
-      class="border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-pink-300">
-      <option value="">全部操作</option>
-      @for (op of operationOptions; track op) {
-        <option [value]="op">{{ operationLabel(op) }}</option>
-      }
-    </select>
-    <button (click)="load()" class="px-3 py-1.5 text-sm text-gray-500 hover:text-pink-600 transition-colors">
-      重新載入
-    </button>
+      <span class="ml-auto text-xs text-gray-400">{{ displayCount }}</span>
+    </div>
   </div>
 
   <!-- Loading / error -->
@@ -178,7 +263,28 @@
       </table>
       </div>
     </div>
+
   }
+
+<!-- Pagination: outside the display-filter block so hidden timestamp-only pages still allow navigation -->
+@if (hasMore || canGoNewer) {
+  <div class="flex justify-end gap-2 mt-3">
+    <button
+      (click)="goNewer()"
+      [disabled]="!canGoNewer || loading"
+      class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+    >
+      ← 較新
+    </button>
+    <button
+      (click)="goOlder()"
+      [disabled]="!hasMore || loading"
+      class="px-3 py-1.5 text-sm border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+    >
+      較舊 →
+    </button>
+  </div>
+}
 </div>
 
 @if (editLog) {

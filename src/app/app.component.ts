@@ -2,16 +2,19 @@ import { Component, DestroyRef, inject, Injector, PLATFORM_ID, signal } from '@a
 import { RouterOutlet, RouterLink, Router, NavigationEnd, NavigationStart, NavigationCancel, NavigationError } from '@angular/router';
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, fromEvent, map, distinctUntilChanged } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { Session } from '@supabase/supabase-js';
 import type { SupabaseService } from './core/supabase.service';
 import { AnalyticsService } from './core/analytics.service';
 import { CookieBannerComponent } from './shared/cookie-banner/cookie-banner.component';
+import { PwaInstallPromptComponent } from './shared/pwa-install-prompt/pwa-install-prompt.component';
 import { ThemeService } from './core/theme.service';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent],
+  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -24,9 +27,13 @@ export class AppComponent {
   readonly isStaff$ = this.isStaffSubject.asObservable();
   readonly showScrollTop = signal(false);
   readonly isNavigating = signal(false);
+  readonly authReady = signal(false);
+  readonly showLoginPill = signal(false);
+  readonly updateAvailable = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly swUpdate = inject(SwUpdate, { optional: true });
   private authChromePromise: Promise<void> | null = null;
   private supabase: SupabaseService | null = null;
 
@@ -53,12 +60,32 @@ export class AppComponent {
         distinctUntilChanged(),
       ).subscribe(show => this.showScrollTop.set(show));
 
+      const swUpdate = this.swUpdate;
+      if (swUpdate?.isEnabled) {
+        swUpdate.versionUpdates.pipe(
+          takeUntilDestroyed(this.destroyRef),
+          filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'),
+        ).subscribe(() => this.updateAvailable.set(true));
+
+        void swUpdate.checkForUpdate().catch(() => {});
+        const updateCheckId = window.setInterval(() => {
+          void swUpdate.checkForUpdate().catch(() => {});
+        }, 30 * 60 * 1000);
+        this.destroyRef.onDestroy(() => window.clearInterval(updateCheckId));
+      }
+
       this.scheduleAuthChromeLoad();
+    } else {
+      this.authReady.set(true);
     }
   }
 
   get isAdminRoute(): boolean {
     return this.router.url.startsWith('/admin');
+  }
+
+  get isFavoritesRoute(): boolean {
+    return this.router.url.startsWith('/my-favorites');
   }
 
   signOut() {
@@ -71,25 +98,27 @@ export class AppComponent {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  applyUpdate(): void {
+    document.location.reload();
+  }
+
   private scheduleAuthChromeLoad(): void {
-    const scheduleIdle = () => {
+    const loadWhenIdle = () => {
       const win = window as Window & {
         requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
       };
-      window.setTimeout(() => {
-        if (win.requestIdleCallback) {
-          win.requestIdleCallback(() => void this.loadAuthChrome(), { timeout: 6000 });
-          return;
-        }
+      if (win.requestIdleCallback) {
+        win.requestIdleCallback(() => void this.loadAuthChrome(), { timeout: 1500 });
+      } else {
         void this.loadAuthChrome();
-      }, 4500);
+      }
     };
 
     if (document.readyState === 'complete') {
-      scheduleIdle();
+      loadWhenIdle();
       return;
     }
-    window.addEventListener('load', scheduleIdle, { once: true });
+    window.addEventListener('load', loadWhenIdle, { once: true });
   }
 
   private loadAuthChrome(): Promise<void> {
@@ -99,17 +128,44 @@ export class AppComponent {
     this.authChromePromise = Promise.all([
       import('./core/supabase.service'),
       import('./core/admin-role.service'),
-    ]).then(([{ SupabaseService }, { AdminRoleService }]) => {
+      import('./core/favorites.service'),
+    ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }]) => {
       const supabase = this.injector.get(SupabaseService);
       const adminRole = this.injector.get(AdminRoleService);
+      const favorites = this.injector.get(FavoritesService);
       this.supabase = supabase;
 
       supabase.authState$.pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(session => this.sessionSubject.next(session));
+        .subscribe(session => {
+          this.sessionSubject.next(session);
+          if (session) {
+            favorites.load(session.user.id).catch(() => {});
+            this.showLoginPill.set(false);
+          } else {
+            favorites.reset();
+            if (this.authReady()) this.showLoginPill.set(true);
+          }
+        });
       adminRole.isAdmin$.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(isAdmin => this.isAdminSubject.next(isAdmin));
       adminRole.isStaff$.pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(isStaff => this.isStaffSubject.next(isStaff));
+
+      return supabase.getSessionOnce()
+        .then(session => {
+          this.sessionSubject.next(session);
+          if (session) {
+            favorites.load(session.user.id).catch(() => {});
+            this.showLoginPill.set(false);
+          } else {
+            this.showLoginPill.set(true);
+          }
+        })
+        .catch(() => {
+          this.sessionSubject.next(null);
+          this.showLoginPill.set(true);
+        })
+        .finally(() => this.authReady.set(true));
     });
 
     return this.authChromePromise;

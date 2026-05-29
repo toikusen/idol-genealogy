@@ -3,6 +3,22 @@ import { SupabaseService } from './supabase.service';
 import { AdminRoleService } from './admin-role.service';
 import { AuditLog } from '../models';
 
+export interface AuditLogCursor {
+  created_at: string;
+  id: string;
+}
+
+export interface AuditLogFilter {
+  table_name?: string;
+  operation?: string;
+  member_id?: string;
+  group_id?: string;
+  date_from?: string;
+  date_to?: string;
+  cursor?: AuditLogCursor;
+  limit?: number;
+}
+
 type EditableAuditTable =
   | 'members'
   | 'groups'
@@ -55,34 +71,23 @@ export class AuditLogService {
 
   private get db() { return this.supabase.client; }
 
-  async getSongLogsByField(songTable: 'member_songs' | 'group_songs', field: 'member_id' | 'group_id', value: string): Promise<AuditLog[]> {
-    const { data, error } = await this.db.rpc('get_songs_audit_logs_by_field', {
-      p_table: songTable,
-      p_field: field,
-      p_value: value,
+  async getAll(filter?: AuditLogFilter): Promise<{ data: AuditLog[]; hasMore: boolean }> {
+    const limit = Math.max(1, Math.min(filter?.limit ?? 50, 100));
+    const { data, error } = await this.db.rpc('get_audit_logs_paginated', {
+      p_table_name:          filter?.table_name          ?? null,
+      p_operation:           filter?.operation           ?? null,
+      p_member_id:           filter?.member_id           ?? null,
+      p_group_id:            filter?.group_id            ?? null,
+      p_date_from:           filter?.date_from           ?? null,
+      p_date_to:             filter?.date_to             ?? null,
+      p_cursor_created_at:   filter?.cursor?.created_at  ?? null,
+      p_cursor_id:           filter?.cursor?.id          ?? null,
+      p_limit:               limit + 1,
     });
     if (error) throw error;
-    return (data ?? []) as AuditLog[];
-  }
-
-  async getHistoryLogsByField(field: 'member_id' | 'group_id', value: string): Promise<AuditLog[]> {
-    const { data, error } = await this.db.rpc('get_history_audit_logs_by_field', {
-      p_field: field,
-      p_value: value,
-    });
-    if (error) throw error;
-    return (data ?? []) as AuditLog[];
-  }
-
-  async getAll(filter?: { table_name?: string; operation?: string }): Promise<AuditLog[]> {
-    let query = this.db.from('audit_log').select('*');
-    if (filter?.table_name) query = (query as any).eq('table_name', filter.table_name);
-    if (filter?.operation) query = (query as any).eq('operation', filter.operation);
-    const { data, error } = await (query as any)
-      .order('created_at', { ascending: false })
-      .limit(200);
-    if (error) throw error;
-    return data ?? [];
+    const rows = (data ?? []) as AuditLog[];
+    const hasMore = rows.length > limit;
+    return { data: hasMore ? rows.slice(0, limit) : rows, hasMore };
   }
 
   async canRevertLog(log: AuditLog): Promise<boolean> {

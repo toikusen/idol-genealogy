@@ -84,7 +84,7 @@ describe('HomeComponent', () => {
             },
           },
         },
-        { provide: SeoService, useValue: { setPage: jasmine.createSpy(), setJsonLd: jasmine.createSpy() } },
+        { provide: SeoService, useValue: { setPage: jasmine.createSpy(), setJsonLd: jasmine.createSpy(), setJsonLdGraph: jasmine.createSpy() } },
       ],
     }).compileComponents();
   }

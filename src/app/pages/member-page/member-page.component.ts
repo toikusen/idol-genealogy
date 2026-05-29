@@ -26,6 +26,7 @@ import { MemberPageData } from '../../core/page-data.resolvers';
 import { memberIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
+import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
 
 interface LastEditEntry {
   table_name: string;
@@ -41,7 +42,7 @@ interface LastEditEntry {
 @Component({
   selector: 'app-member-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent],
   templateUrl: './member-page.component.html',
   styleUrl: './member-page.component.css',
 })

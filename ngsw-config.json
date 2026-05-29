@@ -1,0 +1,62 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app-shell",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/icons/**",
+          "/**/*.png",
+          "/**/*.jpg",
+          "/**/*.svg",
+          "/**/*.woff2"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "supabase-public-api",
+      "urls": [
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/groups**",
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/members**",
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/companies**",
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/group_events**"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 100,
+        "maxAge": "6h",
+        "timeout": "3s"
+      }
+    },
+    {
+      "name": "supabase-public-storage",
+      "urls": [
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/object/public/**",
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/storage/v1/render/image/public/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 200,
+        "maxAge": "30d"
+      }
+    }
+  ]
+}

@@ -37,6 +37,7 @@ import {
 } from '../../core/public-record.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
+import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
 
 interface LastEditEntry {
   table_name: string;
@@ -64,7 +65,7 @@ interface GanttRow {
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent],
   templateUrl: './group-page.component.html',
   styleUrl: './group-page.component.css',
 })

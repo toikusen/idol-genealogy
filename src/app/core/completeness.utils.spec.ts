@@ -51,7 +51,7 @@ describe('getMemberCompleteness', () => {
 
 const baseGroup: Group = {
   id: '1', name: '測試團', name_jp: null, photo_url: null, color: '#fff',
-  company: null, company_id: null, founded_at: null, disbanded_at: null,
+  company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null,
   notes: null, style: null, instagram: null, facebook: null, x: null,
   youtube: null, timetree_url: null, is_trainee: false, updated_at: '', created_at: '',
 };

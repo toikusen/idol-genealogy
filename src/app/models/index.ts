@@ -30,6 +30,7 @@ export interface Group {
   company_id: string | null;
   founded_at: string | null;
   disbanded_at: string | null;
+  disbanded_announced_at: string | null;
   notes: string | null;
   is_trainee: boolean;
   style: string | null;
@@ -233,3 +234,46 @@ export interface VenueCalendarEvent {
   url: string | null;
   isAllDay: boolean;
 }
+
+export type FavoriteEntityType = 'group' | 'member';
+
+export interface SpotlightEntity {
+  id: string;
+  entityType: FavoriteEntityType;
+  name: string;
+  link: string;
+}
+
+export interface UserFavorite {
+  user_id: string;
+  entity_type: FavoriteEntityType;
+  entity_id: string;
+  created_at: string;
+}
+
+export interface FeedItem {
+  id: string;
+  entity_type: FavoriteEntityType;
+  entity_id: string;
+  entity_name: string;
+  event_type: 'event' | 'song' | 'member_change';
+  title: string;
+  occurred_at: string;
+  url?: string;
+}
+
+export interface NotificationPrefs {
+  notify_event: boolean;
+  notify_new_song: boolean;
+  notify_status: boolean;
+  notify_birthday: boolean;
+  notify_disbanded: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
+  notify_event: true,
+  notify_new_song: true,
+  notify_status: true,
+  notify_birthday: true,
+  notify_disbanded: true,
+};
