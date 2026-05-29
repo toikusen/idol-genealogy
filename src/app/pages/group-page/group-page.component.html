@@ -128,28 +128,13 @@
             <div style="flex: 1; height: 1px; background: rgba(232,121,160,0.1);"></div>
           </div>
 
-          <!-- Group name + share link -->
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 6px;">
-            <h1 style="
-              font-size: clamp(2rem, 6vw, 3.5rem);
-              font-weight: 300; line-height: 1.05;
-              letter-spacing: 0.02em; color: var(--text-primary);
-              margin: 0;
-            ">{{ group.name }}</h1>
-            <button
-              (click)="copyLink()"
-              class="share-link-btn"
-              [class.share-link-btn--copied]="linkCopied"
-            >
-              @if (linkCopied) {
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                已複製
-              } @else {
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                分享連結
-              }
-            </button>
-          </div>
+          <!-- Group name -->
+          <h1 style="
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            font-weight: 300; line-height: 1.05;
+            letter-spacing: 0.02em; color: var(--text-primary);
+            margin: 0 0 6px;
+          ">{{ group.name }}</h1>
 
           @if (group.name_jp) {
             <p style="
@@ -300,18 +285,6 @@
               }
             </div>
           }
-
-          <!-- Action buttons -->
-          <div style="display:flex;gap:8px;margin-top:14px;">
-            <button
-              (click)="showGroupProposalPanel = true"
-              class="proposal-edit-btn"
-            >✏️ 提案修改</button>
-            <button
-              (click)="showDeletePanel = true"
-              class="report-btn"
-            >⚑ 回報問題</button>
-          </div>
 
           <!-- Notes -->
           @if (group.notes) {
