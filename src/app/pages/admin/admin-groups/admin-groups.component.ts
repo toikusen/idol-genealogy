@@ -216,6 +216,9 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     } else if (this.editing.timetree_url === '') {
       this.editing.timetree_url = null;
     }
+    if (this.editing.founded_at === '') this.editing.founded_at = null;
+    if (this.editing.disbanded_at === '') this.editing.disbanded_at = null;
+    if (this.editing.disbanded_announced_at === '') this.editing.disbanded_announced_at = null;
     if (!this.isEditor) {
       this.editing.style = this.editingStyles.length > 0 ? this.editingStyles.join(',') : null;
     }
