@@ -227,6 +227,15 @@ export class PushSettingsComponent implements OnInit, OnDestroy {
       await this.prefsService.load(session.user.id);
     }
     await this.pushService.checkSubscription();
+
+    // Auto-prompt on first visit (permission not yet asked, not already subscribed)
+    if (
+      this.pushService.isSupported() &&
+      this._permission() === 'default' &&
+      !this.pushService.isSubscribed()
+    ) {
+      await this.subscribe();
+    }
   }
 
   ngOnDestroy(): void {
