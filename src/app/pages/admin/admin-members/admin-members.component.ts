@@ -156,6 +156,11 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     } else {
       this.editing.birthdate = null;
     }
+    if (this.editing.photo_status === ('' as any)) this.editing.photo_status = null;
+    if (this.editing.video_status === ('' as any)) this.editing.video_status = null;
+    if (this.editing.photo_notes === '') this.editing.photo_notes = null;
+    if (this.editing.video_notes === '') this.editing.video_notes = null;
+    if (this.editing.photography_source === '') this.editing.photography_source = null;
     this.saving = true;
     try {
       if (this.isEdit && this.editing.id) {
