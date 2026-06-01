@@ -21,7 +21,7 @@ import { AdminRoleService } from '../../core/admin-role.service';
 import { GroupSong } from '../../models';
 import { groupPath, siteUrl } from '../../core/public-url.utils';
 import { GroupPageData } from '../../core/page-data.resolvers';
-import { groupIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { groupIndexabilitySignals, isAdEligible } from '../../core/indexability.utils';
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
 import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
@@ -322,7 +322,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     );
 
     const signals = groupIndexabilitySignals(pageData.group, pageData.histories.length);
-    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.seo.setRobotsNoIndex(false);
     this.adEligible = isAdEligible(signals);
 
     this.snsUrls = {

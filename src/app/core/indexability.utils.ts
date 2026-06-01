@@ -1,10 +1,10 @@
-// Search-indexability signals for detail pages (member / group / company).
+// Quality signals for detail pages (member / group / company).
 //
-// Purpose: decide whether a page is worth exposing to Google (sitemap,
-// prerender, <meta robots>) and whether it has enough substance to host ads.
+// Purpose: decide whether a page has enough substance to host ads. Public
+// detail pages are still prerendered and indexable even when they are thin.
 // Intentionally Angular-free so a mirror can be kept in scripts/ for the
-// Node-side prerender/sitemap generator. If you edit the thresholds below,
-// mirror the change in scripts/indexability.mjs.
+// Node-side tests. If you edit the thresholds below, mirror the change in
+// scripts/indexability.mjs.
 
 import { isPlaceholderText } from './public-record.utils';
 
@@ -95,9 +95,6 @@ export function companyIndexabilitySignals(
     hasNotes: nonEmptyText(company.description),
     noteLength: textLength(company.description),
     hasExternalLink: !!(company.website || company.instagram || company.facebook || company.x || company.youtube),
-    // Companies share hasHistory and hasRelation when affiliations exist; a
-    // page still needs a second independent supporting signal (photo or link)
-    // to clear isIndexable — thin roster-only shells are kept out of Google.
     hasRelation: affiliatedEntityCount >= 1,
   };
 }
@@ -108,19 +105,6 @@ function supportingCount(s: IndexabilitySignals): number {
   if (s.hasExternalLink) n++;
   if (s.hasRelation) n++;
   return n;
-}
-
-/**
- * Indexability requires either editorial prose (with at least one support) or,
- * for history-only pages, the full evidence stack: history + photo + external
- * link. This keeps thin pages — those with only a roster link or only a
- * partial set of supporting signals — out of the sitemap and Google's index.
- */
-export function isIndexable(s: IndexabilitySignals): boolean {
-  if (s.hasNotes) {
-    return supportingCount(s) >= 1;
-  }
-  return s.hasHistory && s.hasPhoto && s.hasExternalLink;
 }
 
 /**

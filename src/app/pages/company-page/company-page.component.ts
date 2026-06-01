@@ -12,7 +12,7 @@ import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
-import { companyIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { companyIndexabilitySignals, isAdEligible } from '../../core/indexability.utils';
 import { AnalyticsService } from '../../core/analytics.service';
 import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
@@ -145,7 +145,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
       siteUrl(companyPath(pageData.id)),
       pageData.company.photo_url ?? undefined
     );
-    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.seo.setRobotsNoIndex(false);
     this.adEligible = isAdEligible(signals);
 
     const sameAs: string[] = [

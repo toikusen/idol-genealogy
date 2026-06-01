@@ -1,8 +1,7 @@
 // Node/JS mirror of src/app/core/indexability.utils.ts.
 // Keep the two files in sync — they share spec coverage (see
 // scripts/indexability.test.mjs and src/app/core/indexability.utils.spec.ts).
-// This file is imported by the pre-build script that generates
-// prerender-routes.txt and sitemap.xml, so it cannot depend on Angular.
+// This file cannot depend on Angular.
 
 export const MIN_AD_TEXT_LENGTH = 80;
 
@@ -59,9 +58,6 @@ export function companyIndexabilitySignals(company, affiliatedEntityCount) {
     hasNotes: nonEmptyText(company.description),
     noteLength: textLength(company.description),
     hasExternalLink: !!(company.website || company.instagram || company.facebook || company.x || company.youtube),
-    // Companies share hasHistory and hasRelation when affiliations exist; a
-    // page still needs a second independent supporting signal (photo or link)
-    // to clear isIndexable — thin roster-only shells are kept out of Google.
     hasRelation: affiliatedEntityCount >= 1,
   };
 }
@@ -72,13 +68,6 @@ function supportingCount(s) {
   if (s.hasExternalLink) n++;
   if (s.hasRelation) n++;
   return n;
-}
-
-export function isIndexable(s) {
-  if (s.hasNotes) {
-    return supportingCount(s) >= 1;
-  }
-  return s.hasHistory && s.hasPhoto && s.hasExternalLink;
 }
 
 export function isAdEligible(s) {

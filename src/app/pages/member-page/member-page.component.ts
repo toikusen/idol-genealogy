@@ -22,7 +22,7 @@ import { AdminRoleService } from '../../core/admin-role.service';
 import { FormsModule } from '@angular/forms';
 import { memberPath, siteUrl } from '../../core/public-url.utils';
 import { MemberPageData } from '../../core/page-data.resolvers';
-import { memberIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { memberIndexabilitySignals, isAdEligible } from '../../core/indexability.utils';
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
@@ -231,7 +231,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     );
 
     const signals = memberIndexabilitySignals(member, pageData.histories.length);
-    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.seo.setRobotsNoIndex(false);
     this.adEligible = isAdEligible(signals);
 
     this.snsUrls = {

@@ -1,17 +1,22 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { Title, Meta } from '@angular/platform-browser';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { siteUrl, SITE_URL } from './public-url.utils';
 
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.png`;
 
 @Injectable({ providedIn: 'root' })
 export class SeoService {
+  private readonly isBrowser: boolean;
+
   constructor(
     private title: Title,
     private meta: Meta,
-    @Inject(DOCUMENT) private doc: Document
-  ) {}
+    @Inject(DOCUMENT) private doc: Document,
+    @Inject(PLATFORM_ID) platformId: object,
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   setPage(pageTitle: string, description: string, url: string, image?: string): void {
     const canonicalUrl = this.toAbsoluteUrl(url);
@@ -76,6 +81,11 @@ export class SeoService {
   }
 
   setRobotsNoIndex(noIndex: boolean): void {
+    // Robots meta must only be written during SSR/prerender — not by
+    // client-side hydration. If the browser re-evaluated this with fresh
+    // Supabase data, Googlebot's JS renderer would see a noindex that
+    // contradicts the prerendered HTML it received first.
+    if (this.isBrowser) return;
     const robots = noIndex ? 'noindex, follow' : 'index, follow';
     let tag = this.doc.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
     if (tag) {

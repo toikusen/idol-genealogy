@@ -5,14 +5,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { writeFileSync } from 'fs';
 import WebSocket from 'ws';
-import {
-  memberIndexabilitySignals,
-  groupIndexabilitySignals,
-  companyIndexabilitySignals,
-  isIndexable,
-} from './indexability.mjs';
-
 const SITE_URL = 'https://idolmaps.com';
+
+// Cloudflare Pages sets CF_PAGES_BRANCH automatically on every build.
+// Non-production branches (UAT, feature previews) must not be indexed by Google.
+const PRODUCTION_BRANCH = 'master';
+const cfBranch = process.env['CF_PAGES_BRANCH'];
+if (cfBranch && cfBranch !== PRODUCTION_BRANCH) {
+  writeFileSync('public/robots.txt', 'User-agent: *\nDisallow: /\n', 'utf8');
+  console.log(`Non-production branch "${cfBranch}": robots.txt set to Disallow all.`);
+}
 
 // Fall back to the public anon key already committed in environment.ts
 const SUPABASE_URL = process.env['SUPABASE_URL'] ?? 'https://ziiagdrrytyrmzoeegjk.supabase.co';
@@ -58,7 +60,7 @@ function isTestName(value) {
 async function run() {
   const { data: members, error: membersError } = await supabase
     .from('members')
-    .select('id, name, updated_at, notes, photo_url, instagram, facebook, x, maid_url, company_id');
+    .select('id, name, updated_at, notes');
   if (membersError) {
     console.error('Error fetching members:', membersError.message);
     process.exit(1);
@@ -66,62 +68,27 @@ async function run() {
 
   const { data: groups, error: groupsError } = await supabase
     .from('groups')
-    .select('id, name, updated_at, notes, photo_url, instagram, facebook, x, youtube, company_id');
+    .select('id, name, updated_at');
   if (groupsError) {
     console.error('Error fetching groups:', groupsError.message);
     process.exit(1);
   }
 
-  const { data: histories, error: historiesError } = await supabase
-    .from('history')
-    .select('member_id, group_id');
-  if (historiesError) {
-    console.error('Error fetching histories:', historiesError.message);
-    process.exit(1);
-  }
-  const memberHistoryCount = new Map();
-  const groupHistoryCount = new Map();
   const publicMembers = members.filter(m => !isTestName(m.name));
   const publicGroups = groups.filter(g => !isTestName(g.name));
-  const publicMemberIds = new Set(publicMembers.map(m => m.id));
-  const publicGroupIds = new Set(publicGroups.map(g => g.id));
-  const publicHistories = histories.filter(h =>
-    (!h.member_id || publicMemberIds.has(h.member_id)) &&
-    (!h.group_id || publicGroupIds.has(h.group_id))
-  );
-  for (const h of publicHistories) {
-    if (h.member_id) memberHistoryCount.set(h.member_id, (memberHistoryCount.get(h.member_id) ?? 0) + 1);
-    if (h.group_id) groupHistoryCount.set(h.group_id, (groupHistoryCount.get(h.group_id) ?? 0) + 1);
-  }
 
   const { data: companies, error: companiesError } = await supabase
     .from('companies')
-    .select('id, name, updated_at, description, photo_url, instagram, facebook, x, youtube, website');
+    .select('id, name, updated_at');
   if (companiesError) {
     console.error('Error fetching companies:', companiesError.message);
     process.exit(1);
   }
   const publicCompanies = companies.filter(c => !isTestName(c.name));
 
-  // Companies: affiliated entity count = groups + solo members (member with company_id and no history counts as solo).
-  // Approximation: count any group or member with matching company_id.
-  const companyAffiliationCount = new Map();
-  for (const g of publicGroups) {
-    if (g.company_id) companyAffiliationCount.set(g.company_id, (companyAffiliationCount.get(g.company_id) ?? 0) + 1);
-  }
-  for (const m of publicMembers) {
-    if (m.company_id) companyAffiliationCount.set(m.company_id, (companyAffiliationCount.get(m.company_id) ?? 0) + 1);
-  }
-
-  const indexableMembers = publicMembers.filter(m =>
-    isIndexable(memberIndexabilitySignals(m, memberHistoryCount.get(m.id) ?? 0)),
-  );
-  const indexableGroups = publicGroups.filter(g =>
-    isIndexable(groupIndexabilitySignals(g, groupHistoryCount.get(g.id) ?? 0)),
-  );
-  const indexableCompanies = publicCompanies.filter(c =>
-    isIndexable(companyIndexabilitySignals(c, companyAffiliationCount.get(c.id) ?? 0)),
-  );
+  const indexableMembers = publicMembers;
+  const indexableGroups = publicGroups;
+  const indexableCompanies = publicCompanies;
 
   const staticRoutes = [
     '/',
