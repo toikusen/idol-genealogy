@@ -36,6 +36,12 @@ import {
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
+import {
+  photographyBadgeColor,
+  photographyBadgeTextColor,
+  photographyBadgeBorderColor,
+  photographyStatusLabel,
+} from '../../core/photography-policy.utils';
 
 interface GanttSegment {
   history: History;
@@ -113,6 +119,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   formatRelativeTime(date: string | null): string {
     return formatRelativeTime(date);
   }
+
+  photographyBadgeColor = photographyBadgeColor;
+  photographyBadgeTextColor = photographyBadgeTextColor;
+  photographyBadgeBorderColor = photographyBadgeBorderColor;
+  photographyStatusLabel = photographyStatusLabel;
 
   get latestEditSummary(): string {
     if (!this.lastProposal) return '';

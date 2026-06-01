@@ -323,6 +323,75 @@
         </div><!-- /flex wrapper -->
       </header>
 
+      <!-- ══ Photography policy section ══ -->
+      @if (group.photo_status || group.photo_notes || group.video_status || group.video_notes) {
+        <div style="
+          background: var(--bg-surface);
+          border: 1px solid var(--border-subtle);
+          border-radius: 4px;
+          padding: 14px 20px;
+          margin-bottom: 24px;
+          position: relative; overflow: hidden;
+        ">
+          <div style="
+            position: absolute; top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: linear-gradient(to bottom, rgba(232,127,160,0.5), rgba(124,108,242,0.2));
+          "></div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-left: 4px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-label);">攝錄規範</span>
+              <span style="font-size: 0.62rem; color: var(--text-faint-38); letter-spacing: 0.05em;">以主辦方規定為前提</span>
+            </div>
+            <button
+              (click)="showGroupProposalPanel = true"
+              style="font-size: 0.65rem; color: rgba(232,127,160,0.5); background: none; border: 1px solid rgba(232,127,160,0.15); border-radius: 3px; padding: 2px 8px; cursor: pointer;"
+            >提案修改</button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px; padding-left: 4px;">
+            @if (group.photo_status || group.photo_notes) {
+              <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px;">
+                <span style="font-size: 0.72rem; color: var(--text-faint-40); flex-shrink: 0;">📷</span>
+                @if (group.photo_status) {
+                  <span
+                    [style.background]="photographyBadgeColor(group.photo_status)"
+                    [style.color]="photographyBadgeTextColor(group.photo_status)"
+                    [style.border]="'1px solid ' + photographyBadgeBorderColor(group.photo_status)"
+                    style="border-radius: 3px; padding: 1px 8px; font-size: 0.72rem; flex-shrink: 0;"
+                  >{{ photographyStatusLabel(group.photo_status, 'photo') }}</span>
+                }
+                @if (group.photo_notes) {
+                  <span style="font-size: 0.75rem; color: var(--text-faint-55); line-height: 1.5;">{{ group.photo_notes }}</span>
+                }
+              </div>
+            }
+            @if (group.video_status || group.video_notes) {
+              <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px;">
+                <span style="font-size: 0.72rem; color: var(--text-faint-40); flex-shrink: 0;">🎥</span>
+                @if (group.video_status) {
+                  <span
+                    [style.background]="photographyBadgeColor(group.video_status)"
+                    [style.color]="photographyBadgeTextColor(group.video_status)"
+                    [style.border]="'1px solid ' + photographyBadgeBorderColor(group.video_status)"
+                    style="border-radius: 3px; padding: 1px 8px; font-size: 0.72rem; flex-shrink: 0;"
+                  >{{ photographyStatusLabel(group.video_status, 'video') }}</span>
+                }
+                @if (group.video_notes) {
+                  <span style="font-size: 0.75rem; color: var(--text-faint-55); line-height: 1.5;">{{ group.video_notes }}</span>
+                }
+              </div>
+            }
+          </div>
+
+          @if (group.photography_source) {
+            <div style="margin-top: 10px; padding-left: 4px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 8px;">
+              <span style="font-size: 0.65rem; color: var(--text-faint-38);">資料來源：{{ group.photography_source }}</span>
+            </div>
+          }
+        </div>
+      }
 
       <!-- ══ Selected member detail panel ══ -->
       @if (selectedHistory !== null) {
