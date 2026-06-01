@@ -377,6 +377,51 @@
         <p *ngIf="!isEdit" class="text-xs text-gray-400 mt-1">請先儲存團體後再新增影片</p>
       </div>
 
+      <!-- photography policy -->
+      <div>
+        <p class="text-xs font-semibold text-gray-500 mb-2 mt-1">攝錄規範</p>
+        <div class="space-y-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">攝影</label>
+            <select [(ngModel)]="editing.photo_status"
+              class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+              <option [ngValue]="null">— 未設定 —</option>
+              <option value="allowed">✅ 可拍</option>
+              <option value="not_allowed">❌ 不可拍</option>
+              <option value="conditional">⚠️ 條件式</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">攝影備註</label>
+            <input type="text" [(ngModel)]="editing.photo_notes"
+              placeholder="例：需審核後發布，需標記官方帳號"
+              class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">錄影</label>
+            <select [(ngModel)]="editing.video_status"
+              class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+              <option [ngValue]="null">— 未設定 —</option>
+              <option value="allowed">✅ 可錄</option>
+              <option value="not_allowed">❌ 不可錄</option>
+              <option value="conditional">⚠️ 條件式</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">錄影備註</label>
+            <input type="text" [(ngModel)]="editing.video_notes"
+              placeholder="例：免審，需標記"
+              class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">資料來源</label>
+            <input type="text" [(ngModel)]="editing.photography_source"
+              placeholder="例：官方 Threads · 2025.05"
+              class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"/>
+          </div>
+        </div>
+      </div>
+
       <!-- Error -->
       <p *ngIf="error" class="text-xs text-red-500">{{ error }}</p>
     </div>

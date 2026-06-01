@@ -219,6 +219,11 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     if (this.editing.founded_at === '') this.editing.founded_at = null;
     if (this.editing.disbanded_at === '') this.editing.disbanded_at = null;
     if (this.editing.disbanded_announced_at === '') this.editing.disbanded_announced_at = null;
+    if (this.editing.photo_status === ('' as any)) this.editing.photo_status = null;
+    if (this.editing.video_status === ('' as any)) this.editing.video_status = null;
+    if (this.editing.photo_notes === '') this.editing.photo_notes = null;
+    if (this.editing.video_notes === '') this.editing.video_notes = null;
+    if (this.editing.photography_source === '') this.editing.photography_source = null;
     if (!this.isEditor) {
       this.editing.style = this.editingStyles.length > 0 ? this.editingStyles.join(',') : null;
     }
