@@ -139,8 +139,8 @@ Show the section only when at least one of these is non-null:
 
 **proposal-panel change required:** The panel's default branch renders all unknown fields as `<input type="text">`. `photo_status` and `video_status` must render as `<select>` to enforce the enum — a free-text input would let users submit values like `可拍` that fail the DB `CHECK` constraint. Add a branch for these two fields in `proposal-panel.component.ts`:
 
-```ts
-// inside the field-rendering @if/@else chain:
+```html
+<!-- inside the field-rendering @if/@else chain (Angular template): -->
 } @else if (field === 'photo_status' || field === 'video_status') {
   <select [(ngModel)]="formData[field]" [name]="field" ...>
     <option [ngValue]="null">— 未設定</option>
@@ -179,9 +179,9 @@ These fields save directly via `GroupService.update()` / `MemberService.update()
 | `src/app/core/proposal-fields.config.ts` | Add 5 fields + labels to `groups` and `members` |
 | `src/app/shared/proposal-panel/proposal-panel.component.ts` | Add `@else if` branch to render `<select>` for `photo_status` / `video_status` |
 | `src/app/pages/group-page/group-page.component.html` | Add photography section after header |
-| `src/app/pages/group-page/group-page.component.ts` | Add `photographyBadgeColor(status)` helper method |
+| `src/app/pages/group-page/group-page.component.ts` | Add `photographyBadgeColor(status)` and `photographyStatusLabel(status, type)` helper methods |
 | `src/app/pages/member-page/member-page.component.html` | Add photography section after header |
-| `src/app/pages/member-page/member-page.component.ts` | Add `photographyBadgeColor(status)` helper method |
+| `src/app/pages/member-page/member-page.component.ts` | Add `photographyBadgeColor(status)` and `photographyStatusLabel(status, type)` helper methods |
 | `src/app/pages/admin/admin-groups/admin-groups.component.html` | Add 5 form fields to edit modal |
 | `src/app/pages/admin/admin-members/admin-members.component.html` | Add 5 form fields to edit modal |
 | Supabase migration (new SQL file) | `ALTER TABLE … ADD COLUMN IF NOT EXISTS` for groups and members |
