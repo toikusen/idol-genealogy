@@ -49,7 +49,7 @@ describe('RecordEditHistoryComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(proposalServiceSpy.getApprovedByRecord).toHaveBeenCalledWith('members', 'm1');
-    expect(component.entries.length).toBe(1);
+    expect(component.proposals.length).toBe(1);
     expect(component.loading).toBeFalse();
     expect(component.error).toBeFalse();
   });
