@@ -26,6 +26,12 @@ import { memberIndexabilitySignals, isAdEligible } from '../../core/indexability
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
+import {
+  photographyBadgeColor,
+  photographyBadgeTextColor,
+  photographyBadgeBorderColor,
+  photographyStatusLabel,
+} from '../../core/photography-policy.utils';
 
 @Component({
   selector: 'app-member-page',
@@ -54,6 +60,10 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   companyName: string | null = null;
   companyId: string | null = null;
   adEligible = false;
+  photographyBadgeColor = photographyBadgeColor;
+  photographyBadgeTextColor = photographyBadgeTextColor;
+  photographyBadgeBorderColor = photographyBadgeBorderColor;
+  photographyStatusLabel = photographyStatusLabel;
   snsUrls: { instagram: string | null; facebook: string | null; x: string | null; maid: string | null } = {
     instagram: null, facebook: null, x: null, maid: null,
   };
