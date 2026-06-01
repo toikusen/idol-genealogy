@@ -4,10 +4,12 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
   members: [
     'name', 'name_hiragana', 'name_roman', 'emoji', 'nickname', 'birthdate',
     'color', 'color_name', 'instagram', 'facebook', 'x', 'maid_url', 'photo_url',
+    'photo_status', 'photo_notes', 'video_status', 'video_notes', 'photography_source',
   ],
   groups: [
     'name', 'name_jp', 'color', 'founded_at', 'disbanded_at',
     'instagram', 'facebook', 'x', 'youtube', 'timetree_url', 'company_id', 'photo_url',
+    'photo_status', 'photo_notes', 'video_status', 'video_notes', 'photography_source',
   ],
   history: [
     'member_id', 'group_id', 'name_at_time',
@@ -35,12 +37,14 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
     birthdate: '生日', color: '代表色(HEX)', color_name: '代表色名稱',
     instagram: 'Instagram', facebook: 'Facebook', x: 'X (Twitter)',
     maid_url: '女僕帳號', photo_url: '頭像圖片',
+    photo_status: '攝影規範', photo_notes: '攝影備註', video_status: '錄影規範', video_notes: '錄影備註', photography_source: '資料來源',
   },
   groups: {
     name: '團體名稱', name_jp: '日文名稱', color: '代表色(HEX)',
     founded_at: '成立日期', disbanded_at: '解散日期',
     instagram: 'Instagram', facebook: 'Facebook', x: 'X', youtube: 'YouTube', timetree_url: 'TimeTree',
     company_id: '所屬公司', photo_url: '頭像圖片',
+    photo_status: '攝影規範', photo_notes: '攝影備註', video_status: '錄影規範', video_notes: '錄影備註', photography_source: '資料來源',
   },
   history: {
     member_id: '成員', group_id: '團體', name_at_time: '當時名稱', status: '狀態',
