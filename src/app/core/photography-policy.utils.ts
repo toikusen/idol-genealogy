@@ -37,11 +37,13 @@ export function photographyStatusLabel(
       case 'allowed':     return '可拍';
       case 'not_allowed': return '不可拍';
       case 'conditional': return '條件式';
+      default:            return '';
     }
   }
   switch (status) {
     case 'allowed':     return '可錄';
     case 'not_allowed': return '不可錄';
     case 'conditional': return '條件式';
+    default:            return '';
   }
 }

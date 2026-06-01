@@ -51,6 +51,8 @@ describe('photographyStatusLabel', () => {
     expect(photographyStatusLabel('not_allowed', 'video')).toBe('不可錄'));
   it('video: conditional → 條件式', () =>
     expect(photographyStatusLabel('conditional', 'video')).toBe('條件式'));
-  it('null → empty string', () =>
+  it('null photo → empty string', () =>
     expect(photographyStatusLabel(null, 'photo')).toBe(''));
+  it('null video → empty string', () =>
+    expect(photographyStatusLabel(null, 'video')).toBe(''));
 });
