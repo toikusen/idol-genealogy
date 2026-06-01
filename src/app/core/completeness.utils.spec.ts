@@ -6,6 +6,7 @@ const baseMember: Member = {
   color_name: null, birthdate: null, nickname: null, instagram: null,
   facebook: null, x: null, maid_url: null, notes: null, company_id: null,
   no_sns: false,
+  photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null,
   updated_at: '', created_at: '',
 };
 
@@ -53,7 +54,9 @@ const baseGroup: Group = {
   id: '1', name: '測試團', name_jp: null, photo_url: null, color: '#fff',
   company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null,
   notes: null, style: null, instagram: null, facebook: null, x: null,
-  youtube: null, timetree_url: null, is_trainee: false, updated_at: '', created_at: '',
+  youtube: null, timetree_url: null, is_trainee: false,
+  photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null,
+  updated_at: '', created_at: '',
 };
 
 describe('getGroupCompleteness', () => {

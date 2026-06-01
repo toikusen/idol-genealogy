@@ -7,7 +7,9 @@ function mockMember(id: string, overrides: Partial<Member> = {}): Member {
     id, name: `Member ${id}`, name_hiragana: null, name_roman: null, emoji: null,
     photo_url: null, color: null, color_name: null, birthdate: null, nickname: null,
     instagram: null, facebook: null, x: null, maid_url: null, notes: null,
-    company_id: null, no_sns: false, updated_at: '2026-01-01', created_at: '2026-01-01',
+    company_id: null, no_sns: false,
+    photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null,
+    updated_at: '2026-01-01', created_at: '2026-01-01',
     ...overrides,
   };
 }
@@ -16,7 +18,9 @@ const baseGroup: Group = {
   id: 'g1', name: 'Group 1', name_jp: null, photo_url: null, color: '#000',
   company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null,
   notes: null, is_trainee: false, style: null, instagram: null, facebook: null,
-  x: null, youtube: null, timetree_url: null, updated_at: '2026-01-01', created_at: '2026-01-01',
+  x: null, youtube: null, timetree_url: null,
+  photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null,
+  updated_at: '2026-01-01', created_at: '2026-01-01',
 };
 
 const baseVenue: Venue = {

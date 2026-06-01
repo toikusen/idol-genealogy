@@ -142,11 +142,11 @@ describe('AdminAuditLogComponent — autocomplete', () => {
   let auditLogSpy: jasmine.SpyObj<AuditLogService>;
 
   const mockMembers: Member[] = [
-    { id: 'm1', name: '木村咲子', name_roman: null, name_hiragana: null, emoji: null, photo_url: null, color: null, color_name: null, birthdate: null, nickname: null, instagram: null, facebook: null, x: null, maid_url: null, notes: null, company_id: null, no_sns: false, updated_at: '', created_at: '' },
-    { id: 'm2', name: '山田花子', name_roman: 'Hanako', name_hiragana: null, emoji: null, photo_url: null, color: null, color_name: null, birthdate: null, nickname: null, instagram: null, facebook: null, x: null, maid_url: null, notes: null, company_id: null, no_sns: false, updated_at: '', created_at: '' },
+    { id: 'm1', name: '木村咲子', name_roman: null, name_hiragana: null, emoji: null, photo_url: null, color: null, color_name: null, birthdate: null, nickname: null, instagram: null, facebook: null, x: null, maid_url: null, notes: null, company_id: null, no_sns: false, photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null, updated_at: '', created_at: '' },
+    { id: 'm2', name: '山田花子', name_roman: 'Hanako', name_hiragana: null, emoji: null, photo_url: null, color: null, color_name: null, birthdate: null, nickname: null, instagram: null, facebook: null, x: null, maid_url: null, notes: null, company_id: null, no_sns: false, photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null, updated_at: '', created_at: '' },
   ];
   const mockGroups: Group[] = [
-    { id: 'g1', name: 'AKB48', name_jp: null, photo_url: null, color: '#fff', company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null, notes: null, is_trainee: false, style: null, instagram: null, facebook: null, x: null, youtube: null, timetree_url: null, updated_at: '', created_at: '' },
+    { id: 'g1', name: 'AKB48', name_jp: null, photo_url: null, color: '#fff', company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null, notes: null, is_trainee: false, style: null, instagram: null, facebook: null, x: null, youtube: null, timetree_url: null, photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null, updated_at: '', created_at: '' },
   ];
 
   beforeEach(async () => {

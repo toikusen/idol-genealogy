@@ -1,4 +1,4 @@
-export type PhotographyPolicyStatus = 'allowed' | 'not_allowed' | 'conditional';
+import { PhotographyPolicyStatus } from '../models';
 
 export function photographyBadgeColor(status: PhotographyPolicyStatus | null): string {
   switch (status) {

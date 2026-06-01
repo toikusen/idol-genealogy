@@ -1,3 +1,5 @@
+export type PhotographyPolicyStatus = 'allowed' | 'not_allowed' | 'conditional';
+
 export interface Member {
   id: string;
   name: string;
@@ -16,6 +18,11 @@ export interface Member {
   notes: string | null;
   company_id: string | null;
   no_sns: boolean;
+  photo_status: PhotographyPolicyStatus | null;
+  photo_notes: string | null;
+  video_status: PhotographyPolicyStatus | null;
+  video_notes: string | null;
+  photography_source: string | null;
   updated_at: string;
   created_at: string;
 }
@@ -39,6 +46,11 @@ export interface Group {
   x: string | null;
   youtube: string | null;
   timetree_url: string | null;
+  photo_status: PhotographyPolicyStatus | null;
+  photo_notes: string | null;
+  video_status: PhotographyPolicyStatus | null;
+  video_notes: string | null;
+  photography_source: string | null;
   updated_at: string;
   created_at: string;
 }
