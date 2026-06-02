@@ -125,14 +125,14 @@ UPDATE groups SET
   photography_source = '攝影規範社群討論彙整 · 2026.06'
 WHERE name ILIKE '%存在証明%' OR name ILIKE '%存征%';
 
--- i_three.idol
+-- i<3
 UPDATE groups SET
   photo_status       = 'allowed',
   photo_notes        = '主辦公告開放後可自由拍，無需事前審核；歡迎標註粉專及成員帳號',
   video_status       = 'allowed',
   video_notes        = '主辦公告開放後可自由錄，無需事前審核；歡迎標註粉專及成員帳號',
   photography_source = '攝影規範社群討論彙整 · 2026.06'
-WHERE name ILIKE '%i_three%';
+WHERE name ILIKE '%i<3%';
 
 -- SSR 旗下四個團體 ──────────────────────────────────────────
 
