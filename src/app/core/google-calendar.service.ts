@@ -150,7 +150,6 @@ export class GoogleCalendarService {
     }
 
     if (event.description) {
-      if (this.groupNameNearOrganizerKeyword(names, event.description)) return true;
       if (this.groupNameNearPerformerKeyword(names, event.description)) return true;
     }
 
@@ -181,6 +180,31 @@ export class GoogleCalendarService {
     return false;
   }
 
+  private memberNameInPerformerPhrase(names: string[], phraseNfkc: string): boolean {
+    const phraseStripped = this.stripNonCjk(phraseNfkc);
+    const phraseTrimmed = phraseNfkc.trim();
+    for (const name of names) {
+      const nfkc = name.normalize('NFKC').toLowerCase();
+      const hasCjkKana = /[ぁ-ゖァ-ー一-鿿㐀-䶿]/.test(nfkc);
+      if (hasCjkKana) {
+        if (this.groupNameInPhrase([name], phraseNfkc)) return true;
+      } else {
+        const stripped = this.stripNonCjk(nfkc);
+        if (stripped.length >= 4 && (phraseStripped === stripped || phraseTrimmed === nfkc)) return true;
+        if (stripped.length < 4 && nfkc.length >= 3 && phraseTrimmed === nfkc) return true;
+      }
+    }
+    return false;
+  }
+
+  private stripPerformerKeywords(phraseNfkc: string): string {
+    let stripped = phraseNfkc;
+    for (const keyword of this.GROUP_PERFORMER_KEYWORDS) {
+      stripped = stripped.split(keyword).join('');
+    }
+    return stripped.replace(/^[\s:：|｜/／\-ー・【】\[\]（）()]+|[\s:：|｜/／\-ー・【】\[\]（）()]+$/g, '').trim();
+  }
+
   private groupNameNearOrganizerKeyword(names: string[], description: string): boolean {
     const phrases = this.descriptionPhrases(description);
     for (const phrase of phrases) {
@@ -200,10 +224,28 @@ export class GoogleCalendarService {
       if (!hasKeyword) continue;
       // Same phrase (e.g. "幻波SYNC が出演します")
       if (this.groupNameInPhrase(names, phraseNfkc)) return true;
-      // Following phrases: performers are often listed one per line after the keyword
+      // Following phrases: performers are often listed one per line after the keyword.
+      // Skip phrases containing organizer keywords — a name there is a credit, not a performer.
       for (let j = i + 1; j < phrases.length; j++) {
         const nextNfkc = phrases[j].normalize('NFKC').toLowerCase();
+        if (this.GROUP_ORGANIZER_KEYWORDS.some(kw => nextNfkc.includes(kw))) continue;
         if (this.groupNameInPhrase(names, nextNfkc)) return true;
+      }
+    }
+    return false;
+  }
+
+  private memberNameNearPerformerKeyword(names: string[], description: string): boolean {
+    const phrases = this.descriptionPhrases(description);
+    for (let i = 0; i < phrases.length; i++) {
+      const phraseNfkc = phrases[i].normalize('NFKC').toLowerCase();
+      const hasKeyword = this.GROUP_PERFORMER_KEYWORDS.some(kw => phraseNfkc.includes(kw));
+      if (!hasKeyword) continue;
+      if (this.memberNameInPerformerPhrase(names, this.stripPerformerKeywords(phraseNfkc))) return true;
+      for (let j = i + 1; j < phrases.length; j++) {
+        const nextNfkc = phrases[j].normalize('NFKC').toLowerCase();
+        if (this.GROUP_ORGANIZER_KEYWORDS.some(kw => nextNfkc.includes(kw))) continue;
+        if (this.memberNameInPerformerPhrase(names, nextNfkc)) return true;
       }
     }
     return false;
@@ -233,8 +275,8 @@ export class GoogleCalendarService {
     // Layer 1: extract performer from "name(From Group)" — handles short names precisely
     if (event.description && this.memberNameInFromPattern(names, event.description)) return true;
 
-    // Layer 2: performer keyword scan — reuses existing logic, handles names ≥ 3 CJK/kana chars
-    if (event.description && this.groupNameNearPerformerKeyword(names, event.description)) return true;
+    // Layer 2: performer keyword scan with stricter alpha-name handling.
+    if (event.description && this.memberNameNearPerformerKeyword(names, event.description)) return true;
 
     // Layer 3: title / location direct match — reuses existing phrase matching thresholds
     const summaryNfkc = (event.summary ?? '').normalize('NFKC').toLowerCase();

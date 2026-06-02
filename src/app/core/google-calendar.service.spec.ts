@@ -396,6 +396,28 @@ describe('GoogleCalendarService', () => {
     expect((service as any).matchesMember(event, member)).toBeTrue();
   });
 
+  it('matchesMember: matches roman name listed exactly under performer keyword', () => {
+    const member = mockMember('m6', { name: 'まる', name_roman: 'maru' });
+    const event = {
+      id: 'e-roman-exact',
+      summary: '夏日LIVE',
+      description: '演出者\nmaru',
+      start: { dateTime: '2026-07-01T18:00:00+08:00' },
+    };
+    expect((service as any).matchesMember(event, member)).toBeTrue();
+  });
+
+  it('matchesMember: does NOT match roman member name embedded in a different performer name', () => {
+    const member = mockMember('m7', { name: 'まる', name_roman: 'maru' });
+    const event = {
+      id: 'idol-x-band-fes',
+      summary: 'IDOL X BAND FES',
+      description: 'GUEST\n午場｜終焉Rebirth、THE∆RAREz、RUKA BANANA、OMOCHIおもち\n晚場｜終焉Rebirth、存在証明NO FACE NO REaLiTY with 不要臉樂團、Maru Z(HK)、悪戯ピエロ\nBAND\n台上見俱樂部\n※ 主辦方保留最終解釋權 ※',
+      start: { date: '2026-06-19' },
+    };
+    expect((service as any).matchesMember(event, member)).toBeFalse();
+  });
+
   it('matchesGroup: matches group listed under 演出陣容 keyword with comma-separated performers', () => {
     const group: Group = { ...baseGroup, id: 'shojogacha', name: '少女ガチャポン' };
     const event = {
@@ -568,26 +590,27 @@ describe('matchesGroup', () => {
     expect((service as any).matchesGroup(mkEvent('live', '', desc), mkGroup('か'))).toBeFalse();
   });
 
-  // description organizer keyword matching
-  it('matches group name near "presents" in description', () => {
+  // Organizer keyword matching is intentionally removed — organizer ≠ performer.
+  // Events where the group only appears as 主辦/presents/主催 must not show in 近期活動.
+  it('does NOT match group name near "presents" in description (organizer ≠ performer)', () => {
     expect((service as any).matchesGroup(
       mkEvent('氧鋰氖生誕祭', '', '未確認感情体presents『ねぇ、私の心臓、食べてみて？』'),
       mkGroup('未確認感情体'),
-    )).toBeTrue();
+    )).toBeFalse();
   });
 
-  it('matches group name near "主辦" in description', () => {
+  it('does NOT match group name near "主辦" in description (organizer ≠ performer)', () => {
     expect((service as any).matchesGroup(
       mkEvent('春季演唱會', '', '主辦：乃木坂46\n詳情請見官網'),
       mkGroup('乃木坂46'),
-    )).toBeTrue();
+    )).toBeFalse();
   });
 
-  it('matches group name near "主催" in description', () => {
+  it('does NOT match group name near "主催" in description (organizer ≠ performer)', () => {
     expect((service as any).matchesGroup(
       mkEvent('live event', '', '主催：未確認感情体'),
       mkGroup('未確認感情体'),
-    )).toBeTrue();
+    )).toBeFalse();
   });
 
   it('does NOT match group name in description without organizer keyword', () => {
@@ -601,6 +624,15 @@ describe('matchesGroup', () => {
     expect((service as any).matchesGroup(
       mkEvent('live show', '', '乃木坂46 presents 特別公演'),
       mkGroup('AKB48'),
+    )).toBeFalse();
+  });
+
+  // performer scan bleed: organizer credit appearing after GUEST keyword must not match
+  it('does NOT match group listed as 主辦 appearing after GUEST performer keyword', () => {
+    const desc = 'GUEST\n午場｜終焉Rebirth、THE∆RAREz、RUKA BANANA\n晚場｜終焉Rebirth、悪戯ピエロ\nBAND\n台上見俱樂部\n主辦：汐之時 x 紫苑アスター\n※ 主辦方保留最終解釋權 ※';
+    expect((service as any).matchesGroup(
+      mkEvent('IDOL X BAND FES', '杰克音樂 Jack\'s Studio', desc),
+      mkGroup('汐之時'),
     )).toBeFalse();
   });
 
