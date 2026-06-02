@@ -592,6 +592,19 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original(field) }}</p>
                 }
 
+              <!-- Photography source: URL-first text input -->
+              } @else if (field === 'photography_source') {
+                <input
+                  type="text"
+                  [(ngModel)]="formData[field]"
+                  [name]="field"
+                  placeholder="https://www.threads.net/... （無連結可填文字說明）"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                />
+                @if (operation === 'UPDATE' && original(field)) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original(field) }}</p>
+                }
+
               <!-- Default: text input -->
               } @else {
                 <input

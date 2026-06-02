@@ -362,7 +362,12 @@
 
           @if (member.photography_source) {
             <div style="margin-top: 10px; padding-left: 4px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 8px;">
-              <span style="font-size: 0.65rem; color: var(--text-faint-38);">資料來源：{{ member.photography_source }}</span>
+              @if (member.photography_source.startsWith('http')) {
+                <a [href]="member.photography_source" target="_blank" rel="noopener noreferrer"
+                  style="font-size: 0.65rem; color: var(--text-faint-38); text-decoration: underline; text-underline-offset: 2px;">資料來源 ↗</a>
+              } @else {
+                <span style="font-size: 0.65rem; color: var(--text-faint-38);">資料來源：{{ member.photography_source }}</span>
+              }
             </div>
           }
         </div>
