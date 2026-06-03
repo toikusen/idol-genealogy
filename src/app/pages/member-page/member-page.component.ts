@@ -103,6 +103,9 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
     }
+    if (this.lastProposal.operation === 'DELETE' && this.lastProposalDiffFields.length > 0) {
+      return `${relative} · ${submitter} 刪除了「${this.lastProposalDiffFields[0].newValue === '—' ? this.lastProposalDiffFields[0].oldValue : this.lastProposalDiffFields[0].label}」`;
+    }
     return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
   }
 
@@ -160,10 +163,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.currentLoadId = memberId;
     this.deferredLoading = true;
     try {
-      const [groups, proposals, historyProposals, songs] = await Promise.all([
+      const [groups, proposals, historyProposals, songProposals, songs] = await Promise.all([
         this.groupService.getAll().catch(() => []),
         this.proposalService.getApprovedByRecord('members', memberId).catch(() => []),
         this.proposalService.getApprovedHistoryByField('member_id', memberId).catch(() => [] as Proposal[]),
+        this.proposalService.getApprovedSongsByField('member_songs', 'member_id', memberId).catch(() => [] as Proposal[]),
         this.memberSongService.getByMember(memberId).catch(() => []),
       ]);
       if (this.currentLoadId === memberId && !this.routeDataSub?.closed) {
@@ -171,7 +175,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
           .filter(isPublicGroupRecord)
           .map(g => ({ id: g.id, name: g.name }))
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-        const allProposals = [...proposals, ...historyProposals].sort((a, b) =>
+        const allProposals = [...proposals, ...historyProposals, ...songProposals].sort((a, b) =>
           new Date(b.reviewed_at ?? b.created_at).getTime() -
           new Date(a.reviewed_at ?? a.created_at).getTime()
         );
@@ -344,6 +348,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     try {
       const memberId = this.member?.id ?? this.route.snapshot.paramMap.get('id')!;
       if (this.editingSong) {
+        const originalSong = this.editingSong;
         const updated = await this.memberSongService.update(this.editingSong.id, {
           title: this.songFormData.title,
           release_date: this.songFormData.release_date || null,
@@ -356,6 +361,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         });
         this.memberSongs = this.memberSongs.map(s => s.id === updated.id ? updated : s)
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        await this.proposalService.recordDirectEdit('member_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(() => {});
       } else {
         const created = await this.memberSongService.create({
           member_id: memberId,
@@ -370,6 +376,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         });
         this.memberSongs = [...this.memberSongs, created]
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        await this.proposalService.recordDirectEdit('member_songs', created.id, {}, created, 'INSERT').catch(() => {});
       }
       this.cancelSongForm();
     } catch (e: any) {
@@ -383,6 +390,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
     try {
       await this.memberSongService.delete(song.id);
+      await this.proposalService.recordDirectEdit('member_songs', song.id, song, {}, 'DELETE').catch(() => {});
       this.memberSongs = this.memberSongs.filter(s => s.id !== song.id);
     } catch (e: any) {
       alert(e.message ?? '刪除失敗');

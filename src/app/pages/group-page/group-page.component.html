@@ -1276,6 +1276,8 @@
           [recordId]="group.id"
           [recordLabel]="group.name"
           [relatedHistoryField]="'group_id'"
+          [relatedSongTable]="'group_songs'"
+          [relatedSongField]="'group_id'"
           (closed)="showEditHistory = false"
         />
       }

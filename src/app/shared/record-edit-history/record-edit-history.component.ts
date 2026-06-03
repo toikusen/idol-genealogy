@@ -28,6 +28,9 @@ export class RecordEditHistoryComponent implements OnInit {
   @Input({ required: true }) recordLabel!: string;
   /** When set, also loads approved history proposals where proposed_data->>{field} = recordId */
   @Input() relatedHistoryField?: 'member_id' | 'group_id';
+  /** When set, also loads approved song proposals where proposed_data/original_data carries the owner id */
+  @Input() relatedSongTable?: 'member_songs' | 'group_songs';
+  @Input() relatedSongField?: 'member_id' | 'group_id';
   @Output() closed = new EventEmitter<void>();
 
   proposals: Proposal[] = [];
@@ -47,10 +50,13 @@ export class RecordEditHistoryComponent implements OnInit {
 
   async ngOnInit() {
     try {
-      const [mainProposals, historyProposals] = await Promise.all([
+      const [mainProposals, historyProposals, songProposals] = await Promise.all([
         this.proposalService.getApprovedByRecord(this.tableName, this.recordId),
         this.relatedHistoryField
           ? this.proposalService.getApprovedHistoryByField(this.relatedHistoryField, this.recordId).catch(() => [] as Proposal[])
+          : Promise.resolve([] as Proposal[]),
+        this.relatedSongTable && this.relatedSongField
+          ? this.proposalService.getApprovedSongsByField(this.relatedSongTable, this.relatedSongField, this.recordId).catch(() => [] as Proposal[])
           : Promise.resolve([] as Proposal[]),
       ]);
 
@@ -60,7 +66,7 @@ export class RecordEditHistoryComponent implements OnInit {
         this.relatedHistoryField ? this.loadGroupMap().catch(() => {}) : Promise.resolve(),
       ]);
 
-      const merged = [...mainProposals, ...historyProposals];
+      const merged = [...mainProposals, ...historyProposals, ...songProposals];
       merged.sort((a, b) =>
         new Date(b.reviewed_at ?? b.created_at).getTime() -
         new Date(a.reviewed_at ?? a.created_at).getTime()

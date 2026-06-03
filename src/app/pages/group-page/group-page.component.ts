@@ -133,6 +133,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
     }
+    if (this.lastProposal.operation === 'DELETE' && this.lastProposalDiffFields.length > 0) {
+      return `${relative} · ${submitter} 刪除了「${this.lastProposalDiffFields[0].newValue === '—' ? this.lastProposalDiffFields[0].oldValue : this.lastProposalDiffFields[0].label}」`;
+    }
     return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
   }
 
@@ -246,10 +249,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         publicHistories.map(h => h.member_id).filter((mid): mid is string => !!mid)
       )];
 
-      const [company, proposals, historyProposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
+      const [company, proposals, historyProposals, songProposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
         (!this.companyName && group.company_id) ? this.companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
         this.proposalService.getApprovedByRecord('groups', id).catch(() => []),
         this.proposalService.getApprovedHistoryByField('group_id', id).catch(() => [] as Proposal[]),
+        this.proposalService.getApprovedSongsByField('group_songs', 'group_id', id).catch(() => [] as Proposal[]),
         this.historyService.getByMembers(memberIds).catch(() => []),
         this.memberService.getAll().catch(() => []),
         group.style ? this.groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
@@ -260,7 +264,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       if (this.currentLoadId === id && !this._routeSub?.closed) {
         const publicCompany = company && isPublicCompanyRecord(company) ? company : null;
         if (publicCompany?.name) this.companyName = publicCompany.name;
-        const allProposals = [...proposals, ...historyProposals].sort((a, b) =>
+        const allProposals = [...proposals, ...historyProposals, ...songProposals].sort((a, b) =>
           new Date(b.reviewed_at ?? b.created_at).getTime() -
           new Date(a.reviewed_at ?? a.created_at).getTime()
         );
@@ -590,6 +594,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     try {
       const id = this.route.snapshot.paramMap.get('id')!;
       if (this.editingSong) {
+        const originalSong = this.editingSong;
         const updated = await this.groupSongService.update(this.editingSong.id, {
           title: this.songFormData.title,
           release_date: this.songFormData.release_date || null,
@@ -602,6 +607,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         });
         this.songs = this.songs.map(s => s.id === updated.id ? updated : s)
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        await this.proposalService.recordDirectEdit('group_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(() => {});
       } else {
         const created = await this.groupSongService.create({
           group_id: id,
@@ -616,6 +622,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         });
         this.songs = [...this.songs, created]
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        await this.proposalService.recordDirectEdit('group_songs', created.id, {}, created, 'INSERT').catch(() => {});
       }
       this.cancelSongForm();
     } catch (e: any) {
@@ -629,6 +636,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
     try {
       await this.groupSongService.delete(song.id);
+      await this.proposalService.recordDirectEdit('group_songs', song.id, song, {}, 'DELETE').catch(() => {});
       this.songs = this.songs.filter(s => s.id !== song.id);
     } catch (e: any) {
       alert(e.message ?? '刪除失敗');

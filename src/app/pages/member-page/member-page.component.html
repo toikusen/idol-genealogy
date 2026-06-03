@@ -740,6 +740,8 @@
           [recordId]="member.id"
           [recordLabel]="member.name"
           [relatedHistoryField]="'member_id'"
+          [relatedSongTable]="'member_songs'"
+          [relatedSongField]="'member_id'"
           (closed)="showEditHistory = false"
         />
       }
