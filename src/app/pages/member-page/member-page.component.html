@@ -339,7 +339,7 @@
                     [style.background]="photographyBadgeColor(member.photo_status)"
                     [style.color]="photographyBadgeTextColor(member.photo_status)"
                     [style.border]="'1px solid ' + photographyBadgeBorderColor(member.photo_status)"
-                    style="border-radius: 3px; padding: 1px 0; font-size: 0.72rem; flex-shrink: 0; display: inline-block; width: 3em; text-align: center; white-space: nowrap;"
+                    style="border-radius: 3px; padding: 2px 6px; font-size: 0.72rem; flex-shrink: 0; display: inline-block; min-width: 3em; text-align: center; white-space: nowrap; box-sizing: border-box;"
                   >{{ photographyStatusLabel(member.photo_status, 'photo') }}</span>
                 }
                 @if (member.photo_notes) {
@@ -360,7 +360,7 @@
                     [style.background]="photographyBadgeColor(member.video_status)"
                     [style.color]="photographyBadgeTextColor(member.video_status)"
                     [style.border]="'1px solid ' + photographyBadgeBorderColor(member.video_status)"
-                    style="border-radius: 3px; padding: 1px 0; font-size: 0.72rem; flex-shrink: 0; display: inline-block; width: 3em; text-align: center; white-space: nowrap;"
+                    style="border-radius: 3px; padding: 2px 6px; font-size: 0.72rem; flex-shrink: 0; display: inline-block; min-width: 3em; text-align: center; white-space: nowrap; box-sizing: border-box;"
                   >{{ photographyStatusLabel(member.video_status, 'video') }}</span>
                 }
                 @if (member.video_notes) {
