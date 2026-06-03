@@ -206,7 +206,7 @@ serve(async (req) => {
     .is("notified_at", null)
     .or(`notify_claimed_at.is.null,notify_claimed_at.lt.${claimCutoff}`)
     .gte("starts_at", threeMonthsAgo)
-    .select("id, group_id, title, url, starts_at, groups(name)");
+    .select("id, group_id, title, url, starts_at, location, groups(name)");
 
   if (claimError) {
     console.error(`[sync-group-events] claim error: ${claimError.message}`);
@@ -228,7 +228,7 @@ serve(async (req) => {
 
   // Group claimed events by group_id, tracking the earliest starts_at event so that
   // firstTitle/firstUrl/firstStartsAt always refer to the same record.
-  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; firstUrl: string | null; firstStartsAt: string | null; count: number }>();
+  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; firstUrl: string | null; firstStartsAt: string | null; firstLocation: string | null; count: number }>();
   for (const evt of claimed ?? []) {
     const entry = byGroup.get(evt.group_id);
     if (entry) {
@@ -238,6 +238,7 @@ serve(async (req) => {
         entry.firstTitle = evt.title;
         entry.firstUrl = evt.url ?? null;
         entry.firstStartsAt = evt.starts_at;
+        entry.firstLocation = (evt as any).location ?? null;
       }
     } else {
       byGroup.set(evt.group_id, {
@@ -246,6 +247,7 @@ serve(async (req) => {
         firstTitle: evt.title,
         firstUrl: evt.url ?? null,
         firstStartsAt: evt.starts_at ?? null,
+        firstLocation: (evt as any).location ?? null,
         count: 1,
       });
     }
@@ -253,7 +255,7 @@ serve(async (req) => {
 
   console.log(`Pending push notifications: ${claimed?.length ?? 0} events across ${byGroup.size} groups`);
 
-  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, firstUrl, firstStartsAt, count }]) => {
+  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, firstUrl, firstStartsAt, firstLocation, count }]) => {
     const { data: favUsers } = await supabase
       .from("user_favorites")
       .select("user_id")
@@ -284,7 +286,7 @@ serve(async (req) => {
       : `/group/${groupId}`;
     const dateStr = formatEventDate(firstStartsAt, count === 1);
     const notifBody = count === 1
-      ? (dateStr ? `${firstTitle}\n${dateStr}` : firstTitle)
+      ? [firstTitle, dateStr || null, firstLocation].filter(Boolean).join('\n')
       : (dateStr ? `${count} 個新活動\n最近 ${dateStr}` : `${count} 個新活動`);
     console.log(`[sync-group-events] sending push for ${groupName}: "${notifBody}" to ${filteredIds.length} user(s)`);
     try {
