@@ -227,8 +227,8 @@ serve(async (req) => {
   }
 
   // Group claimed events by group_id, tracking the earliest starts_at event so that
-  // firstTitle/firstUrl/firstStartsAt always refer to the same record.
-  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; firstUrl: string | null; firstStartsAt: string | null; firstLocation: string | null; count: number }>();
+  // firstTitle/firstStartsAt always refer to the same record.
+  const byGroup = new Map<string, { ids: string[]; groupName: string; firstTitle: string; firstStartsAt: string | null; firstLocation: string | null; count: number }>();
   for (const evt of claimed ?? []) {
     const entry = byGroup.get(evt.group_id);
     if (entry) {
@@ -236,7 +236,6 @@ serve(async (req) => {
       entry.ids.push(evt.id);
       if (evt.starts_at && (!entry.firstStartsAt || evt.starts_at < entry.firstStartsAt)) {
         entry.firstTitle = evt.title;
-        entry.firstUrl = evt.url ?? null;
         entry.firstStartsAt = evt.starts_at;
         entry.firstLocation = (evt as any).location ?? null;
       }
@@ -245,7 +244,6 @@ serve(async (req) => {
         ids: [evt.id],
         groupName: (evt as any).groups?.name ?? '',
         firstTitle: evt.title,
-        firstUrl: evt.url ?? null,
         firstStartsAt: evt.starts_at ?? null,
         firstLocation: (evt as any).location ?? null,
         count: 1,
@@ -255,7 +253,7 @@ serve(async (req) => {
 
   console.log(`Pending push notifications: ${claimed?.length ?? 0} events across ${byGroup.size} groups`);
 
-  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, firstUrl, firstStartsAt, firstLocation, count }]) => {
+  await Promise.all(Array.from(byGroup.entries()).map(async ([groupId, { ids, groupName, firstTitle, firstStartsAt, firstLocation, count }]) => {
     const { data: favUsers } = await supabase
       .from("user_favorites")
       .select("user_id")
@@ -281,9 +279,7 @@ serve(async (req) => {
       return;
     }
 
-    const targetUrl = count === 1 && firstUrl
-      ? `/group/${groupId}?openEvent=${encodeURIComponent(firstUrl)}`
-      : `/group/${groupId}`;
+    const targetUrl = `/group/${groupId}`;
     const dateStr = formatEventDate(firstStartsAt, count === 1);
     const notifBody = count === 1
       ? [firstTitle, dateStr || null, firstLocation].filter(Boolean).join('\n')

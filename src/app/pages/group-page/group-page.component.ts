@@ -36,7 +36,6 @@ import {
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
-import { resolveAllowedExternalEventUrl } from '../../core/external-event-url.utils';
 import {
   photographyBadgeColor,
   photographyBadgeTextColor,
@@ -227,13 +226,9 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         this.pendingEditSongId = params['editSongId'];
       }
       if (params['openEvent'] && typeof window !== 'undefined') {
-        const eventUrl = resolveAllowedExternalEventUrl(params['openEvent']);
-        if (eventUrl) {
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.delete('openEvent');
-          window.history.replaceState(window.history.state, '', currentUrl.href);
-          window.location.assign(eventUrl);
-        }
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.delete('openEvent');
+        window.history.replaceState(window.history.state, '', currentUrl.href);
       }
     });
   }
