@@ -279,7 +279,9 @@ serve(async (req) => {
       return;
     }
 
-    const targetUrl = count === 1 && firstUrl ? firstUrl : `/group/${groupId}`;
+    const targetUrl = count === 1 && firstUrl
+      ? `/group/${groupId}?openEvent=${encodeURIComponent(firstUrl)}`
+      : `/group/${groupId}`;
     const dateStr = formatEventDate(firstStartsAt, count === 1);
     const notifBody = count === 1
       ? (dateStr ? `${firstTitle}\n${dateStr}` : firstTitle)
