@@ -6,6 +6,7 @@ import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
+import { photographyStatusLabel } from '../../core/photography-policy.utils';
 import { SupabaseImgPipe } from '../supabase-img.pipe';
 
 @Component({
@@ -87,11 +88,19 @@ export class RecordEditHistoryComponent implements OnInit {
     for (const m of items) this.memberNameMap[m.id] = m.name;
   }
 
+  private static readonly HISTORY_STATUS_LABELS: Record<string, string> = {
+    active: '正常在籍', concurrent: '兼任', support: '支援',
+    hiatus: '活休', transferred: '移籍', graduated: '畢業', withdrawn: '脫退',
+  };
+
   resolveFieldValue(key: string, value: string): string {
     if (value === '—') return value;
     if (key === 'company_id') return this.companyNameMap[value] ?? value;
     if (key === 'group_id') return this.groupNameMap[value] ?? value;
     if (key === 'member_id') return this.memberNameMap[value] ?? value;
+    if (key === 'photo_status') return photographyStatusLabel(value as any, 'photo') || value;
+    if (key === 'video_status') return photographyStatusLabel(value as any, 'video') || value;
+    if (key === 'status') return RecordEditHistoryComponent.HISTORY_STATUS_LABELS[value] ?? value;
     return value;
   }
 

@@ -23,7 +23,13 @@ const mockClient = {
         Promise.resolve({ data: [mockHistory], error: null })
       ),
     }),
-    insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null })),
+    insert: jasmine.createSpy('insert').and.returnValue({
+      select: jasmine.createSpy('select').and.returnValue({
+        single: jasmine.createSpy('single').and.returnValue(
+          Promise.resolve({ data: { id: 'new-h-id' }, error: null })
+        )
+      })
+    }),
     update: jasmine.createSpy('update').and.returnValue({
       eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
     }),
@@ -47,13 +53,20 @@ describe('HistoryService', () => {
   });
 
   it('should be created', () => expect(service).toBeTruthy());
+
   it('getByMember() should return records', async () => {
     const records = await service.getByMember('m-1');
     expect(Array.isArray(records)).toBeTrue();
     expect(records[0]).toEqual(mockHistory);
   });
+
   it('getByGroup() should return records', async () => {
     const records = await service.getByGroup('g-1');
     expect(Array.isArray(records)).toBeTrue();
+  });
+
+  it('create() should return the new record id', async () => {
+    const id = await service.create({ member_id: 'm-1', group_id: 'g-1', status: 'active', joined_at: '2024-01-01' });
+    expect(id).toBe('new-h-id');
   });
 });

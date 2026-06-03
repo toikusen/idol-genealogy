@@ -94,10 +94,11 @@ export class GroupService {
     return data ?? [];
   }
 
-  async create(group: Partial<Group>): Promise<void> {
-    const { error } = await this.db.from('groups').insert(group);
+  async create(group: Partial<Group>): Promise<string> {
+    const { data, error } = await this.db.from('groups').insert(group).select('id').single();
     if (error) throw error;
     this.invalidateCache();
+    return data.id as string;
   }
 
   async update(id: string, group: Partial<Group>): Promise<void> {

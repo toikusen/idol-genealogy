@@ -168,10 +168,11 @@ export class MemberService {
     return (data ?? []) as unknown as Member[];
   }
 
-  async create(member: Partial<Member>): Promise<void> {
-    const { error } = await this.db.from('members').insert(member);
+  async create(member: Partial<Member>): Promise<string> {
+    const { data, error } = await this.db.from('members').insert(member).select('id').single();
     if (error) throw error;
     this.invalidateCache();
+    return data.id as string;
   }
 
   async update(id: string, member: Partial<Member>): Promise<void> {

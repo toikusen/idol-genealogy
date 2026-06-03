@@ -246,9 +246,10 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         publicHistories.map(h => h.member_id).filter((mid): mid is string => !!mid)
       )];
 
-      const [company, proposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
+      const [company, proposals, historyProposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
         (!this.companyName && group.company_id) ? this.companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
         this.proposalService.getApprovedByRecord('groups', id).catch(() => []),
+        this.proposalService.getApprovedHistoryByField('group_id', id).catch(() => [] as Proposal[]),
         this.historyService.getByMembers(memberIds).catch(() => []),
         this.memberService.getAll().catch(() => []),
         group.style ? this.groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
@@ -259,7 +260,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       if (this.currentLoadId === id && !this._routeSub?.closed) {
         const publicCompany = company && isPublicCompanyRecord(company) ? company : null;
         if (publicCompany?.name) this.companyName = publicCompany.name;
-        this.lastProposal = proposals[0] ?? null;
+        const allProposals = [...proposals, ...historyProposals].sort((a, b) =>
+          new Date(b.reviewed_at ?? b.created_at).getTime() -
+          new Date(a.reviewed_at ?? a.created_at).getTime()
+        );
+        this.lastProposal = allProposals[0] ?? null;
         this.allMemberHistories = allMemberHistories.filter(h =>
           (!h.member || isPublicMemberRecord(h.member)) && (!h.group || isPublicGroupRecord(h.group))
         );

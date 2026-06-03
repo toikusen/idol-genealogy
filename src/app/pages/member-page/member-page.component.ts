@@ -160,9 +160,10 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.currentLoadId = memberId;
     this.deferredLoading = true;
     try {
-      const [groups, proposals, songs] = await Promise.all([
+      const [groups, proposals, historyProposals, songs] = await Promise.all([
         this.groupService.getAll().catch(() => []),
         this.proposalService.getApprovedByRecord('members', memberId).catch(() => []),
+        this.proposalService.getApprovedHistoryByField('member_id', memberId).catch(() => [] as Proposal[]),
         this.memberSongService.getByMember(memberId).catch(() => []),
       ]);
       if (this.currentLoadId === memberId && !this.routeDataSub?.closed) {
@@ -170,7 +171,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
           .filter(isPublicGroupRecord)
           .map(g => ({ id: g.id, name: g.name }))
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-        this.lastProposal = proposals[0] ?? null;
+        const allProposals = [...proposals, ...historyProposals].sort((a, b) =>
+          new Date(b.reviewed_at ?? b.created_at).getTime() -
+          new Date(a.reviewed_at ?? a.created_at).getTime()
+        );
+        this.lastProposal = allProposals[0] ?? null;
         this.memberSongs = songs;
         if (this.pendingEditSongId) {
           const song = this.memberSongs.find(s => s.id === this.pendingEditSongId);
