@@ -176,32 +176,34 @@
 }
 
 .share-link-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 11px;
-  min-height: 30px;
-  border-radius: 999px;
-  border: 1px solid var(--mauve-20);
-  background: var(--mauve-04);
+  justify-content: center;
+  border: 1.5px solid var(--mauve-20);
+  background: rgba(255,255,255,0.7);
   color: var(--text-faint-55);
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .share-link-btn:hover {
   border-color: rgba(232,121,160,0.4);
-  color: var(--text-pink);
-  background: rgba(232,121,160,0.06);
+  color: rgba(232,121,160,0.85);
+  background: rgba(232,121,160,0.07);
+  box-shadow: 0 2px 8px rgba(232,121,160,0.15);
 }
 
 .share-link-btn--copied {
   color: #059669;
   border-color: rgba(5,150,105,0.35);
-  background: rgba(5,150,105,0.07);
+  background: rgba(5,150,105,0.08);
+  box-shadow: 0 2px 8px rgba(5,150,105,0.12);
 }
 
 /* ── Dark mode ── */
@@ -234,7 +236,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Mobile: stack vertically */
+/* Mobile: stack vertically, center hero / left details */
 @media (max-width: 520px) {
   .member-hero-card {
     flex-direction: column;
@@ -242,11 +244,16 @@
     gap: 20px;
   }
   .member-info-col {
-    text-align: center;
     padding-top: 0;
     width: 100%;
   }
-  .member-info-col div[style*="display: flex"] {
+  .member-name-row {
+    text-align: center;
+  }
+  .member-subname {
+    text-align: center;
+  }
+  .member-identity-actions {
     justify-content: center;
   }
   .member-portrait {

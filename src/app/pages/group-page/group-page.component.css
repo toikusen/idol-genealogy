@@ -30,6 +30,35 @@
 .sns-link--tt { color: #5a7a50; border-color: rgba(90,122,80,0.28); background: rgba(90,122,80,0.08); }
 .sns-link--tt:hover { background: rgba(90,122,80,0.15); border-color: rgba(90,122,80,0.5); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(90,122,80,0.18); }
 
+.share-link-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--mauve-20);
+  background: rgba(255,255,255,0.7);
+  color: var(--text-faint-55);
+  cursor: pointer;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+.share-link-btn:hover {
+  border-color: rgba(232,121,160,0.4);
+  color: rgba(232,121,160,0.85);
+  background: rgba(232,121,160,0.07);
+  box-shadow: 0 2px 8px rgba(232,121,160,0.15);
+}
+.share-link-btn--copied {
+  color: #059669;
+  border-color: rgba(5,150,105,0.35);
+  background: rgba(5,150,105,0.08);
+  box-shadow: 0 2px 8px rgba(5,150,105,0.12);
+}
+
 .proposal-edit-btn {
   display: inline-flex;
   align-items: center;
@@ -359,6 +388,28 @@ div:hover > .video-overlay {
 @media (max-width: 520px) {
   .group-outer { padding-left: 16px !important; padding-right: 16px !important; }
   .group-header { padding: 20px 16px 20px !important; }
+  .group-hero-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .group-hero-photo {
+    align-self: center !important;
+    margin-top: 0 !important;
+    order: -1;
+  }
+  .group-hero-text {
+    width: 100%;
+  }
+  .group-name-heading {
+    text-align: center;
+  }
+  .group-jp-name {
+    text-align: center;
+  }
+  .group-identity-actions {
+    justify-content: center;
+  }
 }
 
 /* ── Dark mode ── */

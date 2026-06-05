@@ -12,12 +12,12 @@ import { FavoriteEntityType } from '../../models';
       [class.is-fav]="isFav()"
       [disabled]="loading()"
       style="
-        width: 38px; height: 38px; border-radius: 50%;
+        width: 32px; height: 32px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        font-size: 1.2rem; cursor: pointer;
+        font-size: 1rem; cursor: pointer;
         border: 1.5px solid rgba(232,121,160,0.3);
         background: rgba(255,255,255,0.7);
-        transition: all 0.2s;
+        transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
       "

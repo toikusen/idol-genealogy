@@ -110,26 +110,27 @@
             rgba({{ hexToRgb(group.color) }},0.06) 0%, transparent 70%);
         "></div>
 
-        <div style="position: relative; display: flex; gap: 28px; align-items: flex-start;">
+        <!-- Archive mark — sits above the hero row on all screen sizes -->
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <!-- Color dot -->
+          <div style="
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+            box-shadow: 0 0 8px rgba({{ hexToRgb(group.color) }}, 0.4);
+          " [style.background]="group.color"></div>
+          <span style="
+            font-size: 0.72rem; letter-spacing: 0.25em;
+            text-transform: uppercase; color: var(--text-label);
+          ">Group · 團體</span>
+          <div style="flex: 1; height: 1px; background: rgba(232,121,160,0.1);"></div>
+        </div>
+
+        <div class="group-hero-row" style="position: relative; display: flex; gap: 28px; align-items: flex-start;">
 
           <!-- Left: all text content -->
-          <div style="flex: 1; min-width: 0;">
-          <!-- Archive mark -->
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-            <!-- Color dot -->
-            <div style="
-              width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-              box-shadow: 0 0 8px rgba({{ hexToRgb(group.color) }}, 0.4);
-            " [style.background]="group.color"></div>
-            <span style="
-              font-size: 0.72rem; letter-spacing: 0.25em;
-              text-transform: uppercase; color: var(--text-label);
-            ">Group · 團體</span>
-            <div style="flex: 1; height: 1px; background: rgba(232,121,160,0.1);"></div>
-          </div>
+          <div class="group-hero-text" style="flex: 1; min-width: 0;">
 
           <!-- Group name -->
-          <h1 style="
+          <h1 class="group-name-heading" style="
             font-size: clamp(2rem, 6vw, 3.5rem);
             font-weight: 300; line-height: 1.05;
             letter-spacing: 0.02em; color: var(--text-primary);
@@ -137,30 +138,23 @@
           ">{{ group.name }}</h1>
 
           @if (group.name_jp) {
-            <p style="
+            <p class="group-jp-name" style="
               font-size: 0.95rem; color: var(--text-faint-60);
               letter-spacing: 0.08em; margin: 0 0 10px;
             ">{{ group.name_jp }}</p>
           }
 
           <!-- Action buttons -->
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:2px;">
-            <button
-              (click)="showGroupProposalPanel = true"
-              class="proposal-edit-btn"
-            >✏️ 提案修改</button>
-            <button
-              (click)="showDeletePanel = true"
-              class="report-btn"
-            >⚑ 回報問題</button>
+          <div class="group-identity-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:2px;">
             <button
               (click)="copyLink()"
-              class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full transition-colors"
-              [style]="linkCopied ? 'color:#059669;border:1px solid rgba(5,150,105,0.35);background:rgba(5,150,105,0.07);' : 'color:var(--text-faint-55);border:1px solid var(--mauve-20);background:var(--mauve-04);'"
+              class="share-link-btn"
+              [class.share-link-btn--copied]="linkCopied"
             >
-              @if (linkCopied) { ✓ 已複製 } @else {
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                分享連結
+              @if (linkCopied) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              } @else {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               }
             </button>
             @if (isLoggedIn) {
@@ -286,24 +280,23 @@
             </div>
           }
 
-          <!-- Notes -->
-          @if (group.notes) {
-            <div style="
-              margin-top: 16px; padding: 10px 14px 10px 16px;
-              background: rgba(184,160,184,0.07);
-              border-radius: 6px;
-            ">
-              <p style="
-                font-size: 0.75rem; color: var(--text-faint-60);
-                line-height: 1.7; white-space: pre-wrap;
-              ">{{ group.notes }}</p>
-            </div>
-          }
+          <!-- Action buttons (after SNS) -->
+          <div style="display:flex;gap:8px;flex-wrap:nowrap;margin-top:14px;">
+            <button
+              (click)="showGroupProposalPanel = true"
+              class="proposal-edit-btn"
+            >✏️ 提案修改</button>
+            <button
+              (click)="showDeletePanel = true"
+              class="report-btn"
+            >⚑ 回報問題</button>
+          </div>
+
           </div><!-- /left text content -->
 
           <!-- Right: group photo — portrait card, like a press/promo shot -->
           @if (group.photo_url) {
-            <div style="flex-shrink: 0; align-self: flex-start; margin-top: 4px;">
+            <div class="group-hero-photo" style="flex-shrink: 0; align-self: flex-start; margin-top: 4px;">
               <div class="group-portrait-ring" style="
                 width: 140px; height: 140px;
                 border-radius: 50%;
@@ -321,6 +314,21 @@
             </div>
           }
         </div><!-- /flex wrapper -->
+
+        <!-- Notes — full width below flex row -->
+        @if (group.notes) {
+          <div style="
+            margin-top: 16px; padding: 10px 14px 10px 16px;
+            background: rgba(184,160,184,0.07);
+            border-radius: 6px;
+          ">
+            <p style="
+              font-size: 0.75rem; color: var(--text-faint-60);
+              line-height: 1.7; white-space: pre-wrap;
+              margin: 0;
+            ">{{ group.notes }}</p>
+          </div>
+        }
       </header>
 
       <!-- ══ Photography policy section ══ -->
