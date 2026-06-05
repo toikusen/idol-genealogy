@@ -23,6 +23,9 @@ export class SupabaseService implements OnDestroy {
         persistSession: this.isBrowser,
         // Bypass Navigator.locks to prevent "lock immediately failed" console errors
         // during Angular hydration when two async paths race on the same lock.
+        // The null-session risk this creates is mitigated by using the
+        // insert_approved_proposal RPC (which reads auth.uid() from the JWT directly)
+        // instead of a direct proposals table INSERT.
         lock: async <R>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => fn(),
       },
       ...(this.isBrowser ? {} : { realtime: { transport: serverRealtimeTransport } }),

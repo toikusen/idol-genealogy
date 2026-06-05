@@ -97,10 +97,11 @@ export class CompanyService {
     return data ?? [];
   }
 
-  async create(company: Partial<Company>): Promise<void> {
-    const { error } = await this.db.from('companies').insert(company);
+  async create(company: Partial<Company>): Promise<string> {
+    const { data, error } = await this.db.from('companies').insert(company).select('id').single();
     if (error) throw error;
     this.invalidateCache();
+    return data.id;
   }
 
   async update(id: string, company: Partial<Company>): Promise<void> {

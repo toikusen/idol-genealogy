@@ -15,6 +15,7 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
     'member_id', 'group_id', 'name_at_time',
     'status', 'joined_at', 'left_at',
     'external_group_name', 'external_country',
+    'role', 'notes',
   ],
   member_songs: [
     'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger', 'notes',
@@ -50,6 +51,7 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
     member_id: '成員', group_id: '團體', name_at_time: '當時名稱', status: '狀態',
     joined_at: '加入日期', left_at: '離開日期',
     external_group_name: '海外團體/solo名稱', external_country: '國家／地區（非必填）',
+    role: '職稱', notes: '備注',
   },
   companies: {
     name: '公司名稱', description: '簡介', founded_at: '成立日期', website: '官網',

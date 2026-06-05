@@ -106,7 +106,15 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     if (this.lastProposal.operation === 'DELETE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 刪除了「${this.lastProposalDiffFields[0].newValue === '—' ? this.lastProposalDiffFields[0].oldValue : this.lastProposalDiffFields[0].label}」`;
     }
-    return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
+    if (this.lastProposal.operation === 'INSERT') {
+      const insertLabel: Record<string, string> = {
+        members: '建立頁面',
+        history: '新增歷程紀錄',
+        member_songs: '新增歌曲',
+      };
+      return `${relative} · ${submitter} ${insertLabel[this.lastProposal.table_name] ?? '新增資料'}`;
+    }
+    return `${relative} · ${submitter} 補充`;
   }
 
   get editorialSuggestions(): string[] {

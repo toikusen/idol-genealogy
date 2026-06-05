@@ -220,19 +220,12 @@ export class ProposalService {
       }
     }
 
-    const session = await this.supabase.getSessionOnce();
-    const now = new Date().toISOString();
-    const { error } = await this.db.from('proposals').insert({
-      table_name: tableName,
-      record_id: recordId,
-      operation,
-      original_data: originalDataToStore,
-      proposed_data: proposedData,
-      status: 'approved',
-      submitter_name: '管理員',
-      submitter_id: session?.user?.id ?? null,
-      reviewed_at: now,
-      reviewed_by: session?.user?.id ?? null,
+    const { error } = await this.db.rpc('insert_approved_proposal', {
+      p_table_name: tableName,
+      p_record_id: recordId,
+      p_operation: operation,
+      p_proposed_data: proposedData,
+      p_original_data: originalDataToStore,
     });
     if (error) throw error;
   }

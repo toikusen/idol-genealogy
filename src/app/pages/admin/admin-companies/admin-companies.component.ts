@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CompanyService } from '../../../core/company.service';
+import { ProposalService } from '../../../core/proposal.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { IgPhotoService } from '../../../core/ig-photo.service';
 import { Company } from '../../../models';
@@ -22,6 +23,7 @@ export class AdminCompaniesComponent implements OnInit, OnDestroy {
   loading = true;
   showModal = false;
   editing: Partial<Company> = {};
+  private originalData: Record<string, any> = {};
   isEdit = false;
   saving = false;
   error = '';
@@ -32,6 +34,7 @@ export class AdminCompaniesComponent implements OnInit, OnDestroy {
 
   constructor(
     private companyService: CompanyService,
+    private proposalService: ProposalService,
     private adminRole: AdminRoleService,
     private igPhoto: IgPhotoService,
     private route: ActivatedRoute,
@@ -64,6 +67,7 @@ export class AdminCompaniesComponent implements OnInit, OnDestroy {
 
   openCreate() {
     this.editing = {};
+    this.originalData = {};
     this.isEdit = false;
     this.error = '';
     this.igFetchError = '';
@@ -72,6 +76,7 @@ export class AdminCompaniesComponent implements OnInit, OnDestroy {
 
   openEdit(c: Company) {
     this.editing = { ...c };
+    this.originalData = { ...c } as Record<string, any>;
     this.isEdit = true;
     this.error = '';
     this.igFetchError = '';
@@ -83,9 +88,12 @@ export class AdminCompaniesComponent implements OnInit, OnDestroy {
     this.saving = true;
     try {
       if (this.isEdit && this.editing.id) {
-        await this.companyService.update(this.editing.id, this.editing);
+        const id = this.editing.id;
+        await this.companyService.update(id, this.editing);
+        this.proposalService.recordDirectEdit('companies', id, this.originalData, this.editing as Record<string, any>, 'UPDATE').catch(() => {});
       } else {
-        await this.companyService.create(this.editing);
+        const newId = await this.companyService.create(this.editing);
+        this.proposalService.recordDirectEdit('companies', newId, {}, this.editing as Record<string, any>, 'INSERT').catch(() => {});
       }
       this.showModal = false;
       await this.load();
