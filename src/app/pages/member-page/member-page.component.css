@@ -236,7 +236,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Mobile: stack vertically, center hero / left details */
+/* Mobile: stack vertically, all centered */
 @media (max-width: 520px) {
   .member-hero-card {
     flex-direction: column;
@@ -244,8 +244,12 @@
     gap: 20px;
   }
   .member-info-col {
+    text-align: center;
     padding-top: 0;
     width: 100%;
+  }
+  .member-info-col > div {
+    justify-content: center;
   }
   .member-name-row {
     text-align: center;

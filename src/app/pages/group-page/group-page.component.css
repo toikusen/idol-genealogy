@@ -400,6 +400,10 @@ div:hover > .video-overlay {
   }
   .group-hero-text {
     width: 100%;
+    text-align: center;
+  }
+  .group-hero-text > div {
+    justify-content: center;
   }
   .group-name-heading {
     text-align: center;
