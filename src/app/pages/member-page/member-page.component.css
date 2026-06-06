@@ -278,11 +278,14 @@
   display: block;
 }
 
+.member-portrait-btn .member-portrait {
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
 .member-portrait-btn:hover .member-portrait,
 .member-portrait-btn:focus-visible .member-portrait {
   transform: scale(1.02);
   filter: brightness(1.05);
-  transition: transform 150ms ease, filter 150ms ease;
 }
 
 .member-portrait-btn:focus-visible {
