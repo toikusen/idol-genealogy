@@ -297,20 +297,22 @@
           <!-- Right: group photo — portrait card, like a press/promo shot -->
           @if (group.photo_url) {
             <div class="group-hero-photo" style="flex-shrink: 0; align-self: flex-start; margin-top: 4px;">
-              <div class="group-portrait-ring" style="
-                width: 140px; height: 140px;
-                border-radius: 50%;
-                overflow: hidden;
-                box-shadow: 0 4px 20px rgba(45,27,46,0.12);
-                border: 3px solid rgba(255,255,255,0.9);
-                outline: 2px solid rgba(232,121,160,0.2);
-                flex-shrink: 0;
-              " [style.outline-color]="group.color + '44'">
-                <img [src]="group.photo_url | supabaseImg:280" [alt]="group.name" loading="lazy" style="
-                  width: 100%; height: 100%; object-fit: cover;
-                  display: block;
-                ">
-              </div>
+              <button type="button" class="group-photo-btn" (click)="openLightbox()">
+                <div class="group-portrait-ring" style="
+                  width: 140px; height: 140px;
+                  border-radius: 50%;
+                  overflow: hidden;
+                  box-shadow: 0 4px 20px rgba(45,27,46,0.12);
+                  border: 3px solid rgba(255,255,255,0.9);
+                  outline: 2px solid rgba(232,121,160,0.2);
+                  flex-shrink: 0;
+                " [style.outline-color]="group.color + '44'">
+                  <img [src]="group.photo_url | supabaseImg:280" [alt]="group.name" loading="lazy" style="
+                    width: 100%; height: 100%; object-fit: cover;
+                    display: block;
+                  ">
+                </div>
+              </button>
             </div>
           }
         </div><!-- /flex wrapper -->
@@ -1414,4 +1416,13 @@
       border-bottom: 1px solid rgba(232,121,160,0.16);
     "></div>
   </div>
+}
+
+@if (group) {
+  <app-photo-lightbox
+    [photoUrl]="group.photo_url ?? null"
+    [name]="group.name"
+    [open]="lightboxOpen"
+    (closed)="closeLightbox()"
+  />
 }

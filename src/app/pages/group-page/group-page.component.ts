@@ -36,6 +36,7 @@ import {
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
+import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
 import {
   photographyBadgeColor,
   photographyBadgeTextColor,
@@ -58,7 +59,7 @@ interface GanttRow {
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent],
   templateUrl: './group-page.component.html',
   styleUrl: './group-page.component.css',
 })
@@ -111,6 +112,10 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   songReportSubmitting = false;
   songReportError = '';
   songReportDone = false;
+
+  lightboxOpen = false;
+  openLightbox(): void { this.lightboxOpen = true; }
+  closeLightbox(): void { this.lightboxOpen = false; }
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
