@@ -46,15 +46,17 @@
       <!-- ══ Logo + Name ══ -->
       <div style="margin-top: 28px; display:flex; align-items:center; gap:18px;">
         @if (company.photo_url) {
-          <img [src]="company.photo_url | supabaseImg:144" [alt]="company.name" loading="lazy"
-            class="company-logo-border"
-            style="
-              width: 72px; height: 72px; border-radius: 50%;
-              object-fit: cover;
-              border: 3px solid white;
-              box-shadow: 0 4px 16px rgba(45,27,46,0.15);
-              flex-shrink: 0;
-            "/>
+          <button type="button" class="company-logo-btn" (click)="openLightbox()">
+            <img [src]="company.photo_url | supabaseImg:144" [alt]="company.name" loading="lazy"
+              class="company-logo-border"
+              style="
+                width: 72px; height: 72px; border-radius: 50%;
+                object-fit: cover;
+                border: 3px solid white;
+                box-shadow: 0 4px 16px rgba(45,27,46,0.15);
+                flex-shrink: 0;
+              "/>
+          </button>
         } @else {
           <div [style.background]="company.color || '#7c6cf2'" class="company-logo-border" style="
             width: 72px; height: 72px; border-radius: 50%;
@@ -399,5 +401,14 @@
     [recordId]="company.id"
     [originalData]="company"
     (closed)="showDeletePanel = false"
+  />
+}
+
+@if (company) {
+  <app-photo-lightbox
+    [photoUrl]="company.photo_url ?? null"
+    [name]="company.name"
+    [open]="lightboxOpen"
+    (closed)="closeLightbox()"
   />
 }

@@ -16,16 +16,20 @@ import { companyIndexabilitySignals, isAdEligible } from '../../core/indexabilit
 import { AnalyticsService } from '../../core/analytics.service';
 import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
+import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
 
 @Component({
   selector: 'app-company-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe],
+  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, PhotoLightboxComponent],
   templateUrl: './company-page.component.html',
   styleUrl: './company-page.component.css',
 })
 export class CompanyPageComponent implements OnInit, OnDestroy {
   private readonly defaultGroupChipColor = '#7c6cf2';
+  lightboxOpen = false;
+  openLightbox(): void { this.lightboxOpen = true; }
+  closeLightbox(): void { this.lightboxOpen = false; }
   company: Company | null = null;
   showProposalPanel = false;
   showDeletePanel = false;

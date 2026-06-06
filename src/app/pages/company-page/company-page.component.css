@@ -105,3 +105,27 @@
 @media (max-width: 520px) {
   .company-outer { padding-left: 16px !important; padding-right: 16px !important; }
 }
+
+.company-logo-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+}
+
+.company-logo-btn img {
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.company-logo-btn:hover img,
+.company-logo-btn:focus-visible img {
+  transform: scale(1.02);
+  filter: brightness(1.05);
+}
+
+.company-logo-btn:focus-visible {
+  outline: 2px solid rgba(232, 121, 160, 0.6);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
