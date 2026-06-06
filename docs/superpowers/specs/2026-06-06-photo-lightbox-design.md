@@ -43,6 +43,16 @@ photo-lightbox.component.css
 @Output() closed = new EventEmitter<void>();
 ```
 
+### Imports (inside PhotoLightboxComponent)
+
+`PhotoLightboxComponent` is standalone and must declare its own `imports`:
+
+```ts
+imports: [SupabaseImgPipe]
+```
+
+`SupabaseImgPipe` is located at `src/app/shared/supabase-img.pipe.ts`.
+
 ### Image URL
 
 The component applies `supabaseImg:1200` internally. Do **not** pre-transform the URL in the parent — pass the raw `photo_url` value directly. This ensures lightbox always requests a large image regardless of what size the page thumbnail uses.
@@ -67,19 +77,24 @@ Scroll lock and `@HostListener` for Esc are wrapped with `isPlatformBrowser(this
 
 ```ts
 private _savedOverflow = '';
+private _scrollLocked = false;
 
 private lockScroll() {
+  if (this._scrollLocked) return;          // avoid double-lock overwriting saved value
   this._savedOverflow = document.body.style.overflow;
   document.body.style.overflow = 'hidden';
+  this._scrollLocked = true;
 }
 
 private unlockScroll() {
+  if (!this._scrollLocked) return;         // avoid clearing unrelated overflow settings
   document.body.style.overflow = this._savedOverflow;
+  this._scrollLocked = false;
 }
 
 ngOnDestroy() {
   if (isPlatformBrowser(this.platformId)) {
-    this.unlockScroll();
+    this.unlockScroll();                   // safe: no-op if never locked
   }
 }
 ```
@@ -90,6 +105,12 @@ ngOnDestroy() {
 - Lightbox overlay: `role="dialog"` + `aria-modal="true"` + `aria-label="[name] 照片"`
 - ✕ button: `aria-label="關閉"`
 - Esc key already handled via `@HostListener`
+
+#### Focus Management
+
+- When lightbox opens: move focus to the ✕ close button (`closeBtn.nativeElement.focus()`) via `afterNextRender` or `setTimeout(0)` so the DOM is visible before focusing
+- When lightbox closes: return focus to the trigger `<button>` that opened it — parent passes a `ViewChild` reference or the component uses `document.activeElement` captured at open time
+- Minimum requirement: focus must not remain on a background element while the dialog is open; full focus trap is optional for this scope
 
 ### Visual Design
 
