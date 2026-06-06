@@ -3,7 +3,7 @@
     class="lb-backdrop"
     role="dialog"
     aria-modal="true"
-    [attr.aria-label]="name + ' 照片'"
+    [attr.aria-label]="name ? name + ' 照片' : '照片'"
     (click)="close()"
   >
     <button
