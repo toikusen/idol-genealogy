@@ -130,12 +130,34 @@
           <div class="group-hero-text" style="flex: 1; min-width: 0;">
 
           <!-- Group name -->
-          <h1 class="group-name-heading" style="
-            font-size: clamp(2rem, 6vw, 3.5rem);
-            font-weight: 300; line-height: 1.05;
-            letter-spacing: 0.02em; color: var(--text-primary);
-            margin: 0 0 6px;
-          ">{{ group.name }}</h1>
+          <div class="group-name-row">
+            <h1 class="group-name-heading" style="
+              font-size: clamp(2rem, 6vw, 3.5rem);
+              font-weight: 300; line-height: 1.05;
+              letter-spacing: 0.02em; color: var(--text-primary);
+              margin: 0;
+            ">{{ group.name }}</h1>
+            <div class="group-actions-inline">
+              <button
+                (click)="copyLink()"
+                class="share-link-btn"
+                [class.share-link-btn--copied]="linkCopied"
+              >
+                @if (linkCopied) {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                } @else {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                }
+              </button>
+              @if (isLoggedIn) {
+                <app-favorite-toggle
+                  entityType="group"
+                  [entityId]="group.id"
+                  style="flex-shrink:0;"
+                />
+              }
+            </div>
+          </div>
 
           @if (group.name_jp) {
             <p class="group-jp-name" style="
@@ -144,8 +166,8 @@
             ">{{ group.name_jp }}</p>
           }
 
-          <!-- Action buttons -->
-          <div class="group-identity-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:2px;">
+          <!-- Action buttons (mobile only) -->
+          <div class="group-identity-actions">
             <button
               (click)="copyLink()"
               class="share-link-btn"

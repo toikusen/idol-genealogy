@@ -402,6 +402,29 @@ div:hover > .video-overlay {
   outline: none;
 }
 
+.group-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 6px;
+}
+
+.group-actions-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.group-identity-actions {
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
 @media (max-width: 520px) {
   .group-outer { padding-left: 16px !important; padding-right: 16px !important; }
   .group-header { padding: 20px 16px 20px !important; }
@@ -422,6 +445,13 @@ div:hover > .video-overlay {
   .group-hero-text > div {
     justify-content: center;
   }
+  .group-name-row {
+    display: block;
+    text-align: center;
+  }
+  .group-actions-inline {
+    display: none;
+  }
   .group-name-heading {
     text-align: center;
   }
@@ -429,6 +459,7 @@ div:hover > .video-overlay {
     text-align: center;
   }
   .group-identity-actions {
+    display: flex;
     justify-content: center;
   }
 }

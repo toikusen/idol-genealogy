@@ -135,6 +135,26 @@
                 letter-spacing: 0.03em; color: var(--text-primary);
                 margin: 0;
               ">{{ member.name }}</h1>
+              <div class="member-actions-inline">
+                <button
+                  (click)="copyLink()"
+                  class="share-link-btn"
+                  [class.share-link-btn--copied]="linkCopied"
+                >
+                  @if (linkCopied) {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  } @else {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  }
+                </button>
+                @if (isLoggedIn) {
+                  <app-favorite-toggle
+                    entityType="member"
+                    [entityId]="member.id"
+                    style="flex-shrink:0;"
+                  />
+                }
+              </div>
             </div>
 
             <!-- Roman / phonetic name -->
@@ -148,8 +168,8 @@
               </p>
             }
 
-            <!-- Share + favorite -->
-            <div class="member-identity-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+            <!-- Share + favorite (mobile only) -->
+            <div class="member-identity-actions">
               <button
                 (click)="copyLink()"
                 class="share-link-btn"

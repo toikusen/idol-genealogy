@@ -253,6 +253,28 @@
   box-shadow: var(--shadow-sm);
 }
 
+.member-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.member-actions-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.member-identity-actions {
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
 /* Mobile: stack vertically, all centered */
 @media (max-width: 520px) {
   .member-hero-card {
@@ -269,13 +291,18 @@
     justify-content: center;
   }
   .member-name-row {
+    display: block;
     text-align: center;
+  }
+  .member-actions-inline {
+    display: none;
+  }
+  .member-identity-actions {
+    display: flex;
+    justify-content: center;
   }
   .member-subname {
     text-align: center;
-  }
-  .member-identity-actions {
-    justify-content: center;
   }
   .member-portrait {
     width: 130px;
