@@ -404,7 +404,7 @@ div:hover > .video-overlay {
 
 .group-name-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 10px;
   flex-wrap: wrap;
   margin: 0 0 6px;
