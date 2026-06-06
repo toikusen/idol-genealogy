@@ -499,7 +499,6 @@ div:hover > .video-overlay {
   padding: 0;
   cursor: pointer;
   display: block;
-  border-radius: 50%;
 }
 
 .group-photo-btn .group-portrait-ring img {
