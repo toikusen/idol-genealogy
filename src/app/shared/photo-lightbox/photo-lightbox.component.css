@@ -1,7 +1,7 @@
 .lb-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 4000;
   background: rgba(0, 0, 0, 0.82);
   backdrop-filter: blur(6px);
   display: flex;
@@ -63,7 +63,7 @@
   justify-content: center;
   line-height: 1;
   transition: background 150ms ease;
-  z-index: 1001;
+  z-index: 4001;
 }
 
 .lb-close:hover,
