@@ -231,7 +231,24 @@
   border: 1px solid rgba(156, 163, 175, 0.22);
 }
 
-/* Dark mode overrides for status badges */
+/* Dark mode overrides */
+:host-context([data-theme="dark"]) .share-link-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.65);
+}
+:host-context([data-theme="dark"]) .share-link-btn:hover {
+  background: rgba(232, 121, 160, 0.12);
+  border-color: rgba(232, 121, 160, 0.35);
+  color: rgba(232, 121, 160, 0.9);
+  box-shadow: 0 2px 8px rgba(232, 121, 160, 0.2);
+}
+:host-context([data-theme="dark"]) .share-link-btn--copied {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.08);
+}
+
 :host-context([data-theme="dark"]) .status-badge--active {
   color: #34d399;
   background: rgba(52, 211, 153, 0.10);

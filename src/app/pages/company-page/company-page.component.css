@@ -60,6 +60,23 @@
 .sns-link--web:hover { background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.45); }
 
 /* ── Dark mode ── */
+:host-context([data-theme="dark"]) .share-link-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.65);
+}
+:host-context([data-theme="dark"]) .share-link-btn:hover {
+  background: rgba(232, 121, 160, 0.12);
+  border-color: rgba(232, 121, 160, 0.35);
+  color: rgba(232, 121, 160, 0.9);
+  box-shadow: 0 2px 8px rgba(232, 121, 160, 0.2);
+}
+:host-context([data-theme="dark"]) .share-link-btn--copied {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.08);
+}
+
 :host-context([data-theme="dark"]) .sns-link--x {
   color: rgba(210, 175, 210, 0.82);
   border-color: rgba(210, 175, 210, 0.22);
