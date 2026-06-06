@@ -26,6 +26,7 @@ import { memberIndexabilitySignals, isAdEligible } from '../../core/indexability
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
+import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
 import {
   photographyBadgeColor,
   photographyBadgeTextColor,
@@ -36,7 +37,7 @@ import {
 @Component({
   selector: 'app-member-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent],
   templateUrl: './member-page.component.html',
   styleUrl: './member-page.component.css',
 })
@@ -64,6 +65,9 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   photographyBadgeTextColor = photographyBadgeTextColor;
   photographyBadgeBorderColor = photographyBadgeBorderColor;
   photographyStatusLabel = photographyStatusLabel;
+  lightboxOpen = false;
+  openLightbox(): void { this.lightboxOpen = true; }
+  closeLightbox(): void { this.lightboxOpen = false; }
   snsUrls: { instagram: string | null; facebook: string | null; x: string | null; maid: string | null } = {
     instagram: null, facebook: null, x: null, maid: null,
   };

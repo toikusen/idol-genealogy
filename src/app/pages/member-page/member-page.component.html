@@ -107,12 +107,14 @@
           <div class="member-portrait-col">
             <div style="position: relative; display: inline-block;">
               @if (member.photo_url) {
-                <img
-                  [src]="member.photo_url | supabaseImg:320"
-                  [alt]="member.name"
-                  class="member-portrait"
-                  loading="lazy"
-                />
+                <button type="button" class="member-portrait-btn" (click)="openLightbox()">
+                  <img
+                    [src]="member.photo_url | supabaseImg:320"
+                    [alt]="member.name"
+                    class="member-portrait"
+                    loading="lazy"
+                  />
+                </button>
               } @else {
                 <div class="member-portrait member-portrait--fallback"
                   [ngStyle]="fallbackPortraitStyle(member.color)">
@@ -824,5 +826,13 @@
     [requiredFields]="['group_id', 'status', 'joined_at']"
     [groups]="allGroupsList"
     (closed)="showOverseasPanel = false"
+  />
+}
+@if (member) {
+  <app-photo-lightbox
+    [photoUrl]="member.photo_url ?? null"
+    [name]="member.name"
+    [open]="lightboxOpen"
+    (closed)="closeLightbox()"
   />
 }
