@@ -35,7 +35,7 @@
     @if (!loading && !error && company !== null) {
 
       <!-- Back link -->
-      <div style="padding-top: 32px; margin-bottom: 0;">
+      <div style="padding-top: 32px; margin-bottom: 28px;">
         <a routerLink="/" style="
           display: inline-flex; align-items: center; gap: 6px;
           font-size: 0.78rem; color: var(--text-faint-60);
@@ -191,50 +191,6 @@
 
       <div style="border-bottom: 1px solid rgba(124,108,242,0.1); margin-bottom: 0;"></div>
 
-      <!-- Attribution widget -->
-      <div class="attribution-widget" style="
-        margin:40px 0 20px;
-        padding:13px 16px 13px 0;
-        border-radius:10px;
-        background:var(--bg-surface);
-        border:1px solid var(--border-subtle);
-        box-shadow:var(--shadow-sm);
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:12px;
-        flex-wrap:wrap;
-        overflow:hidden;
-      ">
-        <div style="display:flex;align-items:center;gap:14px;min-width:0;">
-          <div style="width:3px;height:36px;flex-shrink:0;border-radius:0 2px 2px 0;background:linear-gradient(to bottom,rgba(124,108,242,0.55),rgba(180,170,255,0.2));"></div>
-          @if (latestEditSummary) {
-            <span style="font-size:0.73rem;color:var(--text-secondary);letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ latestEditSummary }}</span>
-          } @else {
-            <span style="font-size:0.73rem;color:rgba(184,160,184,0.4);letter-spacing:0.04em;">尚無編輯紀錄</span>
-          }
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;padding-right:2px;">
-          @if (lastProposal) {
-            <button
-              type="button"
-              (click)="showEditHistory = true"
-              style="border:none;background:transparent;padding:5px 10px;border-radius:6px;font-size:0.71rem;color:rgba(124,108,242,0.72);cursor:pointer;letter-spacing:0.05em;transition:background 0.15s;white-space:nowrap;"
-              onmouseenter="this.style.background='rgba(124,108,242,0.07)'"
-              onmouseleave="this.style.background='transparent'"
-            >編輯紀錄 →</button>
-          }
-          <button
-            type="button"
-            (click)="showProposalPanel = true"
-            class="attribution-btn-primary"
-            style="border:none;background:rgba(124,108,242,0.07);padding:5px 12px;border-radius:6px;font-size:0.71rem;color:rgba(80,64,168,0.82);cursor:pointer;letter-spacing:0.05em;border:1px solid rgba(124,108,242,0.14);transition:background 0.15s;white-space:nowrap;"
-            onmouseenter="this.style.background='rgba(124,108,242,0.13)'"
-            onmouseleave="this.style.background='rgba(124,108,242,0.07)'"
-          >補充資料 →</button>
-        </div>
-      </div>
-
       <!-- ══ Groups section ══ -->
       <section style="margin-top: 44px;">
 
@@ -356,6 +312,50 @@
           </div>
         </section>
       }
+
+      <!-- Attribution widget -->
+      <div class="attribution-widget" style="
+        margin:40px 0 20px;
+        padding:13px 16px 13px 0;
+        border-radius:10px;
+        background:var(--bg-surface);
+        border:1px solid var(--border-subtle);
+        box-shadow:var(--shadow-sm);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        flex-wrap:wrap;
+        overflow:hidden;
+      ">
+        <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+          <div style="width:3px;height:36px;flex-shrink:0;border-radius:0 2px 2px 0;background:linear-gradient(to bottom,rgba(124,108,242,0.55),rgba(180,170,255,0.2));"></div>
+          @if (latestEditSummary) {
+            <span style="font-size:0.73rem;color:var(--text-secondary);letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ latestEditSummary }}</span>
+          } @else {
+            <span style="font-size:0.73rem;color:rgba(184,160,184,0.4);letter-spacing:0.04em;">尚無編輯紀錄</span>
+          }
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;padding-right:2px;">
+          @if (lastProposal) {
+            <button
+              type="button"
+              (click)="showEditHistory = true"
+              style="border:none;background:transparent;padding:5px 10px;border-radius:6px;font-size:0.71rem;color:rgba(124,108,242,0.72);cursor:pointer;letter-spacing:0.05em;transition:background 0.15s;white-space:nowrap;"
+              onmouseenter="this.style.background='rgba(124,108,242,0.07)'"
+              onmouseleave="this.style.background='transparent'"
+            >編輯紀錄 →</button>
+          }
+          <button
+            type="button"
+            (click)="showProposalPanel = true"
+            class="attribution-btn-primary"
+            style="border:none;background:rgba(124,108,242,0.07);padding:5px 12px;border-radius:6px;font-size:0.71rem;color:rgba(80,64,168,0.82);cursor:pointer;letter-spacing:0.05em;border:1px solid rgba(124,108,242,0.14);transition:background 0.15s;white-space:nowrap;"
+            onmouseenter="this.style.background='rgba(124,108,242,0.13)'"
+            onmouseleave="this.style.background='rgba(124,108,242,0.07)'"
+          >補充資料 →</button>
+        </div>
+      </div>
 
       <!-- Edit History Panel -->
       @if (showEditHistory && company) {
