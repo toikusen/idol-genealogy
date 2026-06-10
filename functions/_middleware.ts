@@ -1,3 +1,5 @@
+const PRODUCTION_HOST = 'idolmaps.com';
+
 function isSpaRoute(pathname: string): boolean {
   if (pathname === '/login' || pathname === '/login/') return true;
   if (pathname === '/my-contributions' || pathname === '/my-contributions/') return true;
@@ -7,6 +9,47 @@ function isSpaRoute(pathname: string): boolean {
   return false;
 }
 
+function robotsForNonProduction(): Response {
+  return new Response('User-agent: *\nDisallow: /\n', {
+    headers: {
+      'Content-Type': 'text/plain; charset=UTF-8',
+      'X-Robots-Tag': 'noindex, nofollow',
+    },
+  });
+}
+
+function withNoIndexHeader(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function withQueryNoIndexHeader(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set('X-Robots-Tag', 'noindex, follow');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function shouldNoIndexQueryUrl(url: URL): boolean {
+  if (!url.search) return false;
+  if (url.pathname.startsWith('/api/')) return false;
+  if (url.pathname === '/sitemap.xml' || url.pathname === '/robots.txt' || url.pathname === '/feed.xml') return false;
+  return true;
+}
+
+function shouldRedirectTrailingSlash(pathname: string): boolean {
+  if (pathname === '/' || !pathname.endsWith('/')) return false;
+  return !/\.[^/]+\/$/.test(pathname);
+}
+
 export const onRequest: PagesFunction = async ({ request, next, env }) => {
   const url = new URL(request.url);
   if (url.hostname === 'idol-genealogy.pages.dev') {
@@ -14,18 +57,35 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
     return Response.redirect(url.toString(), 301);
   }
 
+  const isProductionHost = url.hostname === PRODUCTION_HOST;
+
+  if (isProductionHost && shouldRedirectTrailingSlash(url.pathname)) {
+    url.pathname = url.pathname.slice(0, -1);
+    return Response.redirect(url.toString(), 301);
+  }
+
+  if (!isProductionHost && url.pathname === '/robots.txt') {
+    return robotsForNonProduction();
+  }
+
   if (isSpaRoute(url.pathname)) {
     const shellUrl = new URL('/index.csr.html', url.origin);
     const shell = await (env as any).ASSETS.fetch(new Request(shellUrl.toString()));
-    return new Response(shell.body, { status: 200, headers: shell.headers });
+    const response = new Response(shell.body, { status: 200, headers: shell.headers });
+    return withNoIndexHeader(response);
   }
 
   const response = await next();
+
   const cacheControl = cacheControlForPath(url.pathname, response.status);
-  if (!cacheControl) return response;
+  if (isProductionHost && shouldNoIndexQueryUrl(url)) {
+    return withQueryNoIndexHeader(response);
+  }
+  if (!cacheControl && isProductionHost) return response;
 
   const headers = new Headers(response.headers);
-  headers.set('Cache-Control', cacheControl);
+  if (cacheControl) headers.set('Cache-Control', cacheControl);
+  if (!isProductionHost) headers.set('X-Robots-Tag', 'noindex, nofollow');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

@@ -212,6 +212,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         this.pendingEditSongId = params['editSongId'];
       }
     });
+    this.route.fragment.subscribe(fragment => {
+      if (fragment === 'propose') {
+        this.showGroupProposalPanel = true;
+      }
+    });
   }
 
   ngOnDestroy() { this._routeSub?.unsubscribe(); }

@@ -47,7 +47,7 @@
         <div class="flex flex-wrap gap-2">
           @for (entry of wantedMembers; track entry.member.id) {
             <a [routerLink]="['/member', entry.member.id]"
-               [queryParams]="{ propose: 'true' }"
+               fragment="propose"
                [title]="entry.member.name"
                class="block w-10 h-10 rounded-full border-2 overflow-hidden flex-shrink-0 transition-transform hover:scale-110"
                [class]="borderClass(entry.completeness.score)">
@@ -63,7 +63,7 @@
           }
           @for (entry of wantedGroups; track entry.group.id) {
             <a [routerLink]="['/group', entry.group.id]"
-               [queryParams]="{ propose: 'true' }"
+               fragment="propose"
                [title]="entry.group.name"
                class="block w-10 h-10 rounded-full border-2 overflow-hidden flex-shrink-0 transition-transform hover:scale-110"
                [class]="borderClass(entry.completeness.score)">
@@ -118,7 +118,7 @@
             <div class="flex items-center gap-4 rounded-xl px-4 py-3"
                  style="background: var(--card-bg, rgba(255,255,255,0.04)); border: 1px solid rgba(124,108,242,0.1);">
               <a [routerLink]="['/member', entry.member.id]"
-                 [queryParams]="{ propose: 'true' }"
+                 fragment="propose"
                  class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
                  [class]="borderClass(entry.completeness.score)">
                 @if (entry.member.photo_url) {
@@ -132,7 +132,7 @@
               </a>
               <div class="flex-1 min-w-0">
                 <a [routerLink]="['/member', entry.member.id]"
-                   [queryParams]="{ propose: 'true' }"
+                   fragment="propose"
                    class="font-medium hover:underline truncate block"
                    style="color: var(--text-primary);">{{ entry.member.name }}</a>
                 <div class="flex flex-wrap gap-1 mt-1">
@@ -152,7 +152,7 @@
                 </div>
               </div>
               <a [routerLink]="['/member', entry.member.id]"
-                 [queryParams]="{ propose: 'true' }"
+                 fragment="propose"
                  class="flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-opacity hover:opacity-80"
                  style="background: rgba(124,108,242,0.15); color: rgba(124,108,242,0.9);">
                 補充資料
@@ -172,7 +172,7 @@
             <div class="flex items-center gap-4 rounded-xl px-4 py-3"
                  style="background: var(--card-bg, rgba(255,255,255,0.04)); border: 1px solid rgba(124,108,242,0.1);">
               <a [routerLink]="['/group', entry.group.id]"
-                 [queryParams]="{ propose: 'true' }"
+                 fragment="propose"
                  class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
                  [class]="borderClass(entry.completeness.score)">
                 @if (entry.group.photo_url) {
@@ -186,7 +186,7 @@
               </a>
               <div class="flex-1 min-w-0">
                 <a [routerLink]="['/group', entry.group.id]"
-                   [queryParams]="{ propose: 'true' }"
+                   fragment="propose"
                    class="font-medium hover:underline truncate block"
                    style="color: var(--text-primary);">{{ entry.group.name }}</a>
                 <div class="flex flex-wrap gap-1 mt-1">
@@ -206,7 +206,7 @@
                 </div>
               </div>
               <a [routerLink]="['/group', entry.group.id]"
-                 [queryParams]="{ propose: 'true' }"
+                 fragment="propose"
                  class="flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-opacity hover:opacity-80"
                  style="background: rgba(124,108,242,0.15); color: rgba(124,108,242,0.9);">
                 補充資料
@@ -226,7 +226,7 @@
             <div class="flex items-center gap-4 rounded-xl px-4 py-3"
                  style="background: var(--card-bg, rgba(255,255,255,0.04)); border: 1px solid rgba(124,108,242,0.1);">
               <a [routerLink]="['/company', entry.company.id]"
-                 [queryParams]="{ propose: 'true' }"
+                 fragment="propose"
                  class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2"
                  [class]="borderClass(entry.completeness.score)">
                 @if (entry.company.photo_url) {
@@ -240,7 +240,7 @@
               </a>
               <div class="flex-1 min-w-0">
                 <a [routerLink]="['/company', entry.company.id]"
-                   [queryParams]="{ propose: 'true' }"
+                   fragment="propose"
                    class="font-medium hover:underline truncate block"
                    style="color: var(--text-primary);">{{ entry.company.name }}</a>
                 <div class="flex flex-wrap gap-1 mt-1">
@@ -260,7 +260,7 @@
                 </div>
               </div>
               <a [routerLink]="['/company', entry.company.id]"
-                 [queryParams]="{ propose: 'true' }"
+                 fragment="propose"
                  class="flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-opacity hover:opacity-80"
                  style="background: rgba(124,108,242,0.15); color: rgba(124,108,242,0.9);">
                 補充資料

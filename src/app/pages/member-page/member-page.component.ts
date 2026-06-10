@@ -140,6 +140,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         this.pendingEditSongId = params['editSongId'];
       }
     });
+    this.route.fragment.subscribe(fragment => {
+      if (fragment === 'propose') {
+        this.showProposalPanel = true;
+      }
+    });
   }
 
   ngOnDestroy() {

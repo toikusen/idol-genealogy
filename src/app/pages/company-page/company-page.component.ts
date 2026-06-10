@@ -26,6 +26,7 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 })
 export class CompanyPageComponent implements OnInit, OnDestroy {
   private readonly defaultGroupChipColor = '#7c6cf2';
+  private readonly defaultMemberChipColor = '#e879a0';
   company: Company | null = null;
   showProposalPanel = false;
   showDeletePanel = false;
@@ -101,6 +102,11 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     });
     this.route.queryParams.subscribe(params => {
       if (params['propose'] === 'true') {
+        this.showProposalPanel = true;
+      }
+    });
+    this.route.fragment.subscribe(fragment => {
+      if (fragment === 'propose') {
         this.showProposalPanel = true;
       }
     });
@@ -262,6 +268,18 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
 
   getGroupChipDotBorderColor(hex: string | null | undefined): string {
     return this.isLightColor(hex) ? 'rgba(122,90,122,0.32)' : 'transparent';
+  }
+
+  getMemberChipBorderColor(hex: string | null | undefined): string {
+    return this.isLightColor(hex)
+      ? 'rgba(122,90,122,0.24)'
+      : this.hexToRgba(hex, 0.33, this.defaultMemberChipColor);
+  }
+
+  getMemberChipBackground(hex: string | null | undefined): string {
+    return this.isLightColor(hex)
+      ? 'var(--bg-surface)'
+      : this.hexToRgba(hex, 0.06, this.defaultMemberChipColor);
   }
 
   safeColor(hex: string | null | undefined, fallback = '#e879a0'): string {

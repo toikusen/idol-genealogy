@@ -279,9 +279,9 @@
                font-size:0.85rem;
                 transition:background 0.2s,border-color 0.2s,color 0.2s;
               "
-              [style.borderColor]="(m.color || '#e879a0') + '55'"
+              [style.borderColor]="getMemberChipBorderColor(m.color)"
               [style.color]="'var(--text-primary)'"
-              [style.background]="(m.color || '#e879a0') + '10'"
+              [style.background]="getMemberChipBackground(m.color)"
               >
                 @if (m.photo_url) {
                   <img [src]="m.photo_url | supabaseImg:44" [alt]="m.name" loading="lazy"
