@@ -28,6 +28,28 @@ function withNoIndexHeader(response: Response): Response {
   });
 }
 
+function withQueryNoIndexHeader(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set('X-Robots-Tag', 'noindex, follow');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function shouldNoIndexQueryUrl(url: URL): boolean {
+  if (!url.search) return false;
+  if (url.pathname.startsWith('/api/')) return false;
+  if (url.pathname === '/sitemap.xml' || url.pathname === '/robots.txt' || url.pathname === '/feed.xml') return false;
+  return true;
+}
+
+function shouldRedirectTrailingSlash(pathname: string): boolean {
+  if (pathname === '/' || !pathname.endsWith('/')) return false;
+  return !/\.[^/]+\/$/.test(pathname);
+}
+
 export const onRequest: PagesFunction = async ({ request, next, env }) => {
   const url = new URL(request.url);
   if (url.hostname === 'idol-genealogy.pages.dev') {
@@ -36,6 +58,11 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
   }
 
   const isProductionHost = url.hostname === PRODUCTION_HOST;
+
+  if (isProductionHost && shouldRedirectTrailingSlash(url.pathname)) {
+    url.pathname = url.pathname.slice(0, -1);
+    return Response.redirect(url.toString(), 301);
+  }
 
   if (!isProductionHost && url.pathname === '/robots.txt') {
     return robotsForNonProduction();
@@ -51,6 +78,9 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
   const response = await next();
 
   const cacheControl = cacheControlForPath(url.pathname, response.status);
+  if (isProductionHost && shouldNoIndexQueryUrl(url)) {
+    return withQueryNoIndexHeader(response);
+  }
   if (!cacheControl && isProductionHost) return response;
 
   const headers = new Headers(response.headers);

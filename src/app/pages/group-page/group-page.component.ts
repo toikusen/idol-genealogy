@@ -236,6 +236,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         window.history.replaceState(window.history.state, '', currentUrl.href);
       }
     });
+    this.route.fragment.subscribe(fragment => {
+      if (fragment === 'propose') {
+        this.showGroupProposalPanel = true;
+      }
+    });
   }
 
   ngOnDestroy() { this._routeSub?.unsubscribe(); }

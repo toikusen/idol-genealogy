@@ -57,10 +57,20 @@ serve(async (req) => {
     groupName = group?.name ?? null;
   }
 
-  const { data: favUsers } = await supabase
+  const { data: memberFavUsers } = await supabase
     .from("user_favorites").select("user_id").eq("entity_type", "member").eq("entity_id", record.member_id);
 
-  const userIds = (favUsers ?? []).map((f: any) => f.user_id);
+  let groupFavUsers: { user_id: string }[] | null = null;
+  if (record.group_id) {
+    const { data } = await supabase
+      .from("user_favorites").select("user_id").eq("entity_type", "group").eq("entity_id", record.group_id);
+    groupFavUsers = data;
+  }
+
+  const userIds = [...new Set([
+    ...(memberFavUsers ?? []).map((f: any) => f.user_id),
+    ...(groupFavUsers ?? []).map((f: any) => f.user_id),
+  ])];
   if (userIds.length === 0) return new Response("no subscribers", { status: 200 });
 
   const { data: optedOutRows, error: prefsError } = await supabase
