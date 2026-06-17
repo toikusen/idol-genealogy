@@ -134,6 +134,11 @@
 .ad-rail--left { left: 16px; }
 .ad-rail--right { right: 16px; }
 
+/* visibility:hidden (not display:none) keeps the slot's geometry intact so
+   its IntersectionObserver/ad request lifecycle isn't disrupted — it just
+   stops rendering once the bottom ad banner is about to scroll into view. */
+.ad-rail--hidden { visibility: hidden; }
+
 /* ── Navigation progress bar ── */
 .nav-progress {
   position: fixed;

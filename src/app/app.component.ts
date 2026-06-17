@@ -33,6 +33,7 @@ export class AppComponent {
   readonly updateAvailable = signal(false);
   readonly isMobileViewport = signal(false);
   readonly isWideDesktop = signal(false);
+  readonly nearPageBottom = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -62,6 +63,17 @@ export class AppComponent {
         map(() => window.scrollY > 300),
         distinctUntilChanged(),
       ).subscribe(show => this.showScrollTop.set(show));
+
+      // The fixed side rails would otherwise sit on top of the bottom ad
+      // banner once its real (post-fill) height pushes past the rail's
+      // fixed bottom offset. Rather than guess the banner's height, just
+      // hide the rails once the user is close enough to the page bottom
+      // that the banner is about to be in view.
+      fromEvent(window, 'scroll').pipe(
+        takeUntilDestroyed(),
+        map(() => document.body.scrollHeight - (window.scrollY + window.innerHeight) < 500),
+        distinctUntilChanged(),
+      ).subscribe(near => this.nearPageBottom.set(near));
 
       // Ad placements that don't apply to the current viewport must be removed
       // from the DOM entirely (not just CSS-hidden) — adsbygoogle.push() claims
