@@ -9,12 +9,13 @@ import type { SupabaseService } from './core/supabase.service';
 import { AnalyticsService } from './core/analytics.service';
 import { CookieBannerComponent } from './shared/cookie-banner/cookie-banner.component';
 import { PwaInstallPromptComponent } from './shared/pwa-install-prompt/pwa-install-prompt.component';
+import { AdBannerComponent } from './shared/ad-banner/ad-banner.component';
 import { ThemeService } from './core/theme.service';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent],
+  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent, AdBannerComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -86,6 +87,10 @@ export class AppComponent {
 
   get isFavoritesRoute(): boolean {
     return this.router.url.startsWith('/my-favorites');
+  }
+
+  get showGlobalAds(): boolean {
+    return !this.isAdminRoute && !this.router.url.startsWith('/login');
   }
 
   signOut() {
