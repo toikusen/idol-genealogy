@@ -4,6 +4,10 @@ import { isPlatformBrowser } from '@angular/common';
 @Component({
   selector: 'app-ad-banner',
   standalone: true,
+  // Host defaults to display:inline with no intrinsic size. Inside a flex
+  // container (the side rails) that collapses the ad slot to zero width
+  // before it has content, so AdSense can never measure or fill it.
+  styles: `:host { display: block; width: 100%; }`,
   template: `
     <div [style.display]="visible ? 'block' : 'none'" style="margin: 24px 0; text-align: center;">
       <ins class="adsbygoogle"
