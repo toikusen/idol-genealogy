@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Proposal } from '../../models';
 import { ProposalService } from '../../core/proposal.service';
 import { CompanyService } from '../../core/company.service';
@@ -8,7 +8,6 @@ import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { photographyStatusLabel } from '../../core/photography-policy.utils';
 import { SupabaseImgPipe } from '../supabase-img.pipe';
-import { FloatingPanelStateService } from '../../core/floating-panel-state.service';
 
 @Component({
   selector: 'app-record-edit-history',
@@ -37,7 +36,7 @@ import { FloatingPanelStateService } from '../../core/floating-panel-state.servi
     }
   `],
 })
-export class RecordEditHistoryComponent implements OnInit, OnDestroy {
+export class RecordEditHistoryComponent implements OnInit {
   @Input({ required: true }) tableName!: string;
   @Input({ required: true }) recordId!: string;
   @Input({ required: true }) recordLabel!: string;
@@ -55,21 +54,13 @@ export class RecordEditHistoryComponent implements OnInit, OnDestroy {
   private companyNameMap: Record<string, string> = {};
   private memberNameMap: Record<string, string> = {};
   private groupNameMap: Record<string, string> = {};
-  private readonly releaseFloatingPanel: () => void;
 
   constructor(
     private proposalService: ProposalService,
     private companyService: CompanyService,
     private memberService: MemberService,
     private groupService: GroupService,
-    floatingPanelState: FloatingPanelStateService,
-  ) {
-    this.releaseFloatingPanel = floatingPanelState.register();
-  }
-
-  ngOnDestroy() {
-    this.releaseFloatingPanel();
-  }
+  ) {}
 
   async ngOnInit() {
     try {

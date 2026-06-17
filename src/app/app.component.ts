@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, Injector, PLATFORM_ID, signal } from '@angular/core';
+import { Component, DestroyRef, inject, Injector, PLATFORM_ID, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, NavigationEnd, NavigationStart, NavigationCancel, NavigationError } from '@angular/router';
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, fromEvent, map, distinctUntilChanged } from 'rxjs';
@@ -12,7 +12,6 @@ import { PwaInstallPromptComponent } from './shared/pwa-install-prompt/pwa-insta
 import { AdBannerComponent } from './shared/ad-banner/ad-banner.component';
 import { ThemeService } from './core/theme.service';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { FloatingPanelStateService } from './core/floating-panel-state.service';
 
 @Component({
   selector: 'app-root',
@@ -33,12 +32,6 @@ export class AppComponent {
   readonly showLoginPill = signal(false);
   readonly updateAvailable = signal(false);
   readonly isMobileViewport = signal(false);
-  readonly isWideDesktop = signal(false);
-  private readonly detectedAdBlockingPanelOpen = signal(false);
-  private readonly floatingPanelState = inject(FloatingPanelStateService);
-  readonly adBlockingPanelOpen = computed(() =>
-    this.floatingPanelState.hasOpenPanel() || this.detectedAdBlockingPanelOpen()
-  );
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -69,43 +62,17 @@ export class AppComponent {
         distinctUntilChanged(),
       ).subscribe(show => this.showScrollTop.set(show));
 
-      const updateAdBlockingPanelOpen = () => {
-        this.detectedAdBlockingPanelOpen.set(
-          !!document.querySelector('app-proposal-panel, app-record-edit-history')
-        );
-      };
-
-      let adPanelFrame = 0;
-      const scheduleAdPanelCheck = () => {
-        if (adPanelFrame) return;
-        adPanelFrame = window.requestAnimationFrame(() => {
-          adPanelFrame = 0;
-          updateAdBlockingPanelOpen();
-        });
-      };
-
-      const adPanelObserver = new MutationObserver(scheduleAdPanelCheck);
-      adPanelObserver.observe(document.body, { childList: true, subtree: true });
-      scheduleAdPanelCheck();
-
       // Ad placements that don't apply to the current viewport must be removed
       // from the DOM entirely (not just CSS-hidden) — adsbygoogle.push() claims
       // the next unclaimed <ins> in document order regardless of which slot
       // triggered it, so a hidden zero-width <ins> earlier in the DOM silently
       // swallows the push meant for a later, actually-visible slot.
       const mobileQuery = window.matchMedia('(max-width: 767px)');
-      const wideQuery = window.matchMedia('(min-width: 1280px)');
       this.isMobileViewport.set(mobileQuery.matches);
-      this.isWideDesktop.set(wideQuery.matches);
       const onMobileChange = (e: MediaQueryListEvent) => this.isMobileViewport.set(e.matches);
-      const onWideChange = (e: MediaQueryListEvent) => this.isWideDesktop.set(e.matches);
       mobileQuery.addEventListener('change', onMobileChange);
-      wideQuery.addEventListener('change', onWideChange);
       this.destroyRef.onDestroy(() => {
         mobileQuery.removeEventListener('change', onMobileChange);
-        wideQuery.removeEventListener('change', onWideChange);
-        adPanelObserver.disconnect();
-        if (adPanelFrame) window.cancelAnimationFrame(adPanelFrame);
       });
 
       const swUpdate = this.swUpdate;

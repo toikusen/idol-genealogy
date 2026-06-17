@@ -9,7 +9,8 @@ import { isPlatformBrowser } from '@angular/common';
   // before it has content, so AdSense can never measure or fill it.
   styles: `:host { display: block; width: 100%; }`,
   template: `
-    <div [style.display]="visible ? 'block' : 'none'" style="margin: 24px 0; text-align: center;">
+    <div [style.display]="visible ? 'block' : 'none'" style="margin: 40px 0 24px; padding-top: 24px; text-align: center; border-top: 1px solid var(--border-subtle);">
+      <div style="font-size: 11px; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">廣告</div>
       <ins class="adsbygoogle"
            style="display:block"
            data-ad-client="ca-pub-8862517332076590"

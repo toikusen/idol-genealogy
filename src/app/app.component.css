@@ -125,37 +125,6 @@
   margin-inline: auto;
 }
 
-/* ── AdSense side rails: only rendered (see app.component.ts isWideDesktop)
-   once there is enough margin beside the centered content column
-   (max content width is 880px) ── */
-.ad-rail {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: fixed;
-  top: 120px;
-  bottom: 150px;
-  width: 160px;
-  z-index: 10;
-  overflow: hidden;
-  border-radius: 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-sm);
-  opacity: 0.92;
-  transition: opacity 0.35s ease, visibility 0.35s ease;
-}
-
-.ad-rail:hover { opacity: 1; }
-
-.ad-rail--left { left: 24px; }
-.ad-rail--right { right: 24px; }
-
-/* visibility:hidden (not display:none) keeps the slot's geometry intact so
-   its IntersectionObserver/ad request lifecycle isn't disrupted — it just
-   stops rendering once the bottom ad banner is about to scroll into view. */
-.ad-rail--hidden { visibility: hidden; opacity: 0; }
-
 /* ── Navigation progress bar ── */
 .nav-progress {
   position: fixed;

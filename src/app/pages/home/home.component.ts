@@ -16,7 +16,6 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { VenueMapComponent } from '../../shared/venue-map/venue-map.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
-import { FloatingPanelStateService } from '../../core/floating-panel-state.service';
 import type { HomePageData } from '../../core/page-data.resolvers';
 import {
   isPublicCompanyRecord,
@@ -87,7 +86,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   private lastTrackedSearchTerm = '';
   private browseCatalogLoaded = false;
   private browseCatalogPromise: Promise<void> | null = null;
-  private releaseVenueFloatingPanel: (() => void) | null = null;
   browseCatalogLoading = false;
   constructor(
     private memberService: MemberService,
@@ -97,7 +95,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     private seo: SeoService,
     private analytics: AnalyticsService,
     private route: ActivatedRoute,
-    private floatingPanelState: FloatingPanelStateService,
   ) {}
 
   async ngOnInit() {
@@ -408,17 +405,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   openVenueInsertPanel(): void {
-    this.registerVenueFloatingPanel();
     this.showVenueInsertPanel = true;
   }
 
   closeVenueInsertPanel(): void {
     this.showVenueInsertPanel = false;
-    this.releaseVenueFloatingPanelState();
   }
 
   openVenueUpdatePanel(venue: Venue): void {
-    this.registerVenueFloatingPanel();
     this.venueForProposal = venue;
     this.showVenueUpdatePanel = true;
   }
@@ -426,7 +420,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   closeVenueUpdatePanel(): void {
     this.showVenueUpdatePanel = false;
     this.venueForProposal = null;
-    this.releaseVenueFloatingPanelState();
   }
 
   toggleVenue(venue: Venue) {
@@ -521,17 +514,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.destroyed = true;
     if (this.searchTimer) clearTimeout(this.searchTimer);
     this.clearSearchAnalyticsTimer();
-    this.releaseVenueFloatingPanelState();
-  }
-
-  private registerVenueFloatingPanel(): void {
-    if (this.releaseVenueFloatingPanel) return;
-    this.releaseVenueFloatingPanel = this.floatingPanelState.register();
-  }
-
-  private releaseVenueFloatingPanelState(): void {
-    this.releaseVenueFloatingPanel?.();
-    this.releaseVenueFloatingPanel = null;
   }
 
   get displayedGroups(): Group[] {
