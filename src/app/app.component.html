@@ -11,18 +11,23 @@
 <router-outlet />
 
 @if (showGlobalAds) {
-  <div class="ad-rail ad-rail--left">
-    <app-ad-banner adSlot="5209332328"></app-ad-banner>
-  </div>
-  <div class="ad-rail ad-rail--right">
-    <app-ad-banner adSlot="5209332328"></app-ad-banner>
-  </div>
-  <div class="ad-bottom ad-bottom--mobile">
-    <app-ad-banner adSlot="6713985681"></app-ad-banner>
-  </div>
-  <div class="ad-bottom ad-bottom--desktop">
-    <app-ad-banner adSlot="1461659002"></app-ad-banner>
-  </div>
+  @if (isWideDesktop()) {
+    <div class="ad-rail ad-rail--left">
+      <app-ad-banner adSlot="5209332328"></app-ad-banner>
+    </div>
+    <div class="ad-rail ad-rail--right">
+      <app-ad-banner adSlot="5209332328"></app-ad-banner>
+    </div>
+  }
+  @if (isMobileViewport()) {
+    <div class="ad-bottom">
+      <app-ad-banner adSlot="6713985681"></app-ad-banner>
+    </div>
+  } @else {
+    <div class="ad-bottom">
+      <app-ad-banner adSlot="1461659002"></app-ad-banner>
+    </div>
+  }
 }
 
 @if ((session$ | async); as session) {

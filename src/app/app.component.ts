@@ -31,6 +31,8 @@ export class AppComponent {
   readonly authReady = signal(false);
   readonly showLoginPill = signal(false);
   readonly updateAvailable = signal(false);
+  readonly isMobileViewport = signal(false);
+  readonly isWideDesktop = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -61,6 +63,24 @@ export class AppComponent {
         distinctUntilChanged(),
       ).subscribe(show => this.showScrollTop.set(show));
 
+      // Ad placements that don't apply to the current viewport must be removed
+      // from the DOM entirely (not just CSS-hidden) — adsbygoogle.push() claims
+      // the next unclaimed <ins> in document order regardless of which slot
+      // triggered it, so a hidden zero-width <ins> earlier in the DOM silently
+      // swallows the push meant for a later, actually-visible slot.
+      const mobileQuery = window.matchMedia('(max-width: 767px)');
+      const wideQuery = window.matchMedia('(min-width: 1280px)');
+      this.isMobileViewport.set(mobileQuery.matches);
+      this.isWideDesktop.set(wideQuery.matches);
+      const onMobileChange = (e: MediaQueryListEvent) => this.isMobileViewport.set(e.matches);
+      const onWideChange = (e: MediaQueryListEvent) => this.isWideDesktop.set(e.matches);
+      mobileQuery.addEventListener('change', onMobileChange);
+      wideQuery.addEventListener('change', onWideChange);
+      this.destroyRef.onDestroy(() => {
+        mobileQuery.removeEventListener('change', onMobileChange);
+        wideQuery.removeEventListener('change', onWideChange);
+      });
+
       const swUpdate = this.swUpdate;
       if (swUpdate?.isEnabled) {
         swUpdate.versionUpdates.pipe(
@@ -90,7 +110,10 @@ export class AppComponent {
   }
 
   get showGlobalAds(): boolean {
-    return !this.isAdminRoute && !this.router.url.startsWith('/login');
+    // Skip rendering on the server: these placements depend on the client's
+    // viewport width, and rendering a default on the server would cause a
+    // hydration mismatch once the client corrects it.
+    return this.isBrowser && !this.isAdminRoute && !this.router.url.startsWith('/login');
   }
 
   signOut() {
