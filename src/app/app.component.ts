@@ -34,6 +34,7 @@ export class AppComponent {
   readonly isMobileViewport = signal(false);
   readonly isWideDesktop = signal(false);
   readonly nearPageBottom = signal(false);
+  readonly adBlockingPanelOpen = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -65,22 +66,71 @@ export class AppComponent {
       ).subscribe(show => this.showScrollTop.set(show));
 
       // The fixed side rails would otherwise sit on top of the bottom ad
-      // banner once its real (post-fill) height pushes past the rail's
-      // fixed bottom offset. Measuring against total document height is
-      // unreliable because the banner's own fill changes that height —
-      // once it grows tall, "500px from the (now taller) bottom" can land
-      // back above the banner's top edge, un-hiding the rails right on
-      // top of it. Measure against the banner's own top edge instead,
-      // which doesn't move when the banner's height changes.
+      // banner once AdSense fills the slot and changes its real height.
+      // Re-check on scroll, resize, route changes, and layout resizes so the
+      // rails also react to late iframe insertion without requiring another
+      // user scroll.
+      const updateNearPageBottom = () => {
+        const adBottom = document.querySelector<HTMLElement>('.ad-bottom');
+        if (!adBottom || !this.isWideDesktop()) {
+          this.nearPageBottom.set(false);
+          return;
+        }
+
+        const guardDistance = Math.max(260, Math.min(420, window.innerHeight * 0.35));
+        const nearBottomAd = adBottom.getBoundingClientRect().top < window.innerHeight + guardDistance;
+        this.nearPageBottom.set(nearBottomAd);
+      };
+
+      let nearPageBottomFrame = 0;
+      const scheduleNearPageBottomCheck = () => {
+        if (nearPageBottomFrame) return;
+        nearPageBottomFrame = window.requestAnimationFrame(() => {
+          nearPageBottomFrame = 0;
+          updateNearPageBottom();
+        });
+      };
+
       fromEvent(window, 'scroll').pipe(
         takeUntilDestroyed(),
-        map(() => {
-          const adBottom = document.querySelector('.ad-bottom');
-          if (!adBottom) return false;
-          return adBottom.getBoundingClientRect().top < window.innerHeight + 300;
-        }),
-        distinctUntilChanged(),
-      ).subscribe(near => this.nearPageBottom.set(near));
+      ).subscribe(scheduleNearPageBottomCheck);
+      fromEvent(window, 'resize').pipe(
+        takeUntilDestroyed(),
+      ).subscribe(scheduleNearPageBottomCheck);
+      router.events.pipe(
+        takeUntilDestroyed(),
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      ).subscribe(() => {
+        this.nearPageBottom.set(false);
+        scheduleNearPageBottomCheck();
+      });
+
+      if ('ResizeObserver' in window) {
+        const resizeObserver = new ResizeObserver(scheduleNearPageBottomCheck);
+        resizeObserver.observe(document.body);
+        this.destroyRef.onDestroy(() => resizeObserver.disconnect());
+      }
+
+      scheduleNearPageBottomCheck();
+
+      const updateAdBlockingPanelOpen = () => {
+        this.adBlockingPanelOpen.set(
+          !!document.querySelector('app-proposal-panel, app-record-edit-history')
+        );
+      };
+
+      let adPanelFrame = 0;
+      const scheduleAdPanelCheck = () => {
+        if (adPanelFrame) return;
+        adPanelFrame = window.requestAnimationFrame(() => {
+          adPanelFrame = 0;
+          updateAdBlockingPanelOpen();
+        });
+      };
+
+      const adPanelObserver = new MutationObserver(scheduleAdPanelCheck);
+      adPanelObserver.observe(document.body, { childList: true, subtree: true });
+      scheduleAdPanelCheck();
 
       // Ad placements that don't apply to the current viewport must be removed
       // from the DOM entirely (not just CSS-hidden) — adsbygoogle.push() claims
@@ -92,12 +142,18 @@ export class AppComponent {
       this.isMobileViewport.set(mobileQuery.matches);
       this.isWideDesktop.set(wideQuery.matches);
       const onMobileChange = (e: MediaQueryListEvent) => this.isMobileViewport.set(e.matches);
-      const onWideChange = (e: MediaQueryListEvent) => this.isWideDesktop.set(e.matches);
+      const onWideChange = (e: MediaQueryListEvent) => {
+        this.isWideDesktop.set(e.matches);
+        scheduleNearPageBottomCheck();
+      };
       mobileQuery.addEventListener('change', onMobileChange);
       wideQuery.addEventListener('change', onWideChange);
       this.destroyRef.onDestroy(() => {
         mobileQuery.removeEventListener('change', onMobileChange);
         wideQuery.removeEventListener('change', onWideChange);
+        if (nearPageBottomFrame) window.cancelAnimationFrame(nearPageBottomFrame);
+        adPanelObserver.disconnect();
+        if (adPanelFrame) window.cancelAnimationFrame(adPanelFrame);
       });
 
       const swUpdate = this.swUpdate;

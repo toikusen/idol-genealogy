@@ -12,10 +12,10 @@
 
 @if (showGlobalAds) {
   @if (isWideDesktop()) {
-    <div class="ad-rail ad-rail--left" [class.ad-rail--hidden]="nearPageBottom()">
+    <div class="ad-rail ad-rail--left" [class.ad-rail--hidden]="nearPageBottom() || adBlockingPanelOpen()">
       <app-ad-banner adSlot="5209332328"></app-ad-banner>
     </div>
-    <div class="ad-rail ad-rail--right" [class.ad-rail--hidden]="nearPageBottom()">
+    <div class="ad-rail ad-rail--right" [class.ad-rail--hidden]="nearPageBottom() || adBlockingPanelOpen()">
       <app-ad-banner adSlot="5209332328"></app-ad-banner>
     </div>
   }
