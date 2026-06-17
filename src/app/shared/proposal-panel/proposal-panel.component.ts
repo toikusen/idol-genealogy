@@ -17,6 +17,18 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
   standalone: true,
   imports: [CommonModule, FormsModule, PhotoUploadComponent],
   styles: [`
+    @media (min-width: 768px) {
+      [role="dialog"] {
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translate(-50%, -50%);
+        height: auto !important;
+        max-height: 90vh;
+        border-radius: 16px !important;
+      }
+    }
     :host-context([data-theme="dark"]) .panel-overlay {
       background: rgba(12, 5, 22, 0.82) !important;
     }

@@ -16,6 +16,20 @@ import { FloatingPanelStateService } from '../../core/floating-panel-state.servi
   imports: [SupabaseImgPipe],
   templateUrl: './record-edit-history.component.html',
   styles: [`
+    @media (min-width: 768px) {
+      aside {
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translate(-50%, -50%);
+        height: auto !important;
+        max-height: 90vh;
+        border-left: none !important;
+        border-radius: 16px !important;
+        border: 1px solid var(--border-subtle);
+      }
+    }
     :host-context([data-theme="dark"]) aside {
       background: var(--bg-page) !important;
       border-left-color: rgba(232, 121, 160, 0.15) !important;
