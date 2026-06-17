@@ -66,12 +66,19 @@ export class AppComponent {
 
       // The fixed side rails would otherwise sit on top of the bottom ad
       // banner once its real (post-fill) height pushes past the rail's
-      // fixed bottom offset. Rather than guess the banner's height, just
-      // hide the rails once the user is close enough to the page bottom
-      // that the banner is about to be in view.
+      // fixed bottom offset. Measuring against total document height is
+      // unreliable because the banner's own fill changes that height —
+      // once it grows tall, "500px from the (now taller) bottom" can land
+      // back above the banner's top edge, un-hiding the rails right on
+      // top of it. Measure against the banner's own top edge instead,
+      // which doesn't move when the banner's height changes.
       fromEvent(window, 'scroll').pipe(
         takeUntilDestroyed(),
-        map(() => document.body.scrollHeight - (window.scrollY + window.innerHeight) < 500),
+        map(() => {
+          const adBottom = document.querySelector('.ad-bottom');
+          if (!adBottom) return false;
+          return adBottom.getBoundingClientRect().top < window.innerHeight + 300;
+        }),
         distinctUntilChanged(),
       ).subscribe(near => this.nearPageBottom.set(near));
 
