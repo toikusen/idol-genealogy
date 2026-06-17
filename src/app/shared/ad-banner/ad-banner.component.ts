@@ -18,7 +18,11 @@ import { isPlatformBrowser } from '@angular/common';
 })
 export class AdBannerComponent implements AfterViewInit, OnDestroy {
   @Input() adSlot = '4061570176';
-  visible = false;
+  // Must stay visible (non-zero width) before the ad request fires — AdSense
+  // can't size or fill a full-width-responsive slot that's display:none, and
+  // silently abandons it forever without ever writing data-ad-status. Only
+  // collapse it once we know for sure the slot came back unfilled.
+  visible = true;
   private observer: MutationObserver | null = null;
   private intersectionObserver: IntersectionObserver | null = null;
   private adRequested = false;
