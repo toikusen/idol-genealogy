@@ -9,6 +9,7 @@ import { VenueService } from '../../core/venue.service';
 import { SeoService } from '../../core/seo.service';
 import { Group, Member, Company, MemberLeaderboardEntry, GroupLeaderboardEntry } from '../../models';
 import { HomePageData } from '../../core/page-data.resolvers';
+import { FloatingPanelStateService } from '../../core/floating-panel-state.service';
 
 const makeGroup = (overrides: Partial<Group> = {}): Group =>
   ({ id: 'g1', name: 'TestGroup', founded_at: '2020-01-01', disbanded_at: null, color: null, notes: null, company: null, company_id: null, photo_url: null, name_jp: null, updated_at: '2024-01-01' } as unknown as Group, { ...overrides } as Group);
@@ -90,6 +91,35 @@ describe('HomeComponent', () => {
   }
 
   // ── Issue 1: *ngIf → @if ─────────────────────────────────────────────────
+
+  it('registers venue proposal panels before deferred panel content loads', async () => {
+    await setup();
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+    const floatingPanelState = TestBed.inject(FloatingPanelStateService);
+
+    expect(floatingPanelState.hasOpenPanel()).toBeFalse();
+
+    component.openVenueInsertPanel();
+    expect(component.showVenueInsertPanel).toBeTrue();
+    expect(floatingPanelState.hasOpenPanel()).toBeTrue();
+
+    component.closeVenueInsertPanel();
+    expect(floatingPanelState.hasOpenPanel()).toBeFalse();
+
+    component.venues = [{
+      id: 'v1',
+      name: 'Test Venue',
+      address: '台北市測試路 1 號',
+      region: 'north',
+    } as any];
+    component.onVenueProposalRequested('v1');
+    expect(component.showVenueUpdatePanel).toBeTrue();
+    expect(floatingPanelState.hasOpenPanel()).toBeTrue();
+
+    component.closeVenueUpdatePanel();
+    expect(floatingPanelState.hasOpenPanel()).toBeFalse();
+  });
 
   describe('member name display (Issue 1 — mixed ngIf)', () => {
     it('shows roman name secondary line only when name_roman exists', fakeAsync(async () => {

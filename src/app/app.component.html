@@ -12,19 +12,19 @@
 
 @if (showGlobalAds) {
   @if (isWideDesktop()) {
-    <div class="ad-rail ad-rail--left" [class.ad-rail--hidden]="nearPageBottom() || adBlockingPanelOpen()">
+    <div class="ad-rail ad-rail--left" [class.ad-rail--hidden]="adBlockingPanelOpen()">
       <app-ad-banner adSlot="5209332328"></app-ad-banner>
     </div>
-    <div class="ad-rail ad-rail--right" [class.ad-rail--hidden]="nearPageBottom() || adBlockingPanelOpen()">
+    <div class="ad-rail ad-rail--right" [class.ad-rail--hidden]="adBlockingPanelOpen()">
       <app-ad-banner adSlot="5209332328"></app-ad-banner>
     </div>
   }
   @if (isMobileViewport()) {
-    <div class="ad-bottom">
+    <div class="ad-bottom ad-bottom--mobile">
       <app-ad-banner adSlot="6713985681"></app-ad-banner>
     </div>
   } @else {
-    <div class="ad-bottom">
+    <div class="ad-bottom ad-bottom--desktop">
       <app-ad-banner adSlot="1461659002"></app-ad-banner>
     </div>
   }

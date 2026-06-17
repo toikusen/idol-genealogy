@@ -1057,7 +1057,7 @@
             <div style="text-align:right;margin-bottom:10px;">
               <button
                 type="button"
-                (click)="showVenueInsertPanel = true"
+                (click)="openVenueInsertPanel()"
                 style="font-size:0.72rem;color:#7c6cf2;background:rgba(124,108,242,0.07);border:1px solid rgba(124,108,242,0.2);border-radius:20px;padding:5px 14px;cursor:pointer;"
               >+ 提案新增場地</button>
             </div>
@@ -1346,7 +1346,7 @@
           [recordId]="null"
           [originalData]="{}"
           [requiredFields]="['name', 'address', 'region']"
-          (closed)="showVenueInsertPanel = false"
+          (closed)="closeVenueInsertPanel()"
         />
       }
     }
@@ -1358,7 +1358,7 @@
           [recordId]="venueForProposal.id"
           [originalData]="venueForProposal"
           [requiredFields]="['name', 'address', 'region']"
-          (closed)="showVenueUpdatePanel = false; venueForProposal = null"
+          (closed)="closeVenueUpdatePanel()"
         />
       }
     }

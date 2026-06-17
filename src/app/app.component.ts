@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, Injector, PLATFORM_ID, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, Injector, PLATFORM_ID, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, NavigationEnd, NavigationStart, NavigationCancel, NavigationError } from '@angular/router';
 import { AsyncPipe, isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, fromEvent, map, distinctUntilChanged } from 'rxjs';
@@ -12,6 +12,7 @@ import { PwaInstallPromptComponent } from './shared/pwa-install-prompt/pwa-insta
 import { AdBannerComponent } from './shared/ad-banner/ad-banner.component';
 import { ThemeService } from './core/theme.service';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
+import { FloatingPanelStateService } from './core/floating-panel-state.service';
 
 @Component({
   selector: 'app-root',
@@ -33,8 +34,11 @@ export class AppComponent {
   readonly updateAvailable = signal(false);
   readonly isMobileViewport = signal(false);
   readonly isWideDesktop = signal(false);
-  readonly nearPageBottom = signal(false);
-  readonly adBlockingPanelOpen = signal(false);
+  private readonly detectedAdBlockingPanelOpen = signal(false);
+  private readonly floatingPanelState = inject(FloatingPanelStateService);
+  readonly adBlockingPanelOpen = computed(() =>
+    this.floatingPanelState.hasOpenPanel() || this.detectedAdBlockingPanelOpen()
+  );
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -65,56 +69,8 @@ export class AppComponent {
         distinctUntilChanged(),
       ).subscribe(show => this.showScrollTop.set(show));
 
-      // The fixed side rails would otherwise sit on top of the bottom ad
-      // banner once AdSense fills the slot and changes its real height.
-      // Re-check on scroll, resize, route changes, and layout resizes so the
-      // rails also react to late iframe insertion without requiring another
-      // user scroll.
-      const updateNearPageBottom = () => {
-        const adBottom = document.querySelector<HTMLElement>('.ad-bottom');
-        if (!adBottom || !this.isWideDesktop()) {
-          this.nearPageBottom.set(false);
-          return;
-        }
-
-        const guardDistance = Math.max(260, Math.min(420, window.innerHeight * 0.35));
-        const nearBottomAd = adBottom.getBoundingClientRect().top < window.innerHeight + guardDistance;
-        this.nearPageBottom.set(nearBottomAd);
-      };
-
-      let nearPageBottomFrame = 0;
-      const scheduleNearPageBottomCheck = () => {
-        if (nearPageBottomFrame) return;
-        nearPageBottomFrame = window.requestAnimationFrame(() => {
-          nearPageBottomFrame = 0;
-          updateNearPageBottom();
-        });
-      };
-
-      fromEvent(window, 'scroll').pipe(
-        takeUntilDestroyed(),
-      ).subscribe(scheduleNearPageBottomCheck);
-      fromEvent(window, 'resize').pipe(
-        takeUntilDestroyed(),
-      ).subscribe(scheduleNearPageBottomCheck);
-      router.events.pipe(
-        takeUntilDestroyed(),
-        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
-      ).subscribe(() => {
-        this.nearPageBottom.set(false);
-        scheduleNearPageBottomCheck();
-      });
-
-      if ('ResizeObserver' in window) {
-        const resizeObserver = new ResizeObserver(scheduleNearPageBottomCheck);
-        resizeObserver.observe(document.body);
-        this.destroyRef.onDestroy(() => resizeObserver.disconnect());
-      }
-
-      scheduleNearPageBottomCheck();
-
       const updateAdBlockingPanelOpen = () => {
-        this.adBlockingPanelOpen.set(
+        this.detectedAdBlockingPanelOpen.set(
           !!document.querySelector('app-proposal-panel, app-record-edit-history')
         );
       };
@@ -142,16 +98,12 @@ export class AppComponent {
       this.isMobileViewport.set(mobileQuery.matches);
       this.isWideDesktop.set(wideQuery.matches);
       const onMobileChange = (e: MediaQueryListEvent) => this.isMobileViewport.set(e.matches);
-      const onWideChange = (e: MediaQueryListEvent) => {
-        this.isWideDesktop.set(e.matches);
-        scheduleNearPageBottomCheck();
-      };
+      const onWideChange = (e: MediaQueryListEvent) => this.isWideDesktop.set(e.matches);
       mobileQuery.addEventListener('change', onMobileChange);
       wideQuery.addEventListener('change', onWideChange);
       this.destroyRef.onDestroy(() => {
         mobileQuery.removeEventListener('change', onMobileChange);
         wideQuery.removeEventListener('change', onWideChange);
-        if (nearPageBottomFrame) window.cancelAnimationFrame(nearPageBottomFrame);
         adPanelObserver.disconnect();
         if (adPanelFrame) window.cancelAnimationFrame(adPanelFrame);
       });

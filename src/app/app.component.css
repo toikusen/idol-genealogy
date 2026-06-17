@@ -116,6 +116,15 @@
   display: block;
 }
 
+.ad-bottom--mobile {
+  width: 100%;
+}
+
+.ad-bottom--desktop {
+  width: min(880px, calc(100vw - 32px));
+  margin-inline: auto;
+}
+
 /* ── AdSense side rails: only rendered (see app.component.ts isWideDesktop)
    once there is enough margin beside the centered content column
    (max content width is 880px) ── */

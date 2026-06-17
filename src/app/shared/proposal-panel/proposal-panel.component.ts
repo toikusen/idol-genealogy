@@ -1,5 +1,5 @@
 // src/app/shared/proposal-panel/proposal-panel.component.ts
-import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, ElementRef, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, ElementRef, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,6 +7,7 @@ import { SupabaseService } from '../../core/supabase.service';
 import { ProposalService } from '../../core/proposal.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { CompanyService } from '../../core/company.service';
+import { FloatingPanelStateService } from '../../core/floating-panel-state.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../core/proposal-fields.config';
 import { Company } from '../../models';
 import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
@@ -688,7 +689,7 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
     </div>
   `,
 })
-export class ProposalPanelComponent implements OnInit, AfterViewInit {
+export class ProposalPanelComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() tableName: 'members' | 'groups' | 'history' | 'companies' | 'venues' = 'members';
   @Input() recordId: string | null = null;
   @Input() operation: 'INSERT' | 'UPDATE' | 'DELETE' = 'UPDATE';
@@ -824,6 +825,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
   }
 
   private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'maid_url', 'youtube', 'website', 'photo_url', 'google_maps_url', 'timetree_url']);
+  private readonly releaseFloatingPanel: () => void;
 
   fieldPlaceholder(field: string): string {
     const hints: Record<string, string> = {
@@ -880,7 +882,10 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
     public router: Router,
     private el: ElementRef,
     private analytics: AnalyticsService,
-  ) {}
+    floatingPanelState: FloatingPanelStateService,
+  ) {
+    this.releaseFloatingPanel = floatingPanelState.register();
+  }
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -979,6 +984,10 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
 
   close() {
     this.closed.emit();
+  }
+
+  ngOnDestroy() {
+    this.releaseFloatingPanel();
   }
 
   async submitProposal() {
