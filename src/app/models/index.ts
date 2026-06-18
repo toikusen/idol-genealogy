@@ -173,6 +173,42 @@ export interface GroupLeaderboardEntry {
   view_count: number;
 }
 
+export interface MemberRecentHeatEntry {
+  id: string;
+  name: string;
+  name_roman: string | null;
+  photo_url: string | null;
+  color: string | null;
+  recent_visitors: number;
+}
+
+export interface GroupRecentHeatEntry {
+  id: string;
+  name: string;
+  photo_url: string | null;
+  color: string | null;
+  recent_visitors: number;
+}
+
+export interface MemberTrendingEntry {
+  id: string;
+  name: string;
+  name_roman: string | null;
+  photo_url: string | null;
+  color: string | null;
+  recent_view_count: number;
+  trend_delta: number;
+}
+
+export interface GroupTrendingEntry {
+  id: string;
+  name: string;
+  photo_url: string | null;
+  color: string | null;
+  recent_view_count: number;
+  trend_delta: number;
+}
+
 export interface MemberSong {
   id: string;
   member_id: string;
