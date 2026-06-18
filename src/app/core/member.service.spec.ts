@@ -92,7 +92,7 @@ describe('MemberService', () => {
     expect(results[0].view_count).toBe(42);
   });
 
-  it('getRecentPopular() should call get_recent_popular_members with clamped defaults', async () => {
+  it('getRecentPopular() should call get_recent_popular_members with the default window', async () => {
     const results = await service.getRecentPopular(5);
     expect(mockSupabaseService.client.rpc).toHaveBeenCalledWith(
       'get_recent_popular_members', { p_limit: 5, p_window_days: 7 }
