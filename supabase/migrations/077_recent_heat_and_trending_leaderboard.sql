@@ -7,7 +7,7 @@
 -- migration file. Do not change p_session_token's type (uuid) or the
 -- security/search_path settings — they must match production exactly.
 
-create table page_view_daily (
+create table if not exists page_view_daily (
   entity_type text not null check (entity_type in ('member','group')),
   entity_id   uuid not null,
   view_date   date not null,
@@ -15,16 +15,17 @@ create table page_view_daily (
   primary key (entity_type, entity_id, view_date)
 );
 
-create index idx_page_view_daily_lookup on page_view_daily (entity_type, view_date);
+create index if not exists idx_page_view_daily_lookup on page_view_daily (entity_type, view_date);
 
 alter table page_view_daily enable row level security;
 
+drop policy if exists page_view_daily_no_direct_access on page_view_daily;
 create policy page_view_daily_no_direct_access on page_view_daily
   for all using (false) with check (false);
 
 -- Supports get_recent_popular_members/groups: filters by entity_type +
 -- viewed_at range, then counts distinct session_token per entity_id.
-create index idx_view_session_log_recent
+create index if not exists idx_view_session_log_recent
   on view_session_log (entity_type, viewed_at, entity_id);
 
 create or replace function public.increment_view(p_type text, p_id uuid, p_session_token uuid)
