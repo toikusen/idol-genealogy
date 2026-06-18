@@ -74,4 +74,18 @@ describe('GroupService', () => {
     );
     expect(results[0].name).toBe('XYZ Team');
   });
+  it('getRecentPopular() should call get_recent_popular_groups with the default window', async () => {
+    const results = await service.getRecentPopular(5);
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      'get_recent_popular_groups', { p_limit: 5, p_window_days: 7 }
+    );
+    expect(results[0].name).toBe('XYZ Team');
+  });
+  it('getTrending() should call get_trending_groups', async () => {
+    const results = await service.getTrending(10);
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      'get_trending_groups', { p_limit: 10 }
+    );
+    expect(results[0].name).toBe('XYZ Team');
+  });
 });
