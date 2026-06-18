@@ -7,7 +7,7 @@ import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
 import { SeoService } from '../../core/seo.service';
-import { Group, Member, Company, MemberLeaderboardEntry, GroupLeaderboardEntry } from '../../models';
+import { Group, Member, Company, MemberRecentHeatEntry, GroupRecentHeatEntry } from '../../models';
 import { HomePageData } from '../../core/page-data.resolvers';
 
 const makeGroup = (overrides: Partial<Group> = {}): Group =>
@@ -33,7 +33,7 @@ describe('HomeComponent', () => {
   const emptyMemberService = () => ({
     getRecent: jasmine.createSpy().and.returnValue(Promise.resolve([])),
     getCount: jasmine.createSpy().and.returnValue(Promise.resolve(0)),
-    getTopByViews: jasmine.createSpy().and.returnValue(Promise.resolve([])),
+    getRecentPopular: jasmine.createSpy().and.returnValue(Promise.resolve([])),
     getUpcomingBirthdays: jasmine.createSpy().and.returnValue(Promise.resolve([])),
     getSoloMembers: jasmine.createSpy().and.returnValue(Promise.resolve([])),
     search: jasmine.createSpy().and.returnValue(Promise.resolve([])),
@@ -42,7 +42,7 @@ describe('HomeComponent', () => {
 
   const emptyGroupService = () => ({
     getAll: jasmine.createSpy().and.returnValue(Promise.resolve([])),
-    getTopByViews: jasmine.createSpy().and.returnValue(Promise.resolve([])),
+    getRecentPopular: jasmine.createSpy().and.returnValue(Promise.resolve([])),
     search: jasmine.createSpy().and.returnValue(Promise.resolve([])),
   });
 
@@ -240,12 +240,12 @@ describe('HomeComponent', () => {
 
   // ── Deferred image loading attributes ────────────────────────────────────
   describe('popular rank image loading', () => {
-    function leaderMember(id: string, photoUrl: string): MemberLeaderboardEntry {
-      return { id, name: id, name_roman: null, photo_url: photoUrl, color: null, view_count: 1 };
+    function leaderMember(id: string, photoUrl: string): MemberRecentHeatEntry {
+      return { id, name: id, name_roman: null, photo_url: photoUrl, color: null, recent_visitors: 1 };
     }
 
-    function leaderGroup(id: string, photoUrl: string): GroupLeaderboardEntry {
-      return { id, name: id, photo_url: photoUrl, color: null, view_count: 1 };
+    function leaderGroup(id: string, photoUrl: string): GroupRecentHeatEntry {
+      return { id, name: id, photo_url: photoUrl, color: null, recent_visitors: 1 };
     }
 
     it('keeps topMember images lazy because the section is deferred below the fold', fakeAsync(async () => {
