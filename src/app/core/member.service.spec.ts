@@ -91,4 +91,27 @@ describe('MemberService', () => {
     expect(results.length).toBe(1);
     expect(results[0].view_count).toBe(42);
   });
+
+  it('getRecentPopular() should call get_recent_popular_members with clamped defaults', async () => {
+    const results = await service.getRecentPopular(5);
+    expect(mockSupabaseService.client.rpc).toHaveBeenCalledWith(
+      'get_recent_popular_members', { p_limit: 5, p_window_days: 7 }
+    );
+    expect(Array.isArray(results)).toBeTrue();
+  });
+
+  it('getRecentPopular() should pass a custom window when provided', async () => {
+    await service.getRecentPopular(5, 30);
+    expect(mockSupabaseService.client.rpc).toHaveBeenCalledWith(
+      'get_recent_popular_members', { p_limit: 5, p_window_days: 30 }
+    );
+  });
+
+  it('getTrending() should call get_trending_members', async () => {
+    const results = await service.getTrending(10);
+    expect(mockSupabaseService.client.rpc).toHaveBeenCalledWith(
+      'get_trending_members', { p_limit: 10 }
+    );
+    expect(Array.isArray(results)).toBeTrue();
+  });
 });
