@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Member, MemberLeaderboardEntry } from '../models';
+import { Member, MemberLeaderboardEntry, MemberRecentHeatEntry, MemberTrendingEntry } from '../models';
 import { kanaVariants } from './japanese.utils';
 import { isNotFoundError } from './supabase.utils';
 
@@ -192,5 +192,21 @@ export class MemberService {
     );
     if (error) throw error;
     return (data ?? []) as MemberLeaderboardEntry[];
+  }
+
+  async getRecentPopular(limit: number, windowDays = 7): Promise<MemberRecentHeatEntry[]> {
+    const { data, error } = await this.supabase.client.rpc(
+      'get_recent_popular_members', { p_limit: limit, p_window_days: windowDays }
+    );
+    if (error) throw error;
+    return (data ?? []) as MemberRecentHeatEntry[];
+  }
+
+  async getTrending(limit: number): Promise<MemberTrendingEntry[]> {
+    const { data, error } = await this.supabase.client.rpc(
+      'get_trending_members', { p_limit: limit }
+    );
+    if (error) throw error;
+    return (data ?? []) as MemberTrendingEntry[];
   }
 }
