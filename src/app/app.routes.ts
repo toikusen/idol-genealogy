@@ -34,6 +34,9 @@ const groupPageResolver = lazyResolver(() =>
 const companyPageResolver = lazyResolver(() =>
   import('./core/page-data.resolvers').then(m => m.companyPageResolver)
 );
+const leaderboardPageResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.leaderboardPageResolver)
+);
 const staffGuard = lazyGuard(() =>
   import('./core/staff.guard').then(m => m.staffGuard)
 );
@@ -78,6 +81,11 @@ export const routes: Routes = [
     path: 'group/:id',
     resolve: { pageData: groupPageResolver },
     loadComponent: () => import('./pages/group-page/group-page.component').then(m => m.GroupPageComponent)
+  },
+  {
+    path: 'leaderboard',
+    resolve: { pageData: leaderboardPageResolver },
+    loadComponent: () => import('./pages/leaderboard/leaderboard.component').then(m => m.LeaderboardComponent)
   },
   {
     path: 'login',
