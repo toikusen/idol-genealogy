@@ -3,13 +3,15 @@ import { ResolveFn } from '@angular/router';
 import {
   Company,
   Group,
-  GroupLeaderboardEntry,
+  GroupRecentHeatEntry,
   GroupSong,
+  GroupTrendingEntry,
   GroupVideo,
   History,
   Member,
-  MemberLeaderboardEntry,
+  MemberRecentHeatEntry,
   MemberSong,
+  MemberTrendingEntry,
   Proposal,
   Team,
 } from '../models';
@@ -31,8 +33,8 @@ export interface HomePageData {
   memberCount: number;
   groupCount: number;
   companyCount: number;
-  topMembers: MemberLeaderboardEntry[];
-  topGroups: GroupLeaderboardEntry[];
+  topMembers: MemberRecentHeatEntry[];
+  topGroups: GroupRecentHeatEntry[];
   upcomingBirthdays: { member: Member; daysUntil: number }[];
 }
 
@@ -230,8 +232,8 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
     memberService.getCount().catch(() => 0),
     groupService.getPublicCount().catch(() => 0),
     companyService.getPublicCount().catch(() => 0),
-    memberService.getTopByViews(5).catch(() => [] as MemberLeaderboardEntry[]),
-    groupService.getTopByViews(5).catch(() => [] as GroupLeaderboardEntry[]),
+    memberService.getRecentPopular(5).catch(() => [] as MemberRecentHeatEntry[]),
+    groupService.getRecentPopular(5).catch(() => [] as GroupRecentHeatEntry[]),
     memberService.getUpcomingBirthdays(30).catch(() => [] as { member: Member; daysUntil: number }[]),
   ]);
 
@@ -269,4 +271,30 @@ export const membersListResolver: ResolveFn<MembersListPageData> = async () => {
   } catch {
     return { members: [], groups: [], links: [], error: true };
   }
+};
+
+export interface LeaderboardPageData {
+  recentMembers: MemberRecentHeatEntry[];
+  trendingMembers: MemberTrendingEntry[];
+  recentGroups: GroupRecentHeatEntry[];
+  trendingGroups: GroupTrendingEntry[];
+}
+
+export const leaderboardPageResolver: ResolveFn<LeaderboardPageData> = async () => {
+  const memberService = inject(MemberService);
+  const groupService = inject(GroupService);
+
+  const [recentMembers, trendingMembers, recentGroups, trendingGroups] = await Promise.all([
+    memberService.getRecentPopular(10).catch(() => [] as MemberRecentHeatEntry[]),
+    memberService.getTrending(10).catch(() => [] as MemberTrendingEntry[]),
+    groupService.getRecentPopular(10).catch(() => [] as GroupRecentHeatEntry[]),
+    groupService.getTrending(10).catch(() => [] as GroupTrendingEntry[]),
+  ]);
+
+  return {
+    recentMembers: recentMembers.filter(isPublicMemberRecord),
+    trendingMembers: trendingMembers.filter(isPublicMemberRecord),
+    recentGroups: recentGroups.filter(isPublicGroupRecord),
+    trendingGroups: trendingGroups.filter(isPublicGroupRecord),
+  };
 };
