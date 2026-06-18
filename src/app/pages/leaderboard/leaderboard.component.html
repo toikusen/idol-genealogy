@@ -13,8 +13,8 @@
     </div>
 
     <div class="leaderboard-pair-grid">
-      <section class="leaderboard-panel" aria-label="成員近期熱度">
-        <h3>成員</h3>
+      <section class="leaderboard-panel" aria-label="熱門成員">
+        <h3>熱門成員</h3>
         <ol class="leaderboard-list">
           @for (entry of recentMembers; track entry.id; let i = $index) {
             <li>
@@ -30,8 +30,8 @@
         </ol>
       </section>
 
-      <section class="leaderboard-panel" aria-label="團體近期熱度">
-        <h3>團體</h3>
+      <section class="leaderboard-panel" aria-label="熱門團體">
+        <h3>熱門團體</h3>
         <ol class="leaderboard-list">
           @for (entry of recentGroups; track entry.id; let i = $index) {
             <li>
