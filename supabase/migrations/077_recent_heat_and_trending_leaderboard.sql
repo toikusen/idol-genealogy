@@ -1,11 +1,36 @@
 -- Recent-heat and trending leaderboard support.
 --
--- increment_view's body below is a verbatim reconstruction of the live
--- production function (confirmed via `select pg_get_functiondef(oid) from
--- pg_proc where proname = 'increment_view'` on 2026-06-18) plus one new
--- insert into page_view_daily. It was not previously tracked in any
--- migration file. Do not change p_session_token's type (uuid) or the
--- security/search_path settings — they must match production exactly.
+-- The view-count tables and increment_view RPC were originally created
+-- outside the tracked migration history. Keep these definitions idempotent so
+-- production preserves existing tables, while fresh/staging databases can be
+-- built from migrations alone.
+
+create table if not exists page_views (
+  entity_type text not null check (entity_type in ('member','group')),
+  entity_id   uuid not null,
+  view_count  bigint not null default 0,
+  primary key (entity_type, entity_id)
+);
+
+alter table page_views enable row level security;
+
+drop policy if exists "anyone can read page_views" on page_views;
+create policy "anyone can read page_views" on page_views
+  for select using (true);
+
+create table if not exists view_session_log (
+  session_token uuid not null,
+  entity_type   text not null check (entity_type in ('member','group')),
+  entity_id     uuid not null,
+  viewed_at     timestamptz not null default now(),
+  primary key (session_token, entity_type, entity_id)
+);
+
+alter table view_session_log enable row level security;
+
+drop policy if exists view_session_log_no_direct_access on view_session_log;
+create policy view_session_log_no_direct_access on view_session_log
+  for all using (false) with check (false);
 
 create table if not exists page_view_daily (
   entity_type text not null check (entity_type in ('member','group')),
@@ -65,6 +90,9 @@ begin
   do update set view_count = page_view_daily.view_count + 1;
 end;
 $function$;
+
+revoke all on function public.increment_view(text, uuid, uuid) from public;
+grant execute on function public.increment_view(text, uuid, uuid) to anon, authenticated;
 
 create or replace function public.get_recent_popular_members(p_limit int default 10, p_window_days int default 7)
 returns table (
@@ -146,7 +174,7 @@ declare
 begin
   return query
   with recent as (
-    select entity_id, sum(view_count) as v
+    select entity_id, sum(view_count)::bigint as v
     from page_view_daily
     where entity_type = 'member'
       and view_date >= current_date - 7
@@ -154,7 +182,7 @@ begin
     group by entity_id
   ),
   previous as (
-    select entity_id, sum(view_count) as v
+    select entity_id, sum(view_count)::bigint as v
     from page_view_daily
     where entity_type = 'member'
       and view_date >= current_date - 14
@@ -167,6 +195,7 @@ begin
   from members m
   join recent r on r.entity_id = m.id
   left join previous p on p.entity_id = m.id
+  where coalesce(r.v, 0) - coalesce(p.v, 0) > 0
   order by trend_delta desc
   limit v_limit;
 end;
@@ -190,7 +219,7 @@ declare
 begin
   return query
   with recent as (
-    select entity_id, sum(view_count) as v
+    select entity_id, sum(view_count)::bigint as v
     from page_view_daily
     where entity_type = 'group'
       and view_date >= current_date - 7
@@ -198,7 +227,7 @@ begin
     group by entity_id
   ),
   previous as (
-    select entity_id, sum(view_count) as v
+    select entity_id, sum(view_count)::bigint as v
     from page_view_daily
     where entity_type = 'group'
       and view_date >= current_date - 14
@@ -211,6 +240,7 @@ begin
   from groups g
   join recent r on r.entity_id = g.id
   left join previous p on p.entity_id = g.id
+  where coalesce(r.v, 0) - coalesce(p.v, 0) > 0
   order by trend_delta desc
   limit v_limit;
 end;

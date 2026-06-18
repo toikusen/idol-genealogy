@@ -232,8 +232,8 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
     memberService.getCount().catch(() => 0),
     groupService.getPublicCount().catch(() => 0),
     companyService.getPublicCount().catch(() => 0),
-    memberService.getRecentPopular(5).catch(() => [] as MemberRecentHeatEntry[]),
-    groupService.getRecentPopular(5).catch(() => [] as GroupRecentHeatEntry[]),
+    memberService.getRecentPopular(10).catch(() => [] as MemberRecentHeatEntry[]),
+    groupService.getRecentPopular(10).catch(() => [] as GroupRecentHeatEntry[]),
     memberService.getUpcomingBirthdays(30).catch(() => [] as { member: Member; daysUntil: number }[]),
   ]);
 
@@ -242,8 +242,8 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
     memberCount,
     groupCount,
     companyCount,
-    topMembers: topMembers.filter(isPublicMemberRecord),
-    topGroups: topGroups.filter(isPublicGroupRecord),
+    topMembers: topMembers.filter(isPublicMemberRecord).slice(0, 5),
+    topGroups: topGroups.filter(isPublicGroupRecord).slice(0, 5),
     upcomingBirthdays: upcomingBirthdays
       .filter(entry => isPublicMemberRecord(entry.member))
       .map(entry => ({ ...entry, member: sanitizePublicMemberRecord(entry.member) })),
@@ -285,16 +285,16 @@ export const leaderboardPageResolver: ResolveFn<LeaderboardPageData> = async () 
   const groupService = inject(GroupService);
 
   const [recentMembers, trendingMembers, recentGroups, trendingGroups] = await Promise.all([
-    memberService.getRecentPopular(10).catch(() => [] as MemberRecentHeatEntry[]),
-    memberService.getTrending(10).catch(() => [] as MemberTrendingEntry[]),
-    groupService.getRecentPopular(10).catch(() => [] as GroupRecentHeatEntry[]),
-    groupService.getTrending(10).catch(() => [] as GroupTrendingEntry[]),
+    memberService.getRecentPopular(50).catch(() => [] as MemberRecentHeatEntry[]),
+    memberService.getTrending(50).catch(() => [] as MemberTrendingEntry[]),
+    groupService.getRecentPopular(50).catch(() => [] as GroupRecentHeatEntry[]),
+    groupService.getTrending(50).catch(() => [] as GroupTrendingEntry[]),
   ]);
 
   return {
-    recentMembers: recentMembers.filter(isPublicMemberRecord),
-    trendingMembers: trendingMembers.filter(isPublicMemberRecord),
-    recentGroups: recentGroups.filter(isPublicGroupRecord),
-    trendingGroups: trendingGroups.filter(isPublicGroupRecord),
+    recentMembers: recentMembers.filter(isPublicMemberRecord).slice(0, 10),
+    trendingMembers: trendingMembers.filter(isPublicMemberRecord).slice(0, 10),
+    recentGroups: recentGroups.filter(isPublicGroupRecord).slice(0, 10),
+    trendingGroups: trendingGroups.filter(isPublicGroupRecord).slice(0, 10),
   };
 };
