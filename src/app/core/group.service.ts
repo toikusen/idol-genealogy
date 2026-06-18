@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Group, GroupVideo, Team, GroupLeaderboardEntry } from '../models';
+import { Group, GroupVideo, Team, GroupLeaderboardEntry, GroupRecentHeatEntry, GroupTrendingEntry } from '../models';
 import { kanaVariants } from './japanese.utils';
 import { isPublicGroupRecord } from './public-record.utils';
 import { isNotFoundError } from './supabase.utils';
@@ -167,5 +167,21 @@ export class GroupService {
     );
     if (error) throw error;
     return (data ?? []) as GroupLeaderboardEntry[];
+  }
+
+  async getRecentPopular(limit: number, windowDays = 7): Promise<GroupRecentHeatEntry[]> {
+    const { data, error } = await this.supabase.client.rpc(
+      'get_recent_popular_groups', { p_limit: limit, p_window_days: windowDays }
+    );
+    if (error) throw error;
+    return (data ?? []) as GroupRecentHeatEntry[];
+  }
+
+  async getTrending(limit: number): Promise<GroupTrendingEntry[]> {
+    const { data, error } = await this.supabase.client.rpc(
+      'get_trending_groups', { p_limit: limit }
+    );
+    if (error) throw error;
+    return (data ?? []) as GroupTrendingEntry[];
   }
 }
