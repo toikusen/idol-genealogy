@@ -68,6 +68,15 @@ describe('LeaderboardComponent', () => {
     expect(text).toContain('Group One');
   });
 
+  it('renders each leaderboard section title once', async () => {
+    await setup();
+    const fixture = TestBed.createComponent(LeaderboardComponent);
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text.match(/近期熱度 Top 10/g)?.length).toBe(1);
+    expect(text.match(/上升最快 Top 10/g)?.length).toBe(1);
+  });
+
   it('renders a trend delta chip for trending member rows', async () => {
     await setup(makePageData({
       trendingMembers: [

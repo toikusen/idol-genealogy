@@ -4,13 +4,15 @@
     <p>近 7 天的近期熱度，以及最近 7 個完整日相較前 7 日的上升幅度。</p>
   </header>
 
-  <div class="leaderboard-entity-grid">
-    <section class="leaderboard-entity" aria-labelledby="leaderboard-members-title">
-      <h2 id="leaderboard-members-title">成員</h2>
+  <section class="leaderboard-section" aria-labelledby="leaderboard-recent-title">
+    <div class="leaderboard-section-heading">
+      <h2 id="leaderboard-recent-title">近期熱度 Top 10</h2>
+      <p>近 7 天</p>
+    </div>
 
-      <section class="leaderboard-block" aria-label="成員近期熱度">
-        <h3>近期熱度 Top 10</h3>
-        <p class="leaderboard-note">近 7 天</p>
+    <div class="leaderboard-pair-grid">
+      <section class="leaderboard-panel" aria-label="成員近期熱度">
+        <h3>成員</h3>
         <ol class="leaderboard-list">
           @for (entry of recentMembers; track entry.id; let i = $index) {
             <li>
@@ -26,9 +28,34 @@
         </ol>
       </section>
 
-      <section class="leaderboard-block" aria-label="成員上升最快">
-        <h3>上升最快 Top 10</h3>
-        <p class="leaderboard-note">最近 7 個完整日 vs 前 7 日・資料持續累積中，兩週後會更穩定</p>
+      <section class="leaderboard-panel" aria-label="團體近期熱度">
+        <h3>團體</h3>
+        <ol class="leaderboard-list">
+          @for (entry of recentGroups; track entry.id; let i = $index) {
+            <li>
+              <a [routerLink]="'/group/' + entry.id" class="leaderboard-row">
+                <span class="leaderboard-rank" [class.leaderboard-rank-top]="i < 3">{{ i + 1 }}.</span>
+                @if (entry.photo_url) {
+                  <img loading="lazy" [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="48" height="48" />
+                }
+                <span class="leaderboard-name">{{ entry.name }}</span>
+              </a>
+            </li>
+          }
+        </ol>
+      </section>
+    </div>
+  </section>
+
+  <section class="leaderboard-section" aria-labelledby="leaderboard-trending-title">
+    <div class="leaderboard-section-heading">
+      <h2 id="leaderboard-trending-title">上升最快 Top 10</h2>
+      <p>最近 7 個完整日 vs 前 7 日・資料持續累積中，兩週後會更穩定</p>
+    </div>
+
+    <div class="leaderboard-pair-grid">
+      <section class="leaderboard-panel" aria-label="成員上升最快">
+        <h3>成員</h3>
         <ol class="leaderboard-list">
           @for (entry of trendingMembers; track entry.id; let i = $index) {
             <li>
@@ -44,32 +71,9 @@
           }
         </ol>
       </section>
-    </section>
 
-    <section class="leaderboard-entity" aria-labelledby="leaderboard-groups-title">
-      <h2 id="leaderboard-groups-title">團體</h2>
-
-      <section class="leaderboard-block" aria-label="團體近期熱度">
-        <h3>近期熱度 Top 10</h3>
-        <p class="leaderboard-note">近 7 天</p>
-        <ol class="leaderboard-list">
-          @for (entry of recentGroups; track entry.id; let i = $index) {
-            <li>
-              <a [routerLink]="'/group/' + entry.id" class="leaderboard-row">
-                <span class="leaderboard-rank" [class.leaderboard-rank-top]="i < 3">{{ i + 1 }}.</span>
-                @if (entry.photo_url) {
-                  <img loading="lazy" [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="48" height="48" />
-                }
-                <span class="leaderboard-name">{{ entry.name }}</span>
-              </a>
-            </li>
-          }
-        </ol>
-      </section>
-
-      <section class="leaderboard-block" aria-label="團體上升最快">
-        <h3>上升最快 Top 10</h3>
-        <p class="leaderboard-note">最近 7 個完整日 vs 前 7 日・資料持續累積中，兩週後會更穩定</p>
+      <section class="leaderboard-panel" aria-label="團體上升最快">
+        <h3>團體</h3>
         <ol class="leaderboard-list">
           @for (entry of trendingGroups; track entry.id; let i = $index) {
             <li>
@@ -85,6 +89,6 @@
           }
         </ol>
       </section>
-    </section>
-  </div>
+    </div>
+  </section>
 </main>
