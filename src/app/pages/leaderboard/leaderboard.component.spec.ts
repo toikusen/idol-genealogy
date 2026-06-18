@@ -36,6 +36,15 @@ describe('LeaderboardComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('renders a home back link', async () => {
+    await setup();
+    const fixture = TestBed.createComponent(LeaderboardComponent);
+    fixture.detectChanges();
+    const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('.leaderboard-back-link');
+    expect(link?.textContent).toContain('返回首頁');
+    expect(link?.getAttribute('href')).toBe('/');
+  });
+
   it('renders recent-heat member rows by rank order', async () => {
     await setup(makePageData({
       recentMembers: [
