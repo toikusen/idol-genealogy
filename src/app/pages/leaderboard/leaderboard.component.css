@@ -1,0 +1,5 @@
+@media (min-width: 768px) {
+  .leaderboard-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -1,0 +1,106 @@
+<main style="max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem;">
+  <h1 style="font-size: 1.4rem; font-weight: 600; margin: 0 0 1rem;">排行榜</h1>
+
+  <div role="tablist" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-faint, #e5e5e5);">
+    <button type="button" role="tab" [attr.aria-selected]="activeTab === 'members'"
+            (click)="setTab('members')"
+            [style.font-weight]="activeTab === 'members' ? 600 : 400"
+            [style.color]="activeTab === 'members' ? 'var(--text-primary)' : 'var(--text-faint-45)'"
+            style="padding: 0.5rem 0.25rem; background: none; border: none; cursor: pointer; font-size: 0.95rem;">
+      成員
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="activeTab === 'groups'"
+            (click)="setTab('groups')"
+            [style.font-weight]="activeTab === 'groups' ? 600 : 400"
+            [style.color]="activeTab === 'groups' ? 'var(--text-primary)' : 'var(--text-faint-45)'"
+            style="padding: 0.5rem 0.25rem; background: none; border: none; cursor: pointer; font-size: 0.95rem;">
+      團體
+    </button>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;" class="leaderboard-columns">
+    <!-- 近期熱度 -->
+    <section aria-label="近期熱度">
+      <h2 style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.25rem;">近期熱度 Top 10</h2>
+      <p style="font-size: 0.75rem; color: var(--text-faint-45); margin: 0 0 0.75rem;">近 7 天</p>
+      <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+        @if (activeTab === 'members') {
+          @for (entry of recentMembers; track entry.id; let i = $index) {
+            <li>
+              <a [routerLink]="'/member/' + entry.id" class="popular-rank-link"
+                 style="display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--text-primary); font-size: 0.9rem;">
+                <span [style.font-weight]="i < 3 ? 700 : 400"
+                      [style.color]="i < 3 ? 'var(--accent-pink, #e879a0)' : 'var(--text-faint-45)'"
+                      style="width: 1.4rem; text-align: right; flex-shrink: 0; font-size: 0.8rem;">{{ i + 1 }}.</span>
+                @if (entry.photo_url) {
+                  <img loading="lazy" [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="48" height="48"
+                       style="border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
+                }
+                <span>{{ entry.name }}</span>
+              </a>
+            </li>
+          }
+        } @else {
+          @for (entry of recentGroups; track entry.id; let i = $index) {
+            <li>
+              <a [routerLink]="'/group/' + entry.id" class="popular-rank-link"
+                 style="display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--text-primary); font-size: 0.9rem;">
+                <span [style.font-weight]="i < 3 ? 700 : 400"
+                      [style.color]="i < 3 ? 'var(--accent-pink, #e879a0)' : 'var(--text-faint-45)'"
+                      style="width: 1.4rem; text-align: right; flex-shrink: 0; font-size: 0.8rem;">{{ i + 1 }}.</span>
+                @if (entry.photo_url) {
+                  <img loading="lazy" [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="48" height="48"
+                       style="border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
+                }
+                <span>{{ entry.name }}</span>
+              </a>
+            </li>
+          }
+        }
+      </ol>
+    </section>
+
+    <!-- 上升最快 -->
+    <section aria-label="上升最快">
+      <h2 style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.25rem;">上升最快 Top 10</h2>
+      <p style="font-size: 0.75rem; color: var(--text-faint-45); margin: 0 0 0.75rem;">最近 7 個完整日 vs 前 7 日・資料持續累積中，兩週後會更穩定</p>
+      <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+        @if (activeTab === 'members') {
+          @for (entry of trendingMembers; track entry.id; let i = $index) {
+            <li>
+              <a [routerLink]="'/member/' + entry.id" class="popular-rank-link"
+                 style="display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--text-primary); font-size: 0.9rem;">
+                <span [style.font-weight]="i < 3 ? 700 : 400"
+                      [style.color]="i < 3 ? 'var(--accent-pink, #e879a0)' : 'var(--text-faint-45)'"
+                      style="width: 1.4rem; text-align: right; flex-shrink: 0; font-size: 0.8rem;">{{ i + 1 }}.</span>
+                @if (entry.photo_url) {
+                  <img loading="lazy" [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="48" height="48"
+                       style="border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
+                }
+                <span style="flex: 1;">{{ entry.name }}</span>
+                <span style="font-size: 0.75rem; color: var(--text-faint-45); background: var(--surface-muted, #f5f5f5); padding: 0.1rem 0.45rem; border-radius: 999px;">+{{ entry.trend_delta }}</span>
+              </a>
+            </li>
+          }
+        } @else {
+          @for (entry of trendingGroups; track entry.id; let i = $index) {
+            <li>
+              <a [routerLink]="'/group/' + entry.id" class="popular-rank-link"
+                 style="display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--text-primary); font-size: 0.9rem;">
+                <span [style.font-weight]="i < 3 ? 700 : 400"
+                      [style.color]="i < 3 ? 'var(--accent-pink, #e879a0)' : 'var(--text-faint-45)'"
+                      style="width: 1.4rem; text-align: right; flex-shrink: 0; font-size: 0.8rem;">{{ i + 1 }}.</span>
+                @if (entry.photo_url) {
+                  <img loading="lazy" [src]="entry.photo_url | supabaseImg:128" [alt]="entry.name" width="48" height="48"
+                       style="border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
+                }
+                <span style="flex: 1;">{{ entry.name }}</span>
+                <span style="font-size: 0.75rem; color: var(--text-faint-45); background: var(--surface-muted, #f5f5f5); padding: 0.1rem 0.45rem; border-radius: 999px;">+{{ entry.trend_delta }}</span>
+              </a>
+            </li>
+          }
+        }
+      </ol>
+    </section>
+  </div>
+</main>
