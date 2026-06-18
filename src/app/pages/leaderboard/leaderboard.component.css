@@ -1,5 +1,130 @@
-@media (min-width: 768px) {
-  .leaderboard-columns {
-    grid-template-columns: 1fr 1fr;
+.leaderboard-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3.5rem;
+}
+
+.leaderboard-header {
+  margin-bottom: 1.75rem;
+}
+
+.leaderboard-header h1 {
+  margin: 0 0 0.45rem;
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+
+.leaderboard-header p {
+  max-width: 620px;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.75;
+  letter-spacing: 0.04em;
+  color: var(--text-faint-60);
+}
+
+.leaderboard-entity-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.25rem;
+}
+
+.leaderboard-entity h2 {
+  margin: 0 0 1rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--text-primary);
+}
+
+.leaderboard-block + .leaderboard-block {
+  margin-top: 2rem;
+}
+
+.leaderboard-block h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.leaderboard-note {
+  min-height: 1.5rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: var(--text-faint-45);
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.leaderboard-row img {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.leaderboard-rank {
+  width: 1.4rem;
+  flex-shrink: 0;
+  color: var(--text-faint-45);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.leaderboard-rank-top {
+  color: #e879a0;
+  font-weight: 700;
+}
+
+.leaderboard-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.leaderboard-delta {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: rgba(232, 121, 160, 0.09);
+  padding: 0.1rem 0.45rem;
+  color: var(--text-faint-60);
+  font-size: 0.75rem;
+}
+
+@media (min-width: 820px) {
+  .leaderboard-page {
+    padding-inline: 1.5rem;
+  }
+
+  .leaderboard-entity-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 3rem;
   }
 }
