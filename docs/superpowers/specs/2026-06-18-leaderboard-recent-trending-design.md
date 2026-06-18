@@ -54,7 +54,7 @@ create index idx_view_session_log_recent
   on view_session_log (entity_type, viewed_at, entity_id);
 ```
 
-(`entity_type` 在前因為查詢一定先過濾 type；`viewed_at` 第二支援範圍過濾；`entity_id` 放最後讓 group by 直接吃到索引序，避免額外排序。)
+(`entity_type` 在前因為查詢一定先過濾 type；`viewed_at` 第二支援範圍過濾；`entity_id` 放最後支援 type + time range 過濾後的 group by，降低近期查詢的掃描量——`viewed_at` 是 range 條件，不保證後面的 `entity_id` 能讓 group by 完全免排序。若之後查詢效能仍不夠，可考慮加 `include (session_token)` 讓近期熱度查詢做到 index-only scan。)
 
 ## RPC / 查詢層
 
@@ -62,50 +62,63 @@ create index idx_view_session_log_recent
 
 ### `get_recent_popular_members(p_limit int, p_window_days int default 7)`
 
+公開 RPC 的參數要 clamp，不能信任前台傳什麼值——`limit null` 在 Postgres 等於不限制，過大的 `p_window_days` 會讓查詢掃描範圍失控：
+
 ```sql
-select m.id, m.name, m.name_roman, m.photo_url, m.color,
-       count(distinct vsl.session_token) as recent_visitors
-from members m
-join view_session_log vsl
-  on vsl.entity_type = 'member'
-  and vsl.entity_id = m.id
-  and vsl.viewed_at >= now() - (p_window_days || ' days')::interval
-group by m.id, m.name, m.name_roman, m.photo_url, m.color
-order by recent_visitors desc
-limit p_limit;
+declare
+  v_limit int := least(greatest(coalesce(p_limit, 10), 1), 50);
+  v_window_days int := least(greatest(coalesce(p_window_days, 7), 1), 30);
+begin
+  return query
+  select m.id, m.name, m.name_roman, m.photo_url, m.color,
+         count(distinct vsl.session_token) as recent_visitors
+  from members m
+  join view_session_log vsl
+    on vsl.entity_type = 'member'
+    and vsl.entity_id = m.id
+    and vsl.viewed_at >= now() - (v_window_days || ' days')::interval
+  group by m.id, m.name, m.name_roman, m.photo_url, m.color
+  order by recent_visitors desc
+  limit v_limit;
+end;
 ```
 
-`get_recent_popular_groups` 為對應的 group 版本（entity_type = 'group'，join groups 表）。
+`get_recent_popular_groups` 為對應的 group 版本（entity_type = 'group'，join groups 表），同樣 clamp 參數。
 
 ### `get_trending_members(p_limit int)`
 
 比較「最近 7 個完整日」與「再往前 7 個完整日」的瀏覽次數差值。明確排除今天（today 是進行中、未完結的一天，混進去會讓當天還在累積的數字失真），所以用 `current_date - 7 .. current_date - 1` 共 7 天，不是 `current_date - 7 .. current_date`（後者其實是 8 天）：
 
 ```sql
-with recent as (
-  select entity_id, sum(view_count) as v
-  from page_view_daily
-  where entity_type = 'member'
-    and view_date >= current_date - 7
-    and view_date <  current_date
-  group by entity_id
-),
-previous as (
-  select entity_id, sum(view_count) as v
-  from page_view_daily
-  where entity_type = 'member'
-    and view_date >= current_date - 14
-    and view_date <  current_date - 7
-  group by entity_id
-)
-select m.id, m.name, m.name_roman, m.photo_url, m.color,
-       coalesce(r.v, 0) as recent_view_count,
-       coalesce(r.v, 0) - coalesce(p.v, 0) as trend_delta
-from members m
-join recent r on r.entity_id = m.id
-left join previous p on p.entity_id = m.id
-order by trend_delta desc
-limit p_limit;
+declare
+  v_limit int := least(greatest(coalesce(p_limit, 10), 1), 50);
+begin
+  return query
+  with recent as (
+    select entity_id, sum(view_count) as v
+    from page_view_daily
+    where entity_type = 'member'
+      and view_date >= current_date - 7
+      and view_date <  current_date
+    group by entity_id
+  ),
+  previous as (
+    select entity_id, sum(view_count) as v
+    from page_view_daily
+    where entity_type = 'member'
+      and view_date >= current_date - 14
+      and view_date <  current_date - 7
+    group by entity_id
+  )
+  select m.id, m.name, m.name_roman, m.photo_url, m.color,
+         coalesce(r.v, 0) as recent_view_count,
+         coalesce(r.v, 0) - coalesce(p.v, 0) as trend_delta
+  from members m
+  join recent r on r.entity_id = m.id
+  left join previous p on p.entity_id = m.id
+  order by trend_delta desc
+  limit v_limit;
+end;
 ```
 
 用差值（不用比例）避免「前 7 天 = 0」造成除零或新資料爆衝失真。`get_trending_groups` 為對應 group 版本。
@@ -119,9 +132,9 @@ limit p_limit;
 這四個新 RPC（`get_recent_popular_members/groups`、`get_trending_members/groups`）都是前台公開呼叫的唯讀查詢，統一規格：
 
 ```sql
-create or replace function get_recent_popular_members(p_limit int, p_window_days int default 7)
+create or replace function get_recent_popular_members(p_limit int default 10, p_window_days int default 7)
 returns table (...)
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$ ... $$;
@@ -130,10 +143,13 @@ revoke all on function get_recent_popular_members(int, int) from public;
 grant execute on function get_recent_popular_members(int, int) to anon, authenticated;
 ```
 
+(因為函式內有 `declare`/`begin`/`end` 做參數 clamp，`language` 是 `plpgsql`，不是單純 `sql`。)
+
 - `security definer`：因為要讀 `view_session_log` / `page_view_daily`，這兩張表本身啟用 RLS 且不開放前台直接 SELECT（同 `page_view_daily_no_direct_access` 政策，`view_session_log` 沿用既有政策），RPC 內部用 definer 權限繞過 RLS 讀取，但只回傳聚合後的排行資料，不洩漏個別 session_token。
 - `set search_path = public`：避免 search_path injection。
 - `grant execute ... to anon, authenticated`：明確開放給匿名與登入使用者呼叫（首頁與 `/leaderboard` 未登入也要看得到）；其餘權限預設 revoke。
-- 其餘四個 RPC、以及 `increment_view` 的權限維持現狀寫法（即沿用既有專案慣例的 security definer + grant 模式，不重新發明）。
+- **參數 clamp（上線前保險絲）**：四個新 RPC 都在函式內 clamp `p_limit` 到 `1..50`、`p_window_days`（僅 `get_recent_popular_members/groups` 有此參數）到 `1..30`，避免前台傳 `null`／超大值造成 `limit null`（等於不限制）或超大範圍掃描。
+- 其餘既有 RPC、以及 `increment_view` 的權限維持現狀寫法（即沿用既有專案慣例的 security definer + grant 模式，不重新發明）。
 
 ## 前端
 
@@ -155,6 +171,9 @@ grant execute on function get_recent_popular_members(int, int) to anon, authenti
   - 趨勢榜區塊：名稱右側加一個淡色 chip 顯示 `+N`（`trend_delta`），視覺上要淡、不要喧賓奪主。
   - Top 3：排名數字加重字重，可加一條細的粉色 accent（沿用網站既有 accent 色），不做 podium、不做獎牌圖示。
 - 趨勢榜標題右側（或標題下方）放一行淡色說明文字：「資料持續累積中，兩週後會更穩定」——語氣是說明而非警告，不用驚嘆號或黃色警示樣式。
+- 「近期熱度」與「趨勢」兩個區塊都用到「7 天」，但口徑不同（近期熱度是 rolling `now() - 7 days`；趨勢是最近 7 個完整日，排除今天，並對比再往前 7 個完整日），畫面文案要分開標示避免使用者覺得數字對不起來：
+  - 近期熱度標題旁：「近 7 天」。
+  - 趨勢榜標題旁（或上面那行說明文字一併帶出）：「最近 7 個完整日 vs 前 7 日」。
 
 ### 後續可選功能（不在本次範圍）
 
