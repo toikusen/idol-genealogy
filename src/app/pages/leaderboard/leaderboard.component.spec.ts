@@ -36,19 +36,6 @@ describe('LeaderboardComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('defaults to the members tab', async () => {
-    await setup();
-    const fixture = TestBed.createComponent(LeaderboardComponent);
-    expect(fixture.componentInstance.activeTab).toBe('members');
-  });
-
-  it('switches to the groups tab', async () => {
-    await setup();
-    const fixture = TestBed.createComponent(LeaderboardComponent);
-    fixture.componentInstance.setTab('groups');
-    expect(fixture.componentInstance.activeTab).toBe('groups');
-  });
-
   it('renders recent-heat member rows by rank order', async () => {
     await setup(makePageData({
       recentMembers: [
@@ -63,6 +50,24 @@ describe('LeaderboardComponent', () => {
     expect(text).toContain('Bob');
   });
 
+  it('renders member and group columns at the same time', async () => {
+    await setup(makePageData({
+      recentMembers: [
+        { id: 'm1', name: 'Alice', name_roman: null, photo_url: null, color: null, recent_visitors: 42 },
+      ],
+      recentGroups: [
+        { id: 'g1', name: 'Group One', photo_url: null, color: null, recent_visitors: 18 },
+      ],
+    }));
+    const fixture = TestBed.createComponent(LeaderboardComponent);
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('成員');
+    expect(text).toContain('團體');
+    expect(text).toContain('Alice');
+    expect(text).toContain('Group One');
+  });
+
   it('renders a trend delta chip for trending member rows', async () => {
     await setup(makePageData({
       trendingMembers: [
@@ -73,5 +78,18 @@ describe('LeaderboardComponent', () => {
     fixture.detectChanges();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('+87');
+  });
+
+  it('renders a trend delta chip for trending group rows', async () => {
+    await setup(makePageData({
+      trendingGroups: [
+        { id: 'g1', name: 'Group One', photo_url: null, color: null, recent_view_count: 60, trend_delta: 25 },
+      ],
+    }));
+    const fixture = TestBed.createComponent(LeaderboardComponent);
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Group One');
+    expect(text).toContain('+25');
   });
 });

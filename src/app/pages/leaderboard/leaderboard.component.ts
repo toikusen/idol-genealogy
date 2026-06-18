@@ -15,8 +15,6 @@ import { MemberRecentHeatEntry, MemberTrendingEntry, GroupRecentHeatEntry, Group
   styleUrl: './leaderboard.component.css',
 })
 export class LeaderboardComponent implements OnInit {
-  activeTab: 'members' | 'groups' = 'members';
-
   recentMembers: MemberRecentHeatEntry[] = [];
   trendingMembers: MemberTrendingEntry[] = [];
   recentGroups: GroupRecentHeatEntry[] = [];
@@ -40,9 +38,5 @@ export class LeaderboardComponent implements OnInit {
       '查看近期熱度與上升最快的台灣地下偶像成員與團體排行。',
       siteUrl('/leaderboard'),
     );
-  }
-
-  setTab(tab: 'members' | 'groups'): void {
-    this.activeTab = tab;
   }
 }
