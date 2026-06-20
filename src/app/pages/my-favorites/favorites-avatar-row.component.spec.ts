@@ -28,12 +28,13 @@ describe('FavoritesAvatarRowComponent', () => {
     expect(container.style.flexWrap).toBe('nowrap');
   });
 
-  it('applies wrap layout when layout input is grid', () => {
+  it('applies grid layout when layout input is grid', () => {
     fixture.componentRef.setInput('layout', 'grid');
     fixture.detectChanges();
     const container: HTMLElement = fixture.nativeElement.querySelector('[data-avatar-container]');
-    expect(container.style.flexWrap).toBe('wrap');
-    expect(container.style.overflowX).toBe('hidden');
+    expect(container.style.display).toBe('grid');
+    expect(container.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
+    expect(container.style.overflowX).toBe('visible');
   });
 });
 

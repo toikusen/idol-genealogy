@@ -82,7 +82,7 @@ describe('LeaderboardComponent', () => {
     const fixture = TestBed.createComponent(LeaderboardComponent);
     fixture.detectChanges();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text.match(/近期熱度 Top 10/g)?.length).toBe(1);
+    expect(text.match(/近期熱門 Top 10/g)?.length).toBe(1);
     expect(text.match(/上升最快 Top 10/g)?.length).toBe(1);
   });
 
