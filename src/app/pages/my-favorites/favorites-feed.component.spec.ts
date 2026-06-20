@@ -97,7 +97,8 @@ describe('FavoritesFeedComponent — pagination and race guard', () => {
 
   it('hasMore is false when all tables return fewer than PAGE_LIMIT (20) rows', fakeAsync(() => {
     const rows = [{
-      id: '1', title: 'T', created_at: '2024-01-01', first_seen_at: '2024-01-01',
+      id: '1', title: 'T', created_at: '2024-01-01', updated_at: '2024-01-01', first_seen_at: '2024-01-01',
+      status: 'graduated',
       group_id: 'g1', group: { id: 'g1', name: 'G', photo_url: null },
       groups: { id: 'g1', name: 'G', photo_url: null },
       disbanded_at: '2024-01-01', disbanded_announced_at: null, name: 'Group 1', photo_url: null,
@@ -127,6 +128,8 @@ describe('FavoritesFeedComponent — pagination and race guard', () => {
       id: String(i),
       title: `Song ${i}`,
       created_at: `2024-01-${String(i % 28 + 1).padStart(2, '0')}`,
+      updated_at: `2024-01-${String(i % 28 + 1).padStart(2, '0')}`,
+      status: 'graduated',
       first_seen_at: `2024-01-${String(i % 28 + 1).padStart(2, '0')}`,
       group_id: 'g1',
       group: { id: 'g1', name: 'G', photo_url: null },
@@ -158,7 +161,8 @@ describe('FavoritesFeedComponent — pagination and race guard', () => {
 
   it('loadingMore resets to false and stale appendPage is discarded when concurrent loadFeed fires', fakeAsync(() => {
     const singleRow = [{
-      id: '1', title: 'T', created_at: '2024-01-01', first_seen_at: '2024-01-01',
+      id: '1', title: 'T', created_at: '2024-01-01', updated_at: '2024-01-01', first_seen_at: '2024-01-01',
+      status: 'graduated',
       group_id: 'g1', group: { id: 'g1', name: 'G', photo_url: null },
       groups: { id: 'g1', name: 'G', photo_url: null },
       disbanded_at: '2024-01-01', disbanded_announced_at: null, name: 'Group 1', photo_url: null,

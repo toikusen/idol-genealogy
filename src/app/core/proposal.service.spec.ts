@@ -6,9 +6,11 @@ describe('ProposalService', () => {
   let service: ProposalService;
   let mockDb: any;
   let insertSpy: jasmine.Spy;
+  let rpcSpy: jasmine.Spy;
 
   beforeEach(() => {
     insertSpy = jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null }));
+    rpcSpy = jasmine.createSpy('rpc').and.returnValue(Promise.resolve({ error: null }));
 
     const createSelectChain = () => {
       const isChain = {
@@ -33,7 +35,8 @@ describe('ProposalService', () => {
           };
         }
         return { select: jasmine.createSpy('select').and.returnValue(createSelectChain()) };
-      })
+      }),
+      rpc: rpcSpy,
     };
 
     TestBed.configureTestingModule({
@@ -123,29 +126,30 @@ describe('ProposalService', () => {
   });
 
   describe('recordDirectEdit', () => {
-    it('should insert an approved UPDATE proposal for changed fields', async () => {
+    it('should record an approved UPDATE proposal for changed fields', async () => {
       await service.recordDirectEdit(
         'members', 'rec-1',
         { name: 'Old', photo_status: null },
         { name: 'New', photo_status: 'allowed' },
       );
-      expect(insertSpy).toHaveBeenCalled();
-      const payload = insertSpy.calls.mostRecent().args[0];
-      expect(payload.operation).toBe('UPDATE');
-      expect(payload.status).toBe('approved');
-      expect(payload.submitter_name).toBe('管理員');
-      expect(payload.proposed_data['name']).toBe('New');
-      expect(payload.proposed_data['photo_status']).toBe('allowed');
-      expect(payload.original_data['name']).toBe('Old');
+      expect(rpcSpy).toHaveBeenCalled();
+      const [fn, params] = rpcSpy.calls.mostRecent().args;
+      expect(fn).toBe('insert_approved_proposal');
+      expect(params.p_table_name).toBe('members');
+      expect(params.p_record_id).toBe('rec-1');
+      expect(params.p_operation).toBe('UPDATE');
+      expect(params.p_proposed_data['name']).toBe('New');
+      expect(params.p_proposed_data['photo_status']).toBe('allowed');
+      expect(params.p_original_data['name']).toBe('Old');
     });
 
-    it('should not insert when no allowed fields changed', async () => {
+    it('should not record when no allowed fields changed', async () => {
       await service.recordDirectEdit(
         'members', 'rec-1',
         { name: 'Same' },
         { name: 'Same' },
       );
-      expect(insertSpy).not.toHaveBeenCalled();
+      expect(rpcSpy).not.toHaveBeenCalled();
     });
 
     it('should include member_id and group_id anchors in history UPDATE even when unchanged', async () => {
@@ -154,28 +158,28 @@ describe('ProposalService', () => {
         { member_id: 'm-uuid', group_id: 'g-uuid', status: 'active' },
         { member_id: 'm-uuid', group_id: 'g-uuid', status: 'graduated' },
       );
-      expect(insertSpy).toHaveBeenCalled();
-      const payload = insertSpy.calls.mostRecent().args[0];
-      expect(payload.proposed_data['member_id']).toBe('m-uuid');
-      expect(payload.proposed_data['group_id']).toBe('g-uuid');
-      expect(payload.original_data['member_id']).toBe('m-uuid');
-      expect(payload.original_data['group_id']).toBe('g-uuid');
-      expect(payload.proposed_data['status']).toBe('graduated');
+      expect(rpcSpy).toHaveBeenCalled();
+      const params = rpcSpy.calls.mostRecent().args[1];
+      expect(params.p_proposed_data['member_id']).toBe('m-uuid');
+      expect(params.p_proposed_data['group_id']).toBe('g-uuid');
+      expect(params.p_original_data['member_id']).toBe('m-uuid');
+      expect(params.p_original_data['group_id']).toBe('g-uuid');
+      expect(params.p_proposed_data['status']).toBe('graduated');
     });
 
-    it('should insert an INSERT proposal with non-null allowed fields', async () => {
+    it('should record an INSERT proposal with non-null allowed fields', async () => {
       await service.recordDirectEdit(
         'members', 'new-rec',
         {},
         { name: 'NewMember', photo_status: 'allowed', color: null },
         'INSERT',
       );
-      expect(insertSpy).toHaveBeenCalled();
-      const payload = insertSpy.calls.mostRecent().args[0];
-      expect(payload.operation).toBe('INSERT');
-      expect(payload.proposed_data['name']).toBe('NewMember');
-      expect(payload.proposed_data['photo_status']).toBe('allowed');
-      expect(payload.proposed_data['color']).toBeUndefined();
+      expect(rpcSpy).toHaveBeenCalled();
+      const params = rpcSpy.calls.mostRecent().args[1];
+      expect(params.p_operation).toBe('INSERT');
+      expect(params.p_proposed_data['name']).toBe('NewMember');
+      expect(params.p_proposed_data['photo_status']).toBe('allowed');
+      expect(params.p_proposed_data['color']).toBeUndefined();
     });
 
     it('should include owner anchor fields for song INSERT proposals', async () => {
@@ -185,35 +189,35 @@ describe('ProposalService', () => {
         { member_id: 'member-1', title: 'Song title' },
         'INSERT',
       );
-      expect(insertSpy).toHaveBeenCalled();
-      const payload = insertSpy.calls.mostRecent().args[0];
-      expect(payload.proposed_data['member_id']).toBe('member-1');
-      expect(payload.proposed_data['title']).toBe('Song title');
+      expect(rpcSpy).toHaveBeenCalled();
+      const params = rpcSpy.calls.mostRecent().args[1];
+      expect(params.p_proposed_data['member_id']).toBe('member-1');
+      expect(params.p_proposed_data['title']).toBe('Song title');
     });
 
-    it('should insert a DELETE proposal with original song data and owner anchor', async () => {
+    it('should record a DELETE proposal with original song data and owner anchor', async () => {
       await service.recordDirectEdit(
         'group_songs', 'song-2',
         { group_id: 'group-1', title: 'Old song' },
         {},
         'DELETE',
       );
-      expect(insertSpy).toHaveBeenCalled();
-      const payload = insertSpy.calls.mostRecent().args[0];
-      expect(payload.operation).toBe('DELETE');
-      expect(payload.original_data['group_id']).toBe('group-1');
-      expect(payload.original_data['title']).toBe('Old song');
-      expect(payload.proposed_data['group_id']).toBe('group-1');
+      expect(rpcSpy).toHaveBeenCalled();
+      const params = rpcSpy.calls.mostRecent().args[1];
+      expect(params.p_operation).toBe('DELETE');
+      expect(params.p_original_data['group_id']).toBe('group-1');
+      expect(params.p_original_data['title']).toBe('Old song');
+      expect(params.p_proposed_data['group_id']).toBe('group-1');
     });
 
-    it('should not insert an INSERT proposal when no allowed fields are non-null', async () => {
+    it('should not record an INSERT proposal when no allowed fields are non-null', async () => {
       await service.recordDirectEdit(
         'members', 'new-rec',
         {},
         { color: null, notes: null },
         'INSERT',
       );
-      expect(insertSpy).not.toHaveBeenCalled();
+      expect(rpcSpy).not.toHaveBeenCalled();
     });
   });
 });
