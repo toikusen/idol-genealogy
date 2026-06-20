@@ -29,6 +29,7 @@ export class AppComponent {
   readonly showScrollTop = signal(false);
   readonly isNavigating = signal(false);
   readonly authReady = signal(false);
+  readonly navigationComplete = signal(false);
   readonly showLoginPill = signal(false);
   readonly updateAvailable = signal(false);
   readonly isMobileViewport = signal(false);
@@ -50,6 +51,7 @@ export class AppComponent {
       } else if (e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError) {
         if (e instanceof NavigationEnd) {
           analytics.trackPageView((e as NavigationEnd).urlAfterRedirects);
+          if (!this.navigationComplete()) this.navigationComplete.set(true);
         }
         this.isNavigating.set(false);
       }
@@ -107,7 +109,9 @@ export class AppComponent {
     // Skip rendering on the server: these placements depend on the client's
     // viewport width, and rendering a default on the server would cause a
     // hydration mismatch once the client corrects it.
-    return this.isBrowser && !this.isAdminRoute && !this.router.url.startsWith('/login');
+    // Wait for first NavigationEnd so the page content is already in the DOM
+    // before the ad slot renders — prevents CLS on initial load.
+    return this.isBrowser && this.navigationComplete() && !this.isAdminRoute && !this.router.url.startsWith('/login');
   }
 
   signOut() {
