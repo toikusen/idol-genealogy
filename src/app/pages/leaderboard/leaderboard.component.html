@@ -24,8 +24,8 @@
 
   <div [attr.id]="'leaderboard-panel-' + activeTab" style="display: grid; grid-template-columns: 1fr; gap: 2rem;" class="leaderboard-columns">
     <!-- 近期熱度 -->
-    <section aria-label="近期熱度">
-      <h2 style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.25rem;">近期熱度 Top 10</h2>
+    <section aria-label="熱門 Top 10">
+      <h2 style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 0.25rem;">熱門 Top 10</h2>
       <p style="font-size: 0.75rem; color: var(--text-faint-45); margin: 0 0 0.75rem;">近 7 天</p>
       <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem;">
         @if (activeTab === 'members') {
