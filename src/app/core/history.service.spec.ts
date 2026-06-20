@@ -69,4 +69,23 @@ describe('HistoryService', () => {
     const id = await service.create({ member_id: 'm-1', group_id: 'g-1', status: 'active', joined_at: '2024-01-01' });
     expect(id).toBe('new-h-id');
   });
+
+  it('getByMember() serves repeat calls from cache and re-fetches a new member', async () => {
+    await service.getByMember('m-1');
+    mockClient.from.calls.reset();
+    await service.getByMember('m-1');
+    expect(mockClient.from).not.toHaveBeenCalled();
+    await service.getByMember('m-2');
+    expect(mockClient.from).toHaveBeenCalledTimes(1);
+  });
+
+  it('a history write invalidates the per-member and per-group read caches', async () => {
+    await service.getByMember('m-1');
+    await service.getByGroup('g-1');
+    await service.delete('h-1');
+    mockClient.from.calls.reset();
+    await service.getByMember('m-1');
+    await service.getByGroup('g-1');
+    expect(mockClient.from).toHaveBeenCalledTimes(2);
+  });
 });

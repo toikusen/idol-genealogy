@@ -3,6 +3,7 @@ import { SupabaseService } from './supabase.service';
 import { Member, MemberLeaderboardEntry, MemberRecentHeatEntry, MemberTrendingEntry } from '../models';
 import { kanaVariants } from './japanese.utils';
 import { isNotFoundError } from './supabase.utils';
+import { TtlCache } from './ttl-cache';
 
 @Injectable({ providedIn: 'root' })
 export class MemberService {
@@ -10,6 +11,14 @@ export class MemberService {
   private _allCache: Member[] | null = null;
   private _allPromise: Promise<Member[]> | null = null;
   private _byIdCache = new Map<string, Member | null>();
+  // Short-lived read caches for resolver-driven, navigation-blocking reads.
+  // View-derived RPCs change continuously, so TTL alone keeps them fresh;
+  // member-table reads are also cleared on write via invalidateCache().
+  private readonly _recentCache = new TtlCache<Member[]>(60_000);
+  private readonly _countCache = new TtlCache<number>(60_000);
+  private readonly _recentPopularCache = new TtlCache<MemberRecentHeatEntry[]>(60_000);
+  private readonly _trendingCache = new TtlCache<MemberTrendingEntry[]>(60_000);
+  private readonly _birthdayCache = new TtlCache<{ member: Member; daysUntil: number }[]>(15 * 60_000);
 
   constructor(private supabase: SupabaseService) {}
 
@@ -101,9 +110,16 @@ export class MemberService {
   invalidateCache() {
     this._allCache = null;
     this._byIdCache.clear();
+    this._recentCache.invalidate();
+    this._countCache.invalidate();
+    this._birthdayCache.invalidate();
   }
 
   async getUpcomingBirthdays(withinDays = 30): Promise<{ member: Member; daysUntil: number }[]> {
+    return this._birthdayCache.get(String(withinDays), () => this._fetchUpcomingBirthdays(withinDays));
+  }
+
+  private async _fetchUpcomingBirthdays(withinDays: number): Promise<{ member: Member; daysUntil: number }[]> {
     const { data, error } = await this.db
       .from('members')
       .select('id,name,name_hiragana,name_roman,photo_url,color,birthdate,notes,updated_at')
@@ -144,11 +160,13 @@ export class MemberService {
   }
 
   async getCount(): Promise<number> {
-    const { count, error } = await this.db
-      .from('members')
-      .select('*', { count: 'exact', head: true });
-    if (error) throw error;
-    return count ?? 0;
+    return this._countCache.get('all', async () => {
+      const { count, error } = await this.db
+        .from('members')
+        .select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count ?? 0;
+    });
   }
 
   async getSoloMembers(): Promise<Member[]> {
@@ -159,13 +177,15 @@ export class MemberService {
   }
 
   async getRecent(limit = 10): Promise<Member[]> {
-    const { data, error } = await this.db
-      .from('members')
-      .select('id,name,name_hiragana,name_roman,photo_url,color,notes,updated_at')
-      .order('updated_at', { ascending: false })
-      .limit(limit);
-    if (error) throw error;
-    return (data ?? []) as unknown as Member[];
+    return this._recentCache.get(String(limit), async () => {
+      const { data, error } = await this.db
+        .from('members')
+        .select('id,name,name_hiragana,name_roman,photo_url,color,notes,updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as unknown as Member[];
+    });
   }
 
   async create(member: Partial<Member>): Promise<string> {
@@ -196,18 +216,22 @@ export class MemberService {
   }
 
   async getRecentPopular(limit: number, windowDays = 7): Promise<MemberRecentHeatEntry[]> {
-    const { data, error } = await this.supabase.client.rpc(
-      'get_recent_popular_members', { p_limit: limit, p_window_days: windowDays }
-    );
-    if (error) throw error;
-    return (data ?? []) as MemberRecentHeatEntry[];
+    return this._recentPopularCache.get(`${limit}:${windowDays}`, async () => {
+      const { data, error } = await this.supabase.client.rpc(
+        'get_recent_popular_members', { p_limit: limit, p_window_days: windowDays }
+      );
+      if (error) throw error;
+      return (data ?? []) as MemberRecentHeatEntry[];
+    });
   }
 
   async getTrending(limit: number): Promise<MemberTrendingEntry[]> {
-    const { data, error } = await this.supabase.client.rpc(
-      'get_trending_members', { p_limit: limit }
-    );
-    if (error) throw error;
-    return (data ?? []) as MemberTrendingEntry[];
+    return this._trendingCache.get(String(limit), async () => {
+      const { data, error } = await this.supabase.client.rpc(
+        'get_trending_members', { p_limit: limit }
+      );
+      if (error) throw error;
+      return (data ?? []) as MemberTrendingEntry[];
+    });
   }
 }

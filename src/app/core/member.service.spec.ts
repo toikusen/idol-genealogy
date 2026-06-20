@@ -114,4 +114,35 @@ describe('MemberService', () => {
     );
     expect(Array.isArray(results)).toBeTrue();
   });
+
+  it('getRecentPopular() de-dups repeat calls and re-fetches for a new window', async () => {
+    await service.getRecentPopular(5);
+    await service.getRecentPopular(5);
+    expect(mockSupabaseService.client.rpc).toHaveBeenCalledTimes(1);
+    await service.getRecentPopular(5, 30);
+    expect(mockSupabaseService.client.rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it('getTrending() serves repeat calls from cache', async () => {
+    await service.getTrending(10);
+    await service.getTrending(10);
+    expect(mockSupabaseService.client.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it('getCount() caches and invalidateCache() forces a re-fetch', async () => {
+    await service.getCount();
+    mockSupabaseService.client.from.calls.reset();
+    await service.getCount();
+    expect(mockSupabaseService.client.from).not.toHaveBeenCalled();
+    service.invalidateCache();
+    await service.getCount();
+    expect(mockSupabaseService.client.from).toHaveBeenCalledTimes(1);
+  });
+
+  it('getRecent() serves repeat calls from cache', async () => {
+    await service.getRecent(9);
+    mockSupabaseService.client.from.calls.reset();
+    await service.getRecent(9);
+    expect(mockSupabaseService.client.from).not.toHaveBeenCalled();
+  });
 });
