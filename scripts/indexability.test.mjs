@@ -10,7 +10,6 @@ import {
   memberIndexabilitySignals,
   groupIndexabilitySignals,
   companyIndexabilitySignals,
-  isIndexable,
   isAdEligible,
   MIN_AD_TEXT_LENGTH,
 } from './indexability.mjs';
@@ -129,51 +128,11 @@ describe('companyIndexabilitySignals', () => {
     assert.equal(companyIndexabilitySignals(baseCompany, 10).hasRelation, true);
   });
 
-  it('is not indexable from affiliations alone (roster-only company is thin content)', () => {
-    const signals = companyIndexabilitySignals(baseCompany, 3);
-    assert.equal(isIndexable(signals), false);
-  });
 });
 
 const emptySignals = {
   hasHistory: false, hasPhoto: false, hasNotes: false, noteLength: 0, hasExternalLink: false, hasRelation: false,
 };
-
-describe('isIndexable', () => {
-  it('returns false when no signals are present', () => {
-    assert.equal(isIndexable(emptySignals), false);
-  });
-
-  it('returns false with only supporting signals', () => {
-    assert.equal(isIndexable({ ...emptySignals, hasPhoto: true }), false);
-    assert.equal(isIndexable({ ...emptySignals, hasExternalLink: true }), false);
-    assert.equal(isIndexable({ ...emptySignals, hasRelation: true }), false);
-    assert.equal(isIndexable({ ...emptySignals, hasPhoto: true, hasRelation: true }), false);
-  });
-
-  it('returns false with only a primary signal', () => {
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true }), false);
-    assert.equal(isIndexable({ ...emptySignals, hasNotes: true }), false);
-  });
-
-  it('returns false for history-only pages missing photo or external link', () => {
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true }), false);
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true }), false);
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasRelation: true }), false);
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasRelation: true }), false);
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasExternalLink: true, hasRelation: true }), false);
-  });
-
-  it('returns true for history-only pages with photo AND external link', () => {
-    assert.equal(isIndexable({ ...emptySignals, hasHistory: true, hasPhoto: true, hasExternalLink: true }), true);
-  });
-
-  it('returns true when notes exist with at least one support', () => {
-    assert.equal(isIndexable({ ...emptySignals, hasNotes: true, hasRelation: true }), true);
-    assert.equal(isIndexable({ ...emptySignals, hasNotes: true, hasExternalLink: true }), true);
-    assert.equal(isIndexable({ ...emptySignals, hasNotes: true, hasPhoto: true }), true);
-  });
-});
 
 describe('isAdEligible', () => {
   it('returns false when signals are empty', () => {
@@ -235,7 +194,7 @@ describe('isAdEligible', () => {
     }), true);
   });
 
-  it('any ad-eligible signal set is also indexable', () => {
+  it('returns true with rich signals', () => {
     const rich = {
       hasHistory: true,
       hasPhoto: true,
@@ -245,6 +204,5 @@ describe('isAdEligible', () => {
       hasRelation: false,
     };
     assert.equal(isAdEligible(rich), true);
-    assert.equal(isIndexable(rich), true);
   });
 });

@@ -9,6 +9,13 @@ function isSpaRoute(pathname: string): boolean {
   return false;
 }
 
+// Entity detail pages are prerendered per-build, so a newly created member/group/company
+// has no static HTML yet until the next deploy. Fall back to the SPA shell instead of 404
+// so the Angular app can fetch the entity from Supabase client-side.
+function isDynamicEntityRoute(pathname: string): boolean {
+  return /^\/(?:member|group|company)\/[^/]+\/?$/.test(pathname);
+}
+
 function robotsForNonProduction(): Response {
   return new Response('User-agent: *\nDisallow: /\n', {
     headers: {
@@ -50,6 +57,13 @@ function shouldRedirectTrailingSlash(pathname: string): boolean {
   return !/\.[^/]+\/$/.test(pathname);
 }
 
+async function serveSpaShell(env: unknown, origin: string): Promise<Response> {
+  const shellUrl = new URL('/index.csr.html', origin);
+  const shell = await (env as any).ASSETS.fetch(new Request(shellUrl.toString()));
+  const response = new Response(shell.body, { status: 200, headers: shell.headers });
+  return withNoIndexHeader(response);
+}
+
 export const onRequest: PagesFunction = async ({ request, next, env }) => {
   const url = new URL(request.url);
   if (url.hostname === 'idol-genealogy.pages.dev') {
@@ -69,13 +83,14 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
   }
 
   if (isSpaRoute(url.pathname)) {
-    const shellUrl = new URL('/index.csr.html', url.origin);
-    const shell = await (env as any).ASSETS.fetch(new Request(shellUrl.toString()));
-    const response = new Response(shell.body, { status: 200, headers: shell.headers });
-    return withNoIndexHeader(response);
+    return serveSpaShell(env, url.origin);
   }
 
-  const response = await next();
+  let response = await next();
+
+  if (isDynamicEntityRoute(url.pathname) && response.status === 404) {
+    response = await serveSpaShell(env, url.origin);
+  }
 
   const cacheControl = cacheControlForPath(url.pathname, response.status);
   if (isProductionHost && shouldNoIndexQueryUrl(url)) {

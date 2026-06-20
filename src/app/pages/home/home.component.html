@@ -739,7 +739,14 @@
                   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
                     @for (group of section.groups; track group.id) {
                       <a [routerLink]="'/group/' + group.id" class="company-group-card" [class.company-group-disbanded]="!!group.disbanded_at">
-                        <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px;" [style.background]="group.disbanded_at ? '#c0a8c0' : (group.color || '#b07d2a')"></div>
+                        @if (group.photo_url) {
+                          <img [src]="group.photo_url | supabaseImg:44" [alt]="group.name" loading="lazy"
+                            style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;"
+                            [style.opacity]="group.disbanded_at ? '0.6' : '1'"/>
+                        } @else {
+                          <div style="width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:white;"
+                            [style.background]="group.disbanded_at ? '#c0a8c0' : (group.color || '#b07d2a')">{{ group.name.charAt(0) }}</div>
+                        }
                         <div style="min-width:0;">
                           <div style="
                             font-size:0.83rem;font-weight:500;
@@ -826,31 +833,199 @@
             ">由OTAKU EVENT整理</span>
           </div>
 
-          <!-- Calendar container -->
-          <div class="calendar-container" style="
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid rgba(200,112,106,0.15);
-            box-shadow: 0 4px 24px rgba(160,80,72,0.07), 0 1px 4px rgba(160,80,72,0.04);
-            background: rgba(255,250,248,0.8);
-          ">
-            <div style="
-              height: 3px;
-              background: linear-gradient(to right, rgba(200,112,106,0.5), rgba(220,150,100,0.3), rgba(200,112,106,0.1));
-            "></div>
-            <iframe
-              [src]="calendarUrl | safeUrl"
-              title="活動日曆 — OTAKU EVENT"
-              class="calendar-iframe"
-              style="
-                display: block;
-                width: 100%;
-                height: 600px;
-                border: none;
-              "
-              scrolling="no"
-              frameborder="0"
-            ></iframe>
+          <!-- ══ TODAY'S EVENTS ══ -->
+          <div class="today-events-panel">
+
+            <!-- Panel header -->
+            <div class="today-events-header">
+              <div>
+                <div class="today-events-label">TODAY · 今日活動</div>
+                <div class="today-events-date">{{ todayDisplayDate }}</div>
+              </div>
+              <div class="today-events-count-badge">
+                {{ todayEvents.length }} 個活動
+              </div>
+            </div>
+
+            <!-- Loading -->
+            @if (todayEventsLoading) {
+              <div class="today-empty">
+                <p class="today-empty-text" style="letter-spacing:0.12em;">載入中…</p>
+              </div>
+            }
+
+            @if (!todayEventsLoading) {
+
+              <!-- ── 全天活動 ── -->
+              @if (todayAllDayEvents.length > 0) {
+                <div class="allday-section">
+                  <div class="allday-label">全天活動</div>
+                  <div class="allday-list">
+                    @for (event of todayAllDayEvents; track event.id) {
+                      @if (event.url) {
+                        <a class="allday-chip" [href]="event.url" target="_blank" rel="noopener noreferrer">
+                          <div class="allday-chip-bar"></div>
+                          <span class="allday-chip-title">{{ event.title }}</span>
+                          <svg class="allday-chip-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                        </a>
+                      } @else {
+                        <div class="allday-chip allday-chip--no-link">
+                          <div class="allday-chip-bar"></div>
+                          <span class="allday-chip-title">{{ event.title }}</span>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- ── 昨夜延續 ── -->
+              @if (todayCarryoverEvents.length > 0) {
+                <div class="carryover-section">
+                  <div class="carryover-label">昨夜延續</div>
+                  <div class="carryover-list">
+                    @for (event of todayCarryoverEvents; track event.id) {
+                      <a class="carryover-chip"
+                         [href]="event.url || calendarUrl"
+                         target="_blank" rel="noopener noreferrer">
+                        <div class="carryover-time-col">
+                          <span class="carryover-day-prefix">前日</span>
+                          <span class="carryover-start-time">{{ formatTodayEventTime(event.start) }}</span>
+                          @if (event.end) {
+                            <span class="carryover-arrow" aria-hidden="true">↓</span>
+                            <span class="carryover-end-time">{{ formatTodayEventTime(event.end) }}</span>
+                          }
+                        </div>
+                        <div class="carryover-bar"></div>
+                        <div class="carryover-info">
+                          <div class="carryover-title">{{ event.title }}</div>
+                          @if (event.location) {
+                            <div class="carryover-location">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                                <circle cx="12" cy="10" r="3"/>
+                              </svg>
+                              {{ event.location }}
+                            </div>
+                          }
+                        </div>
+                      </a>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- ── 時間軸 ── -->
+              @if (todayTimedEvents.length > 0) {
+                <div class="today-timeline" role="list">
+                  @for (event of todayTimedEvents; track event.id; let last = $last) {
+                    <div class="timeline-item"
+                         [class.timeline-item--overnight]="isOvernightEvent(event)"
+                         role="listitem">
+
+                      <!-- Time column -->
+                      <div class="timeline-time-col">
+                        <span class="timeline-time-start"
+                              [class.timeline-time-start--overnight]="isOvernightEvent(event)">
+                          {{ formatTodayEventTime(event.start) }}
+                        </span>
+                        <div class="timeline-dot"
+                             [class.timeline-dot--overnight]="isOvernightEvent(event)"></div>
+                        @if (event.end) {
+                          <div class="timeline-end-group">
+                            @if (isOvernightEvent(event)) {
+                              <span class="overnight-next-label">翌日</span>
+                            }
+                            <span class="timeline-time-end"
+                                  [class.timeline-time-end--overnight]="isOvernightEvent(event)">
+                              {{ formatTodayEventTime(event.end) }}
+                            </span>
+                          </div>
+                        }
+                      </div>
+
+                      <!-- Event card -->
+                      @if (event.url) {
+                        <a class="timeline-event-card"
+                           [class.timeline-event-card--overnight]="isOvernightEvent(event)"
+                           [href]="event.url" target="_blank" rel="noopener noreferrer">
+                          <ng-container *ngTemplateOutlet="timedCardContent; context:{ $implicit: event }"></ng-container>
+                        </a>
+                      } @else {
+                        <div class="timeline-event-card timeline-event-card--no-link"
+                             [class.timeline-event-card--overnight]="isOvernightEvent(event)">
+                          <ng-container *ngTemplateOutlet="timedCardContent; context:{ $implicit: event }"></ng-container>
+                        </div>
+                      }
+
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 無活動（或載入失敗） -->
+              @if (todayEvents.length === 0) {
+                <div class="today-empty">
+                  <div class="today-empty-icon" aria-hidden="true">—</div>
+                  <p class="today-empty-text">今日暫無活動行程</p>
+                </div>
+              }
+
+            }
+
+          </div>
+
+          <!-- Timed event card content template -->
+          <ng-template #timedCardContent let-event>
+            @if (isOvernightEvent(event)) {
+              <span class="overnight-moon-badge" aria-label="跨夜活動">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+                跨夜
+              </span>
+            }
+            <div class="timeline-event-title">{{ event.title }}</div>
+            @if (event.location) {
+              <div class="timeline-event-location">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                {{ event.location }}
+              </div>
+            }
+          </ng-template>
+
+          <!-- ══ FULL CALENDAR ══ -->
+          <div style="margin-top: 32px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+              <span style="
+                font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase;
+                color: rgba(200,112,106,0.55); white-space: nowrap;
+              ">CALENDAR · 完整月曆</span>
+              <div style="flex:1; height:1px; background: linear-gradient(to right, rgba(200,112,106,0.15), transparent);"></div>
+            </div>
+            <div class="calendar-container" style="
+              border-radius: 16px;
+              overflow: hidden;
+              border: 1px solid rgba(200,112,106,0.15);
+              box-shadow: 0 4px 24px rgba(160,80,72,0.07), 0 1px 4px rgba(160,80,72,0.04);
+              background: rgba(255,250,248,0.8);
+            ">
+              <div style="
+                height: 3px;
+                background: linear-gradient(to right, rgba(200,112,106,0.5), rgba(220,150,100,0.3), rgba(200,112,106,0.1));
+              "></div>
+              <iframe
+                [src]="calendarUrl | safeUrl"
+                title="活動日曆 — OTAKU EVENT"
+                class="calendar-iframe"
+                style="display: block; width: 100%; height: 600px; border: none;"
+                scrolling="no"
+                frameborder="0"
+              ></iframe>
+            </div>
           </div>
 
         </section>
@@ -886,7 +1061,7 @@
             <div style="text-align:right;margin-bottom:10px;">
               <button
                 type="button"
-                (click)="showVenueInsertPanel = true"
+                (click)="openVenueInsertPanel()"
                 style="font-size:0.72rem;color:#7c6cf2;background:rgba(124,108,242,0.07);border:1px solid rgba(124,108,242,0.2);border-radius:20px;padding:5px 14px;cursor:pointer;"
               >+ 提案新增場地</button>
             </div>
@@ -1175,7 +1350,7 @@
           [recordId]="null"
           [originalData]="{}"
           [requiredFields]="['name', 'address', 'region']"
-          (closed)="showVenueInsertPanel = false"
+          (closed)="closeVenueInsertPanel()"
         />
       }
     }
@@ -1187,7 +1362,7 @@
           [recordId]="venueForProposal.id"
           [originalData]="venueForProposal"
           [requiredFields]="['name', 'address', 'region']"
-          (closed)="showVenueUpdatePanel = false; venueForProposal = null"
+          (closed)="closeVenueUpdatePanel()"
         />
       }
     }

@@ -108,6 +108,23 @@
   color: rgba(210, 175, 210, 0.65);
 }
 
+/* ── AdSense bottom banner: which one renders (mobile vs desktop slot) is
+   decided in the template via JS viewport detection, not CSS, since a
+   CSS-hidden <ins> still sits in the adsbygoogle queue and can swallow the
+   push() meant for the next, actually-visible slot. ── */
+.ad-bottom {
+  display: block;
+}
+
+.ad-bottom--mobile {
+  width: 100%;
+}
+
+.ad-bottom--desktop {
+  width: min(880px, calc(100vw - 32px));
+  margin-inline: auto;
+}
+
 /* ── Navigation progress bar ── */
 .nav-progress {
   position: fixed;

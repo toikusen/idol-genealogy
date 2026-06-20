@@ -22,15 +22,22 @@ import { AdminRoleService } from '../../core/admin-role.service';
 import { FormsModule } from '@angular/forms';
 import { memberPath, siteUrl } from '../../core/public-url.utils';
 import { MemberPageData } from '../../core/page-data.resolvers';
-import { memberIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { memberIndexabilitySignals, isAdEligible } from '../../core/indexability.utils';
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
+import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
+import {
+  photographyBadgeColor,
+  photographyBadgeTextColor,
+  photographyBadgeBorderColor,
+  photographyStatusLabel,
+} from '../../core/photography-policy.utils';
 
 @Component({
   selector: 'app-member-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent],
   templateUrl: './member-page.component.html',
   styleUrl: './member-page.component.css',
 })
@@ -54,6 +61,13 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   companyName: string | null = null;
   companyId: string | null = null;
   adEligible = false;
+  photographyBadgeColor = photographyBadgeColor;
+  photographyBadgeTextColor = photographyBadgeTextColor;
+  photographyBadgeBorderColor = photographyBadgeBorderColor;
+  photographyStatusLabel = photographyStatusLabel;
+  lightboxOpen = false;
+  openLightbox(): void { this.lightboxOpen = true; }
+  closeLightbox(): void { this.lightboxOpen = false; }
   snsUrls: { instagram: string | null; facebook: string | null; x: string | null; maid: string | null } = {
     instagram: null, facebook: null, x: null, maid: null,
   };
@@ -93,7 +107,18 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
     }
-    return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
+    if (this.lastProposal.operation === 'DELETE' && this.lastProposalDiffFields.length > 0) {
+      return `${relative} · ${submitter} 刪除了「${this.lastProposalDiffFields[0].newValue === '—' ? this.lastProposalDiffFields[0].oldValue : this.lastProposalDiffFields[0].label}」`;
+    }
+    if (this.lastProposal.operation === 'INSERT') {
+      const insertLabel: Record<string, string> = {
+        members: '建立頁面',
+        history: '新增歷程紀錄',
+        member_songs: '新增歌曲',
+      };
+      return `${relative} · ${submitter} ${insertLabel[this.lastProposal.table_name] ?? '新增資料'}`;
+    }
+    return `${relative} · ${submitter} 補充`;
   }
 
   get editorialSuggestions(): string[] {
@@ -155,9 +180,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.currentLoadId = memberId;
     this.deferredLoading = true;
     try {
-      const [groups, proposals, songs] = await Promise.all([
+      const [groups, proposals, historyProposals, songProposals, songs] = await Promise.all([
         this.groupService.getAll().catch(() => []),
         this.proposalService.getApprovedByRecord('members', memberId).catch(() => []),
+        this.proposalService.getApprovedHistoryByField('member_id', memberId).catch(() => [] as Proposal[]),
+        this.proposalService.getApprovedSongsByField('member_songs', 'member_id', memberId).catch(() => [] as Proposal[]),
         this.memberSongService.getByMember(memberId).catch(() => []),
       ]);
       if (this.currentLoadId === memberId && !this.routeDataSub?.closed) {
@@ -165,7 +192,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
           .filter(isPublicGroupRecord)
           .map(g => ({ id: g.id, name: g.name }))
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-        this.lastProposal = proposals[0] ?? null;
+        const allProposals = [...proposals, ...historyProposals, ...songProposals].sort((a, b) =>
+          new Date(b.reviewed_at ?? b.created_at).getTime() -
+          new Date(a.reviewed_at ?? a.created_at).getTime()
+        );
+        this.lastProposal = allProposals[0] ?? null;
         this.memberSongs = songs;
         if (this.pendingEditSongId) {
           const song = this.memberSongs.find(s => s.id === this.pendingEditSongId);
@@ -236,7 +267,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     );
 
     const signals = memberIndexabilitySignals(member, pageData.histories.length);
-    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.seo.setRobotsNoIndex(false);
     this.adEligible = isAdEligible(signals);
 
     this.snsUrls = {
@@ -334,6 +365,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     try {
       const memberId = this.member?.id ?? this.route.snapshot.paramMap.get('id')!;
       if (this.editingSong) {
+        const originalSong = this.editingSong;
         const updated = await this.memberSongService.update(this.editingSong.id, {
           title: this.songFormData.title,
           release_date: this.songFormData.release_date || null,
@@ -346,6 +378,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         });
         this.memberSongs = this.memberSongs.map(s => s.id === updated.id ? updated : s)
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        await this.proposalService.recordDirectEdit('member_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(() => {});
       } else {
         const created = await this.memberSongService.create({
           member_id: memberId,
@@ -360,6 +393,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         });
         this.memberSongs = [...this.memberSongs, created]
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        await this.proposalService.recordDirectEdit('member_songs', created.id, {}, created, 'INSERT').catch(() => {});
       }
       this.cancelSongForm();
     } catch (e: any) {
@@ -373,6 +407,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
     try {
       await this.memberSongService.delete(song.id);
+      await this.proposalService.recordDirectEdit('member_songs', song.id, song, {}, 'DELETE').catch(() => {});
       this.memberSongs = this.memberSongs.filter(s => s.id !== song.id);
     } catch (e: any) {
       alert(e.message ?? '刪除失敗');

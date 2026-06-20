@@ -9,12 +9,13 @@ import type { SupabaseService } from './core/supabase.service';
 import { AnalyticsService } from './core/analytics.service';
 import { CookieBannerComponent } from './shared/cookie-banner/cookie-banner.component';
 import { PwaInstallPromptComponent } from './shared/pwa-install-prompt/pwa-install-prompt.component';
+import { AdBannerComponent } from './shared/ad-banner/ad-banner.component';
 import { ThemeService } from './core/theme.service';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent],
+  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent, AdBannerComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -28,8 +29,10 @@ export class AppComponent {
   readonly showScrollTop = signal(false);
   readonly isNavigating = signal(false);
   readonly authReady = signal(false);
+  readonly navigationComplete = signal(false);
   readonly showLoginPill = signal(false);
   readonly updateAvailable = signal(false);
+  readonly isMobileViewport = signal(false);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -48,6 +51,7 @@ export class AppComponent {
       } else if (e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError) {
         if (e instanceof NavigationEnd) {
           analytics.trackPageView((e as NavigationEnd).urlAfterRedirects);
+          if (!this.navigationComplete()) this.navigationComplete.set(true);
         }
         this.isNavigating.set(false);
       }
@@ -59,6 +63,19 @@ export class AppComponent {
         map(() => window.scrollY > 300),
         distinctUntilChanged(),
       ).subscribe(show => this.showScrollTop.set(show));
+
+      // Ad placements that don't apply to the current viewport must be removed
+      // from the DOM entirely (not just CSS-hidden) — adsbygoogle.push() claims
+      // the next unclaimed <ins> in document order regardless of which slot
+      // triggered it, so a hidden zero-width <ins> earlier in the DOM silently
+      // swallows the push meant for a later, actually-visible slot.
+      const mobileQuery = window.matchMedia('(max-width: 767px)');
+      this.isMobileViewport.set(mobileQuery.matches);
+      const onMobileChange = (e: MediaQueryListEvent) => this.isMobileViewport.set(e.matches);
+      mobileQuery.addEventListener('change', onMobileChange);
+      this.destroyRef.onDestroy(() => {
+        mobileQuery.removeEventListener('change', onMobileChange);
+      });
 
       const swUpdate = this.swUpdate;
       if (swUpdate?.isEnabled) {
@@ -86,6 +103,15 @@ export class AppComponent {
 
   get isFavoritesRoute(): boolean {
     return this.router.url.startsWith('/my-favorites');
+  }
+
+  get showGlobalAds(): boolean {
+    // Skip rendering on the server: these placements depend on the client's
+    // viewport width, and rendering a default on the server would cause a
+    // hydration mismatch once the client corrects it.
+    // Wait for first NavigationEnd so the page content is already in the DOM
+    // before the ad slot renders — prevents CLS on initial load.
+    return this.isBrowser && this.navigationComplete() && !this.isAdminRoute && !this.router.url.startsWith('/login');
   }
 
   signOut() {

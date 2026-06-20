@@ -107,12 +107,14 @@
           <div class="member-portrait-col">
             <div style="position: relative; display: inline-block;">
               @if (member.photo_url) {
-                <img
-                  [src]="member.photo_url | supabaseImg:320"
-                  [alt]="member.name"
-                  class="member-portrait"
-                  loading="lazy"
-                />
+                <button type="button" class="member-portrait-btn" (click)="openLightbox()">
+                  <img
+                    [src]="member.photo_url | supabaseImg:320"
+                    [alt]="member.name"
+                    class="member-portrait"
+                    loading="lazy"
+                  />
+                </button>
               } @else {
                 <div class="member-portrait member-portrait--fallback"
                   [ngStyle]="fallbackPortraitStyle(member.color)">
@@ -125,25 +127,58 @@
           <!-- Info column -->
           <div class="member-info-col">
 
-            <!-- Primary name + share link -->
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;">
+            <!-- Primary name -->
+            <div class="member-name-row" style="margin:0 0 10px;">
               <h1 style="
                 font-size: clamp(1.8rem, 5vw, 2.8rem);
-                font-weight: 300; line-height: 1.05;
+                font-weight: 300;
                 letter-spacing: 0.03em; color: var(--text-primary);
                 margin: 0;
               ">{{ member.name }}</h1>
+              <div class="member-actions-inline">
+                <button
+                  (click)="copyLink()"
+                  class="share-link-btn"
+                  [class.share-link-btn--copied]="linkCopied"
+                >
+                  @if (linkCopied) {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  } @else {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  }
+                </button>
+                @if (isLoggedIn) {
+                  <app-favorite-toggle
+                    entityType="member"
+                    [entityId]="member.id"
+                    style="flex-shrink:0;"
+                  />
+                }
+              </div>
+            </div>
+
+            <!-- Roman / phonetic name -->
+            @if (member.name_hiragana || member.name_roman) {
+              <p class="member-subname" style="
+                font-size: 0.9rem;
+                color: var(--text-faint-60);
+                letter-spacing: 0.1em; margin: 0 0 10px;
+              ">
+                @if (member.name_hiragana) {{{ member.name_hiragana }}}@if (member.name_hiragana && member.name_roman) {<span style="margin:0 6px;opacity:0.4;font-style:normal;">/</span>}@if (member.name_roman) {<em style="font-style:italic;">{{ member.name_roman }}</em>}
+              </p>
+            }
+
+            <!-- Share + favorite (mobile only) -->
+            <div class="member-identity-actions">
               <button
                 (click)="copyLink()"
                 class="share-link-btn"
                 [class.share-link-btn--copied]="linkCopied"
               >
                 @if (linkCopied) {
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  已複製
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 } @else {
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                  分享連結
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 }
               </button>
               @if (isLoggedIn) {
@@ -154,17 +189,6 @@
                 />
               }
             </div>
-
-            <!-- Roman / phonetic name -->
-            @if (member.name_hiragana || member.name_roman) {
-              <p style="
-                font-size: 0.9rem;
-                color: var(--text-faint-60);
-                letter-spacing: 0.1em; margin: 0 0 14px;
-              ">
-                @if (member.name_hiragana) {{{ member.name_hiragana }}}@if (member.name_hiragana && member.name_roman) {<span style="margin:0 6px;opacity:0.4;font-style:normal;">/</span>}@if (member.name_roman) {<em style="font-style:italic;">{{ member.name_roman }}</em>}
-              </p>
-            }
 
             <!-- Color + Emoji symbol -->
             @if (member.color) {
@@ -297,6 +321,91 @@
 
       </header>
 
+      <!-- ══ Photography policy section ══ -->
+      @if (member.photo_status || member.photo_notes || member.video_status || member.video_notes) {
+        <div style="
+          background: var(--bg-surface);
+          border: 1px solid var(--border-subtle);
+          border-radius: 4px;
+          padding: 14px 20px;
+          margin-bottom: 24px;
+          margin-top: 24px;
+          position: relative; overflow: hidden;
+        ">
+          <div style="
+            position: absolute; top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: linear-gradient(to bottom, rgba(232,127,160,0.5), rgba(124,108,242,0.2));
+          "></div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-left: 4px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-label);">攝錄規範</span>
+              <span style="font-size: 0.62rem; color: var(--text-faint-38); letter-spacing: 0.05em;">以主辦方規定為前提</span>
+            </div>
+            <button
+              (click)="showProposalPanel = true"
+              style="font-size: 0.65rem; color: rgba(232,127,160,0.5); background: none; border: 1px solid rgba(232,127,160,0.15); border-radius: 3px; padding: 2px 8px; cursor: pointer;"
+            >提案修改</button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px; padding-left: 4px;">
+            @if (member.photo_status || member.photo_notes) {
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span style="color: var(--text-faint-40); flex-shrink: 0; display: flex;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </span>
+                @if (member.photo_status) {
+                  <span
+                    [style.background]="photographyBadgeColor(member.photo_status)"
+                    [style.color]="photographyBadgeTextColor(member.photo_status)"
+                    [style.border]="'1px solid ' + photographyBadgeBorderColor(member.photo_status)"
+                    style="border-radius: 3px; padding: 2px 7px; font-size: 0.72rem; flex-shrink: 0; display: inline-block; width: calc(3em + 14px); text-align: center; white-space: nowrap; box-sizing: border-box;"
+                  >{{ photographyStatusLabel(member.photo_status, 'photo') }}</span>
+                }
+                @if (member.photo_notes) {
+                  <span style="font-size: 0.75rem; color: var(--text-faint-55); line-height: 1.5;">{{ member.photo_notes }}</span>
+                }
+              </div>
+            }
+            @if (member.video_status || member.video_notes) {
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span style="color: var(--text-faint-40); flex-shrink: 0; display: flex;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polygon points="23 7 16 12 23 17 23 7"/>
+                    <rect x="1" y="5" width="15" height="14" rx="2"/>
+                  </svg>
+                </span>
+                @if (member.video_status) {
+                  <span
+                    [style.background]="photographyBadgeColor(member.video_status)"
+                    [style.color]="photographyBadgeTextColor(member.video_status)"
+                    [style.border]="'1px solid ' + photographyBadgeBorderColor(member.video_status)"
+                    style="border-radius: 3px; padding: 2px 7px; font-size: 0.72rem; flex-shrink: 0; display: inline-block; width: calc(3em + 14px); text-align: center; white-space: nowrap; box-sizing: border-box;"
+                  >{{ photographyStatusLabel(member.video_status, 'video') }}</span>
+                }
+                @if (member.video_notes) {
+                  <span style="font-size: 0.75rem; color: var(--text-faint-55); line-height: 1.5;">{{ member.video_notes }}</span>
+                }
+              </div>
+            }
+          </div>
+
+          @if (member.photography_source) {
+            <div style="margin-top: 10px; padding-left: 4px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 8px;">
+              @if (member.photography_source.startsWith('http')) {
+                <a [href]="member.photography_source" target="_blank" rel="noopener noreferrer"
+                  style="font-size: 0.65rem; color: var(--text-faint-38); text-decoration: underline; text-underline-offset: 2px;">資料來源 ↗</a>
+              } @else {
+                <span style="font-size: 0.65rem; color: var(--text-faint-38);">資料來源：{{ member.photography_source }}</span>
+              }
+            </div>
+          }
+        </div>
+      }
 
       <!-- ══ Activity history section ══ -->
       <section>
@@ -655,6 +764,8 @@
           [recordId]="member.id"
           [recordLabel]="member.name"
           [relatedHistoryField]="'member_id'"
+          [relatedSongTable]="'member_songs'"
+          [relatedSongField]="'member_id'"
           (closed)="showEditHistory = false"
         />
       }
@@ -735,5 +846,13 @@
     [requiredFields]="['group_id', 'status', 'joined_at']"
     [groups]="allGroupsList"
     (closed)="showOverseasPanel = false"
+  />
+}
+@if (member) {
+  <app-photo-lightbox
+    [photoUrl]="member.photo_url ?? null"
+    [name]="member.name"
+    [open]="lightboxOpen"
+    (closed)="closeLightbox()"
   />
 }

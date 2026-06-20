@@ -91,6 +91,30 @@ describe('HomeComponent', () => {
 
   // ── Issue 1: *ngIf → @if ─────────────────────────────────────────────────
 
+  it('toggles venue proposal panels before deferred panel content loads', async () => {
+    await setup();
+    const fixture = TestBed.createComponent(HomeComponent);
+    const component = fixture.componentInstance;
+
+    component.openVenueInsertPanel();
+    expect(component.showVenueInsertPanel).toBeTrue();
+
+    component.closeVenueInsertPanel();
+    expect(component.showVenueInsertPanel).toBeFalse();
+
+    component.venues = [{
+      id: 'v1',
+      name: 'Test Venue',
+      address: '台北市測試路 1 號',
+      region: 'north',
+    } as any];
+    component.onVenueProposalRequested('v1');
+    expect(component.showVenueUpdatePanel).toBeTrue();
+
+    component.closeVenueUpdatePanel();
+    expect(component.showVenueUpdatePanel).toBeFalse();
+  });
+
   describe('member name display (Issue 1 — mixed ngIf)', () => {
     it('shows roman name secondary line only when name_roman exists', fakeAsync(async () => {
       const m = member({ id: 'm1', name: 'Alice', name_roman: 'Alice Roman', name_hiragana: null });

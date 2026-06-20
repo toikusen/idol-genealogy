@@ -6,6 +6,7 @@ import { AdminGroupSong, GroupSongService } from '../../../core/group-song.servi
 import { AdminMemberSong, MemberSongService } from '../../../core/member-song.service';
 import { GroupService } from '../../../core/group.service';
 import { MemberService } from '../../../core/member.service';
+import { ProposalService } from '../../../core/proposal.service';
 import { Group, Member } from '../../../models';
 
 type SongKind = 'member' | 'group';
@@ -124,6 +125,7 @@ export class AdminSongsComponent implements OnInit {
     private groupSongService: GroupSongService,
     private memberService: MemberService,
     private groupService: GroupService,
+    private proposalService: ProposalService,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -255,12 +257,17 @@ export class AdminSongsComponent implements OnInit {
     try {
       const kind = this.editingRow?.kind ?? this.activeTab;
       if (this.editingRow) {
+        const originalRow = this.editingRow;
         if (kind === 'member') {
-          const updated = await this.memberSongService.update(this.editingRow.id, payload);
+          const updated = await this.memberSongService.update(originalRow.id, payload);
           this.memberSongs = this.memberSongs.map(song => song.id === updated.id ? updated : song);
+          const original = { ...originalRow, member_id: originalRow.ownerId };
+          await this.proposalService.recordDirectEdit('member_songs', originalRow.id, original, { ...original, ...payload }).catch(() => {});
         } else {
-          const updated = await this.groupSongService.update(this.editingRow.id, payload);
+          const updated = await this.groupSongService.update(originalRow.id, payload);
           this.groupSongs = this.groupSongs.map(song => song.id === updated.id ? updated : song);
+          const original = { ...originalRow, group_id: originalRow.ownerId };
+          await this.proposalService.recordDirectEdit('group_songs', originalRow.id, original, { ...original, ...payload }).catch(() => {});
         }
       } else if (kind === 'member') {
         const created = await this.memberSongService.create({
@@ -268,12 +275,14 @@ export class AdminSongsComponent implements OnInit {
           ...payload,
         });
         this.memberSongs = [created, ...this.memberSongs];
+        await this.proposalService.recordDirectEdit('member_songs', created.id, {}, created, 'INSERT').catch(() => {});
       } else {
         const created = await this.groupSongService.create({
           group_id: this.draft.ownerId,
           ...payload,
         });
         this.groupSongs = [created, ...this.groupSongs];
+        await this.proposalService.recordDirectEdit('group_songs', created.id, {}, created, 'INSERT').catch(() => {});
       }
       this.rebuildSongRows(kind);
       this.syncActiveTabState();
@@ -290,10 +299,12 @@ export class AdminSongsComponent implements OnInit {
     try {
       if (row.kind === 'member') {
         await this.memberSongService.delete(row.id);
+        await this.proposalService.recordDirectEdit('member_songs', row.id, { ...row, member_id: row.ownerId }, {}, 'DELETE').catch(() => {});
         this.memberSongs = this.memberSongs.filter(song => song.id !== row.id);
         this.rebuildSongRows('member');
       } else {
         await this.groupSongService.delete(row.id);
+        await this.proposalService.recordDirectEdit('group_songs', row.id, { ...row, group_id: row.ownerId }, {}, 'DELETE').catch(() => {});
         this.groupSongs = this.groupSongs.filter(song => song.id !== row.id);
         this.rebuildSongRows('group');
       }

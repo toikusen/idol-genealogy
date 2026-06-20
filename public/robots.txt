@@ -1,8 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /@
-Disallow: /my-contributions
-Disallow: /login
+Disallow: /cdn-cgi/
 
 Sitemap: https://idolmaps.com/sitemap.xml

@@ -9,6 +9,7 @@ function mockGroup(id: string, name = `Group ${id}`): Group {
   return { id, name, name_jp: null, photo_url: null, color: '#000', company: null, company_id: null,
     founded_at: null, disbanded_at: null, disbanded_announced_at: null, notes: null, is_trainee: false, style: null,
     instagram: null, facebook: null, x: null, youtube: null, timetree_url: null,
+    photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null,
     updated_at: '2026-01-01', created_at: '2026-01-01' };
 }
 
@@ -21,7 +22,9 @@ function mockMember(id: string, name = `Member ${id}`): Member {
     id, name, name_hiragana: null, name_roman: null, emoji: null, photo_url: null,
     color: null, color_name: null, birthdate: null, nickname: null, instagram: null,
     facebook: null, x: null, maid_url: null, notes: null, company_id: null,
-    no_sns: false, updated_at: '2026-01-01', created_at: '2026-01-01',
+    no_sns: false,
+    photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null,
+    updated_at: '2026-01-01', created_at: '2026-01-01',
   };
 }
 

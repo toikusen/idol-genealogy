@@ -12,21 +12,25 @@ import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
-import { companyIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { companyIndexabilitySignals, isAdEligible } from '../../core/indexability.utils';
 import { AnalyticsService } from '../../core/analytics.service';
 import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
+import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
 
 @Component({
   selector: 'app-company-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe],
+  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, PhotoLightboxComponent],
   templateUrl: './company-page.component.html',
   styleUrl: './company-page.component.css',
 })
 export class CompanyPageComponent implements OnInit, OnDestroy {
   private readonly defaultGroupChipColor = '#7c6cf2';
   private readonly defaultMemberChipColor = '#e879a0';
+  lightboxOpen = false;
+  openLightbox(): void { this.lightboxOpen = true; }
+  closeLightbox(): void { this.lightboxOpen = false; }
   company: Company | null = null;
   showProposalPanel = false;
   showDeletePanel = false;
@@ -151,7 +155,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
       siteUrl(companyPath(pageData.id)),
       pageData.company.photo_url ?? undefined
     );
-    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.seo.setRobotsNoIndex(false);
     this.adEligible = isAdEligible(signals);
 
     const sameAs: string[] = [

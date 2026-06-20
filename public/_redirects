@@ -1,7 +1,6 @@
-# Prevent Netlify's Pretty URLs from 301-redirecting prerendered directory pages.
-# Angular SSR outputs member/{uuid}/index.html but the sitemap uses /member/{uuid}
-# (no trailing slash). Without these rewrites, Netlify would 301-redirect every
-# sitemap URL to its trailing-slash counterpart, causing GSC "page with redirect".
+# Cloudflare Pages would otherwise 301-redirect /member/{uuid} to /member/{uuid}/
+# because the static output is member/{uuid}/index.html. These 200 rewrites suppress
+# that redirect so sitemap URLs (no trailing slash) are served without a redirect.
 /member/:id  /member/:id/  200
 /group/:id   /group/:id/   200
 /company/:id /company/:id/ 200
@@ -17,6 +16,3 @@
 /leaderboard /leaderboard/ 200
 /wanted      /wanted/      200
 # SPA routes handled by _middleware.ts via env.ASSETS
-
-# Unknown routes should be real 404s, not indexable homepage duplicates.
-/* /404.html 404

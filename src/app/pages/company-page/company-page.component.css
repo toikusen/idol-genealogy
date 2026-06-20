@@ -1,3 +1,128 @@
+/* ── Hero layout ── */
+.company-header {
+  padding-bottom: 0;
+  margin-bottom: 44px;
+}
+
+.company-hero-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 36px;
+}
+
+.company-portrait-col {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.company-portrait {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 3px solid rgba(255,255,255,0.95);
+  box-shadow: 0 4px 16px rgba(45,27,46,0.15);
+}
+
+.company-portrait--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  font-weight: 300;
+  color: white;
+}
+
+.company-info-col {
+  flex: 1;
+  min-width: 0;
+  padding-top: 8px;
+}
+
+.company-name {
+  color: #2d1b2e;
+}
+
+.company-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+
+.company-actions-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.company-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.company-action-btn--edit {
+  border: 1.5px solid rgba(232,121,160,0.3);
+  background: rgba(252,228,239,0.45);
+  color: rgba(194,80,122,0.75);
+}
+
+.company-action-btn--edit:hover {
+  background: rgba(232,121,160,0.14);
+  border-color: rgba(232,121,160,0.55);
+  color: rgba(194,80,122,1);
+}
+
+.company-action-btn--report {
+  border: 1.5px solid var(--border-default);
+  background: transparent;
+  color: var(--text-faint-40);
+}
+
+.company-action-btn--report:hover {
+  border-color: rgba(200,80,80,0.4);
+  color: rgba(200,80,80,0.8);
+}
+
+.sns-link--icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  justify-content: center;
+}
+
+@media (max-width: 520px) {
+  .company-hero-card {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .company-info-col {
+    text-align: center;
+    padding-top: 0;
+    width: 100%;
+  }
+  .company-name-row {
+    justify-content: center;
+  }
+  .company-portrait {
+    width: 100px;
+    height: 100px;
+  }
+}
+
 .proposal-edit-btn {
   display: inline-flex;
   align-items: center;
@@ -44,7 +169,7 @@
 
 .sns-link {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 10px; border-radius: 20px; border: 1px solid;
+  height: 36px; padding: 0 10px; border-radius: 18px; border: 1px solid;
   font-size: 0.72rem; letter-spacing: 0.08em;
   text-decoration: none; transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
@@ -60,6 +185,23 @@
 .sns-link--web:hover { background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.45); }
 
 /* ── Dark mode ── */
+:host-context([data-theme="dark"]) .share-link-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.65);
+}
+:host-context([data-theme="dark"]) .share-link-btn:hover {
+  background: rgba(232, 121, 160, 0.12);
+  border-color: rgba(232, 121, 160, 0.35);
+  color: rgba(232, 121, 160, 0.9);
+  box-shadow: 0 2px 8px rgba(232, 121, 160, 0.2);
+}
+:host-context([data-theme="dark"]) .share-link-btn--copied {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.08);
+}
+
 :host-context([data-theme="dark"]) .sns-link--x {
   color: rgba(210, 175, 210, 0.82);
   border-color: rgba(210, 175, 210, 0.22);
@@ -80,6 +222,24 @@
 
 :host-context([data-theme="dark"]) .company-description {
   color: var(--text-faint-70) !important;
+}
+
+:host-context([data-theme="dark"]) .company-action-btn--edit {
+  background: rgba(232, 121, 160, 0.10);
+  border-color: rgba(232, 121, 160, 0.35);
+  color: #e879a0;
+}
+:host-context([data-theme="dark"]) .company-action-btn--edit:hover {
+  background: rgba(232, 121, 160, 0.18);
+  border-color: rgba(232, 121, 160, 0.55);
+}
+:host-context([data-theme="dark"]) .company-action-btn--report {
+  color: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+:host-context([data-theme="dark"]) .company-action-btn--report:hover {
+  border-color: rgba(200,80,80,0.4);
+  color: rgba(200,80,80,0.8);
 }
 
 :host-context([data-theme="dark"]) .proposal-edit-btn {
@@ -104,4 +264,28 @@
 
 @media (max-width: 520px) {
   .company-outer { padding-left: 16px !important; padding-right: 16px !important; }
+}
+
+.company-logo-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+}
+
+.company-logo-btn img {
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.company-logo-btn:hover img,
+.company-logo-btn:focus-visible img {
+  transform: scale(1.02);
+  filter: brightness(1.05);
+}
+
+.company-logo-btn:focus-visible {
+  outline: 2px solid rgba(232, 121, 160, 0.6);
+  outline-offset: 3px;
+  border-radius: 50%;
 }

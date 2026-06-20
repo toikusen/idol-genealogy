@@ -4,6 +4,7 @@ import { Group, GroupVideo, Team, GroupLeaderboardEntry, GroupRecentHeatEntry, G
 import { kanaVariants } from './japanese.utils';
 import { isPublicGroupRecord } from './public-record.utils';
 import { isNotFoundError } from './supabase.utils';
+import { TtlCache } from './ttl-cache';
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
@@ -11,6 +12,10 @@ export class GroupService {
   private _allCache: Group[] | null = null;
   private _allPromise: Promise<Group[]> | null = null;
   private _byIdCache = new Map<string, Group | null>();
+  private readonly _publicCountCache = new TtlCache<number>(60_000);
+  private readonly _recentPopularCache = new TtlCache<GroupRecentHeatEntry[]>(60_000);
+  private readonly _trendingCache = new TtlCache<GroupTrendingEntry[]>(60_000);
+  private readonly _teamsCache = new TtlCache<Team[]>(120_000);
 
   constructor(private supabase: SupabaseService) {}
 
@@ -37,16 +42,19 @@ export class GroupService {
   }
 
   async getPublicCount(): Promise<number> {
-    const { data, error } = await this.db
-      .from('groups')
-      .select('name,name_jp');
-    if (error) throw error;
-    return (data ?? []).filter(isPublicGroupRecord).length;
+    return this._publicCountCache.get('all', async () => {
+      const { data, error } = await this.db
+        .from('groups')
+        .select('name,name_jp');
+      if (error) throw error;
+      return (data ?? []).filter(isPublicGroupRecord).length;
+    });
   }
 
   invalidateCache() {
     this._allCache = null;
     this._byIdCache.clear();
+    this._publicCountCache.invalidate();
   }
 
   async search(query: string): Promise<Group[]> {
@@ -88,16 +96,19 @@ export class GroupService {
   }
 
   async getTeamsByGroup(groupId: string): Promise<Team[]> {
-    const { data, error } = await this.db
-      .from('teams').select('*').eq('group_id', groupId);
-    if (error) throw error;
-    return data ?? [];
+    return this._teamsCache.get(groupId, async () => {
+      const { data, error } = await this.db
+        .from('teams').select('*').eq('group_id', groupId);
+      if (error) throw error;
+      return data ?? [];
+    });
   }
 
-  async create(group: Partial<Group>): Promise<void> {
-    const { error } = await this.db.from('groups').insert(group);
+  async create(group: Partial<Group>): Promise<string> {
+    const { data, error } = await this.db.from('groups').insert(group).select('id').single();
     if (error) throw error;
     this.invalidateCache();
+    return data.id as string;
   }
 
   async update(id: string, group: Partial<Group>): Promise<void> {
@@ -149,16 +160,19 @@ export class GroupService {
   async createTeam(team: Partial<Team>): Promise<void> {
     const { error } = await this.db.from('teams').insert(team);
     if (error) throw error;
+    this._teamsCache.invalidate();
   }
 
   async updateTeam(id: string, team: Partial<Team>): Promise<void> {
     const { error } = await this.db.from('teams').update(team).eq('id', id);
     if (error) throw error;
+    this._teamsCache.invalidate();
   }
 
   async deleteTeam(id: string): Promise<void> {
     const { error } = await this.db.from('teams').delete().eq('id', id);
     if (error) throw error;
+    this._teamsCache.invalidate();
   }
 
   async getTopByViews(limit: number): Promise<GroupLeaderboardEntry[]> {
@@ -170,18 +184,22 @@ export class GroupService {
   }
 
   async getRecentPopular(limit: number, windowDays = 7): Promise<GroupRecentHeatEntry[]> {
-    const { data, error } = await this.supabase.client.rpc(
-      'get_recent_popular_groups', { p_limit: limit, p_window_days: windowDays }
-    );
-    if (error) throw error;
-    return (data ?? []) as GroupRecentHeatEntry[];
+    return this._recentPopularCache.get(`${limit}:${windowDays}`, async () => {
+      const { data, error } = await this.supabase.client.rpc(
+        'get_recent_popular_groups', { p_limit: limit, p_window_days: windowDays }
+      );
+      if (error) throw error;
+      return (data ?? []) as GroupRecentHeatEntry[];
+    });
   }
 
   async getTrending(limit: number): Promise<GroupTrendingEntry[]> {
-    const { data, error } = await this.supabase.client.rpc(
-      'get_trending_groups', { p_limit: limit }
-    );
-    if (error) throw error;
-    return (data ?? []) as GroupTrendingEntry[];
+    return this._trendingCache.get(String(limit), async () => {
+      const { data, error } = await this.supabase.client.rpc(
+        'get_trending_groups', { p_limit: limit }
+      );
+      if (error) throw error;
+      return (data ?? []) as GroupTrendingEntry[];
+    });
   }
 }

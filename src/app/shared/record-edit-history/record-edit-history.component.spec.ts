@@ -21,8 +21,14 @@ describe('RecordEditHistoryComponent', () => {
   let proposalServiceSpy: jasmine.SpyObj<ProposalService>;
 
   beforeEach(async () => {
-    proposalServiceSpy = jasmine.createSpyObj('ProposalService', ['getApprovedByRecord']);
+    proposalServiceSpy = jasmine.createSpyObj('ProposalService', [
+      'getApprovedByRecord',
+      'getApprovedHistoryByField',
+      'getApprovedSongsByField',
+    ]);
     proposalServiceSpy.getApprovedByRecord.and.returnValue(Promise.resolve([mockProposal]));
+    proposalServiceSpy.getApprovedHistoryByField.and.returnValue(Promise.resolve([]));
+    proposalServiceSpy.getApprovedSongsByField.and.returnValue(Promise.resolve([]));
 
     await TestBed.configureTestingModule({
       imports: [RecordEditHistoryComponent],
@@ -45,7 +51,7 @@ describe('RecordEditHistoryComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load proposals on init', async () => {
+  it('should load entries on init', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(proposalServiceSpy.getApprovedByRecord).toHaveBeenCalledWith('members', 'm1');
@@ -60,5 +66,24 @@ describe('RecordEditHistoryComponent', () => {
     await fixture.whenStable();
     expect(component.error).toBeTrue();
     expect(component.loading).toBeFalse();
+  });
+
+  it('should load related song proposals when configured', async () => {
+    const songProposal = {
+      ...mockProposal,
+      id: 'song-p1',
+      table_name: 'member_songs' as const,
+      proposed_data: { member_id: 'm1', title: 'Song' },
+      original_data: {},
+    };
+    proposalServiceSpy.getApprovedSongsByField.and.returnValue(Promise.resolve([songProposal]));
+    component.relatedSongTable = 'member_songs';
+    component.relatedSongField = 'member_id';
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(proposalServiceSpy.getApprovedSongsByField).toHaveBeenCalledWith('member_songs', 'member_id', 'm1');
+    expect(component.proposals.some(p => p.id === 'song-p1')).toBeTrue();
   });
 });

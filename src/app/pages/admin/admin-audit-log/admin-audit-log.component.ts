@@ -127,6 +127,11 @@ export class AdminAuditLogComponent implements OnInit {
       { key: 'company_id', type: 'select' },
       { key: 'no_sns', type: 'checkbox' },
       { key: 'notes', type: 'textarea' },
+      { key: 'photo_status', type: 'select' },
+      { key: 'photo_notes', type: 'text' },
+      { key: 'video_status', type: 'select' },
+      { key: 'video_notes', type: 'text' },
+      { key: 'photography_source', type: 'text' },
     ],
     groups: [
       { key: 'name', type: 'text', required: true },
@@ -144,6 +149,11 @@ export class AdminAuditLogComponent implements OnInit {
       { key: 'is_trainee', type: 'checkbox' },
       { key: 'style', type: 'text' },
       { key: 'notes', type: 'textarea' },
+      { key: 'photo_status', type: 'select' },
+      { key: 'photo_notes', type: 'text' },
+      { key: 'video_status', type: 'select' },
+      { key: 'video_notes', type: 'text' },
+      { key: 'photography_source', type: 'text' },
     ],
     history: [
       { key: 'member_id', type: 'select', required: true },
@@ -699,6 +709,20 @@ export class AdminAuditLogComponent implements OnInit {
           { value: 'north', label: '北部' },
           { value: 'central', label: '中部' },
           { value: 'south', label: '南部' },
+        ];
+      case 'photo_status':
+        return [
+          { value: null, label: '— 未設定 —' },
+          { value: 'allowed', label: '✅ 可拍' },
+          { value: 'not_allowed', label: '❌ 不可拍' },
+          { value: 'conditional', label: '⚠️ 條件式' },
+        ];
+      case 'video_status':
+        return [
+          { value: null, label: '— 未設定 —' },
+          { value: 'allowed', label: '✅ 可錄' },
+          { value: 'not_allowed', label: '❌ 不可錄' },
+          { value: 'conditional', label: '⚠️ 條件式' },
         ];
       default:
         return [];

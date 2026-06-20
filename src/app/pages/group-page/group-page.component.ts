@@ -21,7 +21,7 @@ import { AdminRoleService } from '../../core/admin-role.service';
 import { GroupSong } from '../../models';
 import { groupPath, siteUrl } from '../../core/public-url.utils';
 import { GroupPageData } from '../../core/page-data.resolvers';
-import { groupIndexabilitySignals, isIndexable, isAdEligible } from '../../core/indexability.utils';
+import { groupIndexabilitySignals, isAdEligible } from '../../core/indexability.utils';
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
 import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
@@ -36,6 +36,13 @@ import {
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
+import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
+import {
+  photographyBadgeColor,
+  photographyBadgeTextColor,
+  photographyBadgeBorderColor,
+  photographyStatusLabel,
+} from '../../core/photography-policy.utils';
 
 interface GanttSegment {
   history: History;
@@ -52,7 +59,7 @@ interface GanttRow {
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent],
   templateUrl: './group-page.component.html',
   styleUrl: './group-page.component.css',
 })
@@ -106,6 +113,10 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   songReportError = '';
   songReportDone = false;
 
+  lightboxOpen = false;
+  openLightbox(): void { this.lightboxOpen = true; }
+  closeLightbox(): void { this.lightboxOpen = false; }
+
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
   }
@@ -114,12 +125,20 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     return formatRelativeTime(date);
   }
 
+  photographyBadgeColor = photographyBadgeColor;
+  photographyBadgeTextColor = photographyBadgeTextColor;
+  photographyBadgeBorderColor = photographyBadgeBorderColor;
+  photographyStatusLabel = photographyStatusLabel;
+
   get latestEditSummary(): string {
     if (!this.lastProposal) return '';
     const submitter = this.lastProposal.submitter_name || '貢獻者';
     const relative = this.formatRelativeTime(this.lastProposal.reviewed_at);
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
+    }
+    if (this.lastProposal.operation === 'DELETE' && this.lastProposalDiffFields.length > 0) {
+      return `${relative} · ${submitter} 刪除了「${this.lastProposalDiffFields[0].newValue === '—' ? this.lastProposalDiffFields[0].oldValue : this.lastProposalDiffFields[0].label}」`;
     }
     return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
   }
@@ -211,6 +230,16 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       if (params['editSongId']) {
         this.pendingEditSongId = params['editSongId'];
       }
+      if (params['openEvent'] && typeof window !== 'undefined') {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.delete('openEvent');
+        window.history.replaceState(window.history.state, '', currentUrl.href);
+      }
+    });
+    this.route.fragment.subscribe(fragment => {
+      if (fragment === 'propose') {
+        this.showGroupProposalPanel = true;
+      }
     });
     this.route.fragment.subscribe(fragment => {
       if (fragment === 'propose') {
@@ -230,9 +259,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         publicHistories.map(h => h.member_id).filter((mid): mid is string => !!mid)
       )];
 
-      const [company, proposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
+      const [company, proposals, historyProposals, songProposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
         (!this.companyName && group.company_id) ? this.companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
         this.proposalService.getApprovedByRecord('groups', id).catch(() => []),
+        this.proposalService.getApprovedHistoryByField('group_id', id).catch(() => [] as Proposal[]),
+        this.proposalService.getApprovedSongsByField('group_songs', 'group_id', id).catch(() => [] as Proposal[]),
         this.historyService.getByMembers(memberIds).catch(() => []),
         this.memberService.getAll().catch(() => []),
         group.style ? this.groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
@@ -243,7 +274,11 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       if (this.currentLoadId === id && !this._routeSub?.closed) {
         const publicCompany = company && isPublicCompanyRecord(company) ? company : null;
         if (publicCompany?.name) this.companyName = publicCompany.name;
-        this.lastProposal = proposals[0] ?? null;
+        const allProposals = [...proposals, ...historyProposals, ...songProposals].sort((a, b) =>
+          new Date(b.reviewed_at ?? b.created_at).getTime() -
+          new Date(a.reviewed_at ?? a.created_at).getTime()
+        );
+        this.lastProposal = allProposals[0] ?? null;
         this.allMemberHistories = allMemberHistories.filter(h =>
           (!h.member || isPublicMemberRecord(h.member)) && (!h.group || isPublicGroupRecord(h.group))
         );
@@ -327,7 +362,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     );
 
     const signals = groupIndexabilitySignals(pageData.group, pageData.histories.length);
-    this.seo.setRobotsNoIndex(!isIndexable(signals));
+    this.seo.setRobotsNoIndex(false);
     this.adEligible = isAdEligible(signals);
 
     this.snsUrls = {
@@ -569,6 +604,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     try {
       const id = this.route.snapshot.paramMap.get('id')!;
       if (this.editingSong) {
+        const originalSong = this.editingSong;
         const updated = await this.groupSongService.update(this.editingSong.id, {
           title: this.songFormData.title,
           release_date: this.songFormData.release_date || null,
@@ -581,6 +617,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         });
         this.songs = this.songs.map(s => s.id === updated.id ? updated : s)
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        await this.proposalService.recordDirectEdit('group_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(() => {});
       } else {
         const created = await this.groupSongService.create({
           group_id: id,
@@ -595,6 +632,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         });
         this.songs = [...this.songs, created]
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        await this.proposalService.recordDirectEdit('group_songs', created.id, {}, created, 'INSERT').catch(() => {});
       }
       this.cancelSongForm();
     } catch (e: any) {
@@ -608,6 +646,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
     try {
       await this.groupSongService.delete(song.id);
+      await this.proposalService.recordDirectEdit('group_songs', song.id, song, {}, 'DELETE').catch(() => {});
       this.songs = this.songs.filter(s => s.id !== song.id);
     } catch (e: any) {
       alert(e.message ?? '刪除失敗');

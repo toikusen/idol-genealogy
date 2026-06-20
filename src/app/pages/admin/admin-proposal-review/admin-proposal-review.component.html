@@ -188,6 +188,22 @@
                   <span class="text-gray-400 ml-1">({{ editedData[field] }})</span>
                 </div>
               </div>
+            } @else if (field === 'photo_status' || field === 'video_status') {
+              <div class="flex flex-col gap-1">
+                <span class="text-gray-400 text-xs md:hidden">提案（可編輯）：</span>
+                <select
+                  [(ngModel)]="editedData[field]"
+                  [name]="field"
+                  class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-pink-300"
+                  [class.border-yellow-300]="isChanged(field)"
+                  [class.bg-yellow-50]="isChanged(field)"
+                >
+                  <option [ngValue]="null">— 未設定 —</option>
+                  <option value="allowed">{{ field === 'photo_status' ? '✅ 可拍' : '✅ 可錄' }}</option>
+                  <option value="not_allowed">{{ field === 'photo_status' ? '❌ 不可拍' : '❌ 不可錄' }}</option>
+                  <option value="conditional">⚠️ 條件式</option>
+                </select>
+              </div>
             } @else {
               <div class="flex flex-col gap-1">
                 <span class="text-gray-400 text-xs md:hidden">提案（可編輯）：</span>

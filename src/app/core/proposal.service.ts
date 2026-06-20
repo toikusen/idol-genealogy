@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Proposal } from '../models';
+import { PROPOSAL_ALLOWED_FIELDS } from './proposal-fields.config';
 
 export interface ContributorEntry {
   submitter_id: string;
@@ -133,6 +134,100 @@ export class ProposalService {
     });
     if (error) throw error;
     return (data ?? []) as Proposal[];
+  }
+
+  async getApprovedSongsByField(
+    tableName: 'member_songs' | 'group_songs',
+    field: 'member_id' | 'group_id',
+    value: string,
+  ): Promise<Proposal[]> {
+    const { data, error } = await this.db.rpc('get_approved_songs_by_field', {
+      p_table_name: tableName,
+      p_field: field,
+      p_value: value,
+    });
+    if (error) throw error;
+    return (data ?? []) as Proposal[];
+  }
+
+  /**
+   * Records an admin direct edit as an already-approved proposal.
+   * Only fields present in PROPOSAL_ALLOWED_FIELDS are captured; skips if nothing changed.
+   */
+  async recordDirectEdit(
+    tableName: string,
+    recordId: string,
+    originalData: Record<string, any>,
+    newData: Record<string, any>,
+    operation: 'UPDATE' | 'INSERT' | 'DELETE' = 'UPDATE',
+  ): Promise<void> {
+    const allowedFields = PROPOSAL_ALLOWED_FIELDS[tableName];
+    if (!allowedFields) return;
+
+    const proposedData: Record<string, any> = {};
+    const originalDataToStore: Record<string, any> = {};
+
+    if (operation === 'INSERT') {
+      for (const key of allowedFields) {
+        if (newData[key] != null && newData[key] !== '') {
+          proposedData[key] = newData[key];
+        }
+      }
+      if (Object.keys(proposedData).length === 0) return;
+    } else if (operation === 'DELETE') {
+      for (const key of allowedFields) {
+        if (originalData[key] != null && originalData[key] !== '') {
+          originalDataToStore[key] = originalData[key];
+        }
+      }
+      if (Object.keys(originalDataToStore).length === 0) return;
+    } else {
+      for (const key of allowedFields) {
+        const oldStr = (originalData[key] != null && originalData[key] !== '') ? String(originalData[key]) : '';
+        const newStr = (newData[key] != null && newData[key] !== '') ? String(newData[key]) : '';
+        if (oldStr !== newStr) {
+          proposedData[key] = newData[key] ?? null;
+          originalDataToStore[key] = originalData[key] ?? null;
+        }
+      }
+      if (Object.keys(proposedData).length === 0) return;
+
+      // history proposals are looked up by member_id / group_id inside the JSON,
+      // so always include these anchor fields regardless of whether they changed.
+      if (tableName === 'history') {
+        for (const anchor of ['member_id', 'group_id'] as const) {
+          const val = newData[anchor] ?? originalData[anchor] ?? null;
+          if (val != null) {
+            proposedData[anchor] = val;
+            originalDataToStore[anchor] = originalData[anchor] ?? val;
+          }
+        }
+      }
+    }
+
+    const songAnchor = tableName === 'member_songs'
+      ? 'member_id'
+      : tableName === 'group_songs'
+        ? 'group_id'
+        : null;
+    if (songAnchor) {
+      const val = newData[songAnchor] ?? originalData[songAnchor] ?? null;
+      if (val != null) {
+        proposedData[songAnchor] = val;
+        if (operation !== 'INSERT') {
+          originalDataToStore[songAnchor] = originalData[songAnchor] ?? val;
+        }
+      }
+    }
+
+    const { error } = await this.db.rpc('insert_approved_proposal', {
+      p_table_name: tableName,
+      p_record_id: recordId,
+      p_operation: operation,
+      p_proposed_data: proposedData,
+      p_original_data: originalDataToStore,
+    });
+    if (error) throw error;
   }
 
   async getLeaderboard(): Promise<ContributorEntry[]> {

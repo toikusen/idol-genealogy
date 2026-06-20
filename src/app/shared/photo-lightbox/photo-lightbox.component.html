@@ -1,0 +1,28 @@
+@if (open && photoUrl) {
+  <div
+    class="lb-backdrop"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="name ? name + ' 照片' : '照片'"
+    (click)="close()"
+  >
+    <button
+      #closeBtn
+      class="lb-close"
+      type="button"
+      aria-label="關閉"
+      (click)="close()"
+    >✕</button>
+
+    <div class="lb-content" (click)="stopProp($event)">
+      <img
+        [src]="photoUrl | supabaseImg:1200"
+        [alt]="name"
+        class="lb-photo"
+      />
+      @if (name) {
+        <p class="lb-name">{{ name }}</p>
+      }
+    </div>
+  </div>
+}

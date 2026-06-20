@@ -88,4 +88,31 @@ describe('GroupService', () => {
     );
     expect(results[0].name).toBe('XYZ Team');
   });
+
+  it('getRecentPopular() de-dups repeat calls and re-fetches for a new window', async () => {
+    await service.getRecentPopular(5);
+    await service.getRecentPopular(5);
+    expect(mockClient.rpc).toHaveBeenCalledTimes(1);
+    await service.getRecentPopular(5, 30);
+    expect(mockClient.rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it('getTrending() serves repeat calls from cache', async () => {
+    await service.getTrending(10);
+    await service.getTrending(10);
+    expect(mockClient.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it('getTeamsByGroup() caches per group and createTeam() invalidates it', async () => {
+    await service.getTeamsByGroup('g-1');
+    mockClient.from.calls.reset();
+    await service.getTeamsByGroup('g-1');
+    expect(mockClient.from).not.toHaveBeenCalled();        // same key → cache hit
+    await service.getTeamsByGroup('g-2');
+    expect(mockClient.from).toHaveBeenCalledTimes(1);       // new key → re-fetch
+    await service.createTeam({ group_id: 'g-1', name: 'Team A' } as any);
+    mockClient.from.calls.reset();
+    await service.getTeamsByGroup('g-1');
+    expect(mockClient.from).toHaveBeenCalledTimes(1);       // invalidated → re-fetch
+  });
 });

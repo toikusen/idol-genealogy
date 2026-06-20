@@ -4,8 +4,13 @@ import { isPlatformBrowser } from '@angular/common';
 @Component({
   selector: 'app-ad-banner',
   standalone: true,
+  // Host defaults to display:inline with no intrinsic size. Inside a flex
+  // container (the side rails) that collapses the ad slot to zero width
+  // before it has content, so AdSense can never measure or fill it.
+  styles: `:host { display: block; width: 100%; }`,
   template: `
-    <div [style.display]="visible ? 'block' : 'none'" style="margin: 24px 0; text-align: center;">
+    <div [style.display]="visible ? 'block' : 'none'" style="margin: 40px 0 24px; padding-top: 24px; text-align: center; border-top: 1px solid var(--border-subtle);">
+      <div style="font-size: 11px; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">廣告</div>
       <ins class="adsbygoogle"
            style="display:block"
            data-ad-client="ca-pub-8862517332076590"
@@ -18,7 +23,11 @@ import { isPlatformBrowser } from '@angular/common';
 })
 export class AdBannerComponent implements AfterViewInit, OnDestroy {
   @Input() adSlot = '4061570176';
-  visible = false;
+  // Must stay visible (non-zero width) before the ad request fires — AdSense
+  // can't size or fill a full-width-responsive slot that's display:none, and
+  // silently abandons it forever without ever writing data-ad-status. Only
+  // collapse it once we know for sure the slot came back unfilled.
+  visible = true;
   private observer: MutationObserver | null = null;
   private intersectionObserver: IntersectionObserver | null = null;
   private adRequested = false;

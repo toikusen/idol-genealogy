@@ -8,6 +8,7 @@ import { CompanyService } from '../../../core/company.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { SupabaseService } from '../../../core/supabase.service';
 import { IgPhotoService } from '../../../core/ig-photo.service';
+import { ProposalService } from '../../../core/proposal.service';
 import { Member, Company } from '../../../models';
 import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 
@@ -56,6 +57,8 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
   fetchingIg = false;
   igFetchError = '';
   error = '';
+  private originalData: Record<string, any> = {};
+  saveWarning = '';
 
   batchFetching = false;
   batchProgress = '';
@@ -80,7 +83,8 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     private adminRole: AdminRoleService,
     private route: ActivatedRoute,
     private supabase: SupabaseService,
-    private igPhoto: IgPhotoService
+    private igPhoto: IgPhotoService,
+    private proposalService: ProposalService,
   ) {
     this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
   }
@@ -120,19 +124,23 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
 
   openCreate() {
     this.editing = {};
+    this.originalData = {};
     this.birthdateMonth = 0;
     this.birthdateDay = 0;
     this.isEdit = false;
     this.error = '';
     this.igFetchError = '';
+    this.saveWarning = '';
     this.showModal = true;
   }
 
   openEdit(m: Member) {
     this.editing = { ...m };
+    this.originalData = { ...m };
     this.isEdit = true;
     this.error = '';
     this.igFetchError = '';
+    this.saveWarning = '';
     this.parseBirthdate(m.birthdate);
     this.showModal = true;
   }
@@ -156,12 +164,21 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     } else {
       this.editing.birthdate = null;
     }
+    if (this.editing.photo_status === ('' as any)) this.editing.photo_status = null;
+    if (this.editing.video_status === ('' as any)) this.editing.video_status = null;
+    if (this.editing.photo_notes === '') this.editing.photo_notes = null;
+    if (this.editing.video_notes === '') this.editing.video_notes = null;
+    if (this.editing.photography_source === '') this.editing.photography_source = null;
     this.saving = true;
     try {
       if (this.isEdit && this.editing.id) {
         await this.memberService.update(this.editing.id, this.editing);
+        await this.proposalService.recordDirectEdit('members', this.editing.id, this.originalData, this.editing)
+          .catch(e => { console.error('[EditHistory] Failed to record member edit:', e); this.saveWarning = '資料已儲存，但編輯紀錄寫入失敗'; setTimeout(() => { this.saveWarning = ''; }, 6000); });
       } else {
-        await this.memberService.create(this.editing);
+        const newId = await this.memberService.create(this.editing);
+        await this.proposalService.recordDirectEdit('members', newId, {}, this.editing, 'INSERT')
+          .catch(e => { console.error('[EditHistory] Failed to record member create:', e); this.saveWarning = '資料已儲存，但編輯紀錄寫入失敗'; setTimeout(() => { this.saveWarning = ''; }, 6000); });
       }
       this.showModal = false;
       await this.load();
@@ -212,6 +229,7 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
         const result = await this.igPhoto.fetchPhotoUrl(m.instagram!);
         if (result.photo_url) {
           await this.memberService.update(m.id, { photo_url: result.photo_url });
+          await this.proposalService.recordDirectEdit('members', m.id, m, { ...m, photo_url: result.photo_url }).catch(() => {});
           ok++;
         } else {
           fail++;

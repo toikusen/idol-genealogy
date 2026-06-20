@@ -27,6 +27,18 @@ export function getDiffFields(p: Proposal): DiffField[] {
       }));
   }
 
+  if (p.operation === 'DELETE') {
+    const original = (p.original_data ?? {}) as Record<string, any>;
+    return allowedKeys
+      .filter(k => original[k] != null && original[k] !== '')
+      .map(k => ({
+        key: k,
+        label: FIELD_LABELS[p.table_name]?.[k] ?? k,
+        oldValue: String(original[k]),
+        newValue: '—',
+      }));
+  }
+
   // UPDATE — only show fields that actually changed
   const original = (p.original_data ?? {}) as Record<string, any>;
   return allowedKeys

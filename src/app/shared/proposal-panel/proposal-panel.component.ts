@@ -16,6 +16,18 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
   standalone: true,
   imports: [CommonModule, FormsModule, PhotoUploadComponent],
   styles: [`
+    @media (min-width: 768px) {
+      [role="dialog"] {
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translate(-50%, -50%);
+        height: auto !important;
+        max-height: 90vh;
+        border-radius: 16px !important;
+      }
+    }
     :host-context([data-theme="dark"]) .panel-overlay {
       background: rgba(12, 5, 22, 0.82) !important;
     }
@@ -574,6 +586,35 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
                 <p class="text-xs text-gray-300 mt-0.5">與現在名稱相同時請直接留空，不可填入相同名稱</p>
                 @if (operation === 'UPDATE' && original('name_at_time')) {
                   <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original('name_at_time') }}</p>
+                }
+
+              <!-- Photography policy status select -->
+              } @else if (field === 'photo_status' || field === 'video_status') {
+                <select
+                  [(ngModel)]="formData[field]"
+                  [name]="field"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                >
+                  <option [ngValue]="null">— 未設定 —</option>
+                  <option value="allowed">{{ field === 'photo_status' ? '✅ 可拍' : '✅ 可錄' }}</option>
+                  <option value="not_allowed">{{ field === 'photo_status' ? '❌ 不可拍' : '❌ 不可錄' }}</option>
+                  <option value="conditional">⚠️ 條件式</option>
+                </select>
+                @if (operation === 'UPDATE' && original(field)) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original(field) }}</p>
+                }
+
+              <!-- Photography source: URL-first text input -->
+              } @else if (field === 'photography_source') {
+                <input
+                  type="text"
+                  [(ngModel)]="formData[field]"
+                  [name]="field"
+                  placeholder="https://www.threads.net/... （無連結可填文字說明）"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                />
+                @if (operation === 'UPDATE' && original(field)) {
+                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ original(field) }}</p>
                 }
 
               <!-- Default: text input -->

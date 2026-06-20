@@ -33,11 +33,13 @@ const EDITABLE_FIELDS: Record<EditableAuditTable, Set<string>> = {
     'name', 'name_hiragana', 'name_roman', 'emoji', 'nickname', 'birthdate',
     'color', 'color_name', 'instagram', 'facebook', 'x', 'maid_url', 'photo_url',
     'notes', 'company_id', 'no_sns',
+    'photo_status', 'photo_notes', 'video_status', 'video_notes', 'photography_source',
   ]),
   groups: new Set([
     'name', 'name_jp', 'color', 'founded_at', 'disbanded_at',
     'instagram', 'facebook', 'x', 'youtube', 'company_id', 'company', 'photo_url',
     'notes', 'is_trainee', 'style',
+    'photo_status', 'photo_notes', 'video_status', 'video_notes', 'photography_source',
   ]),
   history: new Set([
     'member_id', 'group_id', 'team_id', 'name_at_time', 'role',

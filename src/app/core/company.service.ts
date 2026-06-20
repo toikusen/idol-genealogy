@@ -3,6 +3,7 @@ import { SupabaseService } from './supabase.service';
 import { Company, Group, Member } from '../models';
 import { isPublicCompanyRecord } from './public-record.utils';
 import { isNotFoundError } from './supabase.utils';
+import { TtlCache } from './ttl-cache';
 
 @Injectable({ providedIn: 'root' })
 export class CompanyService {
@@ -10,6 +11,11 @@ export class CompanyService {
   private _allCache: Company[] | null = null;
   private _allPromise: Promise<Company[]> | null = null;
   private _byIdCache = new Map<string, Company | null>();
+  private readonly _publicCountCache = new TtlCache<number>(60_000);
+  // Relational reads pull from the groups/members tables, which are written by
+  // other services; the short TTL bounds cross-service staleness.
+  private readonly _groupsByCompanyCache = new TtlCache<Group[]>(60_000);
+  private readonly _membersByCompanyCache = new TtlCache<Member[]>(60_000);
 
   constructor(private supabase: SupabaseService) {}
 
@@ -36,16 +42,21 @@ export class CompanyService {
   }
 
   async getPublicCount(): Promise<number> {
-    const { data, error } = await this.db
-      .from('companies')
-      .select('name');
-    if (error) throw error;
-    return (data ?? []).filter(isPublicCompanyRecord).length;
+    return this._publicCountCache.get('all', async () => {
+      const { data, error } = await this.db
+        .from('companies')
+        .select('name');
+      if (error) throw error;
+      return (data ?? []).filter(isPublicCompanyRecord).length;
+    });
   }
 
   invalidateCache() {
     this._allCache = null;
     this._byIdCache.clear();
+    this._publicCountCache.invalidate();
+    this._groupsByCompanyCache.invalidate();
+    this._membersByCompanyCache.invalidate();
   }
 
   // Used by admin table to show group count per company
@@ -84,23 +95,28 @@ export class CompanyService {
   }
 
   async getGroupsByCompany(companyId: string): Promise<Group[]> {
-    const { data, error } = await this.db
-      .from('groups').select('*').eq('company_id', companyId);
-    if (error) throw error;
-    return data ?? [];
+    return this._groupsByCompanyCache.get(companyId, async () => {
+      const { data, error } = await this.db
+        .from('groups').select('*').eq('company_id', companyId);
+      if (error) throw error;
+      return data ?? [];
+    });
   }
 
   async getMembersByCompany(companyId: string): Promise<Member[]> {
-    const { data, error } = await this.db
-      .from('members').select('*').eq('company_id', companyId).order('name', { ascending: true });
-    if (error) throw error;
-    return data ?? [];
+    return this._membersByCompanyCache.get(companyId, async () => {
+      const { data, error } = await this.db
+        .from('members').select('*').eq('company_id', companyId).order('name', { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    });
   }
 
-  async create(company: Partial<Company>): Promise<void> {
-    const { error } = await this.db.from('companies').insert(company);
+  async create(company: Partial<Company>): Promise<string> {
+    const { data, error } = await this.db.from('companies').insert(company).select('id').single();
     if (error) throw error;
     this.invalidateCache();
+    return data.id;
   }
 
   async update(id: string, company: Partial<Company>): Promise<void> {

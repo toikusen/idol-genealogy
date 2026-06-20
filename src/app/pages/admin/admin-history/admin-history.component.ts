@@ -7,6 +7,7 @@ import { HistoryService } from '../../../core/history.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
+import { ProposalService } from '../../../core/proposal.service';
 import { History, Member, Group, Team } from '../../../models';
 
 @Component({
@@ -35,6 +36,8 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   nameAtTimeError = '';
   isAdmin = false;
   private _sub: Subscription;
+  private originalData: Record<string, any> = {};
+  saveWarning = '';
 
   readonly ROLE_OPTIONS = ['隊長', '副隊長', '隊員'];
 
@@ -58,6 +61,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     private groupService: GroupService,
     private adminRole: AdminRoleService,
     private route: ActivatedRoute,
+    private proposalService: ProposalService,
   ) {
     this._sub = this.adminRole.isAdmin$.subscribe(v => this.isAdmin = v);
   }
@@ -144,12 +148,13 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
   }
 
   openCreate() {
-    this.editing = {}; this.teams = []; this.isEdit = false; this.error = ''; this.nameAtTimeError = '';
-    this.memberSearch = ''; this.groupSearch = ''; this.isExternalRecord = false;
+    this.editing = {}; this.originalData = {}; this.teams = []; this.isEdit = false; this.error = ''; this.nameAtTimeError = '';
+    this.memberSearch = ''; this.groupSearch = ''; this.isExternalRecord = false; this.saveWarning = '';
     this.showModal = true;
   }
   openEdit(h: History) {
-    this.editing = { ...h }; this.isEdit = true; this.error = ''; this.nameAtTimeError = '';
+    this.editing = { ...h }; this.originalData = { ...h }; this.isEdit = true; this.error = ''; this.nameAtTimeError = '';
+    this.saveWarning = '';
     this.memberSearch = ''; this.groupSearch = '';
     this.isExternalRecord = !h.group_id && !!h.external_group_name;
     this.showModal = true;
@@ -187,8 +192,12 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     try {
       if (this.isEdit && this.editing.id) {
         await this.historyService.update(this.editing.id, payload);
+        await this.proposalService.recordDirectEdit('history', this.editing.id, this.originalData, payload)
+          .catch(e => { console.error('[EditHistory] Failed to record history edit:', e); this.saveWarning = '資料已儲存，但編輯紀錄寫入失敗'; setTimeout(() => { this.saveWarning = ''; }, 6000); });
       } else {
-        await this.historyService.create(payload);
+        const newId = await this.historyService.create(payload);
+        await this.proposalService.recordDirectEdit('history', newId, {}, payload, 'INSERT')
+          .catch(e => { console.error('[EditHistory] Failed to record history create:', e); this.saveWarning = '資料已儲存，但編輯紀錄寫入失敗'; setTimeout(() => { this.saveWarning = ''; }, 6000); });
       }
       this.showModal = false;
       this.histories = await this.historyService.getAll();

@@ -7,6 +7,7 @@ import { GroupService } from '../../../core/group.service';
 import { AdminRoleService } from '../../../core/admin-role.service';
 import { CompanyService } from '../../../core/company.service';
 import { IgPhotoService } from '../../../core/ig-photo.service';
+import { ProposalService } from '../../../core/proposal.service';
 import { Group, GroupVideo, Company } from '../../../models';
 import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 
@@ -28,6 +29,8 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
   isAdmin = false;
   isEditor = false;
   private _sub: Subscription;
+  private originalData: Record<string, any> = {};
+  saveWarning = '';
 
   fetchingIg = false;
   igFetchError = '';
@@ -55,6 +58,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     private companyService: CompanyService,
     private igPhoto: IgPhotoService,
     private route: ActivatedRoute,
+    private proposalService: ProposalService,
   ) {
     this._sub = this.adminRole.isAdmin$.subscribe(v => {
       this.isAdmin = v;
@@ -100,10 +104,12 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   openCreate() {
     this.editing = { color: '#e879a0', is_trainee: false };
+    this.originalData = {};
     this.editingStyles = [];
     this.isEdit = false;
     this.error = '';
     this.igFetchError = '';
+    this.saveWarning = '';
     this.videos = [];
     this.newVideoUrl = '';
     this.videoError = '';
@@ -113,6 +119,8 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   async openEdit(g: Group) {
     this.editing = { ...g };
+    this.originalData = { ...g };
+    this.saveWarning = '';
     this.editingStyles = g.style ? g.style.split(',') : [];
     this.isEdit = true;
     this.error = '';
@@ -216,6 +224,14 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     } else if (this.editing.timetree_url === '') {
       this.editing.timetree_url = null;
     }
+    if (this.editing.founded_at === '') this.editing.founded_at = null;
+    if (this.editing.disbanded_at === '') this.editing.disbanded_at = null;
+    if (this.editing.disbanded_announced_at === '') this.editing.disbanded_announced_at = null;
+    if (this.editing.photo_status === ('' as any)) this.editing.photo_status = null;
+    if (this.editing.video_status === ('' as any)) this.editing.video_status = null;
+    if (this.editing.photo_notes === '') this.editing.photo_notes = null;
+    if (this.editing.video_notes === '') this.editing.video_notes = null;
+    if (this.editing.photography_source === '') this.editing.photography_source = null;
     if (!this.isEditor) {
       this.editing.style = this.editingStyles.length > 0 ? this.editingStyles.join(',') : null;
     }
@@ -223,8 +239,12 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     try {
       if (this.isEdit && this.editing.id) {
         await this.groupService.update(this.editing.id, this.editing);
+        await this.proposalService.recordDirectEdit('groups', this.editing.id, this.originalData, this.editing)
+          .catch(e => { console.error('[EditHistory] Failed to record group edit:', e); this.saveWarning = '資料已儲存，但編輯紀錄寫入失敗'; setTimeout(() => { this.saveWarning = ''; }, 6000); });
       } else {
-        await this.groupService.create(this.editing);
+        const newId = await this.groupService.create(this.editing);
+        await this.proposalService.recordDirectEdit('groups', newId, {}, this.editing, 'INSERT')
+          .catch(e => { console.error('[EditHistory] Failed to record group create:', e); this.saveWarning = '資料已儲存，但編輯紀錄寫入失敗'; setTimeout(() => { this.saveWarning = ''; }, 6000); });
       }
       this.showModal = false;
       await this.load();

@@ -40,7 +40,15 @@ interface MergedEvent extends VenueCalendarEvent {
                  onmouseenter="this.style.background='rgba(124,108,242,0.05)'"
                  onmouseleave="this.style.background='transparent'">
                 <span style="font-size:0.7rem;color:#7c6cf2;font-weight:600;padding-top:1px;line-height:1.4;">{{ formatDate(event.start, event.end, event.isAllDay) }}</span>
-                <span style="font-size:0.82rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;">{{ event.title }}</span>
+                <div>
+                  <span style="font-size:0.82rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;line-height:1.4;">{{ event.title }}</span>
+                  @if (event.location) {
+                    <span style="display:flex;align-items:center;gap:3px;font-size:0.68rem;color:var(--text-faint);margin-top:2px;overflow:hidden;">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.7;" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ event.location }}</span>
+                    </span>
+                  }
+                </div>
               </a>
             }
             @for (event of visibleMergedEvents; track event.id) {
@@ -52,7 +60,13 @@ interface MergedEvent extends VenueCalendarEvent {
                 <div>
                   <span style="font-size:0.82rem;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;line-height:1.4;">{{ event.title }}</span>
                   @if (event.groupNames.length > 0) {
-                    <span style="font-size:0.68rem;color:var(--text-faint);line-height:1.3;">{{ event.groupNames.join(' · ') }}</span>
+                    <span style="font-size:0.68rem;color:var(--text-faint);line-height:1.3;display:block;">{{ event.groupNames.join(' · ') }}</span>
+                  }
+                  @if (event.location) {
+                    <span style="display:flex;align-items:center;gap:3px;font-size:0.68rem;color:var(--text-faint);margin-top:2px;overflow:hidden;">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.7;" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ event.location }}</span>
+                    </span>
                   }
                 </div>
               </a>

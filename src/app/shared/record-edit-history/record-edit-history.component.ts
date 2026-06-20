@@ -6,6 +6,7 @@ import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
+import { photographyStatusLabel } from '../../core/photography-policy.utils';
 import { SupabaseImgPipe } from '../supabase-img.pipe';
 
 @Component({
@@ -14,6 +15,20 @@ import { SupabaseImgPipe } from '../supabase-img.pipe';
   imports: [SupabaseImgPipe],
   templateUrl: './record-edit-history.component.html',
   styles: [`
+    @media (min-width: 768px) {
+      aside {
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translate(-50%, -50%);
+        height: auto !important;
+        max-height: 90vh;
+        border-left: none !important;
+        border-radius: 16px !important;
+        border: 1px solid var(--border-subtle);
+      }
+    }
     :host-context([data-theme="dark"]) aside {
       background: var(--bg-page) !important;
       border-left-color: rgba(232, 121, 160, 0.15) !important;
@@ -27,6 +42,9 @@ export class RecordEditHistoryComponent implements OnInit {
   @Input({ required: true }) recordLabel!: string;
   /** When set, also loads approved history proposals where proposed_data->>{field} = recordId */
   @Input() relatedHistoryField?: 'member_id' | 'group_id';
+  /** When set, also loads approved song proposals where proposed_data/original_data carries the owner id */
+  @Input() relatedSongTable?: 'member_songs' | 'group_songs';
+  @Input() relatedSongField?: 'member_id' | 'group_id';
   @Output() closed = new EventEmitter<void>();
 
   proposals: Proposal[] = [];
@@ -46,10 +64,13 @@ export class RecordEditHistoryComponent implements OnInit {
 
   async ngOnInit() {
     try {
-      const [mainProposals, historyProposals] = await Promise.all([
+      const [mainProposals, historyProposals, songProposals] = await Promise.all([
         this.proposalService.getApprovedByRecord(this.tableName, this.recordId),
         this.relatedHistoryField
           ? this.proposalService.getApprovedHistoryByField(this.relatedHistoryField, this.recordId).catch(() => [] as Proposal[])
+          : Promise.resolve([] as Proposal[]),
+        this.relatedSongTable && this.relatedSongField
+          ? this.proposalService.getApprovedSongsByField(this.relatedSongTable, this.relatedSongField, this.recordId).catch(() => [] as Proposal[])
           : Promise.resolve([] as Proposal[]),
       ]);
 
@@ -59,7 +80,7 @@ export class RecordEditHistoryComponent implements OnInit {
         this.relatedHistoryField ? this.loadGroupMap().catch(() => {}) : Promise.resolve(),
       ]);
 
-      const merged = [...mainProposals, ...historyProposals];
+      const merged = [...mainProposals, ...historyProposals, ...songProposals];
       merged.sort((a, b) =>
         new Date(b.reviewed_at ?? b.created_at).getTime() -
         new Date(a.reviewed_at ?? a.created_at).getTime()
@@ -87,11 +108,19 @@ export class RecordEditHistoryComponent implements OnInit {
     for (const m of items) this.memberNameMap[m.id] = m.name;
   }
 
+  private static readonly HISTORY_STATUS_LABELS: Record<string, string> = {
+    active: '正常在籍', concurrent: '兼任', support: '支援',
+    hiatus: '活休', transferred: '移籍', graduated: '畢業', withdrawn: '脫退',
+  };
+
   resolveFieldValue(key: string, value: string): string {
     if (value === '—') return value;
     if (key === 'company_id') return this.companyNameMap[value] ?? value;
     if (key === 'group_id') return this.groupNameMap[value] ?? value;
     if (key === 'member_id') return this.memberNameMap[value] ?? value;
+    if (key === 'photo_status') return photographyStatusLabel(value as any, 'photo') || value;
+    if (key === 'video_status') return photographyStatusLabel(value as any, 'video') || value;
+    if (key === 'status') return RecordEditHistoryComponent.HISTORY_STATUS_LABELS[value] ?? value;
     return value;
   }
 
