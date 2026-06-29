@@ -93,6 +93,8 @@ async function run() {
   const staticRoutes = [
     '/',
     '/members',
+    '/groups',
+    '/companies',
     '/contributors',
     '/leaderboard',
     '/wanted',
@@ -132,6 +134,18 @@ async function run() {
     <lastmod>${buildDate}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+  </url>`,
+    `  <url>
+    <loc>${SITE_URL}/groups</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>`,
+    `  <url>
+    <loc>${SITE_URL}/companies</loc>
+    <lastmod>${buildDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>`,
     `  <url>
     <loc>${SITE_URL}/about</loc>

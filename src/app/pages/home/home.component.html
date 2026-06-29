@@ -673,6 +673,13 @@
           } @else if (displayedGroups.length === 0 && allGroups.length > 0) {
             <div style="padding:40px;text-align:center;font-style:italic;font-size:1rem;color:var(--text-secondary);">此分類暫無資料</div>
           }
+
+          <!-- Browse all -->
+          <div style="text-align:center;margin-top:28px;">
+            <a routerLink="/groups" class="home-browse-pill home-browse-pill--group">瀏覽全部 {{ groupCount }} 組團體
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+          </div>
         </section>
       }
 
@@ -810,6 +817,13 @@
                 }
               </div>
             }
+          </div>
+
+          <!-- Browse all -->
+          <div style="text-align:center;margin-top:28px;">
+            <a routerLink="/companies" class="home-browse-pill home-browse-pill--company">瀏覽全部 {{ companyCount }} 家公司
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
           </div>
         </section>
       }

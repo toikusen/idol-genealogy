@@ -34,6 +34,12 @@ const groupPageResolver = lazyResolver(() =>
 const companyPageResolver = lazyResolver(() =>
   import('./core/page-data.resolvers').then(m => m.companyPageResolver)
 );
+const groupsListResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.groupsListResolver)
+);
+const companiesListResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.companiesListResolver)
+);
 const leaderboardPageResolver = lazyResolver(() =>
   import('./core/page-data.resolvers').then(m => m.leaderboardPageResolver)
 );
@@ -76,6 +82,11 @@ export const routes: Routes = [
     matcher: handleMatcher,
     resolve: { pageData: memberPageResolver },
     loadComponent: () => import('./pages/member-page/member-page.component').then(m => m.MemberPageComponent)
+  },
+  {
+    path: 'groups',
+    resolve: { pageData: groupsListResolver },
+    loadComponent: () => import('./pages/groups-list/groups-list.component').then(m => m.GroupsListComponent)
   },
   {
     path: 'group/:id',
@@ -124,6 +135,11 @@ export const routes: Routes = [
       { path: '', redirectTo: 'members', pathMatch: 'full' },
       { path: '**', redirectTo: 'members' }
     ]
+  },
+  {
+    path: 'companies',
+    resolve: { pageData: companiesListResolver },
+    loadComponent: () => import('./pages/companies-list/companies-list.component').then(m => m.CompaniesListComponent)
   },
   {
     path: 'company/:id',
