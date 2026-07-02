@@ -35,9 +35,10 @@ function withNoIndexHeader(response: Response): Response {
   });
 }
 
-function withQueryNoIndexHeader(response: Response): Response {
+function withQueryNoIndexHeader(response: Response, cacheControl: string | null): Response {
   const headers = new Headers(response.headers);
   headers.set('X-Robots-Tag', 'noindex, follow');
+  if (cacheControl) headers.set('Cache-Control', cacheControl);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -94,7 +95,7 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
 
   const cacheControl = cacheControlForPath(url.pathname, response.status);
   if (isProductionHost && shouldNoIndexQueryUrl(url)) {
-    return withQueryNoIndexHeader(response);
+    return withQueryNoIndexHeader(response, cacheControl);
   }
   if (!cacheControl && isProductionHost) return response;
 

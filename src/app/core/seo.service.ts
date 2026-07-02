@@ -18,7 +18,7 @@ export class SeoService {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
-  setPage(pageTitle: string, description: string, url: string, image?: string): void {
+  setPage(pageTitle: string, description: string, url: string, image?: string, ogType = 'website'): void {
     const canonicalUrl = this.toAbsoluteUrl(url);
     const ogImage = image ? this.toAbsoluteUrl(image) : DEFAULT_OG_IMAGE;
     // Reset page-scoped SEO state so simple content pages do not inherit stale
@@ -27,6 +27,7 @@ export class SeoService {
     this.setRobotsNoIndex(false);
     this.title.setTitle(pageTitle);
     this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ property: 'og:type', content: ogType });
     this.meta.updateTag({ property: 'og:title', content: pageTitle });
     this.meta.updateTag({ property: 'og:description', content: description });
     this.meta.updateTag({ property: 'og:url', content: canonicalUrl });

@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { HistoryService } from '../../core/history.service';
@@ -29,7 +30,10 @@ export class MembersListComponent implements OnInit, OnDestroy {
 
   searchQuery = '';
   selectedGroupId = '';
+  /** Raw ?page= value from the URL; use `page` (clamped) for display/slicing */
   currentPage = 1;
+  private pageSub?: Subscription;
+  private pageInitialized = false;
   groupDropdownOpen = false;
   groupSearch = '';
   linksLoaded = false;
@@ -41,6 +45,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
     private historyService: HistoryService,
     private seo: SeoService,
     private route: ActivatedRoute,
+    private router: Router,
   ) {}
 
   async ngOnInit() {
@@ -51,6 +56,16 @@ export class MembersListComponent implements OnInit, OnDestroy {
       pageUrl
     );
     this.applySchemas();
+
+    this.pageSub = this.route.queryParamMap.subscribe(params => {
+      const page = Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1);
+      const changed = page !== this.currentPage;
+      this.currentPage = page;
+      if (this.pageInitialized && changed && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      this.pageInitialized = true;
+    });
 
     const pageData = this.route.snapshot.data['pageData'] as MembersListPageData | undefined;
     if (pageData && !pageData.error) {
@@ -75,6 +90,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.pageSub?.unsubscribe();
   }
 
   private applyPageData(
@@ -132,15 +148,20 @@ export class MembersListComponent implements OnInit, OnDestroy {
     return Math.max(1, Math.ceil(this.filteredMembers.length / PAGE_SIZE));
   }
 
+  /** currentPage clamped to the valid range (URL can carry an out-of-range value) */
+  get page(): number {
+    return Math.min(this.currentPage, this.totalPages);
+  }
+
   get pagedMembers(): Member[] {
-    const start = (this.currentPage - 1) * PAGE_SIZE;
+    const start = (this.page - 1) * PAGE_SIZE;
     return this.filteredMembers.slice(start, start + PAGE_SIZE);
   }
 
   get pageNumbers(): number[] {
     const total = this.totalPages;
     const window = 5;
-    let start = Math.max(1, this.currentPage - Math.floor(window / 2));
+    let start = Math.max(1, this.page - Math.floor(window / 2));
     let end = start + window - 1;
     if (end > total) { end = total; start = Math.max(1, end - window + 1); }
     const pages: number[] = [];
@@ -149,7 +170,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
   }
 
   onFilterChange() {
-    this.currentPage = 1;
+    if (this.currentPage !== 1) this.setPage(1);
   }
 
   get filteredGroupOptions(): Group[] {
@@ -181,8 +202,12 @@ export class MembersListComponent implements OnInit, OnDestroy {
 
   setPage(page: number) {
     if (page < 1 || page > this.totalPages) return;
-    this.currentPage = page;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // URL-driven pagination: the queryParamMap subscription updates currentPage and scrolls
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: page === 1 ? null : page },
+      queryParamsHandling: 'merge',
+    });
   }
 
   getInitial(m: Member): string {
