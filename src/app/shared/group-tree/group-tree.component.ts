@@ -90,10 +90,12 @@ interface FlatGroup {
     }
 
     <!-- Shared member card template -->
+    <!-- Cards are real <a href> so crawlers can reach member pages; plain click
+         still opens the in-page detail panel instead of navigating. -->
     <ng-template #memberCard let-node="node" let-dim="dim">
-      <button type="button"
+      <a [attr.href]="'/member/' + node.id"
            class="block w-full h-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
-           (click)="selectMember.emit(node.history!)"
+           (click)="onCardClick($event, node.history!)"
            [style.opacity]="dim ? '0.6' : '1'">
         <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm h-full
                     p-4 flex flex-col items-center justify-center text-center hover:-translate-y-1 transition-all duration-200">
@@ -115,7 +117,7 @@ interface FlatGroup {
             }
           </div>
         </div>
-      </button>
+      </a>
     </ng-template>
 
     <!-- Has teams: each team section with its own grid -->
@@ -134,9 +136,9 @@ interface FlatGroup {
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               @for (child of node.children || []; track child.id) {
-                <button type="button"
+                <a [attr.href]="'/member/' + child.id"
                      class="block w-full h-full p-0 text-left bg-transparent border-0 rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-200"
-                     (click)="selectMember.emit(child.history!)"
+                     (click)="onCardClick($event, child.history!)"
                      [style.opacity]="child.history?.left_at ? '0.65' : '1'">
                   <div class="gt-card backdrop-blur-sm rounded-2xl shadow-sm h-full
                               p-4 flex flex-col items-center justify-center text-center hover:-translate-y-1 transition-all duration-200">
@@ -160,7 +162,7 @@ interface FlatGroup {
                       </div>
                     }
                   </div>
-                </button>
+                </a>
               }
             </div>
           </div>
@@ -188,6 +190,13 @@ export class GroupTreeComponent implements OnChanges {
 
   ngOnChanges() {
     this.buildTree();
+  }
+
+  /** Plain click opens the detail panel; modified clicks keep native link behavior (new tab etc.) */
+  onCardClick(event: MouseEvent, history: History): void {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    this.selectMember.emit(history);
   }
 
   /** left_at 有值且日期已過才算離開；未來日期仍視為現役 */

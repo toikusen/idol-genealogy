@@ -231,6 +231,36 @@ for (const loc of toSample) {
 }
 if (htmlCheckErrors === 0) pass(`canonical + robots OK across all ${toSample.length} sampled pages`);
 
+// ─── 3b. Internal-link + hreflang regression guards ──────────────────────────
+
+section('── 3b. Internal links + hreflang ───────────────────');
+
+// Group pages must expose crawlable <a href="/member/..."> links (not JS-only
+// cards), otherwise most member pages become sitemap-only orphans.
+const sampledGroupPages = sample(groupUrls, SAMPLE_SIZE)
+  .map(urlToHtmlPath)
+  .filter(existsSync);
+const groupsWithMemberLinks = sampledGroupPages
+  .filter(p => /href="\/member\//.test(readFileSync(p, 'utf8')));
+if (sampledGroupPages.length > 0 && groupsWithMemberLinks.length === 0) {
+  fail('no sampled group page contains a crawlable link to a member page');
+} else {
+  pass(`${groupsWithMemberLinks.length}/${sampledGroupPages.length} sampled group pages link to member pages`);
+}
+
+// hreflang was removed site-wide (single-language site; the old static tag
+// pointed every page at the homepage, which is invalid).
+let hreflangErrors = 0;
+for (const loc of toSample) {
+  const htmlPath = urlToHtmlPath(loc);
+  if (!existsSync(htmlPath)) continue;
+  if (/hreflang=/.test(readFileSync(htmlPath, 'utf8'))) {
+    fail(`unexpected hreflang attribute in: ${relative(DIST, htmlPath)}`);
+    hreflangErrors++;
+  }
+}
+if (hreflangErrors === 0) pass('no hreflang attributes found');
+
 // ─── 4. Full link audit ───────────────────────────────────────────────────────
 
 section('── 4. Link audit (full scan) ────────────────────────');

@@ -353,7 +353,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       `${displayName} - Idol Maps`,
       description,
       siteUrl(groupPath(pageData.id)),
-      pageData.group.photo_url ?? undefined
+      pageData.group.photo_url ?? undefined,
+      'music.band'
     );
 
     const signals = groupIndexabilitySignals(pageData.group, pageData.histories.length);

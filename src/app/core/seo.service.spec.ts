@@ -77,6 +77,16 @@ describe('SeoService', () => {
     });
   });
 
+  it('setPage() defaults og:type to website', () => {
+    service.setPage('T', 'D', 'https://example.com/');
+    expect(metaSpy.updateTag).toHaveBeenCalledWith({ property: 'og:type', content: 'website' });
+  });
+
+  it('setPage() uses provided og:type', () => {
+    service.setPage('T', 'D', 'https://example.com/', undefined, 'profile');
+    expect(metaSpy.updateTag).toHaveBeenCalledWith({ property: 'og:type', content: 'profile' });
+  });
+
   it('setJsonLd() creates a new ld+json script tag when none exists', () => {
     const mockScript = { type: '', id: '', textContent: '' };
     mockDoc.createElement.and.returnValue(mockScript);

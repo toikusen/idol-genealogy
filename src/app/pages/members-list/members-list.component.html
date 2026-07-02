@@ -249,26 +249,28 @@
         <div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;">
 
           <button
-            (click)="setPage(currentPage - 1)"
-            [disabled]="currentPage === 1"
+            (click)="setPage(page - 1)"
+            [disabled]="page === 1"
             class="pagination-nav-btn"
-            [style.opacity]="currentPage === 1 ? '0.35' : '1'"
+            [style.opacity]="page === 1 ? '0.35' : '1'"
           >← 上一頁</button>
 
           @for (p of pageNumbers; track p) {
-            <button
-              (click)="setPage(p)"
+            <!-- Real links so crawlers can reach every page of the member list -->
+            <a
+              [routerLink]="[]"
+              [queryParams]="p === 1 ? {} : { page: p }"
               class="pagination-page-btn"
-              [class.pagination-page-btn--active]="p === currentPage"
-              [style.fontWeight]="p === currentPage ? '600' : '400'"
-            >{{ p }}</button>
+              [class.pagination-page-btn--active]="p === page"
+              [style.fontWeight]="p === page ? '600' : '400'"
+            >{{ p }}</a>
           }
 
           <button
-            (click)="setPage(currentPage + 1)"
-            [disabled]="currentPage === totalPages"
+            (click)="setPage(page + 1)"
+            [disabled]="page === totalPages"
             class="pagination-nav-btn"
-            [style.opacity]="currentPage === totalPages ? '0.35' : '1'"
+            [style.opacity]="page === totalPages ? '0.35' : '1'"
           >下一頁 →</button>
 
         </div>
@@ -278,7 +280,7 @@
           text-align: center; margin-top: 14px;
           font-size: 0.72rem; color: var(--text-faint-40);
           letter-spacing: 0.08em;
-        ">第 {{ currentPage }} 頁，共 {{ totalPages }} 頁・{{ filteredMembers.length }} 位成員</p>
+        ">第 {{ page }} 頁，共 {{ totalPages }} 頁・{{ filteredMembers.length }} 位成員</p>
       }
     }
 
