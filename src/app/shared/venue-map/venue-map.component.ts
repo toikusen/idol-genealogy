@@ -67,6 +67,20 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     ));
   }
 
+  /** Called by HomeComponent when a venue is expanded in the list */
+  focusVenue(venueId: string): void {
+    const marker = this.markers.get(venueId);
+    if (!marker || !this.map?.hasLayer(marker)) return;
+    this.map.panTo(marker.getLatLng());
+    this.openPopupVenueId = venueId;
+    marker.openPopup();
+    const el = marker.getElement()?.querySelector('.venue-marker') as HTMLElement | null;
+    if (!el) return;
+    el.classList.remove('venue-marker--focus');
+    void el.offsetWidth; // restart CSS animation on repeat clicks
+    el.classList.add('venue-marker--focus');
+  }
+
   private readonly MARKER_COLOR = '#4f46e5';
 
   private injectMarkerStyles(): void {
@@ -89,6 +103,13 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
         width:10px; height:10px; background:${this.MARKER_COLOR};
         transform:rotate(45deg);
         margin-top:-6px; z-index:0;
+      }
+      .venue-marker--focus .venue-marker__circle {
+        animation: venue-marker-pulse 1.2s ease-out 2;
+      }
+      @keyframes venue-marker-pulse {
+        0%   { box-shadow:0 0 0 0 rgba(79,70,229,0.45); }
+        100% { box-shadow:0 0 0 14px rgba(79,70,229,0); }
       }
     `;
     document.head.appendChild(style);

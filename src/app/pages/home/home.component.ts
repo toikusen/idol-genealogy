@@ -392,10 +392,14 @@ export class HomeComponent implements OnInit, OnDestroy {
     const venue = this.venues.find(v => v.id === venueId);
     if (!venue) return;
     this.trackVenueView(venue, 'map_popup');
+    await this.refreshVenuePopup(venue);
+  }
+
+  private async refreshVenuePopup(venue: Venue): Promise<void> {
     await this.loadVenueEvents(venue);
-    const events = this.venueEvents.get(venueId) ?? [];
-    const error  = this.venueEventsError.get(venueId) ?? '';
-    this.venueMapRef?.refreshPopup(venueId, events, error);
+    const events = this.venueEvents.get(venue.id) ?? [];
+    const error  = this.venueEventsError.get(venue.id) ?? '';
+    this.venueMapRef?.refreshPopup(venue.id, events, error);
   }
 
   onVenueProposalRequested(venueId: string): void {
@@ -427,8 +431,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.expandedVenueIds.delete(venue.id);
     } else {
       this.expandedVenueIds.add(venue.id);
+      this.venueMapRef?.focusVenue(venue.id);
       this.trackVenueView(venue, 'list_expand');
-      void this.loadVenueEvents(venue);
+      void this.refreshVenuePopup(venue);
     }
   }
 

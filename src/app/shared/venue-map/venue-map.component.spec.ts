@@ -46,6 +46,36 @@ describe('VenueMapComponent', () => {
     });
   });
 
+  describe('focusVenue', () => {
+    it('does nothing when the venue has no marker', () => {
+      expect(() => component.focusVenue('unknown')).not.toThrow();
+    });
+
+    it('pans to the marker, opens its popup, and adds the focus class', () => {
+      const markerEl = document.createElement('div');
+      markerEl.innerHTML = '<div class="venue-marker"></div>';
+      const marker = {
+        getLatLng: () => ({ lat: 25.04, lng: 121.51 }),
+        getElement: () => markerEl,
+        openPopup: jasmine.createSpy('openPopup'),
+      };
+      const map = {
+        hasLayer: () => true,
+        panTo: jasmine.createSpy('panTo'),
+        remove: () => {},
+      };
+      (component as any).map = map;
+      (component as any).markers.set('v1', marker);
+
+      component.focusVenue('v1');
+
+      expect(map.panTo).toHaveBeenCalledWith({ lat: 25.04, lng: 121.51 });
+      expect(marker.openPopup).toHaveBeenCalled();
+      expect((component as any).openPopupVenueId).toBe('v1');
+      expect(markerEl.querySelector('.venue-marker')!.classList).toContain('venue-marker--focus');
+    });
+  });
+
   describe('renderMarkers', () => {
     it('excludes venues without coordinates', async () => {
       component.venues = [
