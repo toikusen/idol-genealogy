@@ -304,16 +304,6 @@
               >⚑ 回報問題</button>
             </div>
 
-            <!-- Intro (mirrors meta description so crawlers get body text) -->
-            @if (pageDescription) {
-              <p style="
-                font-size: 0.82rem; line-height: 1.85;
-                color: var(--text-faint-60);
-                margin-top: 16px;
-                padding-left: 14px;
-              ">{{ pageDescription }}</p>
-            }
-
             <!-- Notes -->
             @if (member.notes) {
               <p style="
