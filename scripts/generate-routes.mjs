@@ -51,6 +51,16 @@ function shortText(value, fallback) {
   return text.length > 180 ? `${text.slice(0, 177)}...` : text;
 }
 
+// Google image sitemap extension — only absolute http(s) URLs are valid.
+function sitemapImage(entity) {
+  const url = typeof entity.photo_url === 'string' ? entity.photo_url.trim() : '';
+  if (!/^https?:\/\//.test(url)) return '';
+  return `
+    <image:image>
+      <image:loc>${escapeXml(url)}</image:loc>
+    </image:image>`;
+}
+
 function isTestName(value) {
   if (typeof value !== 'string') return false;
   const text = value.trim().toLowerCase();
@@ -60,7 +70,7 @@ function isTestName(value) {
 async function run() {
   const { data: members, error: membersError } = await supabase
     .from('members')
-    .select('id, name, updated_at, notes');
+    .select('id, name, updated_at, notes, photo_url');
   if (membersError) {
     console.error('Error fetching members:', membersError.message);
     process.exit(1);
@@ -68,7 +78,7 @@ async function run() {
 
   const { data: groups, error: groupsError } = await supabase
     .from('groups')
-    .select('id, name, updated_at');
+    .select('id, name, updated_at, photo_url');
   if (groupsError) {
     console.error('Error fetching groups:', groupsError.message);
     process.exit(1);
@@ -149,13 +159,13 @@ async function run() {
     <loc>${SITE_URL}/member/${m.id}</loc>
     <lastmod>${(m.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.8</priority>${sitemapImage(m)}
   </url>`),
     ...indexableGroups.map(g => `  <url>
     <loc>${SITE_URL}/group/${g.id}</loc>
     <lastmod>${(g.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.7</priority>${sitemapImage(g)}
   </url>`),
     ...indexableCompanies.map(c => `  <url>
     <loc>${SITE_URL}/company/${c.id}</loc>
@@ -166,7 +176,7 @@ async function run() {
   ];
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${urlEntries.join('\n')}
 </urlset>`;
 

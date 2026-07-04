@@ -329,7 +329,7 @@
                   outline: 2px solid rgba(232,121,160,0.2);
                   flex-shrink: 0;
                 " [style.outline-color]="group.color + '44'">
-                  <img [src]="group.photo_url | supabaseImg:280" [alt]="group.name" loading="lazy" style="
+                  <img [src]="group.photo_url | supabaseImg:280" [alt]="group.name" width="140" height="140" fetchpriority="high" style="
                     width: 100%; height: 100%; object-fit: cover;
                     display: block;
                   ">

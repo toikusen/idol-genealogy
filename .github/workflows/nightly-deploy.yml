@@ -1,0 +1,30 @@
+# Nightly Cloudflare Pages rebuild.
+#
+# Prerender pages + sitemap are generated at build time from Supabase, so new
+# members/groups/companies only become indexable after a deploy. This cron
+# guarantees at most a ~24h gap without any manual deploy.
+#
+# Setup (one-time, manual):
+#   1. Cloudflare Pages dashboard → idol-genealogy → Settings → Builds & deployments
+#      → Deploy hooks → Create (branch: master), copy the hook URL.
+#   2. GitHub repo → Settings → Secrets and variables → Actions
+#      → New secret: CF_PAGES_DEPLOY_HOOK_URL = <hook URL>.
+
+name: nightly-deploy
+
+on:
+  schedule:
+    - cron: '0 19 * * *' # 03:00 Asia/Taipei
+  workflow_dispatch:
+
+jobs:
+  trigger-pages-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cloudflare Pages deploy hook
+        run: |
+          if [ -z "${{ secrets.CF_PAGES_DEPLOY_HOOK_URL }}" ]; then
+            echo "::error::CF_PAGES_DEPLOY_HOOK_URL secret is not set — see comments in this workflow file"
+            exit 1
+          fi
+          curl --fail --silent --show-error -X POST "${{ secrets.CF_PAGES_DEPLOY_HOOK_URL }}"

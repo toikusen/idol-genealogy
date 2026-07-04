@@ -127,4 +127,42 @@ describe('SeoService', () => {
     expect(() => service.clearJsonLd()).not.toThrow();
     expect(mockHead.removeChild).not.toHaveBeenCalled();
   });
+
+  it('setEventsJsonLd() creates a #ld-json-events script with a @graph payload', () => {
+    const mockScript = { type: '', id: '', textContent: '' };
+    mockDoc.createElement.and.returnValue(mockScript);
+    mockHead.querySelector.and.returnValue(null);
+
+    const schemas = [{ '@type': 'MusicEvent', name: 'Live' }];
+    service.setEventsJsonLd(schemas);
+
+    expect(mockScript.id).toBe('ld-json-events');
+    expect(mockScript.type).toBe('application/ld+json');
+    expect(mockScript.textContent).toBe(JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': schemas,
+    }));
+    expect(mockHead.appendChild).toHaveBeenCalledWith(mockScript);
+  });
+
+  it('setEventsJsonLd() with an empty array only clears, never appends', () => {
+    const existingScript = { id: 'ld-json-events' };
+    mockHead.querySelector.and.returnValue(existingScript);
+
+    service.setEventsJsonLd([]);
+
+    expect(mockHead.removeChild).toHaveBeenCalledWith(existingScript);
+    expect(mockHead.appendChild).not.toHaveBeenCalled();
+  });
+
+  it('setPage() clears the events JSON-LD slot', () => {
+    const existingScript = { id: 'ld-json-events' };
+    mockHead.querySelector.and.callFake((selector: string) =>
+      selector === '#ld-json-events' ? existingScript : null
+    );
+
+    service.setPage('T', 'D', 'https://example.com/');
+
+    expect(mockHead.removeChild).toHaveBeenCalledWith(existingScript);
+  });
 });

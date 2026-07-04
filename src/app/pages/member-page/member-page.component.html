@@ -112,7 +112,9 @@
                     [src]="member.photo_url | supabaseImg:320"
                     [alt]="member.name"
                     class="member-portrait"
-                    loading="lazy"
+                    width="160"
+                    height="160"
+                    fetchpriority="high"
                   />
                 </button>
               } @else {

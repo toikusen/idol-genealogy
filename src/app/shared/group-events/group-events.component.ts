@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Group, Member, VenueCalendarEvent } from '../../models';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
 import { TimeTreeService } from '../../core/timetree.service';
+import { SeoService } from '../../core/seo.service';
 
 interface MergedEvent extends VenueCalendarEvent {
   groupNames: string[];
@@ -137,6 +138,7 @@ export class GroupEventsComponent implements OnChanges {
   constructor(
     private calendarService: GoogleCalendarService,
     private timetreeService: TimeTreeService,
+    private seo: SeoService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
     @Inject(PLATFORM_ID) platformId: object,
@@ -287,8 +289,37 @@ export class GroupEventsComponent implements OnChanges {
         this.mergedEvents = allEvents;
       }
 
+      this.seo.setEventsJsonLd(this.buildEventSchemas(allEvents, member));
+
       this.loading = false;
       this.cdr.markForCheck();
     });
+  }
+
+  /**
+   * MusicEvent JSON-LD for Google's event rich results. Only events with a
+   * location qualify — Google reports location-less Event schema as an error.
+   */
+  private buildEventSchemas(events: MergedEvent[], member: Member | null): object[] {
+    return events
+      .filter(e => !!e.location)
+      .slice(0, 20)
+      .map(e => {
+        const performers = e.groupNames.length > 0
+          ? e.groupNames.map(name => ({ '@type': 'MusicGroup', name }))
+          : member?.name
+            ? [{ '@type': 'Person', name: member.name }]
+            : [];
+        return {
+          '@type': 'MusicEvent',
+          name: e.title,
+          startDate: e.start,
+          ...(e.end && { endDate: e.end }),
+          eventStatus: 'https://schema.org/EventScheduled',
+          location: { '@type': 'Place', name: e.location, address: e.location },
+          ...(e.url && { url: e.url }),
+          ...(performers.length > 0 && { performer: performers }),
+        };
+      });
   }
 }
