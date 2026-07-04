@@ -20,8 +20,9 @@ function isDynamicEntityRoute(pathname: string): boolean {
 // index or report) non-production URLs. Enabled by setting UAT_BASIC_AUTH="user:pass"
 // in the Pages environment; when unset, behavior is unchanged.
 function basicAuthChallenge(expected: string | undefined, authHeader: string | null): Response | null {
-  if (!expected) return null;
-  if (authHeader === 'Basic ' + btoa(expected)) return null;
+  const want = expected?.trim();
+  if (!want) return null;
+  if (authHeader === 'Basic ' + btoa(want)) return null;
   return new Response('Authentication required', {
     status: 401,
     headers: {
