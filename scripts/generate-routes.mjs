@@ -93,6 +93,8 @@ async function run() {
   const staticRoutes = [
     '/',
     '/members',
+    '/groups',
+    '/companies',
     '/contributors',
     '/leaderboard',
     '/wanted',
@@ -120,79 +122,29 @@ async function run() {
 
   const buildDate = new Date().toISOString().slice(0, 10);
 
+  // Static pages carry no <lastmod>: stamping the build date on unchanged pages
+  // teaches Google to distrust lastmod site-wide. Entity pages use real updated_at.
+  const staticUrl = (path, changefreq, priority) => `  <url>
+    <loc>${SITE_URL}${path}</loc>
+    <changefreq>${changefreq}</changefreq>
+    <priority>${priority}</priority>
+  </url>`;
+
   const urlEntries = [
-    `  <url>
-    <loc>${SITE_URL}/</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>`,
-    `  <url>
-    <loc>${SITE_URL}/members</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>`,
-    `  <url>
-    <loc>${SITE_URL}/about</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>`,
-    `  <url>
-    <loc>${SITE_URL}/contributors</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>`,
-    `  <url>
-    <loc>${SITE_URL}/leaderboard</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>`,
-    `  <url>
-    <loc>${SITE_URL}/wanted</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>`,
-    `  <url>
-    <loc>${SITE_URL}/guide</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>`,
-    `  <url>
-    <loc>${SITE_URL}/learn</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>`,
-    ...KNOWLEDGE_ROUTES.map(route => `  <url>
-    <loc>${SITE_URL}${route}</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
-  </url>`),
-    `  <url>
-    <loc>${SITE_URL}/contact</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>`,
-    `  <url>
-    <loc>${SITE_URL}/privacy</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>`,
-    `  <url>
-    <loc>${SITE_URL}/terms</loc>
-    <lastmod>${buildDate}</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>`,
+    staticUrl('/', 'weekly', '1.0'),
+    staticUrl('/members', 'daily', '0.8'),
+    staticUrl('/groups', 'daily', '0.8'),
+    staticUrl('/companies', 'weekly', '0.7'),
+    staticUrl('/about', 'monthly', '0.5'),
+    staticUrl('/contributors', 'monthly', '0.5'),
+    staticUrl('/leaderboard', 'daily', '0.6'),
+    staticUrl('/wanted', 'weekly', '0.5'),
+    staticUrl('/guide', 'monthly', '0.5'),
+    staticUrl('/learn', 'monthly', '0.7'),
+    ...KNOWLEDGE_ROUTES.map(route => staticUrl(route, 'monthly', '0.75')),
+    staticUrl('/contact', 'monthly', '0.5'),
+    staticUrl('/privacy', 'yearly', '0.3'),
+    staticUrl('/terms', 'yearly', '0.3'),
     ...indexableMembers.map(m => `  <url>
     <loc>${SITE_URL}/member/${m.id}</loc>
     <lastmod>${(m.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>

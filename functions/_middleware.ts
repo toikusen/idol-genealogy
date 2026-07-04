@@ -16,6 +16,21 @@ function isDynamicEntityRoute(pathname: string): boolean {
   return /^\/(?:member|group|company)\/[^/]+\/?$/.test(pathname);
 }
 
+// Basic Auth for UAT/preview hosts so crawlers can never fetch (and thus never
+// index or report) non-production URLs. Enabled by setting UAT_BASIC_AUTH="user:pass"
+// in the Pages environment; when unset, behavior is unchanged.
+function basicAuthChallenge(expected: string | undefined, authHeader: string | null): Response | null {
+  if (!expected) return null;
+  if (authHeader === 'Basic ' + btoa(expected)) return null;
+  return new Response('Authentication required', {
+    status: 401,
+    headers: {
+      'WWW-Authenticate': 'Basic realm="Staging"',
+      'X-Robots-Tag': 'noindex, nofollow',
+    },
+  });
+}
+
 function robotsForNonProduction(): Response {
   return new Response('User-agent: *\nDisallow: /\n', {
     headers: {
@@ -35,9 +50,10 @@ function withNoIndexHeader(response: Response): Response {
   });
 }
 
-function withQueryNoIndexHeader(response: Response): Response {
+function withQueryNoIndexHeader(response: Response, cacheControl: string | null): Response {
   const headers = new Headers(response.headers);
   headers.set('X-Robots-Tag', 'noindex, follow');
+  if (cacheControl) headers.set('Cache-Control', cacheControl);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -73,6 +89,11 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
 
   const isProductionHost = url.hostname === PRODUCTION_HOST;
 
+  if (!isProductionHost) {
+    const challenge = basicAuthChallenge((env as any).UAT_BASIC_AUTH, request.headers.get('Authorization'));
+    if (challenge) return challenge;
+  }
+
   if (isProductionHost && shouldRedirectTrailingSlash(url.pathname)) {
     url.pathname = url.pathname.slice(0, -1);
     return Response.redirect(url.toString(), 301);
@@ -94,7 +115,7 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
 
   const cacheControl = cacheControlForPath(url.pathname, response.status);
   if (isProductionHost && shouldNoIndexQueryUrl(url)) {
-    return withQueryNoIndexHeader(response);
+    return withQueryNoIndexHeader(response, cacheControl);
   }
   if (!cacheControl && isProductionHost) return response;
 

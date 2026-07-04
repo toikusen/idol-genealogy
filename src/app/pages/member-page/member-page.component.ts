@@ -61,6 +61,8 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   companyName: string | null = null;
   companyId: string | null = null;
   adEligible = false;
+  /** Mirrors the meta description so the page has crawlable body text */
+  pageDescription = '';
   photographyBadgeColor = photographyBadgeColor;
   photographyBadgeTextColor = photographyBadgeTextColor;
   photographyBadgeBorderColor = photographyBadgeBorderColor;
@@ -232,6 +234,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd();
       this.adEligible = false;
+      this.pageDescription = '';
       this.activeGroups = [];
       this.snsUrls = { instagram: null, facebook: null, x: null, maid: null };
       return;
@@ -259,11 +262,13 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       ? `${nameStr}是台灣地下偶像，曾隸屬${groupParts.join('、')}。查看活動歷程、所屬團體與近期演出資訊。`
       : `${displayName}的完整資料，包含所屬團體、活動記錄與近期演出資訊。`;
 
+    this.pageDescription = description;
     this.seo.setPage(
       `${displayName} - Idol Maps`,
       description,
       siteUrl(memberPath(id)),
-      member.photo_url ?? undefined
+      member.photo_url ?? undefined,
+      'profile'
     );
 
     const signals = memberIndexabilitySignals(member, pageData.histories.length);

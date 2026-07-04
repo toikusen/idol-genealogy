@@ -45,6 +45,16 @@ export interface MembersListPageData {
   error: boolean;
 }
 
+export interface GroupsListPageData {
+  groups: Group[];
+  error: boolean;
+}
+
+export interface CompaniesListPageData {
+  companies: Company[];
+  error: boolean;
+}
+
 export interface MemberPageData {
   requestedId: string | null;
   requestedHandle: string | null;
@@ -270,6 +280,32 @@ export const membersListResolver: ResolveFn<MembersListPageData> = async () => {
     };
   } catch {
     return { members: [], groups: [], links: [], error: true };
+  }
+};
+
+export const groupsListResolver: ResolveFn<GroupsListPageData> = async () => {
+  const groupService = inject(GroupService);
+  try {
+    const groups = await groupService.getAll();
+    return {
+      groups: groups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord),
+      error: false,
+    };
+  } catch {
+    return { groups: [], error: true };
+  }
+};
+
+export const companiesListResolver: ResolveFn<CompaniesListPageData> = async () => {
+  const companyService = inject(CompanyService);
+  try {
+    const companies = await companyService.getAll();
+    return {
+      companies: companies.filter(isPublicCompanyRecord).map(sanitizePublicCompanyRecord),
+      error: false,
+    };
+  } catch {
+    return { companies: [], error: true };
   }
 };
 

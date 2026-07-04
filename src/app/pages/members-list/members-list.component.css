@@ -59,6 +59,8 @@
 
 .pagination-page-btn {
   width: 36px; height: 36px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  text-decoration: none;
   border: 1px solid rgba(232, 121, 160, 0.2);
   background: var(--bg-card);
   color: var(--text-secondary);
