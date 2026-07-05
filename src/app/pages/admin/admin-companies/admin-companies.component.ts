@@ -130,4 +130,8 @@ export class AdminCompaniesComponent implements OnInit, OnDestroy {
   getInitial(name: string): string {
     return name.charAt(0).toUpperCase();
   }
+
+  trackById(_index: number, item: { id: string }): string {
+    return item.id;
+  }
 }

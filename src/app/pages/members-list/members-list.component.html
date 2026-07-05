@@ -72,6 +72,14 @@
           </svg>
         </button>
 
+        @if (linksError) {
+          <button type="button" (click)="retryLinks()" style="
+            position:absolute; top:100%; left:0; margin-top:4px;
+            background:none; border:none; padding:0; cursor:pointer;
+            font-size:0.72rem; color:#c05080; text-decoration:underline;
+          ">重試</button>
+        }
+
         <!-- Dropdown panel -->
         @if (groupDropdownOpen) {
           <!-- Backdrop to close -->
@@ -165,15 +173,23 @@
       </div>
     }
 
+    <!-- Error -->
+    @if (!loading && loadError) {
+      <div style="text-align:center;padding:80px 0;">
+        <p style="font-size:1rem;color:rgba(200,80,80,0.75);margin-bottom:14px;">載入失敗，請重試</p>
+        <button type="button" (click)="retryLoad()" style="padding:8px 22px;border-radius:20px;border:1px solid rgba(232,121,160,0.35);background:transparent;color:var(--text-primary);font-size:0.85rem;letter-spacing:0.05em;cursor:pointer;">重試</button>
+      </div>
+    }
+
     <!-- Empty -->
-    @if (!loading && filteredMembers.length === 0) {
+    @if (!loading && !loadError && filteredMembers.length === 0) {
       <div style="text-align:center;padding:80px 0;">
         <p style="font-size:1rem;color:var(--text-faint-45);">查無結果</p>
       </div>
     }
 
     <!-- Grid -->
-    @if (!loading && filteredMembers.length > 0) {
+    @if (!loading && !loadError && filteredMembers.length > 0) {
       <div style="
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));

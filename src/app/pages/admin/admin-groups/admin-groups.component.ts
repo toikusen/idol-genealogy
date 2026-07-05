@@ -260,4 +260,8 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
       await this.load();
     } catch (e: any) { alert(e.message || '刪除失敗，請先刪除相關記錄。'); }
   }
+
+  trackById(_index: number, item: { id: string }): string {
+    return item.id;
+  }
 }

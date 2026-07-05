@@ -215,4 +215,12 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
       alert(e.message || '刪除失敗');
     }
   }
+
+  trackById(_index: number, item: { id: string }): string {
+    return item.id;
+  }
+
+  trackByMemberId(_index: number, group: { memberId: string }): string {
+    return group.memberId;
+  }
 }

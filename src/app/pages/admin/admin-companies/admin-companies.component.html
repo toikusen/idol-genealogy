@@ -24,7 +24,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
-        <tr *ngFor="let c of companies" class="hover:bg-gray-50 transition-colors">
+        <tr *ngFor="let c of companies; trackBy: trackById" class="hover:bg-gray-50 transition-colors">
           <td class="px-4 py-3">
             <img *ngIf="c.photo_url" [src]="c.photo_url" [alt]="c.name"
               class="w-8 h-8 rounded-full object-cover"/>
@@ -59,7 +59,7 @@
   <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-5">
       <h2 class="text-lg font-semibold text-gray-800">{{ isEdit ? '編輯公司' : '新增公司' }}</h2>
-      <button (click)="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1">
+      <button (click)="showModal = false" aria-label="關閉" class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>

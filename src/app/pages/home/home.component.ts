@@ -1,7 +1,8 @@
-import { Component, OnInit, OnDestroy, PLATFORM_ID, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, PLATFORM_ID, inject, ViewChild, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
@@ -25,6 +26,10 @@ import {
   sanitizePublicGroupRecord,
   sanitizePublicMemberRecord,
 } from '../../core/public-record.utils';
+
+type HomeTab = 'members' | 'groups' | 'companies' | 'events' | 'venues';
+const HOME_TABS: readonly HomeTab[] = ['members', 'groups', 'companies', 'events', 'venues'];
+const VENUE_REGION_FILTERS: readonly VenueRegionFilter[] = ['all', 'north', 'central', 'south'];
 
 @Component({
   selector: 'app-home',
@@ -68,11 +73,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   allSoloMembers: Member[] = [];
   topMembers: MemberRecentHeatEntry[] = [];
   topGroups: GroupRecentHeatEntry[] = [];
-  activeTab: 'members' | 'groups' | 'companies' | 'events' | 'venues' = 'members';
+  activeTab: HomeTab = 'members';
   private soloMembersLoaded = false;
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly venueService = inject(VenueService);
+  private readonly destroyRef = inject(DestroyRef);
   private destroyed = false;
 
   activeGroups: Group[] = [];
@@ -95,6 +101,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     private seo: SeoService,
     private analytics: AnalyticsService,
     private route: ActivatedRoute,
+    private router: Router,
   ) {}
 
   async ngOnInit() {
@@ -198,12 +205,39 @@ export class HomeComponent implements OnInit, OnDestroy {
       await this.search();
     }
 
+    // ?tab=/?region= are the single source of truth for the active tab and venue
+    // filter; subscribing (not snapshot) keeps the view in sync on back/forward.
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const tabParam = params.get('tab');
+      const tab: HomeTab = tabParam && (HOME_TABS as readonly string[]).includes(tabParam)
+        ? (tabParam as HomeTab)
+        : 'members';
+      if (tab !== this.activeTab) {
+        this.activeTab = tab;
+        void this.loadTabData(tab);
+      }
+      const regionParam = params.get('region');
+      this.activeVenueRegionFilter = regionParam && (VENUE_REGION_FILTERS as readonly string[]).includes(regionParam)
+        ? (regionParam as VenueRegionFilter)
+        : 'all';
+    });
   }
 
-  async setTab(tab: 'members' | 'groups' | 'companies' | 'events' | 'venues') {
+  async setTab(tab: HomeTab) {
     if (tab === this.activeTab) return;
+    // Apply optimistically for instant feedback; the queryParamMap subscription
+    // only kicks in when the URL changes underneath us (back/forward).
     this.activeTab = tab;
     this.analytics.trackEvent('home_tab_switch', { tab });
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'members' ? null : tab },
+      queryParamsHandling: 'merge',
+    });
+    await this.loadTabData(tab);
+  }
+
+  private async loadTabData(tab: HomeTab): Promise<void> {
     if (tab === 'groups' || tab === 'companies') {
       await this.ensureBrowseCatalog();
     }
@@ -376,7 +410,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   venuesNorth: Venue[] = [];
   venuesCentral: Venue[] = [];
   venuesSouth: Venue[] = [];
-  activeVenueRegionFilter: VenueRegionFilter = 'north';
+  activeVenueRegionFilter: VenueRegionFilter = 'all';
   readonly venueRegionFilters: { key: VenueRegionFilter; label: string }[] = [
     { key: 'all', label: '全部' },
     { key: 'north', label: '北部' },
@@ -386,6 +420,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   setVenueRegionFilter(filter: VenueRegionFilter) {
     this.activeVenueRegionFilter = filter;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { region: filter === 'all' ? null : filter },
+      queryParamsHandling: 'merge',
+    });
   }
 
   async onVenuePopupOpened(venueId: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { Component, Input, inject, signal } from '@angular/core';
+import { Component, Input, OnDestroy, inject, signal } from '@angular/core';
 import { FavoritesService } from '../../core/favorites.service';
 import { FavoriteEntityType } from '../../models';
 
@@ -6,20 +6,30 @@ import { FavoriteEntityType } from '../../models';
   selector: 'app-favorite-toggle',
   standalone: true,
   template: `
-    <button
-      (click)="toggle()"
-      [attr.aria-label]="isFav() ? '取消最愛' : '加入最愛'"
-      [class.is-fav]="isFav()"
-      [disabled]="loading()"
-      class="fav-btn"
-    >
-      {{ isFav() ? '♥' : '♡' }}
-    </button>
+    <div class="fav-wrap">
+      <button
+        (click)="toggle()"
+        [attr.aria-label]="isFav() ? '取消最愛' : '加入最愛'"
+        [class.is-fav]="isFav()"
+        [disabled]="loading()"
+        class="fav-btn"
+      >
+        {{ isFav() ? '♥' : '♡' }}
+      </button>
+      @if (errorMessage()) {
+        <span class="fav-error" role="status">{{ errorMessage() }}</span>
+      }
+    </div>
   `,
   styles: [`
+    .fav-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
     .fav-btn {
-      width: 32px;
-      height: 32px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -33,6 +43,19 @@ import { FavoriteEntityType } from '../../models';
       transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
+    }
+
+    .fav-error {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      white-space: nowrap;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(200, 70, 70, 0.92);
+      color: #fff;
+      z-index: 5;
     }
 
     .fav-btn.is-fav {
@@ -56,12 +79,14 @@ import { FavoriteEntityType } from '../../models';
     }
   `],
 })
-export class FavoriteToggleComponent {
+export class FavoriteToggleComponent implements OnDestroy {
   @Input({ required: true }) entityType!: FavoriteEntityType;
   @Input({ required: true }) entityId!: string;
 
   private favService = inject(FavoritesService);
   readonly loading = signal(false);
+  readonly errorMessage = signal('');
+  private errorTimer?: ReturnType<typeof setTimeout>;
 
   isFav(): boolean {
     return this.favService.isFavorite(this.entityType, this.entityId);
@@ -70,14 +95,29 @@ export class FavoriteToggleComponent {
   async toggle(): Promise<void> {
     if (this.loading()) return;
     this.loading.set(true);
+    this.errorMessage.set('');
+    const wasFav = this.isFav();
     try {
-      if (this.isFav()) {
+      if (wasFav) {
         await this.favService.remove(this.entityType, this.entityId);
       } else {
         await this.favService.add(this.entityType, this.entityId);
       }
+    } catch {
+      // Service already rolls back the optimistic update; just surface feedback.
+      this.showError(wasFav ? '移除最愛失敗，請重試' : '加入最愛失敗，請重試');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private showError(message: string): void {
+    if (this.errorTimer) clearTimeout(this.errorTimer);
+    this.errorMessage.set(message);
+    this.errorTimer = setTimeout(() => this.errorMessage.set(''), 3000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.errorTimer) clearTimeout(this.errorTimer);
   }
 }

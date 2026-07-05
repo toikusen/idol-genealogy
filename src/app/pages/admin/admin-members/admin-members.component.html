@@ -24,7 +24,7 @@
   <!-- Edit history write warning -->
   <div *ngIf="saveWarning" class="mb-4 flex items-center justify-between gap-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
     <span>{{ saveWarning }}</span>
-    <button (click)="saveWarning = ''" class="text-amber-500 hover:text-amber-700 leading-none">✕</button>
+    <button (click)="saveWarning = ''" aria-label="關閉" class="text-amber-500 hover:text-amber-700 leading-none">✕</button>
   </div>
 
   <!-- Search -->
@@ -57,7 +57,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
-        <tr *ngFor="let m of paginatedMembers" class="hover:bg-gray-50 transition-colors">
+        <tr *ngFor="let m of paginatedMembers; trackBy: trackById" class="hover:bg-gray-50 transition-colors">
           <td class="px-4 py-3">
             <div class="relative inline-block">
               <img
@@ -161,7 +161,7 @@
   <div *ngIf="totalPages > 1" class="flex items-center justify-between mt-4 text-sm text-gray-500">
     <span>共 {{ filteredMembers.length }} 筆，第 {{ currentPage }} / {{ totalPages }} 頁</span>
     <div class="flex items-center gap-1">
-      <button (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1"
+      <button (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1" aria-label="上一頁"
         class="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">‹</button>
       <button *ngIf="pageNumbers[0] > 1" (click)="setPage(1)"
         class="px-2.5 py-1 rounded hover:bg-gray-100 transition-colors">1</button>
@@ -173,7 +173,7 @@
       <span *ngIf="pageNumbers[pageNumbers.length - 1] < totalPages - 1" class="px-1">…</span>
       <button *ngIf="pageNumbers[pageNumbers.length - 1] < totalPages" (click)="setPage(totalPages)"
         class="px-2.5 py-1 rounded hover:bg-gray-100 transition-colors">{{ totalPages }}</button>
-      <button (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages"
+      <button (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages" aria-label="下一頁"
         class="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">›</button>
     </div>
   </div>
@@ -191,7 +191,7 @@
       <h2 class="text-lg font-semibold text-gray-800">
       {{ isEdit ? '編輯成員' : '新增成員' }}
       </h2>
-      <button (click)="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1">
+      <button (click)="showModal = false" aria-label="關閉" class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>

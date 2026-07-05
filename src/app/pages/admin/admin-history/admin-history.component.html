@@ -13,7 +13,7 @@
   <!-- Edit history write warning -->
   <div *ngIf="saveWarning" class="mb-4 flex items-center justify-between gap-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
     <span>{{ saveWarning }}</span>
-    <button (click)="saveWarning = ''" class="text-amber-500 hover:text-amber-700 leading-none">✕</button>
+    <button (click)="saveWarning = ''" aria-label="關閉" class="text-amber-500 hover:text-amber-700 leading-none">✕</button>
   </div>
 
   <!-- Search + Filters -->
@@ -42,7 +42,7 @@
 
   <!-- Grouped list -->
   <div *ngIf="!loading && groupedHistories.length > 0" class="space-y-4">
-    <div *ngFor="let group of groupedHistories" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div *ngFor="let group of groupedHistories; trackBy: trackByMemberId" class="bg-white rounded-lg shadow-sm overflow-hidden">
 
       <!-- Member header -->
       <div class="flex items-center gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
@@ -65,7 +65,7 @@
           <col class="w-24"/>
         </colgroup>
         <tbody class="divide-y divide-gray-50">
-          <tr *ngFor="let h of group.records" class="hover:bg-gray-50 transition-colors">
+          <tr *ngFor="let h of group.records; trackBy: trackById" class="hover:bg-gray-50 transition-colors">
             <td class="px-4 py-2.5">
               <span *ngIf="h.group?.color" class="inline-block w-2.5 h-2.5 rounded-full" [style.background-color]="h.group!.color"></span>
             </td>
@@ -127,7 +127,7 @@
       <h2 class="text-lg font-semibold text-gray-800">
         {{ isEdit ? '編輯記錄' : '新增記錄' }}
       </h2>
-      <button (click)="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1">
+      <button (click)="showModal = false" aria-label="關閉" class="text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>

@@ -256,4 +256,8 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
       alert(e.message || '刪除失敗，請先刪除相關歷史記錄。');
     }
   }
+
+  trackById(_index: number, item: { id: string }): string {
+    return item.id;
+  }
 }

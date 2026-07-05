@@ -27,6 +27,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
   private groupMemberIds = new Map<string, Set<string>>();
   private isDestroyed = false;
   loading = true;
+  loadError = false;
 
   searchQuery = '';
   selectedGroupId = '';
@@ -75,6 +76,21 @@ export class MembersListComponent implements OnInit, OnDestroy {
       return;
     }
 
+    await this.fetchMembers();
+  }
+
+  ngOnDestroy() {
+    this.isDestroyed = true;
+    this.pageSub?.unsubscribe();
+  }
+
+  async retryLoad() {
+    this.loading = true;
+    await this.fetchMembers();
+  }
+
+  private async fetchMembers(): Promise<void> {
+    this.loadError = false;
     try {
       const [members, groups] = await Promise.all([
         this.memberService.getAll(),
@@ -83,14 +99,12 @@ export class MembersListComponent implements OnInit, OnDestroy {
       if (this.isDestroyed) return;
       this.applyPageData(members, groups, []);
       void this.loadGroupLinks(members, groups);
+    } catch {
+      if (this.isDestroyed) return;
+      this.loadError = true;
     } finally {
       this.loading = false;
     }
-  }
-
-  ngOnDestroy() {
-    this.isDestroyed = true;
-    this.pageSub?.unsubscribe();
   }
 
   private applyPageData(
@@ -108,6 +122,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
       this.groupMemberIds.get(group_id)!.add(member_id);
     }
     this.applySchemas();
+    this.recomputeFilteredMembers();
   }
 
   private async loadGroupLinks(members: Member[], groups: Group[]): Promise<void> {
@@ -118,6 +133,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
       if (this.isDestroyed) return;
       this.applyPageData(members, groups, links);
       this.linksLoaded = true;
+      this.recomputeFilteredMembers();
     } catch {
       if (this.isDestroyed) return;
       this.linksLoaded = false;
@@ -129,10 +145,13 @@ export class MembersListComponent implements OnInit, OnDestroy {
     }
   }
 
-  get filteredMembers(): Member[] {
+  /** Cached result of the member/search/group filter; recomputed only when an input changes (see `onFilterChange`/`applyPageData`) instead of on every CD cycle. */
+  private _filteredMembers: Member[] = [];
+
+  private recomputeFilteredMembers(): void {
     const q = this.searchQuery.trim().toLowerCase();
     const groupSet = this.selectedGroupId ? this.groupMemberIds.get(this.selectedGroupId) : null;
-    return this.allMembers.filter(m => {
+    this._filteredMembers = this.allMembers.filter(m => {
       const matchSearch = !q ||
         m.name.toLowerCase().includes(q) ||
         (m.name_hiragana ?? '').toLowerCase().includes(q) ||
@@ -142,6 +161,10 @@ export class MembersListComponent implements OnInit, OnDestroy {
       const matchGroup = !this.selectedGroupId || (this.linksLoaded && !!groupSet && groupSet.has(m.id));
       return matchSearch && matchGroup;
     });
+  }
+
+  get filteredMembers(): Member[] {
+    return this._filteredMembers;
   }
 
   get totalPages(): number {
@@ -170,6 +193,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
   }
 
   onFilterChange() {
+    this.recomputeFilteredMembers();
     if (this.currentPage !== 1) this.setPage(1);
   }
 
@@ -191,6 +215,11 @@ export class MembersListComponent implements OnInit, OnDestroy {
     if (this.linksError) return '團體篩選暫不可用';
     if (!this.linksLoaded) return '載入中…';
     return this.selectedGroupName;
+  }
+
+  retryLinks(): void {
+    if (!this.linksError) return;
+    void this.loadGroupLinks(this.allMembers, this.allGroups);
   }
 
   selectGroup(id: string) {

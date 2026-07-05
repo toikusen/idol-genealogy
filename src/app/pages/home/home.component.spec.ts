@@ -1,6 +1,7 @@
 // src/app/pages/home/home.component.spec.ts
 import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
 import { HomeComponent } from './home.component';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
@@ -82,6 +83,7 @@ describe('HomeComponent', () => {
               data: { pageData },
               queryParamMap: { get: () => null },
             },
+            queryParamMap: of(convertToParamMap({})),
           },
         },
         { provide: SeoService, useValue: { setPage: jasmine.createSpy(), setJsonLd: jasmine.createSpy(), setJsonLdGraph: jasmine.createSpy() } },

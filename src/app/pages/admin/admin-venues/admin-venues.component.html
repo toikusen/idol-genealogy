@@ -22,7 +22,7 @@
   @if (batchResult) {
     <div class="mb-4 px-4 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700 flex items-center justify-between">
       <span>{{batchResult}}</span>
-      <button type="button" (click)="batchResult = ''" class="ml-4 text-blue-400 hover:text-blue-600">✕</button>
+      <button type="button" (click)="batchResult = ''" aria-label="關閉" class="ml-4 text-blue-400 hover:text-blue-600">✕</button>
     </div>
   }
 

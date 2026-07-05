@@ -23,7 +23,19 @@ export class LoginComponent {
     });
   }
 
+  signingIn = false;
+  signInError = '';
+
   async signIn() {
-    await this.supabase.signInWithGoogle();
+    if (this.signingIn) return;
+    this.signingIn = true;
+    this.signInError = '';
+    try {
+      await this.supabase.signInWithGoogle();
+    } catch {
+      this.signInError = '登入失敗，請稍後再試';
+    } finally {
+      this.signingIn = false;
+    }
   }
 }
