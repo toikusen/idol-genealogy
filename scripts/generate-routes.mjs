@@ -4,7 +4,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { writeFileSync } from 'fs';
-import WebSocket from 'ws';
 const SITE_URL = 'https://idolmaps.com';
 
 // Cloudflare Pages sets CF_PAGES_BRANCH automatically on every build.
@@ -20,9 +19,7 @@ if (cfBranch && cfBranch !== PRODUCTION_BRANCH) {
 const SUPABASE_URL = process.env['SUPABASE_URL'] ?? 'https://ziiagdrrytyrmzoeegjk.supabase.co';
 const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'] ?? 'sb_publishable_PtKb4LIJeJN3cECUJllW7w_UFRVTbTv';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  realtime: { transport: WebSocket },
-});
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const KNOWLEDGE_ROUTES = [
   '/learn/how-to-read-idol-history',

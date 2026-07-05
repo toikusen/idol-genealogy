@@ -124,11 +124,6 @@ export interface TeamMember {
   updated_at: string;
 }
 
-export interface SearchResult {
-  members: Member[];
-  groups: Group[];
-}
-
 export interface UserRole {
   id: string;
   email: string;
@@ -297,17 +292,6 @@ export interface UserFavorite {
   entity_type: FavoriteEntityType;
   entity_id: string;
   created_at: string;
-}
-
-export interface FeedItem {
-  id: string;
-  entity_type: FavoriteEntityType;
-  entity_id: string;
-  entity_name: string;
-  event_type: 'event' | 'song' | 'member_change';
-  title: string;
-  occurred_at: string;
-  url?: string;
 }
 
 export interface NotificationPrefs {

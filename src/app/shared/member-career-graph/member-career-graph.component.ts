@@ -196,8 +196,7 @@ export class MemberCareerGraphComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (!changes['histories'] && !changes['fallbackName']) return;
-    const { nodes } = buildCareerGraph(this.histories, this.fallbackName);
-    this.nodes = nodes;
+    this.nodes = buildCareerGraph(this.histories, this.fallbackName);
   }
 
   navigate(path: string) {
