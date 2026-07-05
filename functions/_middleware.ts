@@ -16,13 +16,22 @@ function isDynamicEntityRoute(pathname: string): boolean {
   return /^\/(?:member|group|company)\/[^/]+\/?$/.test(pathname);
 }
 
+// Constant-time string comparison to avoid leaking credential info via response timing.
+function timingSafeEqual(a: string, b: string): boolean {
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return diff === 0;
+}
+
 // Basic Auth for UAT/preview hosts so crawlers can never fetch (and thus never
 // index or report) non-production URLs. Enabled by setting UAT_BASIC_AUTH="user:pass"
 // in the Pages environment; when unset, behavior is unchanged.
 function basicAuthChallenge(expected: string | undefined, authHeader: string | null): Response | null {
   const want = expected?.trim();
   if (!want) return null;
-  if (authHeader === 'Basic ' + btoa(want)) return null;
+  if (authHeader && timingSafeEqual(authHeader, 'Basic ' + btoa(want))) return null;
   return new Response('Authentication required', {
     status: 401,
     headers: {

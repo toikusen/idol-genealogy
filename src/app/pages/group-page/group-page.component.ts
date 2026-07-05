@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, DestroyRef, HostListener } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -63,7 +64,7 @@ interface GanttRow {
   templateUrl: './group-page.component.html',
   styleUrl: './group-page.component.css',
 })
-export class GroupPageComponent implements OnInit, OnDestroy {
+export class GroupPageComponent implements OnInit {
   group: Group | null = null;
   eventGroups: Group[] = [];
   companyName: string | null = null;
@@ -159,8 +160,10 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   tooltipHistory: History | null = null;
   tooltipX = 0;
   tooltipY = 0;
+  selectedBarId: string | null = null;
   private _routeSub?: Subscription;
   private currentLoadId: string | null = null;
+  deletingSongId: string | null = null;
 
   private getCarouselVisibleCount(): number {
     return typeof window !== 'undefined' && window.innerWidth >= 768 ? 5 : 2;
@@ -179,6 +182,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private historyService: HistoryService,
     private memberService: MemberService,
     private companyService: CompanyService,
+    private destroyRef: DestroyRef,
   ) {}
 
   @HostListener('window:resize')
@@ -211,19 +215,19 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.carouselVisibleCount = this.getCarouselVisibleCount();
-    this.supabaseAuth.authState$.subscribe(s => {
+    this.supabaseAuth.authState$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(s => {
       this.isLoggedIn = !!s?.user;
       this.currentUserId = s?.user?.id ?? null;
     });
-    this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
-    this._routeSub = this.route.data.subscribe(({ pageData }) => {
+    this.adminRole.isAdmin$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(v => { this.isAdmin = v; });
+    this._routeSub = this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ pageData }) => {
       const data = pageData as GroupPageData;
       this.applyPageData(data);
       if (data.group && !data.error) {
         this.loadDeferredData(data.id, data.group);
       }
     });
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['propose'] === 'true') {
         this.showGroupProposalPanel = true;
       }
@@ -236,14 +240,12 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         window.history.replaceState(window.history.state, '', currentUrl.href);
       }
     });
-    this.route.fragment.subscribe(fragment => {
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fragment => {
       if (fragment === 'propose') {
         this.showGroupProposalPanel = true;
       }
     });
   }
-
-  ngOnDestroy() { this._routeSub?.unsubscribe(); }
 
   private async loadDeferredData(id: string, group: import('../../models').Group): Promise<void> {
     this.currentLoadId = id;
@@ -639,13 +641,17 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   }
 
   async deleteSong(song: GroupSong) {
+    if (this.deletingSongId) return;
     if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
+    this.deletingSongId = song.id;
     try {
       await this.groupSongService.delete(song.id);
       await this.proposalService.recordDirectEdit('group_songs', song.id, song, {}, 'DELETE').catch(() => {});
       this.songs = this.songs.filter(s => s.id !== song.id);
     } catch (e: any) {
       alert(e.message ?? '刪除失敗');
+    } finally {
+      this.deletingSongId = null;
     }
   }
 
@@ -714,7 +720,22 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   }
 
   onBarMouseLeave() {
-    this.tooltipHistory = null;
+    if (!this.selectedBarId) {
+      this.tooltipHistory = null;
+    }
+  }
+
+  /** Touch/click support: tapping a bar toggles its tooltip since touch devices have no hover. */
+  onBarClick(event: MouseEvent, history: History) {
+    if (this.selectedBarId === history.id) {
+      this.selectedBarId = null;
+      this.tooltipHistory = null;
+      return;
+    }
+    this.selectedBarId = history.id;
+    this.tooltipHistory = history;
+    this.tooltipX = event.clientX;
+    this.tooltipY = event.clientY;
   }
 
   hexToRgb(hex: string): string {

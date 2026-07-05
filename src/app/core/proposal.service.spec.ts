@@ -72,6 +72,56 @@ describe('ProposalService', () => {
     expect(count).toBe(0);
   });
 
+  describe('submit() anonymous rate limit', () => {
+    const anonymousProposal = {
+      table_name: 'members' as const,
+      record_id: 'uuid-123',
+      operation: 'UPDATE' as const,
+      proposed_data: { name: 'Test' },
+      original_data: { name: 'Old' },
+      submitter_name: 'Tester',
+      submitter_id: null,
+      submitter_email: null,
+      submitter_note: null,
+    };
+
+    function mockRateLimitResult(result: { count?: number | null; error?: any }) {
+      mockDb.from = jasmine.createSpy('from').and.callFake((table: string) => {
+        if (table === 'proposals') {
+          return {
+            insert: insertSpy,
+            select: jasmine.createSpy('select').and.returnValue({
+              eq: jasmine.createSpy('eq').and.returnValue({
+                is: jasmine.createSpy('is').and.returnValue({
+                  gte: jasmine.createSpy('gte').and.returnValue(Promise.resolve(result)),
+                }),
+              }),
+            }),
+          };
+        }
+        return {};
+      });
+    }
+
+    it('throws a rate-limit error when count >= 5', async () => {
+      mockRateLimitResult({ count: 5, error: null });
+      await expectAsync(service.submit(anonymousProposal)).toBeRejectedWithError('送出過於頻繁，請稍後再試');
+      expect(insertSpy).not.toHaveBeenCalled();
+    });
+
+    it('fails closed and throws when the rate-limit query errors', async () => {
+      mockRateLimitResult({ count: undefined, error: { message: 'db error' } });
+      await expectAsync(service.submit(anonymousProposal)).toBeRejectedWithError('目前無法送出，請稍後再試');
+      expect(insertSpy).not.toHaveBeenCalled();
+    });
+
+    it('calls insert when count < 5', async () => {
+      mockRateLimitResult({ count: 2, error: null });
+      await service.submit(anonymousProposal);
+      expect(insertSpy).toHaveBeenCalledWith(anonymousProposal);
+    });
+  });
+
   describe('getApprovedByRecord', () => {
     it('should call rpc with correct params and return proposals', async () => {
       mockDb.rpc = jasmine.createSpy('rpc').and.returnValue(

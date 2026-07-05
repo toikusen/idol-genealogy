@@ -20,12 +20,16 @@ export class ProposalService {
   async submit(proposal: Omit<Proposal, 'id' | 'status' | 'created_at' | 'reviewed_at' | 'reviewed_by' | 'reviewer_note' | 'reviewed_data'>): Promise<void> {
     // Client-side rate limit: anonymous users, max 5 proposals per 10 min
     if (!proposal.submitter_id) {
-      const { count } = await this.db
+      const { count, error: rateLimitError } = await this.db
         .from('proposals')
         .select('*', { count: 'exact', head: true })
         .eq('submitter_name', proposal.submitter_name)
         .is('submitter_id', null)
         .gte('created_at', new Date(Date.now() - 10 * 60 * 1000).toISOString());
+      // Fail closed: if we can't verify the rate limit, don't let the submission through.
+      if (rateLimitError) {
+        throw new Error('目前無法送出，請稍後再試');
+      }
       if ((count ?? 0) >= 5) {
         throw new Error('送出過於頻繁，請稍後再試');
       }

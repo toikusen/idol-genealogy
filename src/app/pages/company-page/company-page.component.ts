@@ -1,5 +1,6 @@
 // src/app/pages/company-page/company-page.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -89,27 +90,27 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     private seo: SeoService,
     private proposalService: ProposalService,
     private analytics: AnalyticsService,
+    private destroyRef: DestroyRef,
   ) {}
 
   ngOnDestroy() {
-    this.routeDataSub?.unsubscribe();
     this.seo.clearJsonLd?.();
   }
 
   ngOnInit() {
-    this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
+    this.routeDataSub = this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ pageData }) => {
       const data = pageData as CompanyPageData;
       this.applyPageData(data);
       if (data.company && !data.error) {
         this.loadDeferredData(data.id);
       }
     });
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['propose'] === 'true') {
         this.showProposalPanel = true;
       }
     });
-    this.route.fragment.subscribe(fragment => {
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fragment => {
       if (fragment === 'propose') {
         this.showProposalPanel = true;
       }

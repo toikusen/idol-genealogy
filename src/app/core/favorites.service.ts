@@ -35,11 +35,18 @@ export class FavoritesService {
     const [groupRes, memberRes] = await Promise.all([
       groupIds.length
         ? this.db.from('groups').select('id').in('id', groupIds)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
       memberIds.length
         ? this.db.from('members').select('id').in('id', memberIds)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [], error: null }),
     ]);
+
+    // A failed live-check must not be mistaken for "everything was deleted",
+    // or we would wipe the user's favorites. Skip pruning entirely on error.
+    if (groupRes.error || memberRes.error) {
+      console.error('Skipping favorites prune; live-check query failed', groupRes.error ?? memberRes.error);
+      return favs;
+    }
 
     const liveGroups = new Set((groupRes.data ?? []).map((r: { id: string }) => r.id));
     const liveMembers = new Set((memberRes.data ?? []).map((r: { id: string }) => r.id));
@@ -50,14 +57,24 @@ export class FavoritesService {
     );
 
     if (stale.length > 0) {
-      // Fire-and-forget: clean up stale rows; don't block the UI
-      stale.forEach(f => {
-        void this.db.from('user_favorites')
-          .delete()
-          .eq('user_id', userId)
-          .eq('entity_type', f.entity_type)
-          .eq('entity_id', f.entity_id);
-      });
+      // Clean up stale rows, grouped by entity_type to keep it to one DELETE per type.
+      const staleIdsByType = new Map<FavoriteEntityType, string[]>();
+      for (const f of stale) {
+        const ids = staleIdsByType.get(f.entity_type) ?? [];
+        ids.push(f.entity_id);
+        staleIdsByType.set(f.entity_type, ids);
+      }
+
+      await Promise.all(
+        Array.from(staleIdsByType.entries()).map(async ([entityType, ids]) => {
+          const { error } = await this.db.from('user_favorites')
+            .delete()
+            .eq('user_id', userId)
+            .eq('entity_type', entityType)
+            .in('entity_id', ids);
+          if (error) console.error('Failed to prune stale favorites', entityType, error);
+        })
+      );
     }
 
     return favs.filter(f =>

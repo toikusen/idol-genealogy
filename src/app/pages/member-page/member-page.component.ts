@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -41,7 +42,7 @@ import {
   templateUrl: './member-page.component.html',
   styleUrl: './member-page.component.css',
 })
-export class MemberPageComponent implements OnInit, OnDestroy {
+export class MemberPageComponent implements OnInit {
   member: Member | null = null;
   histories: History[] = [];
   activeGroups: Group[] = [];
@@ -89,6 +90,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   songReportSubmitting = false;
   songReportError = '';
   songReportDone = false;
+  deletingSongId: string | null = null;
   private routeDataSub?: Subscription;
   private currentLoadId: string | null = null;
 
@@ -142,22 +144,23 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     private supabaseAuth: SupabaseService,
     private adminRole: AdminRoleService,
     private groupService: GroupService,
+    private destroyRef: DestroyRef,
   ) {}
 
   async ngOnInit() {
-    this.supabaseAuth.authState$.subscribe(s => {
+    this.supabaseAuth.authState$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(s => {
       this.isLoggedIn = !!s?.user;
       this.currentUserId = s?.user?.id ?? null;
     });
-    this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
-    this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
+    this.adminRole.isAdmin$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(v => { this.isAdmin = v; });
+    this.routeDataSub = this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ pageData }) => {
       const data = pageData as MemberPageData;
       this.applyPageData(data);
       if (data.member && !data.error) {
         this.loadDeferredData(data.member.id);
       }
     });
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['propose'] === 'true') {
         this.showProposalPanel = true;
       }
@@ -165,15 +168,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         this.pendingEditSongId = params['editSongId'];
       }
     });
-    this.route.fragment.subscribe(fragment => {
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fragment => {
       if (fragment === 'propose') {
         this.showProposalPanel = true;
       }
     });
-  }
-
-  ngOnDestroy() {
-    this.routeDataSub?.unsubscribe();
   }
 
   private async loadDeferredData(memberId: string): Promise<void> {
@@ -405,13 +404,17 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   }
 
   async deleteSong(song: MemberSong) {
+    if (this.deletingSongId) return;
     if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
+    this.deletingSongId = song.id;
     try {
       await this.memberSongService.delete(song.id);
       await this.proposalService.recordDirectEdit('member_songs', song.id, song, {}, 'DELETE').catch(() => {});
       this.memberSongs = this.memberSongs.filter(s => s.id !== song.id);
     } catch (e: any) {
       alert(e.message ?? '刪除失敗');
+    } finally {
+      this.deletingSongId = null;
     }
   }
 

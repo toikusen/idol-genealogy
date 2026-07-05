@@ -285,7 +285,9 @@ export class AdminAuditLogComponent implements OnInit {
   async ngOnInit() {
     const role = await this.adminRole.getCurrentRole();
     this.currentUserEmail = role?.email ?? '';
-    this.isEditorOnly = role?.role === 'editor';
+    // Fail closed: a null role (no role OR role lookup failure) must not unlock
+    // the edit/revert actions on other people's records.
+    this.isEditorOnly = role?.role !== 'admin' && role?.role !== 'superadmin';
 
     await this.loadLookupData();
     await this.load();

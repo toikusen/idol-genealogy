@@ -662,7 +662,7 @@
                         <button type="button" (click)="openEditSong(song)" class="song-action-btn song-action-btn--edit">
                           編輯
                         </button>
-                        <button type="button" (click)="deleteSong(song)" class="song-action-btn song-action-btn--danger">
+                        <button type="button" (click)="deleteSong(song)" [disabled]="deletingSongId === song.id" class="song-action-btn song-action-btn--danger">
                           刪除
                         </button>
                       }
