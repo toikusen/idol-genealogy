@@ -3,6 +3,7 @@ import { SimpleChange } from '@angular/core';
 import { GroupEventsComponent } from './group-events.component';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
 import { TimeTreeService } from '../../core/timetree.service';
+import { SeoService } from '../../core/seo.service';
 import { Group, Member, VenueCalendarEvent } from '../../models';
 
 function mockGroup(id: string, name = `Group ${id}`): Group {
@@ -319,6 +320,92 @@ describe('GroupEventsComponent', () => {
       await settleEvents();
       const badge = fixture.nativeElement.querySelector('section div a');
       expect(badge?.textContent?.trim()).toBe('OTAKU EVENT');
+    });
+  });
+
+  describe('event JSON-LD schemas', () => {
+    let seoSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      seoSpy = spyOn(TestBed.inject(SeoService), 'setEventsJsonLd');
+    });
+
+    function lastSchemas(): any[] {
+      return seoSpy.calls.mostRecent().args[0];
+    }
+
+    it('emits endDate equal to start date when event has no end', async () => {
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([
+        { ...mockEvent('e1', '2026-07-11T18:00:00+08:00'), location: 'NUZONE' },
+      ]));
+      triggerChange([mockGroup('g1')]);
+      await settleEvents();
+      expect(lastSchemas()[0].endDate).toBe('2026-07-11');
+    });
+
+    it('shifts exclusive all-day end back one day', async () => {
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([
+        { ...mockEvent('e1', '2026-07-11'), end: '2026-07-13', isAllDay: true, location: 'NUZONE' },
+      ]));
+      triggerChange([mockGroup('g1')]);
+      await settleEvents();
+      expect(lastSchemas()[0].endDate).toBe('2026-07-12');
+    });
+
+    it('passes timed end through unchanged', async () => {
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([
+        { ...mockEvent('e1', '2026-07-11T18:00:00+08:00'), end: '2026-07-11T21:00:00+08:00', location: 'NUZONE' },
+      ]));
+      triggerChange([mockGroup('g1')]);
+      await settleEvents();
+      expect(lastSchemas()[0].endDate).toBe('2026-07-11T21:00:00+08:00');
+    });
+
+    it('fills description, image, and organizer from the performing group', async () => {
+      const group = { ...mockGroup('g1', '時空Astria'), photo_url: 'https://cdn.example.com/astria.jpg' };
+      calendarSpy.getUpcomingGroupEvents.and.callFake((g: Group) =>
+        Promise.resolve(g.id === 'g1' ? [{ ...mockEvent('e1'), location: 'NUZONE' }] : [])
+      );
+      component.groups = [group, mockGroup('g2')];
+      component.ngOnChanges({ groups: new SimpleChange(null, component.groups, true) });
+      await settleEvents();
+      const schema = lastSchemas()[0];
+      expect(schema.description).toBe('時空Astria 於 NUZONE 的現場演出活動。');
+      expect(schema.image).toBe('https://cdn.example.com/astria.jpg');
+      expect(schema.organizer).toEqual({
+        '@type': 'MusicGroup',
+        name: '時空Astria',
+        url: 'https://idolmaps.com/group/g1',
+      });
+      expect(schema.offers).toBeUndefined();
+    });
+
+    it('uses the member as performer, organizer, and image source for member events', async () => {
+      const member = { ...mockMember('m1', '夢笛きむ'), photo_url: 'https://cdn.example.com/kimu.jpg' };
+      calendarSpy.getUpcomingMemberEvents.and.returnValue(Promise.resolve([
+        { ...mockEvent('e1'), location: 'Zepp New Taipei' },
+      ]));
+      component.member = member;
+      component.ngOnChanges({ member: new SimpleChange(null, member, true) });
+      await settleEvents();
+      const schema = lastSchemas()[0];
+      expect(schema.performer).toEqual([
+        { '@type': 'Person', name: '夢笛きむ', url: 'https://idolmaps.com/member/m1' },
+      ]);
+      expect(schema.organizer).toEqual(schema.performer[0]);
+      expect(schema.image).toBe('https://cdn.example.com/kimu.jpg');
+      expect(schema.description).toBe('夢笛きむ 於 Zepp New Taipei 的現場演出活動。');
+    });
+
+    it('excludes events without a location from schemas', async () => {
+      calendarSpy.getUpcomingGroupEvents.and.returnValue(Promise.resolve([
+        mockEvent('no-loc'),
+        { ...mockEvent('loc'), location: 'NUZONE' },
+      ]));
+      triggerChange([mockGroup('g1')]);
+      await settleEvents();
+      expect(lastSchemas().length).toBe(1);
+      expect(lastSchemas()[0].name).toBe('Event loc');
     });
   });
 });

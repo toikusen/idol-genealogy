@@ -4,6 +4,7 @@ import { Group, Member, VenueCalendarEvent } from '../../models';
 import { GoogleCalendarService } from '../../core/google-calendar.service';
 import { TimeTreeService } from '../../core/timetree.service';
 import { SeoService } from '../../core/seo.service';
+import { siteUrl, memberPath, groupPath } from '../../core/public-url.utils';
 
 interface MergedEvent extends VenueCalendarEvent {
   groupNames: string[];
@@ -289,7 +290,7 @@ export class GroupEventsComponent implements OnChanges {
         this.mergedEvents = allEvents;
       }
 
-      this.seo.setEventsJsonLd(this.buildEventSchemas(allEvents, member));
+      this.seo.setEventsJsonLd(this.buildEventSchemas(allEvents, member, groups));
 
       this.loading = false;
       this.cdr.markForCheck();
@@ -299,27 +300,57 @@ export class GroupEventsComponent implements OnChanges {
   /**
    * MusicEvent JSON-LD for Google's event rich results. Only events with a
    * location qualify — Google reports location-less Event schema as an error.
+   * Calendar sources carry no organizer or ticketing data: organizer falls
+   * back to the first performer (the Bandsintown convention) and offers is
+   * omitted entirely — offers.url must point at a ticket purchase page, which
+   * a TimeTree/Google Calendar link is not.
    */
-  private buildEventSchemas(events: MergedEvent[], member: Member | null): object[] {
+  private buildEventSchemas(events: MergedEvent[], member: Member | null, groups: Group[]): object[] {
+    const groupsByName = new Map(groups.map(g => [g.name, g]));
     return events
       .filter(e => !!e.location)
       .slice(0, 20)
       .map(e => {
-        const performers = e.groupNames.length > 0
-          ? e.groupNames.map(name => ({ '@type': 'MusicGroup', name }))
+        const performers: object[] = e.groupNames.length > 0
+          ? e.groupNames.map(name => {
+              const group = groupsByName.get(name);
+              return { '@type': 'MusicGroup', name, ...(group && { url: siteUrl(groupPath(group.id)) }) };
+            })
           : member?.name
-            ? [{ '@type': 'Person', name: member.name }]
+            ? [{ '@type': 'Person', name: member.name, url: siteUrl(memberPath(member.id)) }]
             : [];
+        const image = e.groupNames.map(n => groupsByName.get(n)?.photo_url).find((v): v is string => !!v)
+          ?? member?.photo_url;
+        const performerNames = e.groupNames.length > 0 ? e.groupNames.join('、') : member?.name;
+        const description = performerNames
+          ? `${performerNames} 於 ${e.location} 的現場演出活動。`
+          : `於 ${e.location} 舉行的偶像現場演出活動。`;
         return {
           '@type': 'MusicEvent',
           name: e.title,
           startDate: e.start,
-          ...(e.end && { endDate: e.end }),
+          endDate: this.schemaEndDate(e),
           eventStatus: 'https://schema.org/EventScheduled',
           location: { '@type': 'Place', name: e.location, address: e.location },
+          description,
+          ...(image && { image }),
           ...(e.url && { url: e.url }),
-          ...(performers.length > 0 && { performer: performers }),
+          ...(performers.length > 0 && { performer: performers, organizer: performers[0] }),
         };
       });
+  }
+
+  /**
+   * Calendar all-day end dates are exclusive while JSON-LD endDate is
+   * inclusive, so shift back one day. Events without an end from the source
+   * end the day they start.
+   */
+  private schemaEndDate(e: MergedEvent): string {
+    if (!e.end) return e.start.slice(0, 10);
+    if (!e.isAllDay) return e.end;
+    const d = new Date(e.end);
+    if (isNaN(d.getTime())) return e.start.slice(0, 10);
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
   }
 }
