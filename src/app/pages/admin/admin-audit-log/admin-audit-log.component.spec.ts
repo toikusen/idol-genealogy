@@ -228,14 +228,14 @@ describe('AdminAuditLogComponent — autocomplete', () => {
     expect(auditLogSpy.getAll).toHaveBeenCalled();
   });
 
-  it('computeAutocompleteResults shows name_jp as display name when group has name_jp', () => {
+  it('computeAutocompleteResults prefers group name over name_jp as display name', () => {
     component.groups = [
       { id: 'g2', name: 'AKB48', name_jp: 'エイケービー48', photo_url: null } as any,
     ];
     component.autocompleteQuery = 'AKB';
     const results = component.computeAutocompleteResults();
     expect(results.length).toBe(1);
-    expect(results[0].name).toBe('エイケービー48');
+    expect(results[0].name).toBe('AKB48');
   });
 
   it('onFilterChange() resets pagination and calls load()', async () => {

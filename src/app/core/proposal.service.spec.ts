@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ProposalService } from './proposal.service';
 import { SupabaseService } from './supabase.service';
+import { MemberService } from './member.service';
 
 describe('ProposalService', () => {
   let service: ProposalService;
@@ -34,7 +35,10 @@ describe('ProposalService', () => {
             }),
           };
         }
-        return { select: jasmine.createSpy('select').and.returnValue(createSelectChain()) };
+        return {
+          select: jasmine.createSpy('select').and.returnValue(createSelectChain()),
+          insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null })),
+        };
       }),
       rpc: rpcSpy,
     };
@@ -119,6 +123,21 @@ describe('ProposalService', () => {
       mockRateLimitResult({ count: 2, error: null });
       await service.submit(anonymousProposal);
       expect(insertSpy).toHaveBeenCalledWith(anonymousProposal);
+    });
+  });
+
+  describe('approve', () => {
+    it('invalidates the member cache after applying a members proposal', async () => {
+      const memberService = TestBed.inject(MemberService);
+      const spy = spyOn(memberService, 'invalidateCache');
+      await service.approve({
+        id: 'p1',
+        table_name: 'members',
+        record_id: null,
+        operation: 'INSERT',
+        proposed_data: { name: '和希' },
+      } as any);
+      expect(spy).toHaveBeenCalled();
     });
   });
 

@@ -54,7 +54,7 @@ export class AdminProposalReviewComponent implements OnInit {
             this.currentMemberNameMap.set(m.id, m.name);
           }
           for (const g of groups) {
-            this.groupMap.set(g.id, g.name_jp ?? g.name ?? g.id);
+            this.groupMap.set(g.id, g.name ?? g.name_jp ?? g.id);
           }
         }
       }

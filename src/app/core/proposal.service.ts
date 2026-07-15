@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { MemberService } from './member.service';
+import { GroupService } from './group.service';
+import { CompanyService } from './company.service';
 import { Proposal } from '../models';
 import { PROPOSAL_ALLOWED_FIELDS } from './proposal-fields.config';
 
@@ -14,7 +17,12 @@ export interface ContributorEntry {
 export class ProposalService {
   private get db() { return this.supabase.client; }
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(
+    private supabase: SupabaseService,
+    private memberService: MemberService,
+    private groupService: GroupService,
+    private companyService: CompanyService,
+  ) {}
 
   /** Submit a proposal (works for anonymous and logged-in users) */
   async submit(proposal: Omit<Proposal, 'id' | 'status' | 'created_at' | 'reviewed_at' | 'reviewed_by' | 'reviewer_note' | 'reviewed_data'>): Promise<void> {
@@ -92,6 +100,9 @@ export class ProposalService {
       applyError = error;
     }
     if (applyError) throw applyError;
+    // Approve writes bypass the entity services, so their getAll() caches
+    // would keep serving pre-approval data (e.g. audit log showing raw ids).
+    this.invalidateTableCache(proposal.table_name);
 
     const session = await this.supabase.getSessionOnce();
     const { error } = await this.db
@@ -105,6 +116,12 @@ export class ProposalService {
       })
       .eq('id', proposal.id);
     if (error) throw error;
+  }
+
+  private invalidateTableCache(tableName: string): void {
+    if (tableName === 'members') this.memberService.invalidateCache();
+    if (tableName === 'groups') this.groupService.invalidateCache();
+    if (tableName === 'companies') this.companyService.invalidateCache();
   }
 
   /** Reject a proposal. Admin only. */

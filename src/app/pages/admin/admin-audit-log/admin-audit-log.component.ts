@@ -294,6 +294,12 @@ export class AdminAuditLogComponent implements OnInit {
   }
 
   private async loadLookupData() {
+    // Names must reflect the DB at page load, not a cache from earlier in the
+    // session (or a write made in another session) — otherwise logs fall back
+    // to showing raw record ids.
+    this.memberService.invalidateCache();
+    this.groupService.invalidateCache();
+    this.companyService.invalidateCache();
     const [roles, members, groups, companies] = await Promise.all([
       this.adminRole.getAll().catch(() => []),
       this.memberService.getAll().catch(() => []),
@@ -314,7 +320,7 @@ export class AdminAuditLogComponent implements OnInit {
       this.memberMap.set(m.id, m.name ?? m.name_roman ?? m.id);
     }
     for (const g of groups) {
-      this.groupMap.set(g.id, g.name_jp ?? g.name ?? g.id);
+      this.groupMap.set(g.id, g.name ?? g.name_jp ?? g.id);
     }
     for (const c of companies) {
       this.companyMap.set(c.id, c.name ?? c.id);
@@ -365,7 +371,7 @@ export class AdminAuditLogComponent implements OnInit {
         (g.name_jp ?? '').toLowerCase().includes(q)
       )
       .slice(0, 5)
-      .map(g => ({ type: 'group' as const, id: g.id, name: g.name_jp ?? g.name, photo_url: g.photo_url }));
+      .map(g => ({ type: 'group' as const, id: g.id, name: g.name || g.name_jp || g.id, photo_url: g.photo_url }));
 
     return [...memberResults, ...groupResults];
   }
@@ -518,7 +524,7 @@ export class AdminAuditLogComponent implements OnInit {
           ?? src['name'] ?? src['name_roman'] ?? '—';
       case 'groups':
         return this.groupMap.get(log.record_id)
-          ?? src['name_jp'] ?? src['name'] ?? '—';
+          ?? src['name'] ?? src['name_jp'] ?? '—';
       case 'companies':
         return this.companyMap.get(log.record_id)
           ?? src['name'] ?? '—';
@@ -692,7 +698,7 @@ export class AdminAuditLogComponent implements OnInit {
       case 'group_id':
         return [
           { value: null, label: '— 無 —' },
-          ...this.groups.map(g => ({ value: g.id, label: g.name_jp || g.name || g.id })),
+          ...this.groups.map(g => ({ value: g.id, label: g.name || g.name_jp || g.id })),
         ];
       case 'team_id':
         return [
