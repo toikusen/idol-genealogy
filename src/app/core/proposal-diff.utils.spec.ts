@@ -1,4 +1,4 @@
-import { getDiffFields, getEffectiveProposed } from './proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, getEffectiveProposed } from './proposal-diff.utils';
 import { Proposal } from '../models';
 
 const baseProposal: Proposal = {
@@ -17,6 +17,37 @@ describe('getEffectiveProposed', () => {
 
   it('falls back to proposed_data when reviewed_data is null', () => {
     expect(getEffectiveProposed(baseProposal)).toEqual({ name: 'New Name' });
+  });
+});
+
+describe('getDeleteSummary', () => {
+  it('never shows raw ids for a history delete', () => {
+    const p: Proposal = {
+      ...baseProposal, table_name: 'history', operation: 'DELETE',
+      original_data: { member_id: 'b4e69f99-03ba-4deb-b873-96b8fb6ab0dd', group_id: 'g1' },
+    };
+    expect(getDeleteSummary(p)).toBe('刪除了一筆歷程紀錄');
+  });
+
+  it('uses name_at_time for a history delete when present', () => {
+    const p: Proposal = {
+      ...baseProposal, table_name: 'history', operation: 'DELETE',
+      original_data: { member_id: 'm1', name_at_time: 'みるく' },
+    };
+    expect(getDeleteSummary(p)).toBe('刪除了「みるく」的歷程紀錄');
+  });
+
+  it('uses song title for a song delete', () => {
+    const p: Proposal = {
+      ...baseProposal, table_name: 'member_songs', operation: 'DELETE',
+      original_data: { member_id: 'm1', title: 'Sunrise' },
+    };
+    expect(getDeleteSummary(p)).toBe('刪除了歌曲「Sunrise」');
+  });
+
+  it('uses name for other tables', () => {
+    const p: Proposal = { ...baseProposal, operation: 'DELETE' };
+    expect(getDeleteSummary(p)).toBe('刪除了「Old Name」');
   });
 });
 

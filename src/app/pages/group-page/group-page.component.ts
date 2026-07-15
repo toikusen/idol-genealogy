@@ -13,7 +13,7 @@ import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { Group, GroupVideo, Member, Team, History, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { ProposalService } from '../../core/proposal.service';
-import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { GroupSongService } from '../../core/group-song.service';
@@ -138,8 +138,8 @@ export class GroupPageComponent implements OnInit {
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
     }
-    if (this.lastProposal.operation === 'DELETE' && this.lastProposalDiffFields.length > 0) {
-      return `${relative} · ${submitter} 刪除了「${this.lastProposalDiffFields[0].newValue === '—' ? this.lastProposalDiffFields[0].oldValue : this.lastProposalDiffFields[0].label}」`;
+    if (this.lastProposal.operation === 'DELETE') {
+      return `${relative} · ${submitter} ${getDeleteSummary(this.lastProposal)}`;
     }
     return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
   }

@@ -12,7 +12,7 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { Member, History, Proposal, MemberSong, Group } from '../../models';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { ProposalService } from '../../core/proposal.service';
-import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { GroupService } from '../../core/group.service';
@@ -109,8 +109,8 @@ export class MemberPageComponent implements OnInit {
     if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
       return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
     }
-    if (this.lastProposal.operation === 'DELETE' && this.lastProposalDiffFields.length > 0) {
-      return `${relative} · ${submitter} 刪除了「${this.lastProposalDiffFields[0].newValue === '—' ? this.lastProposalDiffFields[0].oldValue : this.lastProposalDiffFields[0].label}」`;
+    if (this.lastProposal.operation === 'DELETE') {
+      return `${relative} · ${submitter} ${getDeleteSummary(this.lastProposal)}`;
     }
     if (this.lastProposal.operation === 'INSERT') {
       const insertLabel: Record<string, string> = {

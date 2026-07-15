@@ -12,6 +12,22 @@ export function getEffectiveProposed(p: Proposal): Record<string, any> {
   return (p.reviewed_data ?? p.proposed_data ?? {});
 }
 
+/** One-line description of a DELETE proposal for the public edit-history
+ *  summary. Never surfaces raw ids — history/song rows lead with uuid
+ *  columns, so falls back to a table-kind label instead. */
+export function getDeleteSummary(p: Proposal): string {
+  const original = (p.original_data ?? {}) as Record<string, any>;
+  if (p.table_name === 'member_songs' || p.table_name === 'group_songs') {
+    return original['title'] ? `刪除了歌曲「${original['title']}」` : '刪除了歌曲';
+  }
+  if (p.table_name === 'history') {
+    return original['name_at_time']
+      ? `刪除了「${original['name_at_time']}」的歷程紀錄`
+      : '刪除了一筆歷程紀錄';
+  }
+  return original['name'] ? `刪除了「${original['name']}」` : '刪除了資料';
+}
+
 export function getDiffFields(p: Proposal): DiffField[] {
   const proposed = getEffectiveProposed(p);
   const allowedKeys: string[] = PROPOSAL_ALLOWED_FIELDS[p.table_name] ?? Object.keys(proposed);
