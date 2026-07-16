@@ -86,4 +86,44 @@ describe('RecordEditHistoryComponent', () => {
     expect(proposalServiceSpy.getApprovedSongsByField).toHaveBeenCalledWith('member_songs', 'member_id', 'm1');
     expect(component.proposals.some(p => p.id === 'song-p1')).toBeTrue();
   });
+
+  describe('getSubjectLabel', () => {
+    const historyProposal: Proposal = {
+      ...mockProposal,
+      table_name: 'history',
+      proposed_data: { name_at_time: '朝陽愛央' },
+      original_data: { member_id: 'm1', group_id: 'g1' },
+    };
+
+    it('returns member name for history proposals on a group page', () => {
+      component.relatedHistoryField = 'group_id';
+      (component as any).memberNameMap = { m1: '朝陽愛央(現名)' };
+      expect(component.getSubjectLabel(historyProposal)).toBe('朝陽愛央(現名)');
+    });
+
+    it('falls back to name_at_time when member map has no entry', () => {
+      component.relatedHistoryField = 'group_id';
+      expect(component.getSubjectLabel(historyProposal)).toBe('朝陽愛央');
+    });
+
+    it('returns group name for history proposals on a member page', () => {
+      component.relatedHistoryField = 'member_id';
+      (component as any).groupNameMap = { g1: '月宵◇クレシェンテ' };
+      expect(component.getSubjectLabel(historyProposal)).toBe('月宵◇クレシェンテ');
+    });
+
+    it('returns song title for song proposals', () => {
+      const songProposal: Proposal = {
+        ...mockProposal,
+        table_name: 'group_songs',
+        proposed_data: { title: 'ルミナス' },
+        original_data: null,
+      };
+      expect(component.getSubjectLabel(songProposal)).toBe('ルミナス');
+    });
+
+    it('returns null for main-record proposals', () => {
+      expect(component.getSubjectLabel(mockProposal)).toBeNull();
+    });
+  });
 });

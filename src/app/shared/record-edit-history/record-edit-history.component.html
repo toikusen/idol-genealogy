@@ -93,6 +93,15 @@
                 border:1px solid rgba(124,108,242,0.2);
               ">修改</span>
             }
+            @if (getSubjectLabel(p); as subject) {
+              <span style="
+                display:inline-flex;align-items:center;
+                font-size:0.68rem;
+                padding:2px 8px;border-radius:999px;
+                background:rgba(232,121,160,0.08);color:var(--text-faint-60);
+                border:1px solid rgba(232,121,160,0.18);
+              ">{{ subject }}</span>
+            }
           </div>
 
           <!-- Diff rows -->
