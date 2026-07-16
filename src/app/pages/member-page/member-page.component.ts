@@ -12,7 +12,7 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { Member, History, Proposal, MemberSong, Group } from '../../models';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { ProposalService } from '../../core/proposal.service';
-import { getDiffFields, getDeleteSummary, DiffField } from '../../core/proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, getRelatedSubjectName, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { GroupService } from '../../core/group.service';
@@ -103,22 +103,23 @@ export class MemberPageComponent implements OnInit {
   }
 
   get latestEditSummary(): string {
-    if (!this.lastProposal) return '';
-    const submitter = this.lastProposal.submitter_name || '貢獻者';
-    const relative = this.formatRelativeTime(this.lastProposal.reviewed_at);
-    if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
-      return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
+    const p = this.lastProposal;
+    if (!p) return '';
+    const submitter = p.submitter_name || '貢獻者';
+    const relative = this.formatRelativeTime(p.reviewed_at);
+    const subject = getRelatedSubjectName(p, 'group_id', id => this.allGroupsList.find(g => g.id === id)?.name);
+    if (p.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
+      const target = subject ? `${subject}的` : '';
+      return `${relative} · ${submitter} 更新了${target}「${this.lastProposalDiffFields[0].label}」`;
     }
-    if (this.lastProposal.operation === 'DELETE') {
-      return `${relative} · ${submitter} ${getDeleteSummary(this.lastProposal)}`;
+    if (p.operation === 'DELETE') {
+      return `${relative} · ${submitter} ${getDeleteSummary(p)}`;
     }
-    if (this.lastProposal.operation === 'INSERT') {
-      const insertLabel: Record<string, string> = {
-        members: '建立頁面',
-        history: '新增歷程紀錄',
-        member_songs: '新增歌曲',
-      };
-      return `${relative} · ${submitter} ${insertLabel[this.lastProposal.table_name] ?? '新增資料'}`;
+    if (p.operation === 'INSERT') {
+      if (p.table_name === 'history') return `${relative} · ${submitter} 新增了${subject ? `${subject}的` : ''}歷程紀錄`;
+      if (p.table_name === 'member_songs') return `${relative} · ${submitter} 新增了歌曲${subject ? `「${subject}」` : ''}`;
+      if (p.table_name === 'members') return `${relative} · ${submitter} 建立頁面`;
+      return `${relative} · ${submitter} 新增資料`;
     }
     return `${relative} · ${submitter} 補充`;
   }

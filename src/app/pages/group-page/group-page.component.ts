@@ -13,7 +13,7 @@ import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { Group, GroupVideo, Member, Team, History, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { ProposalService } from '../../core/proposal.service';
-import { getDiffFields, getDeleteSummary, DiffField } from '../../core/proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, getRelatedSubjectName, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { GroupSongService } from '../../core/group-song.service';
@@ -132,16 +132,24 @@ export class GroupPageComponent implements OnInit {
   photographyStatusLabel = photographyStatusLabel;
 
   get latestEditSummary(): string {
-    if (!this.lastProposal) return '';
-    const submitter = this.lastProposal.submitter_name || '貢獻者';
-    const relative = this.formatRelativeTime(this.lastProposal.reviewed_at);
-    if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
-      return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
+    const p = this.lastProposal;
+    if (!p) return '';
+    const submitter = p.submitter_name || '貢獻者';
+    const relative = this.formatRelativeTime(p.reviewed_at);
+    const subject = getRelatedSubjectName(p, 'member_id', id => this.allMembers.find(m => m.id === id)?.name);
+    if (p.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
+      const target = subject ? `${subject}的` : '';
+      return `${relative} · ${submitter} 更新了${target}「${this.lastProposalDiffFields[0].label}」`;
     }
-    if (this.lastProposal.operation === 'DELETE') {
-      return `${relative} · ${submitter} ${getDeleteSummary(this.lastProposal)}`;
+    if (p.operation === 'DELETE') {
+      return `${relative} · ${submitter} ${getDeleteSummary(p)}`;
     }
-    return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
+    if (p.operation === 'INSERT') {
+      if (p.table_name === 'history') return `${relative} · ${submitter} 新增了${subject ? `${subject}的` : ''}歷程紀錄`;
+      if (p.table_name === 'group_songs') return `${relative} · ${submitter} 新增了歌曲${subject ? `「${subject}」` : ''}`;
+      return `${relative} · ${submitter} 建立頁面`;
+    }
+    return `${relative} · ${submitter} 補充`;
   }
 
   get editorialSuggestions(): string[] {

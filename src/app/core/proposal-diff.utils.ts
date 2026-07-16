@@ -28,6 +28,27 @@ export function getDeleteSummary(p: Proposal): string {
   return original['name'] ? `刪除了「${original['name']}」` : '刪除了資料';
 }
 
+/** Who/what a related-record proposal belongs to when shown on another
+ *  record's page — the member of a history row on a group page
+ *  (subjectIdField 'member_id'), the group on a member page ('group_id'),
+ *  or a song's title. Null for main-record proposals. */
+export function getRelatedSubjectName(
+  p: Proposal,
+  subjectIdField: 'member_id' | 'group_id',
+  resolveName: (id: string) => string | undefined,
+): string | null {
+  const data = { ...(p.original_data ?? {}), ...getEffectiveProposed(p) };
+  if (p.table_name === 'history') {
+    const resolved = data[subjectIdField] ? resolveName(data[subjectIdField]) : undefined;
+    if (resolved) return resolved;
+    return subjectIdField === 'member_id' ? (data['name_at_time'] ?? null) : null;
+  }
+  if (p.table_name === 'member_songs' || p.table_name === 'group_songs') {
+    return data['title'] ?? null;
+  }
+  return null;
+}
+
 export function getDiffFields(p: Proposal): DiffField[] {
   const proposed = getEffectiveProposed(p);
   const allowedKeys: string[] = PROPOSAL_ALLOWED_FIELDS[p.table_name] ?? Object.keys(proposed);

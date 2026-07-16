@@ -4,7 +4,7 @@ import { ProposalService } from '../../core/proposal.service';
 import { CompanyService } from '../../core/company.service';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
-import { getDiffFields, getEffectiveProposed, DiffField } from '../../core/proposal-diff.utils';
+import { getDiffFields, getRelatedSubjectName, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { photographyStatusLabel } from '../../core/photography-policy.utils';
 import { SupabaseImgPipe } from '../supabase-img.pipe';
@@ -131,17 +131,9 @@ export class RecordEditHistoryComponent implements OnInit {
   /** Who/what a merged related-record proposal belongs to (e.g. which member's
    *  history row was edited when viewing a group's history panel). */
   getSubjectLabel(p: Proposal): string | null {
-    const data = { ...(p.original_data ?? {}), ...getEffectiveProposed(p) };
-    if (p.table_name === 'history') {
-      if (this.relatedHistoryField === 'group_id') {
-        return this.memberNameMap[data['member_id']] ?? data['name_at_time'] ?? null;
-      }
-      return this.groupNameMap[data['group_id']] ?? null;
-    }
-    if (p.table_name === 'member_songs' || p.table_name === 'group_songs') {
-      return data['title'] ?? null;
-    }
-    return null;
+    return this.relatedHistoryField === 'group_id'
+      ? getRelatedSubjectName(p, 'member_id', id => this.memberNameMap[id])
+      : getRelatedSubjectName(p, 'group_id', id => this.groupNameMap[id]);
   }
 
   formatRelativeTime(date: string | null): string {

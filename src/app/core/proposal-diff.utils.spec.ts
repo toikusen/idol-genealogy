@@ -1,4 +1,4 @@
-import { getDiffFields, getDeleteSummary, getEffectiveProposed } from './proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, getEffectiveProposed, getRelatedSubjectName } from './proposal-diff.utils';
 import { Proposal } from '../models';
 
 const baseProposal: Proposal = {
@@ -48,6 +48,41 @@ describe('getDeleteSummary', () => {
   it('uses name for other tables', () => {
     const p: Proposal = { ...baseProposal, operation: 'DELETE' };
     expect(getDeleteSummary(p)).toBe('刪除了「Old Name」');
+  });
+});
+
+describe('getRelatedSubjectName', () => {
+  const historyProposal: Proposal = {
+    ...baseProposal, table_name: 'history',
+    proposed_data: { name_at_time: '朝陽愛央' },
+    original_data: { member_id: 'm1', group_id: 'g1' },
+  };
+  const memberNames: Record<string, string> = { m1: '朝陽愛央(現名)' };
+  const groupNames: Record<string, string> = { g1: '月宵◇クレシェンテ' };
+
+  it('resolves the member of a history row', () => {
+    expect(getRelatedSubjectName(historyProposal, 'member_id', id => memberNames[id])).toBe('朝陽愛央(現名)');
+  });
+
+  it('falls back to name_at_time when the member id is unresolvable', () => {
+    expect(getRelatedSubjectName(historyProposal, 'member_id', () => undefined)).toBe('朝陽愛央');
+  });
+
+  it('resolves the group of a history row without name_at_time fallback', () => {
+    expect(getRelatedSubjectName(historyProposal, 'group_id', id => groupNames[id])).toBe('月宵◇クレシェンテ');
+    expect(getRelatedSubjectName(historyProposal, 'group_id', () => undefined)).toBeNull();
+  });
+
+  it('uses the song title for song proposals', () => {
+    const p: Proposal = {
+      ...baseProposal, table_name: 'group_songs',
+      proposed_data: { title: 'ルミナス' }, original_data: null,
+    };
+    expect(getRelatedSubjectName(p, 'member_id', () => undefined)).toBe('ルミナス');
+  });
+
+  it('returns null for main-record proposals', () => {
+    expect(getRelatedSubjectName(baseProposal, 'member_id', id => memberNames[id])).toBeNull();
   });
 });
 
