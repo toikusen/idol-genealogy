@@ -1164,7 +1164,11 @@
               >
                 @for (g of similarGroups; track g.id) {
                   <div class="similar-carousel-slide" [style.width]="(100 / carouselVisibleCount) + '%'">
-                    <a [routerLink]="'/group/' + g.id" class="similar-card">
+                    <a
+                      [routerLink]="'/group/' + g.id"
+                      (click)="onRelatedClick(g.id)"
+                      class="similar-card"
+                    >
                       <!-- Color bar -->
                       <div style="height: 3px;" [style.background]="g.color"></div>
 

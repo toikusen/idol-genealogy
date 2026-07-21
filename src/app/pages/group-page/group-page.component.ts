@@ -207,6 +207,10 @@ export class GroupPageComponent implements OnInit {
   carouselPrev() { if (this.carouselCanPrev) this.carouselIndex--; }
   carouselNext() { if (this.carouselCanNext) this.carouselIndex++; }
 
+  onRelatedClick(toGroupId: string): void {
+    if (this.group) this.viewCount.logRelatedClick(this.group.id, toGroupId);
+  }
+
   ngOnInit() {
     this.carouselVisibleCount = this.getCarouselVisibleCount();
     this.supabaseAuth.authState$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(s => {

@@ -94,4 +94,21 @@ describe('ViewCountService', () => {
     mockRpc.and.returnValue(Promise.reject(new Error('network error')));
     await expectAsync(service.increment('group', 'uuid-3')).toBeRejected();
   });
+
+  it('logRelatedClick() should call rpc with both group ids and the session token', () => {
+    service.logRelatedClick('from-1', 'to-2');
+    expect(mockRpc).toHaveBeenCalledOnceWith('log_related_click', {
+      p_from_group_id: 'from-1',
+      p_to_group_id: 'to-2',
+      p_session_token: jasmine.any(String),
+    });
+  });
+
+  it('logRelatedClick() should swallow a rejected rpc so navigation is unaffected', async () => {
+    // A rejected promise with no handler fails the suite as an unhandled
+    // rejection — this asserts the fire-and-forget catch is actually there.
+    mockRpc.and.returnValue(Promise.reject(new Error('network error')));
+    expect(() => service.logRelatedClick('from-1', 'to-2')).not.toThrow();
+    await Promise.resolve();
+  });
 });
