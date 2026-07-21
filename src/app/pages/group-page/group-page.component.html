@@ -1177,16 +1177,8 @@
                             color: var(--text-primary); margin: 0;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                             line-height: 1.3;
-                          ">{{ g.name_jp || g.name }}</p>
-                        </div>
-
-                        @if (g.name_jp) {
-                          <p style="
-                            font-style: italic; font-size: 0.72rem;
-                            color: var(--text-faint); margin: 0 0 5px;
-                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                           ">{{ g.name }}</p>
-                        }
+                        </div>
 
                         @if (g.company_name) {
                           <p style="
