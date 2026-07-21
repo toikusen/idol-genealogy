@@ -3,7 +3,8 @@ import {
   extractChannelId,
   isChannelId,
   parseChannelUrl,
-  parseVideoFeed,
+  parseVideoList,
+  uploadsPlaylistId,
 } from './youtube-feed.utils';
 
 describe('parseChannelUrl', () => {
@@ -87,68 +88,84 @@ describe('decodeXmlEntities', () => {
   });
 });
 
-describe('parseVideoFeed', () => {
-  const entry = (id: string, title: string, views: string | null) => `
-    <entry>
-      <yt:videoId>${id}</yt:videoId>
-      <title>${title}</title>
-      <published>2026-07-20T14:28:00+00:00</published>
-      <media:group>
-        <media:thumbnail url="https://i2.ytimg.com/vi/${id}/hqdefault.jpg" width="480" height="360"/>
-        ${views === null ? '' : `<media:community><media:statistics views="${views}"/></media:community>`}
-      </media:group>
-    </entry>`;
+describe('uploadsPlaylistId', () => {
+  it('swaps the UC prefix for UU', () => {
+    expect(uploadsPlaylistId('UCuAXFkgsw1L7xaCfnd5JJOw')).toBe('UUuAXFkgsw1L7xaCfnd5JJOw');
+  });
+});
 
-  const feed = (...entries: string[]) => `<?xml version="1.0"?><feed>${entries.join('')}</feed>`;
-
-  it('ranks by view count descending and applies the limit', () => {
-    const xml = feed(
-      entry('aaaaaaaaaaa', 'low', '10'),
-      entry('bbbbbbbbbbb', 'high', '9000'),
-      entry('ccccccccccc', 'mid', '500'),
-      entry('ddddddddddd', 'lowest', '1'),
-    );
-
-    expect(parseVideoFeed(xml).map(v => v.title)).toEqual(['high', 'mid', 'low']);
-    expect(parseVideoFeed(xml, 1).map(v => v.title)).toEqual(['high']);
+describe('parseVideoList', () => {
+  const video = (id: string, title: string, views: string | null) => ({
+    id,
+    snippet: {
+      title,
+      publishedAt: '2026-07-20T14:28:00Z',
+      thumbnails: {
+        default: { url: `https://i.ytimg.com/vi/${id}/default.jpg` },
+        medium: { url: `https://i.ytimg.com/vi/${id}/mqdefault.jpg` },
+        high: { url: `https://i.ytimg.com/vi/${id}/hqdefault.jpg` },
+      },
+    },
+    ...(views === null ? {} : { statistics: { viewCount: views } }),
   });
 
-  it('keeps entries with no view count, sorted as zero', () => {
-    const result = parseVideoFeed(feed(
-      entry('aaaaaaaaaaa', 'no stats', null),
-      entry('bbbbbbbbbbb', 'has stats', '5'),
-    ));
+  it('ranks by view count descending and applies the limit', () => {
+    const body = { items: [
+      video('aaaaaaaaaaa', 'low', '10'),
+      video('bbbbbbbbbbb', 'high', '9000'),
+      video('ccccccccccc', 'mid', '500'),
+      video('ddddddddddd', 'lowest', '1'),
+    ] };
+
+    expect(parseVideoList(body).map(v => v.title)).toEqual(['high', 'mid', 'low']);
+    expect(parseVideoList(body, 1).map(v => v.title)).toEqual(['high']);
+  });
+
+  it('keeps videos with no statistics, sorted as zero', () => {
+    const result = parseVideoList({ items: [
+      video('aaaaaaaaaaa', 'no stats', null),
+      video('bbbbbbbbbbb', 'has stats', '5'),
+    ] });
 
     expect(result.map(v => v.title)).toEqual(['has stats', 'no stats']);
     expect(result[1].views).toBe(0);
   });
 
+  // The API returns titles HTML-escaped even though the payload is JSON.
   it('decodes entities in titles', () => {
-    const [video] = parseVideoFeed(feed(entry('aaaaaaaaaaa', 'Tulsi &amp; Akhil&#39;s Mix', '1')));
-    expect(video.title).toBe("Tulsi & Akhil's Mix");
+    const [v] = parseVideoList({ items: [video('a', 'Tulsi &amp; Akhil&#39;s Mix', '1')] });
+    expect(v.title).toBe("Tulsi & Akhil's Mix");
   });
 
-  it('extracts the fields the frontend renders', () => {
-    const [video] = parseVideoFeed(feed(entry('Mdetf76SdMw', 'Song', '10517')));
-    expect(video).toEqual({
+  it('extracts the fields the frontend renders, preferring the high thumbnail', () => {
+    const [v] = parseVideoList({ items: [video('Mdetf76SdMw', 'Song', '10517')] });
+    expect(v).toEqual({
       videoId: 'Mdetf76SdMw',
       title: 'Song',
-      thumbnail: 'https://i2.ytimg.com/vi/Mdetf76SdMw/hqdefault.jpg',
-      publishedAt: '2026-07-20T14:28:00+00:00',
+      thumbnail: 'https://i.ytimg.com/vi/Mdetf76SdMw/hqdefault.jpg',
+      publishedAt: '2026-07-20T14:28:00Z',
       views: 10517,
     });
   });
 
-  it('falls back to a derived thumbnail when the feed omits one', () => {
-    const xml = feed('<entry><yt:videoId>Mdetf76SdMw</yt:videoId><title>t</title></entry>');
-    expect(parseVideoFeed(xml)[0].thumbnail)
+  it('falls back through thumbnail sizes, then to a derived URL', () => {
+    const noHigh = { items: [{ id: 'x', snippet: { thumbnails: { medium: { url: 'M' } } } }] };
+    expect(parseVideoList(noHigh)[0].thumbnail).toBe('M');
+
+    const none = { items: [{ id: 'Mdetf76SdMw', snippet: {} }] };
+    expect(parseVideoList(none)[0].thumbnail)
       .toBe('https://i.ytimg.com/vi/Mdetf76SdMw/hqdefault.jpg');
   });
 
-  it('returns an empty array for empty, malformed, and entry-less feeds', () => {
-    expect(parseVideoFeed('')).toEqual([]);
-    expect(parseVideoFeed('<html>not a feed at all</html>')).toEqual([]);
-    expect(parseVideoFeed(feed('<entry><title>no video id</title></entry>'))).toEqual([]);
+  it('skips items with no id', () => {
+    expect(parseVideoList({ items: [{ snippet: { title: 'orphan' } }] })).toEqual([]);
+  });
+
+  it('returns an empty array for empty, malformed, and missing payloads', () => {
+    expect(parseVideoList({ items: [] })).toEqual([]);
+    expect(parseVideoList({})).toEqual([]);
+    expect(parseVideoList(null)).toEqual([]);
+    expect(parseVideoList('not json at all')).toEqual([]);
   });
 });
 
