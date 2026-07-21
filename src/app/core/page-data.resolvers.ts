@@ -6,7 +6,6 @@ import {
   GroupRecentHeatEntry,
   GroupSong,
   GroupTrendingEntry,
-  GroupVideo,
   History,
   Member,
   MemberRecentHeatEntry,
@@ -76,7 +75,6 @@ export interface GroupPageData {
   teams: Team[];
   histories: History[];
   allMemberHistories: History[];
-  videos: GroupVideo[];
   similarGroups: RelatedGroup[];
   allMembers: { id: string; name: string }[];
   lastProposal: Proposal | null;
@@ -166,7 +164,7 @@ export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
     if (!group) {
       return {
         id, group: null, companyName: null, teams, histories,
-        allMemberHistories: [], videos: [], similarGroups: [],
+        allMemberHistories: [], similarGroups: [],
         allMembers: [], lastProposal: null, songs: [], error: false,
       };
     }
@@ -180,13 +178,13 @@ export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
     return {
       id, group, companyName, teams,
       histories: publicHistories,
-      allMemberHistories: [], videos: [], similarGroups: [],
+      allMemberHistories: [], similarGroups: [],
       allMembers: [], lastProposal: null, songs: [], error: false,
     };
   } catch {
     return {
       id, group: null, companyName: null, teams: [], histories: [],
-      allMemberHistories: [], videos: [], similarGroups: [],
+      allMemberHistories: [], similarGroups: [],
       allMembers: [], lastProposal: null, songs: [], error: true,
     };
   }

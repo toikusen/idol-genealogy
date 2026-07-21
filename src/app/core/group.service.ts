@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Group, GroupVideo, Team, GroupLeaderboardEntry, GroupRecentHeatEntry, GroupTrendingEntry, RelatedGroup } from '../models';
+import { isChannelId } from './youtube-feed.utils';
 import { kanaVariants } from './japanese.utils';
 import { isPublicGroupRecord } from './public-record.utils';
 import { isNotFoundError } from './supabase.utils';
@@ -137,27 +138,36 @@ export class GroupService {
     return ((data ?? []) as RelatedGroup[]).filter(isPublicGroupRecord);
   }
 
-  async getVideosByGroup(groupId: string): Promise<GroupVideo[]> {
-    const { data, error } = await this.db
-      .from('group_videos').select('*').eq('group_id', groupId).order('sort_order');
-    if (error) {
-      if ((error as any).code === 'PGRST205') return []; // table not yet migrated
-      throw error;
-    }
-    return data ?? [];
-  }
-
-  async createVideo(video: Omit<GroupVideo, 'id' | 'created_at'>): Promise<void> {
-    const { error } = await this.db.from('group_videos').insert(video);
-    if (error) {
-      if ((error as any).code === 'PGRST205') throw new Error('請先在 Supabase 執行 015_create_group_videos.sql');
-      throw error;
+  /**
+   * Top videos from the group's YouTube channel, ranked by view count.
+   *
+   * Browser-only — callers must guard with isPlatformBrowser. Returns [] on any
+   * failure: a missing video strip is not worth surfacing an error on a group page.
+   */
+  async getChannelVideos(channelId: string | null): Promise<GroupVideo[]> {
+    if (!isChannelId(channelId)) return [];
+    try {
+      const res = await fetch(`/api/youtube-videos?channel=${encodeURIComponent(channelId!)}`);
+      return res.ok ? await res.json() : [];
+    } catch {
+      return [];
     }
   }
 
-  async deleteVideo(id: string): Promise<void> {
-    const { error } = await this.db.from('group_videos').delete().eq('id', id);
-    if (error) throw error;
+  /**
+   * Resolves a YouTube channel URL to its UC... ID via the server (the browser
+   * cannot fetch youtube.com directly — CORS).
+   *
+   * Returns the ID, or null when the URL is genuinely not a channel. Throws on a
+   * transient upstream failure so callers can leave a stored ID untouched
+   * instead of nulling it out.
+   */
+  async resolveYouTubeChannelId(url: string): Promise<string | null> {
+    const res = await fetch(`/api/youtube-channel-id?url=${encodeURIComponent(url)}`);
+    if (res.status === 400) return null; // not a channel URL
+    if (!res.ok) throw new Error('YouTube 暫時無法連線,頻道 ID 未更新');
+    const { channelId } = await res.json() as { channelId: string | null };
+    return channelId;
   }
 
   async createTeam(team: Partial<Team>): Promise<void> {

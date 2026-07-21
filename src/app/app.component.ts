@@ -36,6 +36,9 @@ export class AppComponent {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
+  // loadAuthChrome resolves a dynamic import before touching the injector, so
+  // the component can be torn down in between — reading it then throws NG0205.
+  private destroyed = false;
   private readonly swUpdate = inject(SwUpdate, { optional: true });
   private authChromePromise: Promise<void> | null = null;
   private supabase: SupabaseService | null = null;
@@ -150,12 +153,14 @@ export class AppComponent {
   private loadAuthChrome(): Promise<void> {
     if (!this.isBrowser) return Promise.resolve();
     if (this.authChromePromise) return this.authChromePromise;
+    this.destroyRef.onDestroy(() => { this.destroyed = true; });
 
     this.authChromePromise = Promise.all([
       import('./core/supabase.service'),
       import('./core/admin-role.service'),
       import('./core/favorites.service'),
     ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }]) => {
+      if (this.destroyed) return;
       const supabase = this.injector.get(SupabaseService);
       const adminRole = this.injector.get(AdminRoleService);
       const favorites = this.injector.get(FavoritesService);

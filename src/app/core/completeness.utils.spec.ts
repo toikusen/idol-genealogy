@@ -54,7 +54,7 @@ const baseGroup: Group = {
   id: '1', name: '測試團', name_jp: null, photo_url: null, color: '#fff',
   company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null,
   notes: null, instagram: null, facebook: null, x: null,
-  youtube: null, timetree_url: null, is_trainee: false,
+  youtube: null, youtube_channel_id: null, timetree_url: null, is_trainee: false,
   photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null,
   updated_at: '', created_at: '',
 };
