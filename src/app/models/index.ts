@@ -40,7 +40,6 @@ export interface Group {
   disbanded_announced_at: string | null;
   notes: string | null;
   is_trainee: boolean;
-  style: string | null;
   instagram: string | null;
   facebook: string | null;
   x: string | null;
@@ -187,6 +186,23 @@ export interface MemberRecentHeatEntry {
   photo_url: string | null;
   color: string | null;
   recent_visitors: number;
+}
+
+/**
+ * A "其他人也看了" card. `reason` is set only when it tells the reader something
+ * the card does not already show (currently: a member who was in both groups);
+ * null otherwise, and the line is hidden.
+ */
+export interface RelatedGroup {
+  id: string;
+  name: string;
+  name_jp: string | null;
+  photo_url: string | null;
+  color: string | null;
+  company_name: string | null;
+  reason: string | null;
+  tier: number;
+  score: number;
 }
 
 export interface GroupRecentHeatEntry {

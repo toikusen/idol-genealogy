@@ -13,6 +13,7 @@ import {
   MemberSong,
   MemberTrendingEntry,
   Proposal,
+  RelatedGroup,
   Team,
 } from '../models';
 import { CompanyService } from './company.service';
@@ -76,7 +77,7 @@ export interface GroupPageData {
   histories: History[];
   allMemberHistories: History[];
   videos: GroupVideo[];
-  similarGroups: Group[];
+  similarGroups: RelatedGroup[];
   allMembers: { id: string; name: string }[];
   lastProposal: Proposal | null;
   songs: GroupSong[];

@@ -10,7 +10,7 @@ import { ViewCountService } from '../../core/view-count.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
 import { GroupConnectionGraphComponent } from '../../shared/group-connection-graph/group-connection-graph.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
-import { Group, GroupVideo, Member, Team, History, Proposal } from '../../models';
+import { Group, GroupVideo, Member, Team, History, Proposal, RelatedGroup } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { ProposalService } from '../../core/proposal.service';
 import { getDiffFields, getDeleteSummary, getRelatedSubjectName, DiffField } from '../../core/proposal-diff.utils';
@@ -32,7 +32,6 @@ import {
   isPublicCompanyRecord,
   isPublicGroupRecord,
   isPublicMemberRecord,
-  sanitizePublicGroupRecord,
 } from '../../core/public-record.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
@@ -72,8 +71,7 @@ export class GroupPageComponent implements OnInit {
   histories: History[] = [];
   allMemberHistories: History[] = [];
   videos: GroupVideo[] = [];
-  similarGroups: Group[] = [];
-  similarGroupCompanyNames = new Map<string, string>();
+  similarGroups: RelatedGroup[] = [];
   carouselIndex = 0;
   carouselVisibleCount = 2;
   selectedHistory: History | null = null;
@@ -202,18 +200,6 @@ export class GroupPageComponent implements OnInit {
     }
   }
 
-  private async resolveSimilarGroupCompanyNames(): Promise<void> {
-    const needsLookup = this.similarGroups.filter(g => g.company_id && !g.company);
-    if (!needsLookup.length) return;
-    const companies = await this.companyService.getAll().catch(() => []);
-    const nameById = new Map(companies.map(c => [c.id, c.name]));
-    this.similarGroupCompanyNames = new Map(
-      needsLookup
-        .filter(g => nameById.has(g.company_id!))
-        .map(g => [g.company_id!, nameById.get(g.company_id!)!])
-    );
-  }
-
   get carouselCanPrev(): boolean { return this.carouselIndex > 0; }
   get carouselCanNext(): boolean {
     return this.carouselIndex < this.similarGroups.length - this.carouselVisibleCount;
@@ -271,7 +257,7 @@ export class GroupPageComponent implements OnInit {
         this.proposalService.getApprovedSongsByField('group_songs', 'group_id', id).catch(() => [] as Proposal[]),
         this.historyService.getByMembers(memberIds).catch(() => []),
         this.memberService.getAll().catch(() => []),
-        group.style ? this.groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
+        this.groupService.getRelated(id).catch(() => []),
         this.groupSongService.getByGroup(id).catch(() => []),
         this.groupService.getVideosByGroup(id).catch(() => []),
       ]);
@@ -291,8 +277,7 @@ export class GroupPageComponent implements OnInit {
           .filter(isPublicMemberRecord)
           .map(m => ({ id: m.id, name: m.name ?? m.name_roman ?? m.id }))
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-        this.similarGroups = similarGroups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
-        await this.resolveSimilarGroupCompanyNames();
+        this.similarGroups = similarGroups;
         this.songs = songs;
         this.videos = videos;
         if (this.pendingEditSongId) {
@@ -319,7 +304,6 @@ export class GroupPageComponent implements OnInit {
     this.allMemberHistories = pageData.allMemberHistories;
     this.videos = pageData.videos;
     this.similarGroups = pageData.similarGroups;
-    this.resolveSimilarGroupCompanyNames();
     this.carouselIndex = 0;
     this.lastProposal = pageData.lastProposal;
     this.allMembers = pageData.allMembers;
@@ -385,11 +369,6 @@ export class GroupPageComponent implements OnInit {
       this.snsUrls.youtube,
     ].filter((v): v is string => !!v);
 
-    const styleGenres = (pageData.group.style ?? '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
     const musicGroupSchema: Record<string, any> = {
       '@type': 'MusicGroup',
       name: displayName,
@@ -401,7 +380,6 @@ export class GroupPageComponent implements OnInit {
       ...(pageData.group.founded_at && { foundingDate: pageData.group.founded_at }),
       ...(pageData.group.disbanded_at && { dissolutionDate: pageData.group.disbanded_at }),
       ...(pageData.group.photo_url && { image: pageData.group.photo_url }),
-      ...(styleGenres.length > 0 && { genre: styleGenres }),
       ...(sameAs.length > 0 && { sameAs }),
       ...(pageData.companyName && {
         parentOrganization: {

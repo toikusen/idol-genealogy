@@ -103,6 +103,25 @@ describe('GroupService', () => {
     expect(mockClient.rpc).toHaveBeenCalledTimes(1);
   });
 
+  it('getRelated() passes the group id through and drops test records', async () => {
+    // withArgs, not and.resolveTo: leaves the shared default stub intact for
+    // the other rpc-backed tests.
+    mockClient.rpc.withArgs('get_related_groups', jasmine.anything()).and.resolveTo({
+      data: [
+        { id: 'g-2', name: 'BEYOOOOONDS', reason: null, tier: 2, score: 0 },
+        { id: 'g-3', name: '測試用的團體', reason: null, tier: 4, score: 0 },
+      ],
+      error: null,
+    });
+
+    const related = await service.getRelated('g-1');
+
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      'get_related_groups', { p_group_id: 'g-1', p_limit: 12 }
+    );
+    expect(related.map(g => g.name)).toEqual(['BEYOOOOONDS']);
+  });
+
   it('getTeamsByGroup() caches per group and createTeam() invalidates it', async () => {
     await service.getTeamsByGroup('g-1');
     mockClient.from.calls.reset();

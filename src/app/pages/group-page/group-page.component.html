@@ -1188,12 +1188,20 @@
                           ">{{ g.name }}</p>
                         }
 
-                        @if (g.company || (g.company_id && similarGroupCompanyNames.get(g.company_id))) {
+                        @if (g.company_name) {
                           <p style="
                             font-size: 0.72rem; letter-spacing: 0.05em;
                             color: var(--text-faint-45); margin: 0;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                          ">{{ g.company || similarGroupCompanyNames.get(g.company_id!) }}</p>
+                          ">{{ g.company_name }}</p>
+                        }
+
+                        @if (g.reason) {
+                          <p style="
+                            font-size: 0.66rem; letter-spacing: 0.04em;
+                            color: var(--text-label); margin: 8px 0 0;
+                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                          ">{{ g.reason }}</p>
                         }
                       </div>
                     </a>

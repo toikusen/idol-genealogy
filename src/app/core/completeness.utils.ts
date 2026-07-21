@@ -40,7 +40,7 @@ export function getGroupCompleteness(g: Group, hasMembers = true): CompletenessR
       [hasSocial,      '社群帳號'],
       [hasMembers,     '成員'],
     ],
-    [!!g.name_jp, !!g.style, !!g.disbanded_at]
+    [!!g.name_jp, !!g.disbanded_at]
   );
 }
 

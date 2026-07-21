@@ -53,7 +53,7 @@ describe('getMemberCompleteness', () => {
 const baseGroup: Group = {
   id: '1', name: '測試團', name_jp: null, photo_url: null, color: '#fff',
   company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null,
-  notes: null, style: null, instagram: null, facebook: null, x: null,
+  notes: null, instagram: null, facebook: null, x: null,
   youtube: null, timetree_url: null, is_trainee: false,
   photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null,
   updated_at: '', created_at: '',
@@ -76,10 +76,10 @@ describe('getGroupCompleteness', () => {
   });
 
   it('returns partial score proportional to filled fields', () => {
-    // 7 tracked fields: photo_url, founded_at, hasSocial, hasMembers (core x4) + name_jp, style, disbanded_at (optional x3)
-    // fill 3 of 7: photo_url + founded_at + hasMembers(default true) → 43%
+    // 6 tracked fields: photo_url, founded_at, hasSocial, hasMembers (core x4) + name_jp, disbanded_at (optional x2)
+    // fill 3 of 6: photo_url + founded_at + hasMembers(default true) → 50%
     const g: Group = { ...baseGroup, photo_url: 'url', founded_at: '2020-01-01' };
-    expect(getGroupCompleteness(g).score).toBe(Math.round(3 / 7 * 100));
+    expect(getGroupCompleteness(g).score).toBe(Math.round(3 / 6 * 100));
   });
 });
 

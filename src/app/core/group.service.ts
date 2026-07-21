@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Group, GroupVideo, Team, GroupLeaderboardEntry, GroupRecentHeatEntry, GroupTrendingEntry } from '../models';
+import { Group, GroupVideo, Team, GroupLeaderboardEntry, GroupRecentHeatEntry, GroupTrendingEntry, RelatedGroup } from '../models';
 import { kanaVariants } from './japanese.utils';
 import { isPublicGroupRecord } from './public-record.utils';
 import { isNotFoundError } from './supabase.utils';
@@ -123,15 +123,18 @@ export class GroupService {
     this.invalidateCache();
   }
 
-  async getSimilarByStyle(styles: string[], excludeId: string): Promise<Group[]> {
-    const orFilter = styles.map(s => `style.like.%${s}%`).join(',');
-    const { data, error } = await this.db
-      .from('groups').select('*')
-      .or(orFilter)
-      .neq('id', excludeId)
-      .is('disbanded_at', null);
+  /**
+   * Groups to recommend alongside `groupId`, best first: co-visited by other
+   * readers, then same company / shared member / same debut era as fallback.
+   * All of it is derived server-side, so a group needs no extra curation to
+   * show up here.
+   */
+  async getRelated(groupId: string, limit = 12): Promise<RelatedGroup[]> {
+    const { data, error } = await this.db.rpc(
+      'get_related_groups', { p_group_id: groupId, p_limit: limit }
+    );
     if (error) throw error;
-    return data ?? [];
+    return ((data ?? []) as RelatedGroup[]).filter(isPublicGroupRecord);
   }
 
   async getVideosByGroup(groupId: string): Promise<GroupVideo[]> {

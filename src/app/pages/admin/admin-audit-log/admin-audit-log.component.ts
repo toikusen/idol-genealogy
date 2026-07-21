@@ -147,7 +147,6 @@ export class AdminAuditLogComponent implements OnInit {
       { key: 'x', type: 'url' },
       { key: 'youtube', type: 'url' },
       { key: 'is_trainee', type: 'checkbox' },
-      { key: 'style', type: 'text' },
       { key: 'notes', type: 'textarea' },
       { key: 'photo_status', type: 'select' },
       { key: 'photo_notes', type: 'text' },
@@ -223,6 +222,8 @@ export class AdminAuditLogComponent implements OnInit {
     groups: {
       company: '自定義公司名稱',
       is_trainee: '研修・見習',
+      // Column dropped in 086, but audit rows written before that still
+      // reference it — keep the label so old history renders 風格, not "style".
       style: '風格',
       notes: '備注',
     },
