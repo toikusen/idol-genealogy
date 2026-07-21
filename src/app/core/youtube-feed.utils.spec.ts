@@ -1,10 +1,12 @@
 import {
   decodeXmlEntities,
   extractChannelId,
+  filterByName,
   isChannelId,
   parseChannelUrl,
   parseVideoList,
   uploadsPlaylistId,
+  type FeedVideo,
 } from './youtube-feed.utils';
 
 describe('parseChannelUrl', () => {
@@ -186,6 +188,69 @@ describe('parseVideoList', () => {
     expect(parseVideoList({})).toEqual([]);
     expect(parseVideoList(null)).toEqual([]);
     expect(parseVideoList('not json at all')).toEqual([]);
+  });
+});
+
+describe('filterByName', () => {
+  const v = (title: string): FeedVideo =>
+    ({ videoId: title.slice(0, 4), title, thumbnail: '', publishedAt: '', views: 1 });
+
+  // Real titles from @toyplataiwan, a company channel hosting both groups.
+  const tsukiyoi = v('月宵◇クレシェンテ「Not a full moon...」Live Music Video');
+  const spectra1 = v('陽光◆スペクトラ「疾走PRiMACY⤴」Live Music Video');
+  const spectra2 = v('陽光◆スペクトラ「飛躍↑TraveLer」Live Music Video');
+  const channel = [tsukiyoi, spectra1, spectra2];
+
+  it('keeps only the named group on a shared channel', () => {
+    expect(filterByName(channel, ['月宵◇クレシェンテ'])).toEqual([tsukiyoi]);
+    expect(filterByName(channel, ['陽光◆スペクトラ'])).toEqual([spectra1, spectra2]);
+  });
+
+  it('matches when the title omits decorative characters', () => {
+    const plain = v('月宵クレシェンテ「別の曲」Live');
+    expect(filterByName([plain, spectra1], ['月宵◇クレシェンテ'])).toEqual([plain]);
+  });
+
+  it('matches on any of the supplied names', () => {
+    expect(filterByName(channel, ['Some Roman Name', '陽光◆スペクトラ']))
+      .toEqual([spectra1, spectra2]);
+  });
+
+  it('is case-insensitive', () => {
+    const en = v('LUVRUSH - Live at Shibuya');
+    expect(filterByName([en, spectra1], ['LuvRush'])).toEqual([en]);
+  });
+
+  // The fallback that makes this safe to run on every channel: a group's own
+  // channel rarely repeats the group name, and filtering to nothing would hide
+  // videos that were fine.
+  it('returns everything when no title matches', () => {
+    expect(filterByName(channel, ['Unrelated Group'])).toEqual(channel);
+  });
+
+  it('returns everything when no usable names are given', () => {
+    expect(filterByName(channel, [])).toEqual(channel);
+    expect(filterByName(channel, ['', '   '])).toEqual(channel);
+  });
+});
+
+describe('parseVideoList with name matching', () => {
+  const item = (id: string, title: string, views: string) => ({
+    id, snippet: { title }, statistics: { viewCount: views },
+  });
+
+  it('filters before ranking, so a low-view match beats a high-view sibling', () => {
+    const body = { items: [
+      item('a', '陽光◆スペクトラ「疾走PRiMACY⤴」Live Music Video', '99999'),
+      item('b', '月宵◇クレシェンテ「Not a full moon...」Live Music Video', '10'),
+    ] };
+
+    expect(parseVideoList(body, 3, ['月宵◇クレシェンテ']).map(x => x.videoId)).toEqual(['b']);
+  });
+
+  it('ranks the whole channel when the group is not named in any title', () => {
+    const body = { items: [item('a', 'Some video', '5'), item('b', 'Another', '50')] };
+    expect(parseVideoList(body, 3, ['月宵◇クレシェンテ']).map(x => x.videoId)).toEqual(['b', 'a']);
   });
 });
 

@@ -62,7 +62,41 @@ the same path as any upstream failure: empty list, no video section.
 
 ## Ranking Rule
 
-Sort the 15 candidate uploads by view count descending, take 3. No other filtering.
+Take the 50 most recent uploads, keep those whose title mentions the group, sort by
+view count descending, take 3.
+
+### Shared Channels
+
+Some groups list their company's channel, which hosts several groups. `@toyplataiwan`
+carries both `月宵◇クレシェンテ` and `陽光◆スペクトラ`, so ranking the channel by views
+put a sibling group's videos on both groups' pages.
+
+Titles on those channels lead with the group name — `月宵◇クレシェンテ「Not a full
+moon...」Live Music Video` — which is the only signal available. Filter on it, then
+rank.
+
+**When nothing matches, return everything unfiltered.** That fallback is what makes
+the filter safe to run on every channel without deciding first whether a channel is
+shared: a group's own channel rarely repeats the group name in its titles, and
+filtering those to nothing would hide videos that were fine.
+
+This is deliberately *not* driven by detecting shared channels in the database
+(`select youtube_channel_id ... group by having count(*) > 1`, currently 1 hit). That
+detection misses a company channel whose sibling groups are not in the database at
+all — the fallback approach is correct in both cases and needs less code.
+
+Matching is case-insensitive against `name` and `name_jp`, with a second pass that
+strips decorative characters (`◇◆★☆♡` and friends) from both title and name, so a
+title writing `月宵クレシェンテ` still matches the stored `月宵◇クレシェンテ`. Without
+that second pass a punctuation mismatch would silently fall back to unfiltered — the
+bug returning invisibly.
+
+The candidate window is 50, not 15: after filtering, a group's videos can be sparse
+among its siblings'. Both API endpoints cap at 50, so this is still 2 quota units.
+
+**Known limit:** a group whose name is a common word could false-match a sibling's
+video on a shared channel. The one shared channel in the data has two distinctive
+names, so this is not addressed until observed.
 
 **Shorts are deliberately not filtered.** `videos.list` could return
 `contentDetails.duration` for a length heuristic, but that is a guess at intent
@@ -206,7 +240,9 @@ fails the channel-path check, and leaves those rows permanently unresolved.
 (query param in, validate, `Response.json` out) but with a different cache — see
 Caching below.
 
-- Request: `GET /api/youtube-videos?channel=UC...`
+- Request: `GET /api/youtube-videos?channel=UC...&match=<name>&match=<name_jp>`.
+  The `match` terms carry into the cache key, so two groups sharing a channel
+  cache separately — which is what they need.
 - Validate `channel` against `/^UC[\w-]{22}$/`; 400 otherwise. This doubles as the
   SSRF guard — the channel ID is interpolated into a fixed YouTube URL, never a
   caller-supplied one.

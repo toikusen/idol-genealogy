@@ -134,6 +134,46 @@ function pickThumbnail(video: ApiVideo, videoId: string): string {
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
+// Decorative characters that idol group names collect (月宵◇クレシェンテ,
+// En9⭐︎熾, ♡xDoLL) and that a video title may or may not reproduce exactly.
+// Stripping them from both sides gives a second chance at a match.
+const DECORATION = /[\s◇◆★☆♡♥△▲▽▼※・･‐‑‒–—―~〜=＝!！?？.。,、'"“”'']/g;
+
+function bareForm(text: string): string {
+  return text.toLowerCase().replace(DECORATION, '');
+}
+
+/**
+ * Keeps only videos whose title mentions one of `names`.
+ *
+ * Company channels host several groups, so "top 3 by views" would otherwise mix
+ * a sibling group's videos into a group's page. Titles on those channels lead
+ * with the group name, which is the only signal available.
+ *
+ * Returns the input untouched when nothing matches. That fallback is what makes
+ * this safe to run unconditionally: a group's own channel rarely repeats the
+ * group name in its titles, and filtering those down to nothing would hide
+ * videos that were fine.
+ */
+export function filterByName(videos: FeedVideo[], names: string[]): FeedVideo[] {
+  const terms = names.map(n => n.trim()).filter(Boolean);
+  if (!terms.length) return videos;
+
+  const bareTerms = terms.map(bareForm).filter(Boolean);
+
+  const matched = videos.filter(video => {
+    const title = video.title.toLowerCase();
+    if (terms.some(term => title.includes(term.toLowerCase()))) return true;
+
+    // Second pass without decoration, so a title writing 月宵クレシェンテ still
+    // matches the stored 月宵◇クレシェンテ.
+    const bareTitle = bareForm(video.title);
+    return bareTerms.some(term => bareTitle.includes(term));
+  });
+
+  return matched.length ? matched : videos;
+}
+
 /**
  * Maps a YouTube Data API videos.list response to videos ranked by view count.
  *
@@ -144,8 +184,10 @@ function pickThumbnail(video: ApiVideo, videoId: string): string {
  * statistic should not hide a video entirely.
  *
  * @param limit how many videos to return, highest view count first
+ * @param names group names to match against titles; filtering happens before
+ *   the limit is applied, and falls back to the full set when nothing matches
  */
-export function parseVideoList(body: unknown, limit = 3): FeedVideo[] {
+export function parseVideoList(body: unknown, limit = 3, names: string[] = []): FeedVideo[] {
   const items = (body as { items?: ApiVideo[] } | null)?.items;
   if (!Array.isArray(items)) return [];
 
@@ -166,7 +208,9 @@ export function parseVideoList(body: unknown, limit = 3): FeedVideo[] {
     });
   }
 
-  return videos.sort((a, b) => b.views - a.views).slice(0, limit);
+  return filterByName(videos, names)
+    .sort((a, b) => b.views - a.views)
+    .slice(0, limit);
 }
 
 /** True if the value is a well-formed UC... channel ID. */
