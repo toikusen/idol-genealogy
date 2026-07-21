@@ -92,38 +92,67 @@ export interface FeedVideo {
   views: number;
 }
 
-function field(block: string, pattern: RegExp): string | null {
-  const match = pattern.exec(block);
-  return match ? match[1] : null;
+/**
+ * The channel's "uploads" playlist ID.
+ *
+ * YouTube derives it from the channel ID by swapping the UC prefix for UU, which
+ * saves a channels.list call (and a quota unit) per refresh.
+ */
+export function uploadsPlaylistId(channelId: string): string {
+  return `UU${channelId.slice(2)}`;
+}
+
+/** Shape of the videos.list response fields this reads. */
+interface ApiVideo {
+  id?: string;
+  snippet?: {
+    title?: string;
+    publishedAt?: string;
+    thumbnails?: Record<string, { url?: string } | undefined>;
+  };
+  statistics?: { viewCount?: string };
+}
+
+// Widest first: high is 480x360, matching what the RSS feed used to return.
+const THUMBNAIL_SIZES = ['high', 'medium', 'default'];
+
+function pickThumbnail(video: ApiVideo, videoId: string): string {
+  const thumbnails = video.snippet?.thumbnails;
+  for (const size of THUMBNAIL_SIZES) {
+    const url = thumbnails?.[size]?.url;
+    if (url) return url;
+  }
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
 /**
- * Parses a YouTube channel RSS feed and returns its videos ranked by view count.
+ * Maps a YouTube Data API videos.list response to videos ranked by view count.
  *
- * The Workers runtime has no DOMParser, so this splits on <entry> and applies
- * per-field regexes. Entries with no view count sort as 0 rather than being
- * dropped — a missing statistic should not hide a video entirely.
+ * Titles still need entity decoding — the API returns them HTML-escaped, so
+ * "Rock & Roll" arrives as "Rock &amp; Roll" despite being JSON.
+ *
+ * Videos with no viewCount sort as 0 rather than being dropped; a missing
+ * statistic should not hide a video entirely.
  *
  * @param limit how many videos to return, highest view count first
  */
-export function parseVideoFeed(xml: string, limit = 3): FeedVideo[] {
-  if (!xml) return [];
+export function parseVideoList(body: unknown, limit = 3): FeedVideo[] {
+  const items = (body as { items?: ApiVideo[] } | null)?.items;
+  if (!Array.isArray(items)) return [];
 
   const videos: FeedVideo[] = [];
 
-  for (const block of xml.split('<entry>').slice(1)) {
-    const videoId = field(block, /<yt:videoId>([\w-]+)<\/yt:videoId>/);
+  for (const item of items) {
+    const videoId = item?.id;
     if (!videoId) continue;
 
-    const rawTitle = field(block, /<title>([\s\S]*?)<\/title>/);
-    const views = field(block, /<media:statistics\s+views="(\d+)"/);
+    const views = item.statistics?.viewCount;
 
     videos.push({
       videoId,
-      title: rawTitle ? decodeXmlEntities(rawTitle.trim()) : '',
-      thumbnail: field(block, /<media:thumbnail\s+url="([^"]+)"/)
-        ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-      publishedAt: field(block, /<published>([^<]+)<\/published>/) ?? '',
+      title: decodeXmlEntities((item.snippet?.title ?? '').trim()),
+      thumbnail: pickThumbnail(item, videoId),
+      publishedAt: item.snippet?.publishedAt ?? '',
       views: views ? parseInt(views, 10) : 0,
     });
   }

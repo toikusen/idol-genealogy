@@ -13,35 +13,62 @@ channel is the natural source of truth and the manual list is redundant work.
 
 ## Solution
 
-Drop the manual list entirely. Fetch the group's YouTube channel RSS feed through a
-Cloudflare Pages Function, rank the returned entries by view count, and render the
-top 3 client-side. No API key, no quota, no cron, no editor upkeep.
+Drop the manual list entirely. Fetch the group's recent uploads through a Cloudflare
+Pages Function, rank them by view count, and render the top 3 client-side. No cron,
+no editor upkeep.
 
 The section is renamed from「精選影片」to「熱門影片」so the label matches what it
 actually shows.
 
-## Why RSS And Not The YouTube Data API
+## Data Source: YouTube Data API v3
 
-`https://www.youtube.com/feeds/videos.xml?channel_id=UC...` is public, unauthenticated,
-and unmetered. Verified 2026-07-21 against a live channel: each `<entry>` carries
-`yt:videoId`, `title`, `published`, `media:thumbnail@url`, and — the deciding
-factor — `media:community/media:statistics@views`.
+**The RSS feed was tried first and abandoned.** It is worth recording why, because
+on paper it is the better option and the failure is not visible from a dev machine.
 
-That view count is what makes「熱門」possible for free. The trade-off is that the feed
-returns only the channel's most recent ~15 uploads, so the ranking is "most-watched
-of the recent uploads", not all-time most-watched. For a group page that is the
-better semantic anyway: it reflects what the group is doing now.
+`https://www.youtube.com/feeds/videos.xml?channel_id=UC...` is public,
+unauthenticated, unmetered, and carries exactly the fields needed, including
+`media:community/media:statistics@views`. It was verified working, shipped, and
+then **failed completely in production**: on 2026-07-21 every channel requested
+through the deployed Pages Function returned empty, while the same feed URLs
+returned 200 from a residential IP minutes apart. YouTube blocks that endpoint from
+Cloudflare's egress IPs.
+
+Notably the *channel pages* remain reachable from Cloudflare — `/api/youtube-channel-id`
+kept working throughout — so the block is specific to the feed endpoint, not to
+YouTube as a whole.
+
+This also killed the fallback of persisting the last successful response: from
+Cloudflare there is never a successful response to persist.
+
+**The API path**, per refresh:
+
+1. `playlistItems.list?part=contentDetails&playlistId=UU…&maxResults=15` — 1 unit.
+   The uploads playlist ID is the channel ID with `UC` swapped for `UU`, which
+   avoids a `channels.list` call.
+2. `videos.list?part=snippet,statistics&id=…` — 1 unit. `playlistItems` does not
+   carry view counts, hence the second call.
+
+Two units per channel per cache miss, against a 10,000/day free tier. `search.list`
+with `order=viewCount` would be one call but costs 100 units, so it is not used.
+
+The ranking window is unchanged: the 15 most recent uploads, so the result is
+"most-watched of the recent uploads", not all-time most-watched. For a group page
+that is the better semantic anyway — it reflects what the group is doing now.
+
+`YOUTUBE_API_KEY` is a Cloudflare Pages secret, restricted in Google Cloud to the
+YouTube Data API with no application restriction (Workers egress IPs are not fixed,
+and referrer restrictions do not apply to server-side calls). A missing key takes
+the same path as any upstream failure: empty list, no video section.
 
 ## Ranking Rule
 
-Sort the feed's entries by `views` descending, take 3. No other filtering.
+Sort the 15 candidate uploads by view count descending, take 3. No other filtering.
 
-**Shorts are deliberately not filtered.** The RSS feed carries no duration or video-type
-field, so detecting Shorts requires probing `youtube.com/shorts/{id}` per video and
-reading the status code (303 → regular video; verified for regular videos only, the
-positive case was not confirmed). That is 15 extra requests per channel resting on
-undocumented behavior, to solve a problem that view-count ranking already mostly
-solves: MVs and notable uploads outrank routine 告知 videos on their own.
+**Shorts are deliberately not filtered.** `videos.list` could return
+`contentDetails.duration` for a length heuristic, but that is a guess at intent
+dressed up as a rule, and view-count ranking already mostly solves the problem: MVs
+and notable uploads outrank routine 告知 videos on their own. Revisit only if Shorts
+noise is observed on real group pages.
 
 Revisit only if Shorts noise is observed in practice on real group pages.
 
@@ -183,58 +210,32 @@ Caching below.
 - Validate `channel` against `/^UC[\w-]{22}$/`; 400 otherwise. This doubles as the
   SSRF guard — the channel ID is interpolated into a fixed YouTube URL, never a
   caller-supplied one.
-- Fetch the RSS feed with `signal: AbortSignal.timeout(8000)`; on timeout or non-OK
-  upstream return 503, so the frontend fails fast instead of hanging.
+- Call the YouTube Data API with `signal: AbortSignal.timeout(8000)` per request:
+  `playlistItems.list` for recent uploads, then `videos.list` for their statistics.
 - Parse, rank, slice to 3, return JSON.
+- Any failure — missing key, non-OK response, timeout, empty result — returns an
+  empty list rather than an error status. The frontend renders nothing either way,
+  so a distinct error code would only add a path nobody handles.
 
-**Request headers.** Send `Accept: application/atom+xml, application/xml, text/xml`
-and a browser-style `User-Agent`, matching `timetree-events.ts`. Cheap insurance,
-not a documented requirement — see the rate-limit finding below for what actually
-causes failures.
+### Historical: Why The RSS Feed Was Dropped
 
-### Upstream Rate Limiting — Unresolved Risk
+Superseded by the API — kept because the failure is invisible locally and someone
+will otherwise propose the feed again as the "simpler" option.
 
-**The feed is rate-limited per IP, and this is the main threat to the design.**
-
-Measured 2026-07-21 from one address:
+Measured 2026-07-21 from a residential IP:
 
 - First ~20 requests: 200, with any User-Agent (none, curl's default, browser).
-- After that: 404 and 500, on *every* channel tried, while ordinary channel pages
-  (`youtube.com/@handle`) kept returning 200.
-- Still failing after three retries spaced 20s apart.
-- **Recovered on its own roughly 30 minutes later** — a later end-to-end run
-  through the Pages Function returned all three videos correctly ranked.
+- After that: 404 and 500 on every channel, while ordinary channel pages kept
+  returning 200. Recovered on its own after roughly 30 minutes.
 
-So it is a temporary throttle, not a block. That makes the risk materially smaller
-than a persistent failure would be, but it is still a throttle triggered by roughly
-20 requests from one address.
+So from a home IP it was a temporary throttle. That is *not* what happens from
+Cloudflare. Measured against the deployed Function the same day, three separate
+channels — three distinct cache keys, so three fresh fetches — all returned empty,
+while the same feed URLs returned 200 from the residential IP minutes apart. The
+feed endpoint is blocked from Cloudflare's egress range, not merely throttled.
 
-This corrects an earlier claim in this document that a missing `User-Agent` causes
-404s: the header is not the variable — request volume is. Both the original review
-observation (404s) and the first rebuttal (all 200) were real, taken either side of
-the rate limit.
-
-**Why it matters:** Cloudflare Workers egress from shared datacenter IPs. If YouTube
-throttles the feed that aggressively, production may fail often, and the video
-section would frequently not render — arriving back at the original complaint (a
-usually-empty section) by a different route.
-
-**Why it is not a blocker yet:** every failure path degrades to "section not
-rendered", so a throttled window is invisible rather than broken; the throttle
-lifts by itself; and local testing cannot answer the question anyway — it measures
-a home IP, not Cloudflare's egress. The 6-hour cache also means one request per
-channel per colo per 24 hours, which is far below the rate that triggered it here.
-
-**Mitigation in the implementation:** upstream failures are negative-cached as an
-empty list for 5 minutes. Without it, a throttled window would have every visitor
-re-hitting YouTube and extending the block.
-
-**Decision: ship to UAT and measure before committing.** Deploy phase A, watch the
-Function's 5xx and empty-response rate on real traffic for a week. If the feed
-proves unreliable from Cloudflare, the fallbacks are (a) persist the last successful
-result per group so a throttled fetch shows stale videos instead of none, or (b)
-move to the YouTube Data API with a key and quota. **Migration B must not run until
-this is settled** — until then `group_videos` stays as the rollback path.
+This also corrects an earlier claim in this document that a missing `User-Agent`
+causes 404s. The header was never the variable.
 
 ### Caching
 
@@ -275,13 +276,14 @@ interface GroupVideo {
 }
 ```
 
-**Parsing note:** the Workers runtime has no `DOMParser`. Parse by splitting on
-`<entry>` and applying per-field regexes to each block — same shape of pragmatism as
-the channel-ID extraction. Entries missing `views` sort as 0 rather than being dropped.
+**Parsing notes.** Videos missing `statistics.viewCount` sort as 0 rather than being
+dropped — a missing statistic should not hide a video entirely. Thumbnails fall back
+`high` → `medium` → `default` → a URL derived from the video ID.
 
-Titles must be XML-entity decoded after extraction — `&amp;`, `&quot;`, `&#39;`,
-`&lt;`, `&gt;`, and numeric refs all appear in real video titles. The unit test
-covers a title containing `&amp;` and a numeric reference.
+Titles still need HTML-entity decoding despite the payload being JSON: the API
+returns `Rock &amp; Roll`, not `Rock & Roll`. `&amp;`, `&quot;`, `&#39;`, `&lt;`,
+`&gt;` and numeric refs all appear in real titles. The unit test covers a title with
+`&amp;` and a numeric reference.
 
 ## Frontend
 
@@ -340,9 +342,10 @@ Verified against the current tree:
 
 ## Testing
 
-RSS parsing and ranking are pure functions and get one unit test fed fixed XML
-strings covering: normal entries, an entry with no `views`, a title with `&amp;` and
-a numeric entity reference, and a malformed/empty feed.
+Response mapping and ranking are pure functions and get one unit test fed fixed
+`videos.list` payloads covering: normal items, an item with no `statistics`, a title
+with `&amp;` and a numeric entity reference, thumbnail fallback, an item with no
+`id`, and malformed/empty/null payloads.
 
 Channel-ID extraction gets one test per accepted pattern in isolation, plus a
 negative case with none of them. Not a single saved page — the point of the test is
