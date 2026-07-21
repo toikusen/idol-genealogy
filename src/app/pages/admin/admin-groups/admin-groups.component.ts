@@ -8,8 +8,9 @@ import { AdminRoleService } from '../../../core/admin-role.service';
 import { CompanyService } from '../../../core/company.service';
 import { IgPhotoService } from '../../../core/ig-photo.service';
 import { ProposalService } from '../../../core/proposal.service';
-import { Group, GroupVideo, Company } from '../../../models';
+import { Group, Company } from '../../../models';
 import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
+import { normalizeSnsUrl } from '../../../core/sns-url.utils';
 
 @Component({
   selector: 'app-admin-groups',
@@ -39,11 +40,6 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
 
   // Style multi-select
 
-  // Videos
-  videos: GroupVideo[] = [];
-  newVideoUrl = '';
-  videoError = '';
-  savingVideo = false;
   private readonly TIMETREE_URL_PREFIXES = [
     'https://timetreeapp.com/public_calendars/',
     'https://www.timetreeapp.com/public_calendars/',
@@ -107,24 +103,18 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     this.error = '';
     this.igFetchError = '';
     this.saveWarning = '';
-    this.videos = [];
-    this.newVideoUrl = '';
-    this.videoError = '';
     this.showModal = true;
     this.loadCompanies();
   }
 
-  async openEdit(g: Group) {
+  openEdit(g: Group) {
     this.editing = { ...g };
     this.originalData = { ...g };
     this.saveWarning = '';
     this.isEdit = true;
     this.error = '';
     this.igFetchError = '';
-    this.newVideoUrl = '';
-    this.videoError = '';
     this.showModal = true;
-    this.videos = await this.groupService.getVideosByGroup(g.id);
     this.loadCompanies();
   }
 
@@ -145,56 +135,52 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     }
   }
 
-  extractYouTubeId(url: string): string | null {
-    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([A-Za-z0-9_-]{11})/);
-    return m ? m[1] : null;
-  }
+  /**
+   * Keeps `youtube_channel_id` in step with `youtube`, mutating `this.editing`
+   * so both are written by the same update and can never disagree.
+   *
+   * Only calls the resolver when it has to — editing an unrelated field must not
+   * trigger a YouTube fetch. Comparing normalized values means a cosmetic change
+   * like `@Foo` → `youtube.com/@Foo` does not count as a channel change either.
+   *
+   * @returns false when the save must be abandoned.
+   */
+  private async syncYouTubeChannelId(): Promise<boolean> {
+    const normalized = normalizeSnsUrl(this.editing.youtube, 'youtube');
+    const previous = normalizeSnsUrl(this.originalData['youtube'], 'youtube');
 
-  async addVideo() {
-    this.videoError = '';
-    const url = this.newVideoUrl.trim();
-    if (!url) return;
-    if (!this.extractYouTubeId(url)) {
-      this.videoError = '請輸入有效的 YouTube 網址';
-      return;
+    if (!normalized) {
+      this.editing.youtube = null;
+      this.editing.youtube_channel_id = null;
+      return true;
     }
-    if (this.videos.length >= 3) {
-      this.videoError = '最多只能新增 3 部影片';
-      return;
+
+    const channelChanged = normalized !== previous;
+    if (!channelChanged && this.editing.youtube_channel_id) {
+      this.editing.youtube = normalized;
+      return true;
     }
-    this.savingVideo = true;
+
     try {
-      // Fetch title from YouTube oEmbed (no API key needed)
-      let title: string | null = null;
-      try {
-        const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
-        if (res.ok) {
-          const json = await res.json();
-          title = json.title ?? null;
-        }
-      } catch { /* ignore, save without title */ }
-
-      await this.groupService.createVideo({
-        group_id: this.editing.id!,
-        url,
-        title,
-        sort_order: this.videos.length,
-      });
-      this.videos = await this.groupService.getVideosByGroup(this.editing.id!);
-      this.newVideoUrl = '';
-    } catch (e: any) {
-      this.videoError = e.message || '新增失敗';
-    } finally {
-      this.savingVideo = false;
-    }
-  }
-
-  async removeVideo(v: GroupVideo) {
-    try {
-      await this.groupService.deleteVideo(v.id);
-      this.videos = this.videos.filter(x => x.id !== v.id);
-    } catch (e: any) {
-      this.videoError = e.message || '刪除失敗';
+      const channelId = await this.groupService.resolveYouTubeChannelId(normalized);
+      this.editing.youtube = normalized;
+      this.editing.youtube_channel_id = channelId;
+      return true;
+    } catch {
+      // Upstream is down. What that means depends on whether the channel moved.
+      if (channelChanged) {
+        // Writing the new URL beside the old ID would make the group page show
+        // the *previous* channel's videos. Abandon the save instead.
+        this.error = 'YouTube 暫時無法連線，頻道網址已變更但無法驗證,請稍後再試';
+        return false;
+      }
+      // Same channel, we were only filling a missing ID. Saving the other fields
+      // is safe; the null ID means a later save retries the resolution.
+      this.editing.youtube = normalized;
+      this.editing.youtube_channel_id = this.originalData['youtube_channel_id'] ?? null;
+      this.saveWarning = 'YouTube 暫時無法連線，頻道 ID 未更新，下次儲存會再試';
+      setTimeout(() => { this.saveWarning = ''; }, 6000);
+      return true;
     }
   }
 
@@ -220,6 +206,7 @@ export class AdminGroupsComponent implements OnInit, OnDestroy {
     if (this.editing.photography_source === '') this.editing.photography_source = null;
     this.saving = true;
     try {
+      if (!await this.syncYouTubeChannelId()) return;
       if (this.isEdit && this.editing.id) {
         await this.groupService.update(this.editing.id, this.editing);
         await this.proposalService.recordDirectEdit('groups', this.editing.id, this.originalData, this.editing)

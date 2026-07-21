@@ -1046,7 +1046,7 @@
         </div>
       }
 
-      <!-- ══ Featured videos ══ -->
+      <!-- ══ Popular videos (auto-fetched from the group's YouTube channel) ══ -->
       @if (videos.length > 0) {
         <section style="margin-top: 48px; margin-bottom: 16px;">
 
@@ -1057,14 +1057,14 @@
               font-size: 0.72rem; letter-spacing: 0.25em;
               text-transform: uppercase; color: var(--text-label);
               white-space: nowrap;
-            ">精選影片</span>
+            ">熱門影片</span>
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.18), transparent);"></div>
           </div>
 
           <!-- Video cards -->
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;">
-            @for (v of videos; track v.id) {
-              @if (extractYouTubeId(v.url); as vid) {
+            @for (v of videos; track v.videoId) {
+              @let vid = v.videoId;
                 <div class="video-card" style="
                   border-radius: 4px; overflow: hidden;
                   background: var(--bg-card);
@@ -1089,7 +1089,7 @@
                       style="position: relative; cursor: pointer; overflow: hidden;"
                     >
                       <img
-                        [src]="'https://img.youtube.com/vi/' + vid + '/hqdefault.jpg'"
+                        [src]="v.thumbnail"
                         loading="lazy"
                         style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; transition: transform 0.3s;"
                         class="video-thumb"
@@ -1131,7 +1131,6 @@
                   }
 
                 </div>
-              }
             }
           </div>
         </section>

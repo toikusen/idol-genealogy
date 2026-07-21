@@ -44,6 +44,8 @@ export interface Group {
   facebook: string | null;
   x: string | null;
   youtube: string | null;
+  /** Resolved UC... ID for `youtube`; null when unresolved. See migration 092. */
+  youtube_channel_id: string | null;
   timetree_url: string | null;
   photo_status: PhotographyPolicyStatus | null;
   photo_notes: string | null;
@@ -84,13 +86,13 @@ export interface History {
   member?: Member;
 }
 
+/** A video from the group's YouTube channel feed, served by /api/youtube-videos. */
 export interface GroupVideo {
-  id: string;
-  group_id: string;
-  url: string;
-  title: string | null;
-  sort_order: number;
-  created_at: string;
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  publishedAt: string;
+  views: number;
 }
 
 export interface Company {

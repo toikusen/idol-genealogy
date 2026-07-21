@@ -1,8 +1,8 @@
-import { Component, OnInit, DestroyRef, HostListener } from '@angular/core';
+import { Component, OnInit, DestroyRef, HostListener, PLATFORM_ID, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
@@ -71,6 +71,7 @@ export class GroupPageComponent implements OnInit {
   histories: History[] = [];
   allMemberHistories: History[] = [];
   videos: GroupVideo[] = [];
+  private readonly platformId = inject(PLATFORM_ID);
   similarGroups: RelatedGroup[] = [];
   carouselIndex = 0;
   carouselVisibleCount = 2;
@@ -223,6 +224,7 @@ export class GroupPageComponent implements OnInit {
       this.applyPageData(data);
       if (data.group && !data.error) {
         this.loadDeferredData(data.id, data.group);
+        this.loadChannelVideos(data.group);
       }
     });
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
@@ -245,6 +247,20 @@ export class GroupPageComponent implements OnInit {
     });
   }
 
+  /**
+   * Loads the channel's top videos. Browser-only: loadDeferredData runs during
+   * SSR, and the prerender build must not depend on YouTube being reachable.
+   */
+  private async loadChannelVideos(group: import('../../models').Group): Promise<void> {
+    this.videos = [];
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const channelId = group.youtube_channel_id;
+    const videos = await this.groupService.getChannelVideos(channelId);
+    // Route may have changed while the request was in flight.
+    if (this.group?.youtube_channel_id === channelId) this.videos = videos;
+  }
+
   private async loadDeferredData(id: string, group: import('../../models').Group): Promise<void> {
     this.currentLoadId = id;
     this.deferredLoading = true;
@@ -254,7 +270,7 @@ export class GroupPageComponent implements OnInit {
         publicHistories.map(h => h.member_id).filter((mid): mid is string => !!mid)
       )];
 
-      const [company, proposals, historyProposals, songProposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
+      const [company, proposals, historyProposals, songProposals, allMemberHistories, allMembers, similarGroups, songs] = await Promise.all([
         (!this.companyName && group.company_id) ? this.companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
         this.proposalService.getApprovedByRecord('groups', id).catch(() => []),
         this.proposalService.getApprovedHistoryByField('group_id', id).catch(() => [] as Proposal[]),
@@ -263,7 +279,6 @@ export class GroupPageComponent implements OnInit {
         this.memberService.getAll().catch(() => []),
         this.groupService.getRelated(id).catch(() => []),
         this.groupSongService.getByGroup(id).catch(() => []),
-        this.groupService.getVideosByGroup(id).catch(() => []),
       ]);
 
       if (this.currentLoadId === id && !this._routeSub?.closed) {
@@ -283,7 +298,6 @@ export class GroupPageComponent implements OnInit {
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
         this.similarGroups = similarGroups;
         this.songs = songs;
-        this.videos = videos;
         if (this.pendingEditSongId) {
           const song = this.songs.find(s => s.id === this.pendingEditSongId);
           if (song) this.openEditSong(song);
@@ -306,7 +320,6 @@ export class GroupPageComponent implements OnInit {
     this.teams = pageData.teams;
     this.histories = pageData.histories;
     this.allMemberHistories = pageData.allMemberHistories;
-    this.videos = pageData.videos;
     this.similarGroups = pageData.similarGroups;
     this.carouselIndex = 0;
     this.lastProposal = pageData.lastProposal;

@@ -73,6 +73,7 @@ const baseGroup = {
   facebook: null as string | null,
   x: null as string | null,
   youtube: null as string | null,
+  youtube_channel_id: null as string | null,
   company_id: null as string | null,
 };
 
@@ -106,6 +107,7 @@ const baseCompany = {
   facebook: null as string | null,
   x: null as string | null,
   youtube: null as string | null,
+  youtube_channel_id: null as string | null,
   website: null as string | null,
 };
 
