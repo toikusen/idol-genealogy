@@ -26,7 +26,15 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 // Mirrors src/app/core/youtube-feed.utils.ts. Duplicated rather than imported:
 // this is a plain .mjs script and that file is TypeScript.
 const ALLOWED_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com']);
-const CHANNEL_PATHS = [/^\/@[^/]+\/?$/, /^\/channel\/UC[\w-]{22}\/?$/, /^\/c\/[^/]+\/?$/, /^\/user\/[^/]+\/?$/];
+// Tab suffixes ("/@handle/videos") are what the address bar shows once you click
+// into a channel, so stored URLs routinely carry them. Capture the channel part.
+const CHANNEL_TAB = '(?:/(?:videos|featured|shorts|streams|playlists|community|about|releases|podcasts))?/?';
+const CHANNEL_PATHS = [
+  new RegExp(`^(/@[^/]+)${CHANNEL_TAB}$`),
+  new RegExp(`^(/channel/UC[\\w-]{22})${CHANNEL_TAB}$`),
+  new RegExp(`^(/c/[^/]+)${CHANNEL_TAB}$`),
+  new RegExp(`^(/user/[^/]+)${CHANNEL_TAB}$`),
+];
 const CHANNEL_ID_PATTERNS = [
   /rel="canonical"\s+href="[^"]*\/channel\/(UC[\w-]{22})/,
   /channel_id=(UC[\w-]{22})/,
@@ -71,8 +79,14 @@ function parseChannelUrl(input) {
 
   if (url.protocol !== 'https:') return null;
   if (!ALLOWED_HOSTS.has(url.hostname)) return null;
-  if (!CHANNEL_PATHS.some(re => re.test(url.pathname))) return null;
-  return `https://www.youtube.com${url.pathname}`;
+
+  for (const pattern of CHANNEL_PATHS) {
+    const match = pattern.exec(url.pathname);
+    // Rebuilt from the captured channel path only, dropping any tab suffix and
+    // the ?si= tracking params YouTube's share button appends.
+    if (match) return `https://www.youtube.com${match[1]}`;
+  }
+  return null;
 }
 
 async function resolveChannelId(channelUrl) {
@@ -110,7 +124,12 @@ console.log(`${groups.length} group(s) to resolve${DRY_RUN ? ' (dry run)' : ''}.
 const unresolved = [];
 let resolved = 0;
 
+let blank = 0;
+
 for (const group of groups) {
+  // Some rows store '' rather than NULL. Nothing to resolve and nothing wrong.
+  if (!group.youtube.trim()) { blank++; continue; }
+
   const channelUrl = parseChannelUrl(group.youtube);
 
   if (!channelUrl) {
@@ -145,7 +164,7 @@ for (const group of groups) {
   await sleep(THROTTLE_MS);
 }
 
-console.log(`\nResolved ${resolved}/${groups.length}.`);
+console.log(`\nResolved ${resolved}/${groups.length - blank}${blank ? ` (${blank} row(s) had a blank youtube value, skipped)` : ''}.`);
 if (unresolved.length) {
   console.log(`\nUnresolved (${unresolved.length}) — re-run to retry transient failures:`);
   for (const line of unresolved) console.log(`  - ${line}`);

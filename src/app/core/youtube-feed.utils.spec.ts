@@ -19,6 +19,26 @@ describe('parseChannelUrl', () => {
       .toBe('https://www.youtube.com/user/SomeUser');
   });
 
+  // Real stored data: URLs get copied from a channel tab, and YouTube's share
+  // button appends ?si= tracking params. Both must resolve to the channel root.
+  it('strips tab suffixes and query strings', () => {
+    expect(parseChannelUrl('https://www.youtube.com/@florafiore0314/videos'))
+      .toBe('https://www.youtube.com/@florafiore0314');
+    expect(parseChannelUrl('https://www.youtube.com/@foo/featured'))
+      .toBe('https://www.youtube.com/@foo');
+    expect(parseChannelUrl('https://www.youtube.com/@foo/streams'))
+      .toBe('https://www.youtube.com/@foo');
+    expect(parseChannelUrl('https://youtube.com/@shionasutaa?si=e3ZmudFQs9L7J_EK'))
+      .toBe('https://www.youtube.com/@shionasutaa');
+    expect(parseChannelUrl('https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw/videos'))
+      .toBe('https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw');
+  });
+
+  it('still rejects unknown path segments after the channel', () => {
+    expect(parseChannelUrl('https://www.youtube.com/@foo/bar')).toBeNull();
+    expect(parseChannelUrl('https://www.youtube.com/@foo/videos/extra')).toBeNull();
+  });
+
   it('rejects non-HTTPS', () => {
     expect(parseChannelUrl('http://www.youtube.com/@RickAstleyYT')).toBeNull();
   });

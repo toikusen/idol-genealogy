@@ -5,11 +5,15 @@
 
 const CHANNEL_ID = /^UC[\w-]{22}$/;
 
+// Channel URLs are routinely copied from a tab rather than the channel root —
+// "/@handle/videos" is what the browser address bar shows once you click through.
+// Capture the channel part and drop the tab, so the fetch hits the channel page.
+const CHANNEL_TAB = '(?:/(?:videos|featured|shorts|streams|playlists|community|about|releases|podcasts))?/?';
 const CHANNEL_PATHS = [
-  /^\/@[^/]+\/?$/,
-  /^\/channel\/UC[\w-]{22}\/?$/,
-  /^\/c\/[^/]+\/?$/,
-  /^\/user\/[^/]+\/?$/,
+  new RegExp(`^(/@[^/]+)${CHANNEL_TAB}$`),
+  new RegExp(`^(/channel/UC[\\w-]{22})${CHANNEL_TAB}$`),
+  new RegExp(`^(/c/[^/]+)${CHANNEL_TAB}$`),
+  new RegExp(`^(/user/[^/]+)${CHANNEL_TAB}$`),
 ];
 
 const ALLOWED_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com']);
@@ -37,9 +41,14 @@ export function parseChannelUrl(input: string | null | undefined): string | null
 
   if (url.protocol !== 'https:') return null;
   if (!ALLOWED_HOSTS.has(url.hostname)) return null;
-  if (!CHANNEL_PATHS.some(re => re.test(url.pathname))) return null;
 
-  return `https://www.youtube.com${url.pathname}`;
+  for (const pattern of CHANNEL_PATHS) {
+    const match = pattern.exec(url.pathname);
+    // Rebuilt from the captured channel path only: any tab suffix, query string
+    // (?si= tracking params are common) and fragment are dropped here.
+    if (match) return `https://www.youtube.com${match[1]}`;
+  }
+  return null;
 }
 
 // Ordered by verified reliability against real channel pages (2026-07-21).
