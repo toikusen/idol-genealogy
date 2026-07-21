@@ -8,9 +8,11 @@ const CACHE_SECONDS = 24 * 60 * 60;
 const FAILURE_CACHE_SECONDS = 5 * 60;
 const UPSTREAM_TIMEOUT_MS = 8000;
 const VIDEO_COUNT = 3;
-// How many recent uploads to rank across. The API caps playlistItems at 50; 15
-// keeps videos.list to one page and matches what the old RSS feed returned.
-const CANDIDATE_COUNT = 15;
+// How many recent uploads to rank across — the API caps both playlistItems and
+// videos.list at 50, so this is the widest a 2-unit refresh can be. It needs to
+// be wide: on a company channel shared by several groups, this group's videos
+// may be sparse among its siblings' after title filtering.
+const CANDIDATE_COUNT = 50;
 
 const API = 'https://www.googleapis.com/youtube/v3';
 
@@ -27,7 +29,11 @@ interface Env {
  * from a residential IP). Two calls, 1 quota unit each, against a 10k/day tier.
  */
 export const onRequestGet: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
-  const channel = new URL(request.url).searchParams.get('channel');
+  const params = new URL(request.url).searchParams;
+  const channel = params.get('channel');
+  // Group names, for channels shared by several groups. The cache key carries
+  // them, so two groups on one channel cache separately — which is correct.
+  const names = params.getAll('match');
 
   // Doubles as the SSRF guard: the channel ID is interpolated into fixed
   // googleapis URLs below, so nothing caller-supplied reaches fetch() verbatim.
@@ -80,7 +86,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, waitUntil
   );
   if (!details) return backOff();
 
-  const videos = parseVideoList(details, VIDEO_COUNT);
+  const videos = parseVideoList(details, VIDEO_COUNT, names);
   if (!videos.length) return backOff();
 
   const response = Response.json(videos, {

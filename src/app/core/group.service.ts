@@ -144,10 +144,16 @@ export class GroupService {
    * Browser-only — callers must guard with isPlatformBrowser. Returns [] on any
    * failure: a missing video strip is not worth surfacing an error on a group page.
    */
-  async getChannelVideos(channelId: string | null): Promise<GroupVideo[]> {
+  async getChannelVideos(channelId: string | null, names: (string | null)[] = []): Promise<GroupVideo[]> {
     if (!isChannelId(channelId)) return [];
+
+    const query = new URLSearchParams({ channel: channelId! });
+    // Sent so a company channel shared by several groups can be filtered down to
+    // this group's videos. Ignored when nothing in the channel matches.
+    for (const name of names) if (name?.trim()) query.append('match', name.trim());
+
     try {
-      const res = await fetch(`/api/youtube-videos?channel=${encodeURIComponent(channelId!)}`);
+      const res = await fetch(`/api/youtube-videos?${query}`);
       return res.ok ? await res.json() : [];
     } catch {
       return [];

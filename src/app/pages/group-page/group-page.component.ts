@@ -256,7 +256,7 @@ export class GroupPageComponent implements OnInit {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const channelId = group.youtube_channel_id;
-    const videos = await this.groupService.getChannelVideos(channelId);
+    const videos = await this.groupService.getChannelVideos(channelId, [group.name, group.name_jp]);
     // Route may have changed while the request was in flight.
     if (this.group?.youtube_channel_id === channelId) this.videos = videos;
   }
