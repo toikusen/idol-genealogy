@@ -89,3 +89,8 @@ docs/superpowers/specs/2026-05-13-venues-tab-design.md
 # playwright test cach
 .playwright-mcp/
 .wrangler/
+
+# Local secrets (service keys, API keys) — never commit
+.env
+.env.*
+!.env.example
