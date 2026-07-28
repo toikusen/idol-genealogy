@@ -1,4 +1,4 @@
-import { getDiffFields, getDeleteSummary, getEffectiveProposed, getRelatedSubjectName } from './proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, getEffectiveProposed, getRelatedSubjectName, isReportProposal } from './proposal-diff.utils';
 import { Proposal } from '../models';
 
 const baseProposal: Proposal = {
@@ -17,6 +17,21 @@ describe('getEffectiveProposed', () => {
 
   it('falls back to proposed_data when reviewed_data is null', () => {
     expect(getEffectiveProposed(baseProposal)).toEqual({ name: 'New Name' });
+  });
+});
+
+describe('isReportProposal', () => {
+  it('is true for an UPDATE with no proposed fields', () => {
+    expect(isReportProposal({ ...baseProposal, proposed_data: {} })).toBe(true);
+  });
+
+  it('is false for an UPDATE that changes a field', () => {
+    expect(isReportProposal(baseProposal)).toBe(false);
+  });
+
+  it('is false for INSERT and DELETE, whose empty payloads are meaningful', () => {
+    expect(isReportProposal({ ...baseProposal, operation: 'INSERT', proposed_data: {} })).toBe(false);
+    expect(isReportProposal({ ...baseProposal, operation: 'DELETE', proposed_data: {} })).toBe(false);
   });
 });
 

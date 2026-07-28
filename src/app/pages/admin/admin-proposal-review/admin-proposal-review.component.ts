@@ -8,6 +8,7 @@ import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../../core/proposal-fields.config';
 import { normalizeHistoryNameAtTime } from '../../../core/history-name-at-time.utils';
+import { isReportProposal } from '../../../core/proposal-diff.utils';
 import { Proposal } from '../../../models';
 
 @Component({
@@ -92,6 +93,11 @@ export class AdminProposalReviewComponent implements OnInit {
     return PROPOSAL_ALLOWED_FIELDS[this.proposal.table_name] ?? [];
   }
 
+  /** Free-text report with no field changes (song 「回報問題」). Nothing to apply. */
+  get isReport(): boolean {
+    return !!this.proposal && isReportProposal(this.proposal);
+  }
+
   /** Key-value pairs from original_data for DELETE proposal display */
   get deleteOriginalEntries(): { key: string; value: any }[] {
     const src = this.proposal?.original_data ?? {};
@@ -118,7 +124,10 @@ export class AdminProposalReviewComponent implements OnInit {
   }
 
   tableLabel(t: string): string {
-    return { members: '成員', groups: '團體', history: '歷程', companies: '公司' }[t] ?? t;
+    return {
+      members: '成員', groups: '團體', history: '歷程', companies: '公司',
+      venues: '場地', member_songs: '成員歌曲', group_songs: '團體歌曲',
+    }[t] ?? t;
   }
 
   async approve() {

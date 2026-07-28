@@ -5,6 +5,7 @@ import { GroupService } from './group.service';
 import { CompanyService } from './company.service';
 import { Proposal } from '../models';
 import { PROPOSAL_ALLOWED_FIELDS } from './proposal-fields.config';
+import { isReportProposal } from './proposal-diff.utils';
 
 export interface ContributorEntry {
   submitter_id: string;
@@ -100,13 +101,14 @@ export class ProposalService {
         .delete()
         .eq('id', proposal.record_id!);
       applyError = error;
-    } else {
+    } else if (!isReportProposal({ operation: proposal.operation, proposed_data: dataToApply })) {
       const { error } = await this.db
         .from(proposal.table_name)
         .update(dataToApply)
         .eq('id', proposal.record_id!);
       applyError = error;
     }
+    // Report proposals carry no fields to apply; approving one only marks it handled.
     if (applyError) throw applyError;
     // Approve writes bypass the entity services, so their getAll() caches
     // would keep serving pre-approval data (e.g. audit log showing raw ids).

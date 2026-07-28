@@ -168,6 +168,21 @@ describe('ProposalService', () => {
       );
     });
 
+    it('does not touch the target table when approving a report (empty UPDATE)', async () => {
+      await service.approve({
+        id: 'p3',
+        table_name: 'group_songs',
+        record_id: 'song-1',
+        operation: 'UPDATE',
+        proposed_data: {},
+        submitter_note: '這首歌的作曲者寫錯了',
+      } as any);
+      expect(mockDb.from).not.toHaveBeenCalledWith('group_songs');
+      expect(proposalUpdateSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ status: 'approved', record_id: 'song-1' })
+      );
+    });
+
     it('keeps the existing record_id when approving an UPDATE', async () => {
       await service.approve({
         id: 'p2',

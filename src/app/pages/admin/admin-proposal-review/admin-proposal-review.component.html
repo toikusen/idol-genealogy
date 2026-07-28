@@ -84,8 +84,16 @@
       </div>
     }
 
+    <!-- Report: free-text only, no fields to review -->
+    @if (isReport) {
+      <div class="bg-blue-50 rounded-xl border border-blue-100 p-4 mb-6 text-sm text-blue-800">
+        <p class="font-medium mb-1">問題回報</p>
+        <p>這筆提案沒有欄位變更，只有上方的回報內容。核准不會改動任何資料，僅代表已處理；請自行到後台修正後再核准。</p>
+      </div>
+    }
+
     <!-- Diff table (INSERT / UPDATE only) -->
-    @if (proposal.operation !== 'DELETE') {
+    @if (proposal.operation !== 'DELETE' && !isReport) {
     <div class="bg-white rounded-xl border border-gray-100 overflow-hidden mb-6">
       <div class="hidden md:grid grid-cols-3 bg-gray-50 text-xs font-medium text-gray-500 px-4 py-2 border-b border-gray-100">
         <span>欄位</span>
@@ -244,7 +252,7 @@
           [disabled]="saving"
           class="px-6 py-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-full text-sm font-medium transition-colors"
         >
-          {{ proposal.operation === 'DELETE' ? '🗑️ 確認刪除' : '✅ 核准' }}
+          {{ proposal.operation === 'DELETE' ? '🗑️ 確認刪除' : isReport ? '✅ 標記已處理' : '✅ 核准' }}
         </button>
 
         @if (!showRejectForm) {
@@ -308,7 +316,7 @@
               [disabled]="saving"
               class="flex-1 py-2.5 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-full text-sm font-medium transition-colors"
             >
-              {{ proposal.operation === 'DELETE' ? '🗑️ 確認刪除' : '✅ 核准' }}
+              {{ proposal.operation === 'DELETE' ? '🗑️ 確認刪除' : isReport ? '✅ 標記已處理' : '✅ 核准' }}
             </button>
             <button
               (click)="showRejectForm = true"
