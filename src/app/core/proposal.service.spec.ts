@@ -8,6 +8,7 @@ describe('ProposalService', () => {
   let mockDb: any;
   let insertSpy: jasmine.Spy;
   let rpcSpy: jasmine.Spy;
+  let proposalUpdateSpy: jasmine.Spy;
 
   beforeEach(() => {
     insertSpy = jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null }));
@@ -24,20 +25,34 @@ describe('ProposalService', () => {
       return { eq: jasmine.createSpy('eq').and.returnValue(eqChain) };
     };
 
+    proposalUpdateSpy = jasmine.createSpy('update').and.returnValue({
+      eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
+    });
+
     mockDb = {
       from: jasmine.createSpy('from').and.callFake((table: string) => {
         if (table === 'proposals') {
           return {
             insert: insertSpy,
             select: jasmine.createSpy('select').and.returnValue(createSelectChain()),
-            update: jasmine.createSpy('update').and.returnValue({
-              eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
-            }),
+            update: proposalUpdateSpy,
           };
         }
         return {
           select: jasmine.createSpy('select').and.returnValue(createSelectChain()),
-          insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null })),
+          insert: jasmine.createSpy('insert').and.returnValue({
+            select: jasmine.createSpy('select').and.returnValue({
+              single: jasmine.createSpy('single').and.returnValue(
+                Promise.resolve({ data: { id: 'new-record-id' }, error: null })
+              ),
+            }),
+          }),
+          update: jasmine.createSpy('update').and.returnValue({
+            eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
+          }),
+          delete: jasmine.createSpy('delete').and.returnValue({
+            eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
+          }),
         };
       }),
       rpc: rpcSpy,
@@ -138,6 +153,32 @@ describe('ProposalService', () => {
         proposed_data: { name: '和希' },
       } as any);
       expect(spy).toHaveBeenCalled();
+    });
+
+    it('stores the new row id as record_id when approving an INSERT', async () => {
+      await service.approve({
+        id: 'p1',
+        table_name: 'companies',
+        record_id: null,
+        operation: 'INSERT',
+        proposed_data: { name: '新公司' },
+      } as any);
+      expect(proposalUpdateSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ record_id: 'new-record-id' })
+      );
+    });
+
+    it('keeps the existing record_id when approving an UPDATE', async () => {
+      await service.approve({
+        id: 'p2',
+        table_name: 'companies',
+        record_id: 'existing-id',
+        operation: 'UPDATE',
+        proposed_data: { name: '改名' },
+      } as any);
+      expect(proposalUpdateSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ record_id: 'existing-id' })
+      );
     });
   });
 
