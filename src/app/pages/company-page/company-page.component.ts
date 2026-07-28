@@ -9,7 +9,7 @@ import { ProposalService } from '../../core/proposal.service';
 import { Company, Group, Member, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
-import { formatRelativeTime } from '../../core/time.utils';
+import { formatRelativeTime, formatYmd } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
@@ -61,6 +61,10 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
 
   formatRelativeTime(date: string | null): string {
     return formatRelativeTime(date);
+  }
+
+  get foundedLabel(): string {
+    return formatYmd(this.company?.founded_at ?? null);
   }
 
   get latestEditSummary(): string {
