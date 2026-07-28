@@ -12,6 +12,13 @@ export function getEffectiveProposed(p: Proposal): Record<string, any> {
   return (p.reviewed_data ?? p.proposed_data ?? {});
 }
 
+/** A report carries only a free-text submitter_note — the song "回報問題" flow
+ *  submits one as an UPDATE with empty proposed_data. There is nothing to write
+ *  to the target table, so approving it just marks the report handled. */
+export function isReportProposal(p: { operation: string; proposed_data?: Record<string, any> | null }): boolean {
+  return p.operation === 'UPDATE' && Object.keys(p.proposed_data ?? {}).length === 0;
+}
+
 /** One-line description of a DELETE proposal for the public edit-history
  *  summary. Never surfaces raw ids — history/song rows lead with uuid
  *  columns, so falls back to a table-kind label instead. */
