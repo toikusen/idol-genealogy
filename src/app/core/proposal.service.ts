@@ -82,10 +82,18 @@ export class ProposalService {
   async approve(proposal: Proposal, reviewedData?: Record<string, any>, note?: string): Promise<void> {
     const dataToApply = reviewedData ?? proposal.proposed_data;
     let applyError: any;
+    // INSERT proposals carry no record_id (the row doesn't exist yet). Capture the
+    // new row's id so the record's edit-history panel can find this proposal.
+    let insertedId: string | null = null;
 
     if (proposal.operation === 'INSERT') {
-      const { error } = await this.db.from(proposal.table_name).insert(dataToApply);
+      const { data, error } = await this.db
+        .from(proposal.table_name)
+        .insert(dataToApply)
+        .select('id')
+        .single();
       applyError = error;
+      insertedId = (data as { id?: string } | null)?.id ?? null;
     } else if (proposal.operation === 'DELETE') {
       const { error } = await this.db
         .from(proposal.table_name)
@@ -109,6 +117,7 @@ export class ProposalService {
       .from('proposals')
       .update({
         status: 'approved',
+        record_id: insertedId ?? proposal.record_id,
         reviewed_data: reviewedData ?? null,
         reviewer_note: note ?? null,
         reviewed_at: new Date().toISOString(),
