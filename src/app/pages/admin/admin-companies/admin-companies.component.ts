@@ -90,10 +90,10 @@ export class AdminCompaniesComponent implements OnInit, OnDestroy {
       if (this.isEdit && this.editing.id) {
         const id = this.editing.id;
         await this.companyService.update(id, this.editing);
-        this.proposalService.recordDirectEdit('companies', id, this.originalData, this.editing as Record<string, any>, 'UPDATE').catch(() => {});
+        this.proposalService.recordDirectEdit('companies', id, this.originalData, this.editing as Record<string, any>, 'UPDATE').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       } else {
         const newId = await this.companyService.create(this.editing);
-        this.proposalService.recordDirectEdit('companies', newId, {}, this.editing as Record<string, any>, 'INSERT').catch(() => {});
+        this.proposalService.recordDirectEdit('companies', newId, {}, this.editing as Record<string, any>, 'INSERT').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       }
       this.showModal = false;
       await this.load();

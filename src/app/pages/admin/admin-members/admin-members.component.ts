@@ -229,7 +229,7 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
         const result = await this.igPhoto.fetchPhotoUrl(m.instagram!);
         if (result.photo_url) {
           await this.memberService.update(m.id, { photo_url: result.photo_url });
-          await this.proposalService.recordDirectEdit('members', m.id, m, { ...m, photo_url: result.photo_url }).catch(() => {});
+          await this.proposalService.recordDirectEdit('members', m.id, m, { ...m, photo_url: result.photo_url }).catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
           ok++;
         } else {
           fail++;
