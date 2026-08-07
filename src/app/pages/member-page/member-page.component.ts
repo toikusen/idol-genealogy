@@ -379,7 +379,7 @@ export class MemberPageComponent implements OnInit {
         });
         this.memberSongs = this.memberSongs.map(s => s.id === updated.id ? updated : s)
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-        await this.proposalService.recordDirectEdit('member_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(() => {});
+        await this.proposalService.recordDirectEdit('member_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       } else {
         const created = await this.memberSongService.create({
           member_id: memberId,
@@ -394,7 +394,7 @@ export class MemberPageComponent implements OnInit {
         });
         this.memberSongs = [...this.memberSongs, created]
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-        await this.proposalService.recordDirectEdit('member_songs', created.id, {}, created, 'INSERT').catch(() => {});
+        await this.proposalService.recordDirectEdit('member_songs', created.id, {}, created, 'INSERT').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       }
       this.cancelSongForm();
     } catch (e: any) {
@@ -410,7 +410,7 @@ export class MemberPageComponent implements OnInit {
     this.deletingSongId = song.id;
     try {
       await this.memberSongService.delete(song.id);
-      await this.proposalService.recordDirectEdit('member_songs', song.id, song, {}, 'DELETE').catch(() => {});
+      await this.proposalService.recordDirectEdit('member_songs', song.id, song, {}, 'DELETE').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       this.memberSongs = this.memberSongs.filter(s => s.id !== song.id);
     } catch (e: any) {
       alert(e.message ?? '刪除失敗');
