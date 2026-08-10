@@ -358,18 +358,25 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
 
               <!-- Company dropdown (groups: company_id) -->
               } @else if (tableName === 'groups' && field === 'company_id') {
-                <select
-                  [(ngModel)]="formData['company_id']"
-                  name="company_id"
-                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                >
-                  <option [value]="''">— 無 —</option>
-                  @for (c of companies; track c.id) {
-                    <option [value]="c.id">{{ c.name }}</option>
+                @if (isLocked('company_id')) {
+                  <!-- opened from this company's page: show it, do not let it move -->
+                  <input type="text" [value]="currentCompanyName || '—'" disabled
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-400 bg-gray-50 cursor-not-allowed"/>
+                  <p class="text-xs text-gray-300 mt-0.5">如需變更所屬公司,請至該團體頁面提案</p>
+                } @else {
+                  <select
+                    [(ngModel)]="formData['company_id']"
+                    name="company_id"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                  >
+                    <option [value]="''">— 無 —</option>
+                    @for (c of companies; track c.id) {
+                      <option [value]="c.id">{{ c.name }}</option>
+                    }
+                  </select>
+                  @if (operation === 'UPDATE' && currentCompanyName) {
+                    <p class="text-xs text-gray-300 mt-0.5">原始值：{{ currentCompanyName }}</p>
                   }
-                </select>
-                @if (operation === 'UPDATE' && currentCompanyName) {
-                  <p class="text-xs text-gray-300 mt-0.5">原始值：{{ currentCompanyName }}</p>
                 }
 
               <!-- history INSERT: member_id field -->
@@ -716,12 +723,17 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
   /** Force external mode (e.g. opened from member page) */
   @Input() forceExternal = false;
   /**
-   * Fields to drop from the form entirely. They are left out of proposed_data
-   * too, so the approved update leaves them untouched rather than clearing
-   * them. Use where the entry point fixes a value: editing a group from its
-   * company's page must not be able to reassign it to another company.
+   * Fields the entry point fixes: shown, but as a read-only value rather than
+   * an editable control, the way the group page locks a history's 團體. The
+   * original value still goes into proposed_data, so it reads as unchanged
+   * instead of being cleared. Editing a group from its company's page locks
+   * company_id this way — reassignment is a 移籍 and belongs on the group page.
    */
-  @Input() hiddenFields: string[] = [];
+  @Input() lockedFields: string[] = [];
+
+  isLocked(field: string): boolean {
+    return this.lockedFields.includes(field);
+  }
   @Output() closed = new EventEmitter<void>();
 
   formData: Record<string, any> = {};
@@ -812,10 +824,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
   }
 
   get allowedFields(): string[] {
-    const all = PROPOSAL_ALLOWED_FIELDS[this.tableName] ?? [];
-    const fields = this.hiddenFields.length
-      ? all.filter(f => !this.hiddenFields.includes(f))
-      : all;
+    const fields = PROPOSAL_ALLOWED_FIELDS[this.tableName] ?? [];
     if (this.tableName === 'history') {
       if (this.isExternalRecord) {
         // Hide group_id for external records (uses external_group_name instead)

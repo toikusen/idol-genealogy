@@ -1,41 +1,34 @@
 import { ProposalPanelComponent } from './proposal-panel.component';
 
-/**
- * `allowedFields` touches none of the injected services, and both the form loop
- * and the proposed_data loop read it — so a field it drops is neither shown nor
- * submitted.
- */
+/** Neither `allowedFields` nor `isLocked` touches an injected service. */
 function panel(): ProposalPanelComponent {
   const none = null as any;
   return new ProposalPanelComponent(none, none, none, none, none, none);
 }
 
-describe('ProposalPanelComponent.allowedFields', () => {
-  it('offers the company dropdown by default', () => {
+describe('ProposalPanelComponent locked fields', () => {
+  it('locks nothing by default', () => {
     const p = panel();
     p.tableName = 'groups';
-    expect(p.allowedFields).toContain('company_id');
+    expect(p.isLocked('company_id')).toBe(false);
   });
 
-  it('drops a hidden field so the proposal cannot touch it', () => {
+  it('reports a locked field so the template renders it read-only', () => {
     const p = panel();
     p.tableName = 'groups';
-    p.hiddenFields = ['company_id'];
+    p.lockedFields = ['company_id'];
+    expect(p.isLocked('company_id')).toBe(true);
+    expect(p.isLocked('founded_at')).toBe(false);
+  });
 
-    expect(p.allowedFields).not.toContain('company_id');
-    // The fields the company page opens the panel for must survive.
+  it('keeps a locked field in allowedFields so its value is submitted unchanged', () => {
+    const p = panel();
+    p.tableName = 'groups';
+    p.lockedFields = ['company_id'];
+    // Dropping it from allowedFields would leave it out of proposed_data; the
+    // point is for it to round-trip untouched, not to disappear.
+    expect(p.allowedFields).toContain('company_id');
     expect(p.allowedFields).toContain('founded_at');
     expect(p.allowedFields).toContain('disbanded_at');
-  });
-
-  it('keeps applying the history internal/external filter alongside hidden fields', () => {
-    const p = panel();
-    p.tableName = 'history';
-    p.hiddenFields = ['name_at_time'];
-
-    const fields = p.allowedFields;
-    expect(fields).not.toContain('name_at_time');
-    expect(fields).not.toContain('external_group_name');
-    expect(fields).toContain('group_id');
   });
 });
