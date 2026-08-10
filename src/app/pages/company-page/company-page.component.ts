@@ -57,6 +57,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   private currentLoadId: string | null = null;
 
   timelineGroups: Group[] = [];
+  proposalGroup: Group | null = null;
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -135,6 +136,7 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     // ponytail: no dated group means nothing to plot — hide the whole section, hint included
     const allGroups = [...pageData.activeGroups, ...pageData.disbandedGroups];
     this.timelineGroups = allGroups.some(g => g.founded_at) ? allGroups : [];
+    this.proposalGroup = null;
 
     if (!pageData.company || pageData.error) {
       this.seo.setPage(

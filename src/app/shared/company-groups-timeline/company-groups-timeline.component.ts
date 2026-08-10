@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Group } from '../../models';
@@ -104,16 +104,25 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
 
           <!-- Rows -->
           @for (row of rows; track row.group.id) {
-            <a [routerLink]="'/group/' + row.group.id"
-              style="
-                white-space:nowrap;
-                padding:0 12px 0 4px;text-align:right;
-                font-size:0.75rem;color:var(--text-secondary);
-                text-decoration:none;
-                display:flex;align-items:center;justify-content:flex-end;
-                transition:color 0.15s;
-              "
-            >{{ row.group.name_jp || row.group.name }}</a>
+            <div style="
+              white-space:nowrap;
+              padding:0 12px 0 4px;
+              display:flex;align-items:center;justify-content:flex-end;gap:2px;
+            ">
+              <a [routerLink]="'/group/' + row.group.id"
+                style="
+                  font-size:0.75rem;color:var(--text-secondary);
+                  text-decoration:none;
+                  transition:color 0.15s;
+                "
+              >{{ row.group.name_jp || row.group.name }}</a>
+              <button
+                type="button"
+                (click)="editGroup.emit(row.group)"
+                class="hover:text-pink-400 text-xs" style="color:var(--text-faint-40);"
+                [title]="'提案修改「' + (row.group.name_jp || row.group.name) + '」'"
+              >✏️</button>
+            </div>
 
             <div style="position:relative;display:flex;align-items:center;">
               <div style="flex:1;position:relative;height:10px;">
@@ -177,6 +186,8 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
 })
 export class CompanyGroupsTimelineComponent implements OnChanges {
   @Input() groups: Group[] = [];
+  /** The page owns the proposal panel, so the pencil just reports which group. */
+  @Output() editGroup = new EventEmitter<Group>();
 
   rows: GroupTimelineRow[] = [];
   years: { label: string; leftPct: number }[] = [];
