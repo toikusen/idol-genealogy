@@ -1,4 +1,23 @@
-import { formatRelativeTime, formatYmd } from './time.utils';
+import { formatRelativeTime, formatYmd, localDateMs } from './time.utils';
+
+describe('localDateMs', () => {
+  it('matches the local year tick a timeline axis is drawn from', () => {
+    expect(localDateMs('2015-01-01')).toBe(new Date(2015, 0, 1).getTime());
+  });
+
+  it('keeps a timestamp on its own local day', () => {
+    expect(localDateMs('2015-04-01T23:30:00Z')).toBe(new Date(2015, 3, 1).getTime());
+  });
+
+  it('fills in the first month and day of a partial date', () => {
+    expect(localDateMs('2015')).toBe(new Date(2015, 0, 1).getTime());
+    expect(localDateMs('2015-04')).toBe(new Date(2015, 3, 1).getTime());
+  });
+
+  it('orders dates the same way their strings sort', () => {
+    expect(localDateMs('2015-01-01')).toBeLessThan(localDateMs('2015-01-02'));
+  });
+});
 
 describe('formatYmd', () => {
   it('renders a full date without a leading zero', () => {

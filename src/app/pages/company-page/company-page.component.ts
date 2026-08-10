@@ -18,11 +18,12 @@ import { AnalyticsService } from '../../core/analytics.service';
 import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
+import { CompanyGroupsTimelineComponent } from '../../shared/company-groups-timeline/company-groups-timeline.component';
 
 @Component({
   selector: 'app-company-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, PhotoLightboxComponent],
+  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, PhotoLightboxComponent, CompanyGroupsTimelineComponent],
   templateUrl: './company-page.component.html',
   styleUrl: './company-page.component.css',
 })
@@ -54,6 +55,8 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   } = { instagram: null, facebook: null, x: null, youtube: null, website: null };
   private routeDataSub?: Subscription;
   private currentLoadId: string | null = null;
+
+  timelineGroups: Group[] = [];
 
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
@@ -129,6 +132,9 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     this.disbandedGroups = pageData.disbandedGroups;
     this.soloMembers = pageData.soloMembers;
     this.lastProposal = pageData.lastProposal;
+    // ponytail: no dated group means nothing to plot — hide the whole section, hint included
+    const allGroups = [...pageData.activeGroups, ...pageData.disbandedGroups];
+    this.timelineGroups = allGroups.some(g => g.founded_at) ? allGroups : [];
 
     if (!pageData.company || pageData.error) {
       this.seo.setPage(

@@ -14,7 +14,7 @@ import { Group, GroupVideo, Member, Team, History, Proposal, RelatedGroup } from
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { ProposalService } from '../../core/proposal.service';
 import { getDiffFields, getDeleteSummary, getRelatedSubjectName, DiffField } from '../../core/proposal-diff.utils';
-import { formatRelativeTime } from '../../core/time.utils';
+import { formatRelativeTime, localDateMs } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { GroupSongService } from '../../core/group-song.service';
 import { SupabaseService } from '../../core/supabase.service';
@@ -525,12 +525,12 @@ export class GroupPageComponent implements OnInit {
 
     const now = Date.now();
     const endBound = group?.disbanded_at
-      ? Math.max(new Date(group.disbanded_at).getTime(), now)
+      ? Math.max(localDateMs(group.disbanded_at), now)
       : now;
 
-    const minMs = Math.min(...histories.map(h => new Date(h.joined_at).getTime()));
+    const minMs = Math.min(...histories.map(h => localDateMs(h.joined_at)));
     const maxMs = Math.max(
-      ...histories.map(h => h.left_at ? new Date(h.left_at).getTime() : endBound),
+      ...histories.map(h => h.left_at ? localDateMs(h.left_at) : endBound),
       endBound
     );
     const totalMs = maxMs - minMs || 1;
@@ -538,7 +538,7 @@ export class GroupPageComponent implements OnInit {
     // Group by member_id; sort each member's histories by joined_at
     const memberMap = new Map<string, History[]>();
     for (const h of [...histories].sort((a, b) =>
-      new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime()
+      localDateMs(a.joined_at) - localDateMs(b.joined_at)
     )) {
       if (!memberMap.has(h.member_id)) memberMap.set(h.member_id, []);
       memberMap.get(h.member_id)!.push(h);
@@ -546,17 +546,17 @@ export class GroupPageComponent implements OnInit {
 
     this.ganttRows = [...memberMap.values()].map(memberHistories => {
       const primaryHistory =
-        memberHistories.find(h => !h.left_at || new Date(h.left_at).getTime() > now)
+        memberHistories.find(h => !h.left_at || localDateMs(h.left_at) > now)
         ?? memberHistories[memberHistories.length - 1];
 
       const segments: GanttSegment[] = memberHistories.map(h => {
-        const start = new Date(h.joined_at).getTime();
-        const end = h.left_at ? new Date(h.left_at).getTime() : maxMs;
+        const start = localDateMs(h.joined_at);
+        const end = h.left_at ? localDateMs(h.left_at) : maxMs;
         return {
           history: h,
           leftPct: (start - minMs) / totalMs * 100,
           widthPct: Math.max((end - start) / totalMs * 100, 0.5),
-          isActive: !h.left_at || new Date(h.left_at).getTime() > now,
+          isActive: !h.left_at || localDateMs(h.left_at) > now,
         };
       });
 

@@ -13,6 +13,17 @@ export function formatYmd(date: string | null): string {
   return `${year}年${+month}月${+day}日`;
 }
 
+/**
+ * Parses a stored date as local midnight. Timeline charts build their year ticks
+ * with `new Date(y, 0, 1)` (local); passing the same string through `new Date()`
+ * would read it as UTC and drift the axis by the offset, dropping the first tick
+ * east of UTC. Partial dates ("2015", "2015-04") fall back to the first month/day.
+ */
+export function localDateMs(date: string): number {
+  const [year, month, day] = date.slice(0, 10).split('-').map(Number);
+  return new Date(year, (month || 1) - 1, day || 1).getTime();
+}
+
 export function formatRelativeTime(isoDate: string | null): string {
   if (!isoDate) return '—';
   const diffMs = Date.now() - new Date(isoDate).getTime();
