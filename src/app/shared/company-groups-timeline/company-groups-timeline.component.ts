@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, HostListener, Input, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Group } from '../../models';
@@ -227,14 +227,33 @@ export class CompanyGroupsTimelineComponent implements OnChanges {
 
   /** Touch/click support: tapping a bar toggles its tooltip since touch devices have no hover. */
   onBarClick(event: MouseEvent, row: GroupTimelineRow) {
+    // Kept from the document listener below, which would otherwise unpin this
+    // tooltip the moment the same click finished bubbling.
+    event.stopPropagation();
     if (this.pinnedGroupId === row.group.id) {
-      this.pinnedGroupId = null;
-      this.tooltipRow = null;
+      this.unpin();
       return;
     }
     this.pinnedGroupId = row.group.id;
     this.tooltipRow = row;
     this.tooltipX = event.clientX;
     this.tooltipY = event.clientY;
+  }
+
+  /** Clicking anywhere but a bar dismisses a pinned tooltip. */
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.unpin();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    this.unpin();
+  }
+
+  private unpin() {
+    if (!this.pinnedGroupId) return;
+    this.pinnedGroupId = null;
+    this.tooltipRow = null;
   }
 }
