@@ -32,12 +32,20 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
   if (dated.length === 0) return { rows: [], years: [], undatedCount };
 
   const minMs = Math.min(...dated.map(g => localDateMs(g.founded_at!)));
-  const maxMs = Math.max(now, ...dated.map(g => (g.disbanded_at ? localDateMs(g.disbanded_at) : now)));
+  // The axis has to cover every date it will draw, including a founding still
+  // ahead of us — otherwise that bar lands past 100%, and a company whose
+  // groups all debut later would invert the axis entirely.
+  const maxMs = dated.reduce(
+    (max, g) => Math.max(max, localDateMs(g.founded_at!), g.disbanded_at ? localDateMs(g.disbanded_at) : 0),
+    now
+  );
   const total = maxMs - minMs || 1;
 
   const rows = dated.map(g => {
     const start = localDateMs(g.founded_at!);
-    const end = g.disbanded_at ? localDateMs(g.disbanded_at) : maxMs;
+    // A group still going ends today, not at the axis end: another group
+    // disbanding in the future must not stretch this one's bar with it.
+    const end = g.disbanded_at ? localDateMs(g.disbanded_at) : Math.max(now, start);
     return {
       group: g,
       leftPct: ((start - minMs) / total) * 100,
@@ -180,12 +188,16 @@ export class CompanyGroupsTimelineComponent implements OnChanges {
   }
 
   onBarMouseEnter(event: MouseEvent, group: Group) {
+    // A pinned tooltip stays put until another bar is clicked: letting hover
+    // swap the contents would leave the pin pointing at a bar nobody chose.
+    if (this.pinnedGroupId) return;
     this.tooltipGroup = group;
     this.tooltipX = event.clientX;
     this.tooltipY = event.clientY;
   }
 
   onBarMouseMove(event: MouseEvent) {
+    if (this.pinnedGroupId) return;
     this.tooltipX = event.clientX;
     this.tooltipY = event.clientY;
   }
