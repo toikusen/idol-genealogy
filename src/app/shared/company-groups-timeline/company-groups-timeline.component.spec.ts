@@ -1,4 +1,4 @@
-import { buildGroupTimeline, CompanyGroupsTimelineComponent } from './company-groups-timeline.component';
+import { buildGroupTimeline, CompanyGroupsTimelineComponent, GroupTimelineRow } from './company-groups-timeline.component';
 import { Group } from '../../models';
 
 // Local midnight, matching how the component parses stored dates.
@@ -65,8 +65,35 @@ describe('buildGroupTimeline', () => {
       NOW
     );
     const future = rows.find(r => r.group.id === 'future')!;
-    expect(future.leftPct).toBeLessThanOrEqual(100);
     expect(future.leftPct).toBeGreaterThan(0);
+    // The bar sits at the axis end, where the minimum width would overflow it.
+    expect(future.leftPct + future.widthPct).toBeLessThanOrEqual(100);
+  });
+
+  it('never lets any bar run past the right edge', () => {
+    const { rows } = buildGroupTimeline(
+      [
+        group('a', '2020-01-01'),
+        group('b', '2026-01-01'),
+        group('future', '2027-01-01'),
+        group('sameDay', '2027-01-01', '2027-01-01'),
+      ],
+      NOW
+    );
+    expect(rows.every(r => r.leftPct >= 0)).toBe(true);
+    expect(rows.every(r => r.leftPct + r.widthPct <= 100)).toBe(true);
+  });
+
+  it('marks a group founded in the future as upcoming rather than active', () => {
+    const { rows } = buildGroupTimeline([group('future', '2027-01-01')], NOW);
+    expect(rows[0].isUpcoming).toBe(true);
+    expect(rows[0].isActive).toBe(false);
+  });
+
+  it('marks a group already operating as active and not upcoming', () => {
+    const { rows } = buildGroupTimeline([group('now', '2020-01-01')], NOW);
+    expect(rows[0].isUpcoming).toBe(false);
+    expect(rows[0].isActive).toBe(true);
   });
 
   it('does not invert the axis when every group debuts later', () => {
@@ -105,15 +132,19 @@ describe('CompanyGroupsTimelineComponent tooltip', () => {
   let component: CompanyGroupsTimelineComponent;
   const a = group('a', '2020-01-01');
   const b = group('b', '2021-01-01');
+  let rowA: GroupTimelineRow;
+  let rowB: GroupTimelineRow;
 
   beforeEach(() => {
     component = new CompanyGroupsTimelineComponent();
     component.groups = [a, b];
     component.ngOnChanges();
+    rowA = component.rows.find(r => r.group.id === 'a')!;
+    rowB = component.rows.find(r => r.group.id === 'b')!;
   });
 
   it('follows the cursor while hovering and clears on leave', () => {
-    component.onBarMouseEnter(at(10, 20), a);
+    component.onBarMouseEnter(at(10, 20), rowA);
     expect(component.tooltipGroup).toBe(a);
 
     component.onBarMouseMove(at(30, 40));
@@ -125,25 +156,25 @@ describe('CompanyGroupsTimelineComponent tooltip', () => {
   });
 
   it('pins the tooltip on click so leaving the bar does not close it', () => {
-    component.onBarClick(at(10, 20), a);
+    component.onBarClick(at(10, 20), rowA);
     component.onBarMouseLeave();
     expect(component.tooltipGroup).toBe(a);
   });
 
   it('closes a pinned tooltip when its own bar is clicked again', () => {
-    component.onBarClick(at(10, 20), a);
-    component.onBarClick(at(10, 20), a);
+    component.onBarClick(at(10, 20), rowA);
+    component.onBarClick(at(10, 20), rowA);
     expect(component.tooltipGroup).toBeNull();
 
-    component.onBarMouseEnter(at(50, 60), b);
+    component.onBarMouseEnter(at(50, 60), rowB);
     component.onBarMouseLeave();
     expect(component.tooltipGroup).toBeNull();
   });
 
   it('ignores hover on another bar while one is pinned', () => {
-    component.onBarClick(at(10, 20), a);
+    component.onBarClick(at(10, 20), rowA);
 
-    component.onBarMouseEnter(at(50, 60), b);
+    component.onBarMouseEnter(at(50, 60), rowB);
     expect(component.tooltipGroup).toBe(a);
     expect(component.tooltipX).toBe(10);
 
@@ -155,19 +186,19 @@ describe('CompanyGroupsTimelineComponent tooltip', () => {
   });
 
   it('moves a pinned tooltip to another bar that is clicked', () => {
-    component.onBarClick(at(10, 20), a);
-    component.onBarClick(at(50, 60), b);
+    component.onBarClick(at(10, 20), rowA);
+    component.onBarClick(at(50, 60), rowB);
     expect(component.tooltipGroup).toBe(b);
     expect(component.tooltipX).toBe(50);
   });
 
   it('drops a pinned tooltip when the group list changes', () => {
-    component.onBarClick(at(10, 20), a);
+    component.onBarClick(at(10, 20), rowA);
     component.groups = [b];
     component.ngOnChanges();
     expect(component.tooltipGroup).toBeNull();
 
-    component.onBarMouseEnter(at(50, 60), b);
+    component.onBarMouseEnter(at(50, 60), rowB);
     component.onBarMouseLeave();
     expect(component.tooltipGroup).toBeNull();
   });
