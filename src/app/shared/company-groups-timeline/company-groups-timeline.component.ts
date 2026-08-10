@@ -1,5 +1,4 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Group } from '../../models';
 import { formatYmd, localDateMs } from '../../core/time.utils';
@@ -15,14 +14,14 @@ export interface GroupTimelineRow {
   isUpcoming: boolean;
 }
 
-/** A zero-length period still needs to be visible; keep it a hair wide. */
-const MIN_WIDTH_PCT = 0.5;
-
 export interface GroupTimeline {
   rows: GroupTimelineRow[];
   years: { label: string; leftPct: number }[];
   undatedCount: number;
 }
+
+/** A zero-length period still needs to be visible; keep it a hair wide. */
+const MIN_WIDTH_PCT = 0.5;
 
 /**
  * Lays out one bar per group across a shared time axis running from the earliest
@@ -82,7 +81,7 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
 @Component({
   selector: 'app-company-groups-timeline',
   standalone: true,
-  imports: [CommonModule, RouterLink, GanttTooltipComponent],
+  imports: [RouterLink, GanttTooltipComponent],
   template: `
     @if (rows.length > 0) {
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">

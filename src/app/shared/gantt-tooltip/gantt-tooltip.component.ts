@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { SupabaseImgPipe } from '../supabase-img.pipe';
 
 /**
@@ -10,7 +9,7 @@ import { SupabaseImgPipe } from '../supabase-img.pipe';
 @Component({
   selector: 'app-gantt-tooltip',
   standalone: true,
-  imports: [CommonModule, SupabaseImgPipe],
+  imports: [SupabaseImgPipe],
   styles: [`
     @keyframes ganttTooltipIn {
       from { opacity: 0; transform: translate(-50%, calc(-100% - 20px)); }
