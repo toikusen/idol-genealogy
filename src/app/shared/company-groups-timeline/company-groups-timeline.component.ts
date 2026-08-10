@@ -130,13 +130,12 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
                   position:absolute;top:0;height:100%;
                   border-radius:3px;
                   cursor:pointer;
+                  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.08);
                   transition:opacity 0.15s;
                 "
                 [style.left]="row.leftPct + '%'"
                 [style.width]="row.widthPct + '%'"
-                [style.background]="row.isUpcoming ? 'transparent' : (row.isActive ? '#c05080' : 'rgba(192,80,128,0.4)')"
-                [style.border]="row.isUpcoming ? '1px dashed rgba(192,80,128,0.65)' : 'none'"
-                [style.boxShadow]="row.isUpcoming ? 'none' : 'inset 0 0 0 1px rgba(0,0,0,0.08)'"
+                [style.background]="row.isActive || row.isUpcoming ? '#c05080' : 'rgba(192,80,128,0.4)'"
                 [style.opacity]="tooltipGroup && tooltipGroup.id !== row.group.id ? '0.5' : '1'"
                 (mouseenter)="onBarMouseEnter($event, row)"
                 (mousemove)="onBarMouseMove($event)"
