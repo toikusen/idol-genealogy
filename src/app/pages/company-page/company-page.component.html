@@ -214,7 +214,10 @@
               font-size:0.72rem;letter-spacing:0.15em;
               color:var(--text-secondary);margin:0 0 12px;
             ">運作期間</p>
-            <app-company-groups-timeline [groups]="timelineGroups" />
+            <app-company-groups-timeline
+              [groups]="timelineGroups"
+              (editGroup)="proposalGroup = $event"
+            />
           </div>
         }
 
@@ -430,6 +433,17 @@
     [recordId]="company.id"
     [originalData]="company"
     (closed)="showDeletePanel = false"
+  />
+}
+
+<!-- Affiliated group edit proposal, opened from the operating-period chart -->
+@if (proposalGroup) {
+  <app-proposal-panel
+    tableName="groups"
+    operation="UPDATE"
+    [recordId]="proposalGroup.id"
+    [originalData]="proposalGroup"
+    (closed)="proposalGroup = null"
   />
 }
 
