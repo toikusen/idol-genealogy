@@ -128,7 +128,8 @@ describe('buildGroupTimeline', () => {
 });
 
 describe('CompanyGroupsTimelineComponent tooltip', () => {
-  const at = (x: number, y: number) => ({ clientX: x, clientY: y }) as MouseEvent;
+  const at = (x: number, y: number) =>
+    ({ clientX: x, clientY: y, stopPropagation: () => {} }) as MouseEvent;
   let component: CompanyGroupsTimelineComponent;
   const a = group('a', '2020-01-01');
   const b = group('b', '2021-01-01');
@@ -190,6 +191,31 @@ describe('CompanyGroupsTimelineComponent tooltip', () => {
     component.onBarClick(at(50, 60), rowB);
     expect(component.tooltipGroup).toBe(b);
     expect(component.tooltipX).toBe(50);
+  });
+
+  it('dismisses a pinned tooltip on a click outside the bars', () => {
+    component.onBarClick(at(10, 20), rowA);
+
+    component.onDocumentClick();
+    expect(component.tooltipGroup).toBeNull();
+
+    // The pin is gone too, so plain hovering works again.
+    component.onBarMouseEnter(at(50, 60), rowB);
+    expect(component.tooltipGroup).toBe(b);
+    component.onBarMouseLeave();
+    expect(component.tooltipGroup).toBeNull();
+  });
+
+  it('dismisses a pinned tooltip on Escape', () => {
+    component.onBarClick(at(10, 20), rowA);
+    component.onEscape();
+    expect(component.tooltipGroup).toBeNull();
+  });
+
+  it('leaves an unpinned hover alone when the document is clicked', () => {
+    component.onBarMouseEnter(at(10, 20), rowA);
+    component.onDocumentClick();
+    expect(component.tooltipGroup).toBe(a);
   });
 
   it('drops a pinned tooltip when the group list changes', () => {
