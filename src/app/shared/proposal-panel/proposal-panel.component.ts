@@ -715,6 +715,13 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
   @Input() requiredFields: string[] = [];
   /** Force external mode (e.g. opened from member page) */
   @Input() forceExternal = false;
+  /**
+   * Fields to drop from the form entirely. They are left out of proposed_data
+   * too, so the approved update leaves them untouched rather than clearing
+   * them. Use where the entry point fixes a value: editing a group from its
+   * company's page must not be able to reassign it to another company.
+   */
+  @Input() hiddenFields: string[] = [];
   @Output() closed = new EventEmitter<void>();
 
   formData: Record<string, any> = {};
@@ -805,7 +812,10 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
   }
 
   get allowedFields(): string[] {
-    const fields = PROPOSAL_ALLOWED_FIELDS[this.tableName] ?? [];
+    const all = PROPOSAL_ALLOWED_FIELDS[this.tableName] ?? [];
+    const fields = this.hiddenFields.length
+      ? all.filter(f => !this.hiddenFields.includes(f))
+      : all;
     if (this.tableName === 'history') {
       if (this.isExternalRecord) {
         // Hide group_id for external records (uses external_group_name instead)
