@@ -37,6 +37,7 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
 import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
+import { GanttTooltipComponent } from '../../shared/gantt-tooltip/gantt-tooltip.component';
 import {
   photographyBadgeColor,
   photographyBadgeTextColor,
@@ -59,7 +60,7 @@ interface GanttRow {
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent],
+  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent, GanttTooltipComponent],
   templateUrl: './group-page.component.html',
   styleUrl: './group-page.component.css',
 })

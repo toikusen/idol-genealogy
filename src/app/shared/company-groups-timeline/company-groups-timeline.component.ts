@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Group } from '../../models';
 import { formatYmd, localDateMs } from '../../core/time.utils';
+import { GanttTooltipComponent } from '../gantt-tooltip/gantt-tooltip.component';
 
 export interface GroupTimelineRow {
   group: Group;
@@ -62,7 +63,7 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
 @Component({
   selector: 'app-company-groups-timeline',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, GanttTooltipComponent],
   template: `
     @if (rows.length > 0) {
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
@@ -109,12 +110,18 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
                 <div style="
                   position:absolute;top:0;height:100%;
                   border-radius:3px;
+                  cursor:pointer;
                   box-shadow:inset 0 0 0 1px rgba(0,0,0,0.08);
+                  transition:opacity 0.15s;
                 "
                 [style.left]="row.leftPct + '%'"
                 [style.width]="row.widthPct + '%'"
                 [style.background]="row.isActive ? '#c05080' : 'rgba(192,80,128,0.4)'"
-                [title]="rangeLabel(row.group)"></div>
+                [style.opacity]="tooltipGroup && tooltipGroup.id !== row.group.id ? '0.5' : '1'"
+                (mouseenter)="onBarMouseEnter($event, row.group)"
+                (mousemove)="onBarMouseMove($event)"
+                (mouseleave)="onBarMouseLeave()"
+                (click)="onBarClick($event, row.group)"></div>
               </div>
             </div>
           }
@@ -134,6 +141,18 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
         還有 {{ undatedCount }} 個團體尚無創立日期,歡迎補充
       </p>
     }
+    @if (tooltipGroup) {
+      <app-gantt-tooltip
+        [x]="tooltipX"
+        [y]="tooltipY"
+        [title]="tooltipGroup.name_jp || tooltipGroup.name"
+        [photoUrl]="tooltipGroup.photo_url"
+        label="運作期間"
+        [from]="formatYmd(tooltipGroup.founded_at)"
+        [to]="tooltipGroup.disbanded_at ? formatYmd(tooltipGroup.disbanded_at) : null"
+        accentColor="#c05080"
+      />
+    }
   `,
 })
 export class CompanyGroupsTimelineComponent implements OnChanges {
@@ -143,15 +162,50 @@ export class CompanyGroupsTimelineComponent implements OnChanges {
   years: { label: string; leftPct: number }[] = [];
   undatedCount = 0;
 
+  tooltipGroup: Group | null = null;
+  tooltipX = 0;
+  tooltipY = 0;
+  /** Set by a click; keeps the tooltip up after the pointer leaves the bar. */
+  private pinnedGroupId: string | null = null;
+
+  formatYmd = formatYmd;
+
   ngOnChanges() {
     const timeline = buildGroupTimeline(this.groups, Date.now());
     this.rows = timeline.rows;
     this.years = timeline.years;
     this.undatedCount = timeline.undatedCount;
+    this.tooltipGroup = null;
+    this.pinnedGroupId = null;
   }
 
-  rangeLabel(group: Group): string {
-    const from = formatYmd(group.founded_at);
-    return group.disbanded_at ? `${from} 〜 ${formatYmd(group.disbanded_at)}` : `${from} 〜`;
+  onBarMouseEnter(event: MouseEvent, group: Group) {
+    this.tooltipGroup = group;
+    this.tooltipX = event.clientX;
+    this.tooltipY = event.clientY;
+  }
+
+  onBarMouseMove(event: MouseEvent) {
+    this.tooltipX = event.clientX;
+    this.tooltipY = event.clientY;
+  }
+
+  onBarMouseLeave() {
+    if (!this.pinnedGroupId) {
+      this.tooltipGroup = null;
+    }
+  }
+
+  /** Touch/click support: tapping a bar toggles its tooltip since touch devices have no hover. */
+  onBarClick(event: MouseEvent, group: Group) {
+    if (this.pinnedGroupId === group.id) {
+      this.pinnedGroupId = null;
+      this.tooltipGroup = null;
+      return;
+    }
+    this.pinnedGroupId = group.id;
+    this.tooltipGroup = group;
+    this.tooltipX = event.clientX;
+    this.tooltipY = event.clientY;
   }
 }
