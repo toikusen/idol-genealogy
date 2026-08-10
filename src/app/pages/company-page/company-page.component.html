@@ -207,6 +207,17 @@
           <p style="font-size:0.85rem;color:var(--text-faint-45);">目前無旗下團體</p>
         }
 
+        <!-- Operating-period timeline -->
+        @if (timelineGroups.length > 0) {
+          <div style="margin-bottom:32px;">
+            <p style="
+              font-size:0.72rem;letter-spacing:0.15em;
+              color:var(--text-secondary);margin:0 0 12px;
+            ">運作期間</p>
+            <app-company-groups-timeline [groups]="timelineGroups" />
+          </div>
+        }
+
         <!-- Active groups -->
         @if (activeGroups.length > 0) {
           <div style="margin-bottom:24px;">
