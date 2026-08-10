@@ -93,7 +93,6 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
                 display:flex;align-items:center;justify-content:flex-end;
                 transition:color 0.15s;
               "
-              [style.opacity]="row.isActive ? '1' : '0.65'"
             >{{ row.group.name_jp || row.group.name }}</a>
 
             <div style="position:relative;display:flex;align-items:center;">
@@ -114,8 +113,7 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
                 "
                 [style.left]="row.leftPct + '%'"
                 [style.width]="row.widthPct + '%'"
-                [style.background]="row.group.color || '#7c6cf2'"
-                [style.opacity]="row.isActive ? '1' : '0.45'"
+                [style.background]="row.isActive ? '#c05080' : 'rgba(192,80,128,0.4)'"
                 [title]="rangeLabel(row.group)"></div>
               </div>
             </div>
