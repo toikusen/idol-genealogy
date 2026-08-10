@@ -443,6 +443,7 @@
     operation="UPDATE"
     [recordId]="proposalGroup.id"
     [originalData]="proposalGroup"
+    [hiddenFields]="['company_id']"
     (closed)="proposalGroup = null"
   />
 }
