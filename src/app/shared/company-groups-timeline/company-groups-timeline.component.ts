@@ -9,8 +9,14 @@ export interface GroupTimelineRow {
   group: Group;
   leftPct: number;
   widthPct: number;
+  /** Operating right now. False for both a disbanded group and one not yet founded. */
   isActive: boolean;
+  /** Founded on a date still ahead of us — announced, but not started. */
+  isUpcoming: boolean;
 }
+
+/** A zero-length period still needs to be visible; keep it a hair wide. */
+const MIN_WIDTH_PCT = 0.5;
 
 export interface GroupTimeline {
   rows: GroupTimelineRow[];
@@ -46,11 +52,16 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
     // A group still going ends today, not at the axis end: another group
     // disbanding in the future must not stretch this one's bar with it.
     const end = g.disbanded_at ? localDateMs(g.disbanded_at) : Math.max(now, start);
+    const isUpcoming = start > now;
+    const widthPct = Math.max(((end - start) / total) * 100, MIN_WIDTH_PCT);
     return {
       group: g,
-      leftPct: ((start - minMs) / total) * 100,
-      widthPct: Math.max(((end - start) / total) * 100, 0.5),
-      isActive: !g.disbanded_at || localDateMs(g.disbanded_at) > now,
+      // The widened minimum would otherwise push a bar sitting at the axis end
+      // past 100%; nudge it left so it stays flush inside the track.
+      leftPct: Math.min(((start - minMs) / total) * 100, 100 - widthPct),
+      widthPct,
+      isActive: !isUpcoming && (!g.disbanded_at || localDateMs(g.disbanded_at) > now),
+      isUpcoming,
     };
   });
 
@@ -119,17 +130,18 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
                   position:absolute;top:0;height:100%;
                   border-radius:3px;
                   cursor:pointer;
-                  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.08);
                   transition:opacity 0.15s;
                 "
                 [style.left]="row.leftPct + '%'"
                 [style.width]="row.widthPct + '%'"
-                [style.background]="row.isActive ? '#c05080' : 'rgba(192,80,128,0.4)'"
+                [style.background]="row.isUpcoming ? 'transparent' : (row.isActive ? '#c05080' : 'rgba(192,80,128,0.4)')"
+                [style.border]="row.isUpcoming ? '1px dashed rgba(192,80,128,0.65)' : 'none'"
+                [style.boxShadow]="row.isUpcoming ? 'none' : 'inset 0 0 0 1px rgba(0,0,0,0.08)'"
                 [style.opacity]="tooltipGroup && tooltipGroup.id !== row.group.id ? '0.5' : '1'"
-                (mouseenter)="onBarMouseEnter($event, row.group)"
+                (mouseenter)="onBarMouseEnter($event, row)"
                 (mousemove)="onBarMouseMove($event)"
                 (mouseleave)="onBarMouseLeave()"
-                (click)="onBarClick($event, row.group)"></div>
+                (click)="onBarClick($event, row)"></div>
               </div>
             </div>
           }
@@ -149,15 +161,16 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
         還有 {{ undatedCount }} 個團體尚無創立日期,歡迎補充
       </p>
     }
-    @if (tooltipGroup) {
+    @if (tooltipRow; as row) {
       <app-gantt-tooltip
         [x]="tooltipX"
         [y]="tooltipY"
-        [title]="tooltipGroup.name_jp || tooltipGroup.name"
-        [photoUrl]="tooltipGroup.photo_url"
-        label="運作期間"
-        [from]="formatYmd(tooltipGroup.founded_at)"
-        [to]="tooltipGroup.disbanded_at ? formatYmd(tooltipGroup.disbanded_at) : null"
+        [title]="row.group.name_jp || row.group.name"
+        [photoUrl]="row.group.photo_url"
+        [label]="row.isUpcoming ? '成立預定日' : '運作期間'"
+        [from]="formatYmd(row.group.founded_at)"
+        [to]="row.group.disbanded_at ? formatYmd(row.group.disbanded_at) : null"
+        [openEndedLabel]="row.isUpcoming ? '尚未開始' : '現在'"
         accentColor="#c05080"
       />
     }
@@ -170,7 +183,7 @@ export class CompanyGroupsTimelineComponent implements OnChanges {
   years: { label: string; leftPct: number }[] = [];
   undatedCount = 0;
 
-  tooltipGroup: Group | null = null;
+  tooltipRow: GroupTimelineRow | null = null;
   tooltipX = 0;
   tooltipY = 0;
   /** Set by a click; keeps the tooltip up after the pointer leaves the bar. */
@@ -178,20 +191,25 @@ export class CompanyGroupsTimelineComponent implements OnChanges {
 
   formatYmd = formatYmd;
 
+  /** The group the tooltip is showing, if any. */
+  get tooltipGroup(): Group | null {
+    return this.tooltipRow?.group ?? null;
+  }
+
   ngOnChanges() {
     const timeline = buildGroupTimeline(this.groups, Date.now());
     this.rows = timeline.rows;
     this.years = timeline.years;
     this.undatedCount = timeline.undatedCount;
-    this.tooltipGroup = null;
+    this.tooltipRow = null;
     this.pinnedGroupId = null;
   }
 
-  onBarMouseEnter(event: MouseEvent, group: Group) {
+  onBarMouseEnter(event: MouseEvent, row: GroupTimelineRow) {
     // A pinned tooltip stays put until another bar is clicked: letting hover
     // swap the contents would leave the pin pointing at a bar nobody chose.
     if (this.pinnedGroupId) return;
-    this.tooltipGroup = group;
+    this.tooltipRow = row;
     this.tooltipX = event.clientX;
     this.tooltipY = event.clientY;
   }
@@ -204,19 +222,19 @@ export class CompanyGroupsTimelineComponent implements OnChanges {
 
   onBarMouseLeave() {
     if (!this.pinnedGroupId) {
-      this.tooltipGroup = null;
+      this.tooltipRow = null;
     }
   }
 
   /** Touch/click support: tapping a bar toggles its tooltip since touch devices have no hover. */
-  onBarClick(event: MouseEvent, group: Group) {
-    if (this.pinnedGroupId === group.id) {
+  onBarClick(event: MouseEvent, row: GroupTimelineRow) {
+    if (this.pinnedGroupId === row.group.id) {
       this.pinnedGroupId = null;
-      this.tooltipGroup = null;
+      this.tooltipRow = null;
       return;
     }
-    this.pinnedGroupId = group.id;
-    this.tooltipGroup = group;
+    this.pinnedGroupId = row.group.id;
+    this.tooltipRow = row;
     this.tooltipX = event.clientX;
     this.tooltipY = event.clientY;
   }

@@ -99,7 +99,7 @@ import { SupabaseImgPipe } from '../supabase-img.pipe';
             <span style="
               font-size: 0.68rem; letter-spacing: 0.18em;
               font-weight: 500;
-            " [style.color]="accentColor">現在</span>
+            " [style.color]="accentColor">{{ openEndedLabel }}</span>
           }
         </div>
       </div>
@@ -124,8 +124,10 @@ export class GanttTooltipComponent {
   /** Small caps heading above the dates, e.g. 在籍期間. */
   @Input() label = '';
   @Input() from = '';
-  /** Null renders 現在 in the accent colour instead of an end date. */
+  /** Null renders `openEndedLabel` in the accent colour instead of an end date. */
   @Input() to: string | null = null;
+  /** Stand-in for a missing end date. 尚未開始 when the period has not begun. */
+  @Input() openEndedLabel = '現在';
   @Input() accentColor = '#e879a0';
   @Input() photoUrl: string | null = null;
 }
