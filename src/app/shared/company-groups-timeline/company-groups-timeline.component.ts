@@ -114,12 +114,12 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
                   text-decoration:none;
                   transition:color 0.15s;
                 "
-              >{{ row.group.name_jp || row.group.name }}</a>
+              >{{ row.group.name }}</a>
               <button
                 type="button"
                 (click)="editGroup.emit(row.group)"
                 class="hover:text-pink-400 text-xs" style="color:var(--text-faint-40);"
-                [title]="'提案修改「' + (row.group.name_jp || row.group.name) + '」'"
+                [title]="'提案修改「' + row.group.name + '」'"
               >✏️</button>
             </div>
 
@@ -172,7 +172,7 @@ export function buildGroupTimeline(groups: Group[], now: number): GroupTimeline 
       <app-gantt-tooltip
         [x]="tooltipX"
         [y]="tooltipY"
-        [title]="row.group.name_jp || row.group.name"
+        [title]="row.group.name"
         [photoUrl]="row.group.photo_url"
         [label]="row.isUpcoming ? '成立預定日' : '運作期間'"
         [from]="formatYmd(row.group.founded_at)"
