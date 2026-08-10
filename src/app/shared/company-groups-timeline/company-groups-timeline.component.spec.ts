@@ -59,6 +59,39 @@ describe('buildGroupTimeline', () => {
     expect(years.every(y => y.leftPct >= 0 && y.leftPct <= 100)).toBe(true);
   });
 
+  it('keeps a group founded in the future inside the chart', () => {
+    const { rows } = buildGroupTimeline(
+      [group('past', '2020-01-01'), group('future', '2027-01-01')],
+      NOW
+    );
+    const future = rows.find(r => r.group.id === 'future')!;
+    expect(future.leftPct).toBeLessThanOrEqual(100);
+    expect(future.leftPct).toBeGreaterThan(0);
+  });
+
+  it('does not invert the axis when every group debuts later', () => {
+    const { rows, years } = buildGroupTimeline(
+      [group('a', '2027-01-01'), group('b', '2028-01-01')],
+      NOW
+    );
+    expect(rows.every(r => r.leftPct >= 0 && r.leftPct <= 100)).toBe(true);
+    expect(rows.every(r => r.widthPct > 0)).toBe(true);
+    expect(years.length).toBeGreaterThan(0);
+  });
+
+  it('stops an operating group at today when another disbands in the future', () => {
+    const { rows } = buildGroupTimeline(
+      [group('operating', '2020-01-01'), group('closing', '2020-01-01', '2027-01-01')],
+      NOW
+    );
+    const operating = rows.find(r => r.group.id === 'operating')!;
+    const closing = rows.find(r => r.group.id === 'closing')!;
+    // The axis runs to 2027, so the operating bar must fall short of the end.
+    expect(operating.widthPct).toBeLessThan(closing.widthPct);
+    expect(operating.leftPct + operating.widthPct).toBeLessThan(100);
+    expect(closing.leftPct + closing.widthPct).toBeCloseTo(100, 5);
+  });
+
   it('accepts a partial founding date', () => {
     const { rows } = buildGroupTimeline([group('a', '2020'), group('b', '2020-06')], NOW);
     expect(rows.map(r => r.group.id)).toEqual(['a', 'b']);
@@ -105,6 +138,20 @@ describe('CompanyGroupsTimelineComponent tooltip', () => {
     component.onBarMouseEnter(at(50, 60), b);
     component.onBarMouseLeave();
     expect(component.tooltipGroup).toBeNull();
+  });
+
+  it('ignores hover on another bar while one is pinned', () => {
+    component.onBarClick(at(10, 20), a);
+
+    component.onBarMouseEnter(at(50, 60), b);
+    expect(component.tooltipGroup).toBe(a);
+    expect(component.tooltipX).toBe(10);
+
+    component.onBarMouseMove(at(70, 80));
+    expect(component.tooltipX).toBe(10);
+
+    component.onBarMouseLeave();
+    expect(component.tooltipGroup).toBe(a);
   });
 
   it('moves a pinned tooltip to another bar that is clicked', () => {
