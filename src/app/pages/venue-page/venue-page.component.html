@@ -56,73 +56,22 @@
       <p class="sr-live" aria-live="polite">{{ addressCopied ? '地址已複製' : '' }}</p>
     </header>
 
-    <div class="body-grid">
-      <div class="col-main">
-        @if (v.is_active && calendarStatus !== 'unconfigured') {
-          <section class="schedule" aria-labelledby="schedule-heading">
-            <div class="sec-head">
-              <h2 id="schedule-heading">近期演出</h2>
-              @if (calendarStatus === 'ok' && eventCount > 0) {
-                <em>未來 90 天 · {{ eventCount }} 場</em>
-              }
-            </div>
+    <!-- Where and when, in one object: the two questions this page exists to
+         answer, at the same weight. -->
+    <section class="where-when" [class.where-when--nomap]="venuesForMap.length === 0">
+      @if (venuesForMap.length > 0) {
+        <app-venue-map
+          class="ww-map"
+          [venues]="venuesForMap"
+          [compact]="true"
+          [markerPopups]="false"
+          [ariaLabel]="v.name + ' 位置地圖'"
+        ></app-venue-map>
+      }
 
-            @if (calendarStatus === 'error') {
-              <p class="notice-inline" role="alert">場次資訊暫時取得失敗,請重新整理頁面再試。</p>
-            } @else {
-              <p class="sec-note">場次整理自公開行事曆,實際出演者與開演時間以主辦方公告為準。</p>
-
-              @if (scheduleDays.length === 0) {
-                <div class="empty">
-                  <p>目前沒有登錄的場次。地下偶像的行程多半在演出前 2–4 週才公布,可以先看看同區域的其他場地。</p>
-                  <a class="btn" routerLink="/" [queryParams]="regionQueryParams">看{{ regionText }}其他場地</a>
-                </div>
-              } @else {
-                <div class="days" id="schedule-days">
-                  @for (day of visibleScheduleDays; track day.key; let first = $first) {
-                    <div class="day" [class.day--soon]="first">
-                      <div class="day-mark">
-                        <p class="day-num"><i>{{ day.month }}</i>{{ day.day }}</p>
-                        <p class="day-week">{{ day.weekday }}</p>
-                      </div>
-                      <div class="shows">
-                        @for (show of day.shows; track show.event.id) {
-                          @if (show.event.url) {
-                            <a class="show" [href]="show.event.url" target="_blank" rel="noopener">
-                              <span class="show-time">{{ show.time }}</span>
-                              <span class="show-title">{{ show.event.title }}</span>
-                              <svg class="show-out" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg>
-                            </a>
-                          } @else {
-                            <div class="show">
-                              <span class="show-time">{{ show.time }}</span>
-                              <span class="show-title">{{ show.event.title }}</span>
-                            </div>
-                          }
-                        }
-                      </div>
-                    </div>
-                  }
-                </div>
-
-                @if (hasHiddenDays) {
-                  <button
-                    type="button"
-                    class="more"
-                    (click)="showAllShows = !showAllShows"
-                    [attr.aria-expanded]="showAllShows"
-                    aria-controls="schedule-days"
-                  >{{ showAllShows ? '收合' : '展開全部 ' + eventCount + ' 場 ▾' }}</button>
-                }
-              }
-            }
-          </section>
-        }
-      </div>
-
-      <aside class="col-side">
+      <div class="ww-side">
         @if (scheduleDays.length > 0) {
-          <div class="next" aria-label="下一場演出">
+          <div class="next">
             <p class="next-label">下一場</p>
             <p class="next-date">
               {{ scheduleDays[0].month }}/{{ scheduleDays[0].day }}<small>{{ scheduleDays[0].weekday }}</small>
@@ -138,16 +87,6 @@
           </div>
         }
 
-        @if (venuesForMap.length > 0) {
-          <app-venue-map
-            class="venue-map-slot"
-            [venues]="venuesForMap"
-            [compact]="true"
-            [markerPopups]="false"
-            [ariaLabel]="v.name + ' 位置地圖'"
-          ></app-venue-map>
-        }
-
         <dl class="facts">
           @if (venueType) {
             <div class="fact"><dt>類型</dt><dd>{{ venueType }}</dd></div>
@@ -157,8 +96,69 @@
           }
           <div class="fact"><dt>最後更新</dt><dd>{{ updatedYmd }}</dd></div>
         </dl>
-      </aside>
-    </div>
+      </div>
+    </section>
+
+    @if (v.is_active && calendarStatus !== 'unconfigured') {
+      <section class="schedule" aria-labelledby="schedule-heading">
+        <div class="sec-head">
+          <h2 id="schedule-heading">近期演出</h2>
+          @if (calendarStatus === 'ok' && eventCount > 0) {
+            <em>未來 90 天 · {{ eventCount }} 場</em>
+          }
+        </div>
+
+        @if (calendarStatus === 'error') {
+          <p class="notice-inline" role="alert">場次資訊暫時取得失敗,請重新整理頁面再試。</p>
+        } @else {
+          <p class="sec-note">場次整理自公開行事曆,實際出演者與開演時間以主辦方公告為準。</p>
+
+          @if (scheduleDays.length === 0) {
+            <div class="empty">
+              <p>目前沒有登錄的場次。地下偶像的行程多半在演出前 2–4 週才公布,可以先看看同區域的其他場地。</p>
+              <a class="btn" routerLink="/" [queryParams]="regionQueryParams">看{{ regionText }}其他場地</a>
+            </div>
+          } @else {
+            <div class="days" id="schedule-days">
+              @for (day of visibleScheduleDays; track day.key; let first = $first) {
+                <div class="day" [class.day--soon]="first">
+                  <div class="day-mark">
+                    <p class="day-num"><i>{{ day.month }}</i>{{ day.day }}</p>
+                    <p class="day-week">{{ day.weekday }}</p>
+                  </div>
+                  <div class="shows">
+                    @for (show of day.shows; track show.event.id) {
+                      @if (show.event.url) {
+                        <a class="show" [href]="show.event.url" target="_blank" rel="noopener">
+                          <span class="show-time">{{ show.time }}</span>
+                          <span class="show-title">{{ show.event.title }}</span>
+                          <svg class="show-out" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg>
+                        </a>
+                      } @else {
+                        <div class="show">
+                          <span class="show-time">{{ show.time }}</span>
+                          <span class="show-title">{{ show.event.title }}</span>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (hasHiddenDays) {
+              <button
+                type="button"
+                class="more"
+                (click)="showAllShows = !showAllShows"
+                [attr.aria-expanded]="showAllShows"
+                aria-controls="schedule-days"
+              >{{ showAllShows ? '收合' : '展開全部 ' + eventCount + ' 場 ▾' }}</button>
+            }
+          }
+        }
+      </section>
+    }
 
     @if (v.notes) {
       <section class="notes" aria-labelledby="notes-heading">

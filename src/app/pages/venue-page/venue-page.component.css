@@ -73,18 +73,26 @@ h1 {
   max-width: calc(100% - 96px);
 }
 
-/* Schedule left, at-a-glance right. */
-.body-grid {
+/* One panel, one border: the map and the next show are the same answer seen
+   two ways, so they share a surface instead of floating as separate cards. */
+.where-when {
   display: grid;
-  grid-template-columns: 1fr 210px;
-  gap: 24px;
-  align-items: start;
+  grid-template-columns: 1fr 250px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 34px;
 }
-.col-side {
+.where-when--nomap { grid-template-columns: 1fr; }
+
+.ww-side {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  border-left: 1px solid var(--border-divider);
 }
+.where-when--nomap .ww-side { border-left: 0; }
 
 .addr {
   display: flex;
@@ -144,13 +152,8 @@ h1 {
 
 /* Next show — the page's thesis, not the venue name. */
 .next {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: 14px;
-  padding: 16px 18px 18px;
-  box-shadow: var(--shadow-md);
+  padding: 18px 20px 20px;
   position: relative;
-  overflow: hidden;
 }
 .next::before {
   content: "";
@@ -185,11 +188,18 @@ h1 {
   font-variant-numeric: tabular-nums;
   margin: 0 0 10px;
 }
+/* The full title is a row away in the schedule, so two lines is enough here
+   and the panel keeps a predictable height. */
 .next-title {
   font-size: 0.85rem;
   line-height: 1.5;
   color: var(--text-primary);
   margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 .next-link {
   display: inline-flex;
@@ -202,19 +212,20 @@ h1 {
 }
 .next-link:hover { text-decoration: underline; }
 
-/* A thumbnail in the aside, not a browsing surface — the "開啟地圖" button
-   in the cover is the way out to a real map. */
-.venue-map-slot {
+/* Big enough to recognise the street you will walk in from. */
+.ww-map {
   display: block;
-  --venue-map-compact-height: 120px;
+  --venue-map-compact-height: 300px;
+  /* The panel already draws the frame; a second one inside doubles the edge. */
+  --venue-map-radius: 0;
+  --venue-map-border: transparent;
 }
 
+/* Pushed to the bottom of the panel so the facts read as a footer to it. */
 .facts {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin: 0;
+  margin: auto 0 0;
+  padding: 14px 20px 16px;
+  border-top: 1px solid var(--border-divider);
 }
 .fact {
   display: flex;
@@ -265,8 +276,8 @@ h1 {
 
 .day {
   display: grid;
-  grid-template-columns: 56px 1fr;
-  gap: 14px;
+  grid-template-columns: 64px 1fr;
+  gap: 16px;
   padding: 13px 0;
   border-top: 1px solid var(--border-divider);
 }
@@ -324,7 +335,7 @@ a.show:hover { background: var(--mauve-05); }
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
-  width: 46px;
+  width: 52px;
 }
 .show-title {
   font-size: 0.85rem;
@@ -474,11 +485,12 @@ a.show:hover .show-out, a.show:focus-visible .show-out { opacity: 1; }
   .status { top: 16px; right: 16px; }
   /* The pill only shares a line with the eyebrow once the title wraps. */
   h1 { max-width: 100%; }
-  /* "下一場" must stay above the fold, so the aside leads on narrow screens. */
-  .body-grid { grid-template-columns: 1fr; gap: 22px; }
-  .col-side { order: -1; }
-  .venue-map-slot { --venue-map-compact-height: 200px; }
+  /* The panel stacks: map, then the next show, then the facts. */
+  .where-when { grid-template-columns: 1fr; }
+  .ww-map { --venue-map-compact-height: 220px; }
+  .ww-side { border-left: 0; border-top: 1px solid var(--border-divider); }
   .next-date { font-size: 1.7rem; }
+  .next-title { -webkit-line-clamp: 3; line-clamp: 3; }
   .day { grid-template-columns: 52px 1fr; gap: 12px; }
   .day-num { font-size: 1.25rem; }
   .show { padding: 10px 8px; gap: 10px; }
