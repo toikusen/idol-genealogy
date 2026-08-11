@@ -1391,6 +1391,91 @@ input::placeholder {
   transform: translateY(-1px);
 }
 
+.venue-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 13px 16px;
+}
+
+/* Card actions — one rail, one height, one radius. The type chip stays a
+   20px pill so the card reads round = information, square = action. */
+.venue-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.venue-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.venue-act--events,
+.venue-act--quiet {
+  min-width: 6.75rem;
+  background: var(--bg-surface);
+}
+/* The caret is a hint, not a glyph to read, and one shared width keeps the
+   rail lined up down the list whether a venue has shows or not. */
+.venue-act--events span,
+.venue-act--quiet span {
+  font-size: 0.62em;
+  opacity: 0.75;
+}
+/* Purple is the colour of leaving the list for the venue's own page. */
+.venue-act--detail {
+  background: rgba(124, 108, 242, 0.12);
+  border: 1px solid rgba(124, 108, 242, 0.3);
+  color: var(--text-purple);
+  font-weight: 500;
+}
+.venue-act--detail:hover {
+  background: rgba(124, 108, 242, 0.2);
+  border-color: rgba(124, 108, 242, 0.5);
+}
+/* Shows carry the date colour the venue detail page uses. */
+.venue-act--events {
+  border: 1px solid var(--section-event-muted);
+  color: var(--section-event);
+  font-variant-numeric: tabular-nums;
+}
+.venue-act--events:hover { border-color: var(--section-event); }
+.venue-act--quiet {
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.venue-act--quiet:hover {
+  border-color: rgba(124, 108, 242, 0.35);
+  color: var(--text-primary);
+}
+.venue-act--icon {
+  width: 40px;
+  min-width: 0;
+  padding: 0;
+}
+
+/* Three controls plus the address never fit one line on a phone: the rail
+   takes its own row and the primary action absorbs the slack. */
+@media (max-width: 620px) {
+  .venue-actions { flex-basis: 100%; margin-left: 0; }
+  .venue-act--detail { flex: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .venue-card:hover { transform: none; }
+  .venue-act { transition: none; }
 }
