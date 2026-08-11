@@ -94,5 +94,54 @@ describe('VenueMapComponent', () => {
       await fixture.whenStable();
       expect((component as any).markers.size).toBe(1);
     });
+
+    it('gives each marker an accessible name and keyboard focus', async () => {
+      component.venues = [
+        { id: 'v3', name: '杰克音樂', address: 'addr', region: 'north', is_active: true, created_at: '', updated_at: '', google_maps_url: null, phone: null, notes: null, type: null, latitude: 25.04, longitude: 121.51 },
+      ];
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const el = (component as any).markers.get('v3').getElement() as HTMLElement;
+      expect(el.getAttribute('aria-label')).toContain('杰克音樂');
+      expect(el.getAttribute('title')).toBe('杰克音樂');
+      expect(el.tabIndex).toBe(0);
+    });
+  });
+
+  describe('markerPopups = false', () => {
+    it('creates a non-focusable pin with no popup', async () => {
+      component.markerPopups = false;
+      component.venues = [
+        { id: 'v4', name: '杰克音樂', address: 'addr', region: 'north', is_active: true, created_at: '', updated_at: '', google_maps_url: null, phone: null, notes: null, type: null, latitude: 25.04, longitude: 121.51 },
+      ];
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const marker = (component as any).markers.get('v4');
+      expect(marker.getPopup()).toBeUndefined();
+      const el = marker.getElement() as HTMLElement;
+      expect(el.getAttribute('aria-hidden')).toBe('true');
+      expect(el.getAttribute('role')).toBeNull();
+    });
+  });
+
+  describe('compact mode', () => {
+    it('is off by default and does not hide the map from assistive tech', () => {
+      fixture.detectChanges();
+      const container = (fixture.nativeElement as HTMLElement).querySelector('.venue-map-container')!;
+      expect(container.classList).not.toContain('venue-map-container--compact');
+      expect(container.getAttribute('aria-hidden')).toBeNull();
+      expect(container.getAttribute('role')).toBe('application');
+    });
+
+    it('applies the compact class and the supplied label', () => {
+      component.compact = true;
+      component.ariaLabel = '杰克音樂 位置地圖';
+      fixture.detectChanges();
+      const container = (fixture.nativeElement as HTMLElement).querySelector('.venue-map-container')!;
+      expect(container.classList).toContain('venue-map-container--compact');
+      expect(container.getAttribute('aria-label')).toBe('杰克音樂 位置地圖');
+    });
   });
 });

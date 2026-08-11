@@ -11,3 +11,14 @@
     height: 260px;
   }
 }
+
+/* Single-venue pages need a band, not a browsing surface. */
+.venue-map-container--compact {
+  height: 220px;
+}
+
+@media (max-width: 640px) {
+  .venue-map-container--compact {
+    height: 200px;
+  }
+}

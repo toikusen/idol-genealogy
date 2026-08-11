@@ -1,6 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { Group, Member, Venue, VenueCalendarEvent } from '../models';
+import { SITE_URL } from './public-url.utils';
+import { taipeiStartOfDay } from './taipei-date.utils';
+
+export type CalendarStatus = 'ok' | 'unconfigured' | 'error';
+
+export interface CalendarResult {
+  events: VenueCalendarEvent[];
+  status: CalendarStatus;
+}
 
 interface GoogleCalendarEventDate {
   date?: string;
@@ -20,6 +30,20 @@ interface GoogleCalendarEventResource {
 
 interface GoogleCalendarEventsResponse {
   items?: GoogleCalendarEventResource[];
+  nextPageToken?: string;
+}
+
+/**
+ * Shared across service instances on purpose. Prerender builds one injector per
+ * route, so an instance-level cache would hit the Calendar API once per venue
+ * page. Module scope collapses that to one call per prerender worker thread
+ * (Angular runs up to `min(4, cores - 1)` of them).
+ */
+const sharedRawCache = new Map<number, Promise<GoogleCalendarEventResource[]>>();
+
+/** Test-only: module-scope cache would otherwise leak between specs. */
+export function clearCalendarRawCache(): void {
+  sharedRawCache.clear();
 }
 
 @Injectable({ providedIn: 'root' })
@@ -27,10 +51,26 @@ export class GoogleCalendarService {
   private readonly calendarId = environment.googleCalendar?.calendarId ?? '';
   private readonly apiKey = environment.googleCalendar?.apiKey ?? '';
   private readonly cache = new Map<string, Promise<VenueCalendarEvent[]>>();
-  private readonly rawCache = new Map<number, Promise<GoogleCalendarEventResource[]>>();
+  private readonly rawCache = sharedRawCache;
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   isConfigured(): boolean {
     return this.calendarId.trim().length > 0 && this.apiKey.trim().length > 0;
+  }
+
+  /**
+   * Venue events plus why the list is empty. An empty array on its own cannot
+   * distinguish "no shows booked" from "the API call failed", and rendering a
+   * failure as "no shows booked" is a lie the user cannot detect.
+   */
+  async getUpcomingVenueEventsResult(venue: Venue, daysAhead = 90): Promise<CalendarResult> {
+    if (!this.isConfigured()) return { events: [], status: 'unconfigured' };
+    try {
+      return { events: await this.getUpcomingVenueEvents(venue, daysAhead), status: 'ok' };
+    } catch (error) {
+      console.warn(`[calendar] venue events unavailable for ${venue.name}:`, error);
+      return { events: [], status: 'error' };
+    }
   }
 
   async preloadForVenues(venues: Venue[], daysAhead = 90): Promise<Map<string, number>> {
@@ -77,24 +117,10 @@ export class GoogleCalendarService {
 
   async getEventsForDate(date: Date): Promise<VenueCalendarEvent[]> {
     if (!this.isConfigured()) return [];
-    const timeMin = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const timeMax = new Date(timeMin);
-    timeMax.setDate(timeMax.getDate() + 1);
-    const params = new URLSearchParams({
-      key: this.apiKey,
-      singleEvents: 'true',
-      orderBy: 'startTime',
-      timeMin: timeMin.toISOString(),
-      timeMax: timeMax.toISOString(),
-      maxResults: '50',
-    });
-    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(this.calendarId)}/events?${params}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`Google Calendar API: ${resp.status}`);
-    const data = await resp.json() as { items?: GoogleCalendarEventResource[] };
-    return (data.items ?? [])
-      .filter(e => e.status !== 'cancelled' && !!e.start)
-      .map(e => this.toVenueEvent(e));
+    const timeMin = taipeiStartOfDay(date);
+    const timeMax = new Date(timeMin.getTime() + 24 * 60 * 60 * 1000);
+    const events = await this.fetchAllPages(timeMin, timeMax);
+    return events.map(e => this.toVenueEvent(e));
   }
 
   getUpcomingMemberEvents(member: Member, daysAhead = 90): Promise<VenueCalendarEvent[]> {
@@ -292,30 +318,63 @@ export class GoogleCalendarService {
     return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`).test(text);
   }
 
+  /**
+   * The API key is restricted to the site's HTTP referrer. Browsers attach the
+   * Referer automatically; Node does not, and an absent one is rejected with
+   * 403 "Requests from referer <empty> are blocked" — which would leave every
+   * prerendered page with no schedule.
+   */
+  private requestInit(): RequestInit | undefined {
+    return this.isBrowser ? undefined : { headers: { Referer: `${SITE_URL}/` } };
+  }
+
   private fetchUpcomingEvents(daysAhead: number): Promise<GoogleCalendarEventResource[]> {
     const cached = this.rawCache.get(daysAhead);
     if (cached) return cached;
-    const now = new Date();
-    const timeMin = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const timeMax = new Date(timeMin);
-    timeMax.setDate(timeMax.getDate() + daysAhead);
-    const params = new URLSearchParams({
-      key: this.apiKey,
-      singleEvents: 'true',
-      orderBy: 'startTime',
-      timeMin: timeMin.toISOString(),
-      timeMax: timeMax.toISOString(),
-      maxResults: '100',
+    const timeMin = taipeiStartOfDay();
+    const timeMax = new Date(timeMin.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    const promise = this.fetchAllPages(timeMin, timeMax);
+    // Drop a rejected promise so the next caller retries. Keeping it would let
+    // one transient failure poison every remaining page rendered by this worker.
+    promise.catch(() => {
+      if (this.rawCache.get(daysAhead) === promise) this.rawCache.delete(daysAhead);
     });
-    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(this.calendarId)}/events?${params}`;
-    const promise = fetch(url)
-      .then(response => {
-        if (!response.ok) throw new Error(`Google Calendar API failed: ${response.status}`);
-        return response.json() as Promise<GoogleCalendarEventsResponse>;
-      })
-      .then(data => (data.items ?? []).filter(event => event.status !== 'cancelled' && !!event.start));
     this.rawCache.set(daysAhead, promise);
     return promise;
+  }
+
+  /** 90 days already returns ~93 events, so a single unpaged request truncates. */
+  private async fetchAllPages(timeMin: Date, timeMax: Date): Promise<GoogleCalendarEventResource[]> {
+    const MAX_PAGES = 5;
+    const collected: GoogleCalendarEventResource[] = [];
+    let pageToken: string | undefined;
+
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const params = new URLSearchParams({
+        key: this.apiKey,
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        timeZone: 'Asia/Taipei',
+        timeMin: timeMin.toISOString(),
+        timeMax: timeMax.toISOString(),
+        maxResults: '250',
+      });
+      if (pageToken) params.set('pageToken', pageToken);
+
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(this.calendarId)}/events?${params}`;
+      const response = await fetch(url, this.requestInit());
+      if (!response.ok) throw new Error(`Google Calendar API failed: ${response.status}`);
+      const data = await response.json() as GoogleCalendarEventsResponse;
+
+      collected.push(...(data.items ?? []));
+      pageToken = data.nextPageToken;
+      if (!pageToken) break;
+      if (page === MAX_PAGES - 1) {
+        console.warn(`[calendar] stopped after ${MAX_PAGES} pages; some events were not fetched.`);
+      }
+    }
+
+    return collected.filter(event => event.status !== 'cancelled' && !!event.start);
   }
 
   private matchesVenue(event: GoogleCalendarEventResource, venue: Venue): boolean {

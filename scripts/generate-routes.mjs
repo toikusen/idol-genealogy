@@ -93,6 +93,17 @@ async function run() {
   }
   const publicCompanies = companies.filter(c => !isTestName(c.name));
 
+  const { data: venues, error: venuesError } = await supabase
+    .from('venues')
+    .select('id, name, is_active');
+  if (venuesError) {
+    console.error('Error fetching venues:', venuesError.message);
+    process.exit(1);
+  }
+  // Closed venues stay prerendered so old links keep working; the page itself
+  // emits noindex. Only active venues go in the sitemap.
+  const activeVenues = venues.filter(v => v.is_active);
+
   const indexableMembers = publicMembers;
   const indexableGroups = publicGroups;
   const indexableCompanies = publicCompanies;
@@ -118,13 +129,15 @@ async function run() {
     ...indexableMembers.map(m => `/member/${m.id}`),
     ...indexableGroups.map(g => `/group/${g.id}`),
     ...indexableCompanies.map(c => `/company/${c.id}`),
+    ...venues.map(v => `/venue/${v.id}`),
   ];
   writeFileSync('prerender-routes.txt', routes.join('\n') + '\n', 'utf8');
   console.log(
     `prerender-routes.txt: ${routes.length} routes ` +
     `(${indexableMembers.length}/${publicMembers.length} public members, ` +
     `${indexableGroups.length}/${publicGroups.length} public groups, ` +
-    `${indexableCompanies.length}/${publicCompanies.length} public companies).`,
+    `${indexableCompanies.length}/${publicCompanies.length} public companies, ` +
+    `${activeVenues.length}/${venues.length} active venues).`,
   );
 
   const buildDate = new Date().toISOString().slice(0, 10);
@@ -149,6 +162,10 @@ async function run() {
     staticUrl('/guide', 'monthly', '0.5'),
     staticUrl('/learn', 'monthly', '0.7'),
     ...KNOWLEDGE_ROUTES.map(route => staticUrl(route, 'monthly', '0.75')),
+    // Venue pages carry no <lastmod>: `venues.updated_at` does not move when the
+    // schedule changes, and stamping the build date would claim a daily edit
+    // that most venues never have.
+    ...activeVenues.map(v => staticUrl(`/venue/${v.id}`, 'daily', '0.7')),
     staticUrl('/contact', 'monthly', '0.5'),
     staticUrl('/privacy', 'yearly', '0.3'),
     staticUrl('/terms', 'yearly', '0.3'),

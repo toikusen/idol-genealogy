@@ -1153,13 +1153,15 @@
 
     <!-- Venue card template -->
     <ng-template #venueCard let-venue>
-      <div
-        (click)="toggleVenue(venue)"
+      <!-- Non-interactive container: the name link and the disclosure button are
+           siblings. Nesting an <a> inside a <button> (or inside a click-handling
+           div) is invalid and breaks keyboard and screen-reader behaviour. -->
+      <article
         style="
           background:var(--bg-card);border:1px solid var(--border-subtle);
           border-radius:10px;margin-bottom:8px;
           box-shadow:var(--shadow-sm);overflow:hidden;
-          cursor:pointer;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;
+          transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;
         "
         [style.border-color]="expandedVenueIds.has(venue.id) ? 'rgba(124,108,242,0.55)' : ''"
         [style.box-shadow]="expandedVenueIds.has(venue.id) ? 'var(--shadow-md)' : 'var(--shadow-sm)'"
@@ -1181,9 +1183,12 @@
 
           <!-- Info -->
           <div style="flex:1;min-width:0;">
-            <div style="font-size:0.88rem;font-weight:500;color:var(--text-primary);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            <a
+              [routerLink]="['/venue', venue.id]"
+              style="display:block;font-size:0.88rem;font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;padding:12px 0;margin:-12px 0 -10px;"
+            >
               {{venue.name}}
-            </div>
+            </a>
             <div style="font-size:0.7rem;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
               {{venue.address}}
             </div>
@@ -1197,21 +1202,35 @@
           <!-- Buttons -->
           <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
             @if (calendarLoaded && (venueEventCounts.get(venue.id) ?? 0) > 0) {
-              <span
-                (click)="toggleVenue(venue); $event.stopPropagation()"
-                style="display:inline-flex;align-items:center;justify-content:center;min-width:5.25rem;box-sizing:border-box;font-size:0.6rem;padding:4px 9px;border-radius:20px;border:1px solid rgba(232,121,160,0.55);color:#c9527a;background:rgba(232,121,160,0.08);font-weight:500;letter-spacing:0.04em;white-space:nowrap;cursor:pointer;"
+              <button
+                type="button"
+                (click)="toggleVenue(venue)"
+                [attr.aria-expanded]="expandedVenueIds.has(venue.id)"
+                [attr.aria-controls]="'venue-panel-' + venue.id"
+                style="display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:5.25rem;min-height:44px;box-sizing:border-box;font-family:inherit;font-size:0.6rem;padding:4px 9px;border-radius:20px;border:1px solid rgba(232,121,160,0.55);color:#c9527a;background:rgba(232,121,160,0.08);font-weight:500;letter-spacing:0.04em;white-space:nowrap;cursor:pointer;"
                 [attr.aria-label]="'查看 ' + venue.name + ' 近期活動'"
               >
                 近期活動 {{ venueEventCounts.get(venue.id) }}
-              </span>
+                <span aria-hidden="true">{{expandedVenueIds.has(venue.id) ? '▲' : '▼'}}</span>
+              </button>
             } @else {
-              <span style="display:inline-flex;align-items:center;justify-content:center;min-width:5.25rem;box-sizing:border-box;font-size:0.6rem;padding:4px 9px;border-radius:20px;border:1px dashed rgba(232,121,160,0.28);color:rgba(232,121,160,0.45);background:rgba(232,121,160,0.04);letter-spacing:0.04em;white-space:nowrap;cursor:not-allowed;">
-                近期活動
-              </span>
+              <!-- Still a button with no events: it opens the map panel, which was
+                   previously reachable by clicking anywhere on the card. -->
+              <button
+                type="button"
+                (click)="toggleVenue(venue)"
+                [attr.aria-expanded]="expandedVenueIds.has(venue.id)"
+                [attr.aria-controls]="'venue-panel-' + venue.id"
+                style="display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:5.25rem;min-height:44px;box-sizing:border-box;font-family:inherit;font-size:0.6rem;padding:4px 9px;border-radius:20px;border:1px dashed rgba(232,121,160,0.28);color:var(--text-secondary);background:rgba(232,121,160,0.04);letter-spacing:0.04em;white-space:nowrap;cursor:pointer;"
+                [attr.aria-label]="'查看 ' + venue.name + ' 地圖'"
+              >
+                地圖
+                <span aria-hidden="true">{{expandedVenueIds.has(venue.id) ? '▲' : '▼'}}</span>
+              </button>
             }
             <button
               (click)="copyAddress(venue.address, $event)"
-              style="width:30px;height:30px;border-radius:7px;border:1px solid var(--border-subtle);background:var(--bg-surface);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);cursor:pointer;"
+              style="width:44px;height:44px;border-radius:9px;border:1px solid var(--border-subtle);background:var(--bg-surface);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);cursor:pointer;"
               [attr.aria-label]="'複製 ' + venue.name + ' 地址'"
               title="複製地址"
             >
@@ -1219,15 +1238,12 @@
                 <path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/>
               </svg>
             </button>
-            <span style="font-size:0.65rem;color:var(--text-faint);padding:0 2px;user-select:none;">
-              {{expandedVenueIds.has(venue.id) ? '▲' : '▼'}}
-            </span>
           </div>
         </div>
 
         <!-- Expanded map panel -->
         @if (expandedVenueIds.has(venue.id)) {
-          <div style="padding:0 16px 14px;">
+          <div [id]="'venue-panel-' + venue.id" style="padding:0 16px 14px;">
             <iframe
               [src]="venueMapUrl(venue.address) | safeUrl"
               width="100%"
@@ -1316,7 +1332,7 @@
             </div>
           </div>
         }
-      </div>
+      </article>
     </ng-template>
 
     <!-- ══ Proposal panels ══ -->

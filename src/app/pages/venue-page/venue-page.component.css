@@ -1,0 +1,444 @@
+/* Venue pages reuse the global token set. Two rules are load-bearing here:
+   never render content text in --text-faint (2.09:1 on --bg-page), and never
+   dim text with opacity — pick a quieter token instead. */
+
+.venue-page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 20px 72px;
+}
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 0.72rem;
+  color: var(--text-label);
+  margin-bottom: 12px;
+}
+.crumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 2px;
+}
+.crumbs a:hover { color: var(--text-link); }
+.crumbs span { margin: 0 6px; }
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.eyebrow span {
+  font-size: 0.66rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-label);
+  white-space: nowrap;
+}
+.eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(124, 108, 242, 0.25), transparent);
+}
+.eyebrow-sep { letter-spacing: 0; }
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 264px;
+  gap: 28px;
+  align-items: start;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: var(--text-heading);
+  margin: 0 0 10px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.chip {
+  font-size: 0.68rem;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  background: var(--mauve-05);
+  border: 1px solid var(--mauve-12);
+  color: var(--text-secondary);
+}
+/* Purple is 3.74:1 — fine as a border or fill, never as the label colour. */
+.chip--live {
+  background: var(--bg-purple-tint);
+  border-color: rgba(124, 108, 242, 0.25);
+  color: var(--text-secondary);
+}
+
+.addr {
+  display: flex;
+  gap: 9px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+.addr svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--idol-purple);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.2s, color 0.2s, transform 0.2s;
+}
+.btn:hover {
+  border-color: rgba(124, 108, 242, 0.25);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.btn--primary {
+  background: var(--bg-purple-tint);
+  border-color: rgba(124, 108, 242, 0.25);
+  color: var(--text-primary);
+}
+.btn--primary svg { color: var(--idol-purple); }
+
+.sr-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Next show — the page's thesis, not the venue name. */
+.next {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+.next::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--event-date-color), transparent);
+}
+.next-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  color: var(--text-label);
+  margin: 0 0 10px;
+}
+.next-date {
+  font-size: 2.1rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--event-date-color);
+  font-variant-numeric: tabular-nums;
+  margin: 0 0 4px;
+}
+.next-date small {
+  font-size: 0.9rem;
+  margin-left: 7px;
+  letter-spacing: 0.06em;
+}
+.next-time {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  margin: 0 0 12px;
+}
+.next-title {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin: 0;
+}
+.next-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  min-height: 44px;
+  font-size: 0.76rem;
+  color: var(--text-link);
+}
+.next-link:hover { text-decoration: underline; }
+
+.venue-map-slot {
+  display: block;
+  margin: 32px 0;
+}
+
+/* Schedule rail — order carries real information, so no decorative numbering. */
+.sec-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.sec-head h2 {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--text-heading);
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+.sec-head em {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+.sec-note {
+  font-size: 0.72rem;
+  color: var(--text-label);
+  line-height: 1.7;
+  margin: 0 0 18px;
+}
+.notice-inline {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+}
+
+.day {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border-divider);
+}
+.day:last-of-type { border-bottom: 1px solid var(--border-divider); }
+.day-mark {
+  text-align: right;
+  padding-top: 2px;
+}
+.day-num {
+  font-size: 1.5rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--event-date-color);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.day-num i {
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--text-label);
+  margin-right: 3px;
+}
+.day-week {
+  font-size: 0.7rem;
+  color: var(--text-label);
+  margin: 5px 0 0;
+  letter-spacing: 0.1em;
+}
+.day--soon .day-week {
+  color: var(--text-primary);
+  background: var(--section-event-muted);
+  border-radius: 20px;
+  padding: 1px 7px;
+  display: inline-block;
+  letter-spacing: 0.06em;
+}
+
+.shows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.show {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 12px;
+  min-height: 44px;
+  border-radius: 9px;
+  transition: background 0.18s;
+}
+a.show:hover { background: var(--bg-card); }
+.show-time {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  width: 76px;
+}
+.show-title {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  flex: 1;
+}
+.show-out {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+a.show:hover .show-out, a.show:focus-visible .show-out { opacity: 1; }
+
+.empty {
+  border: 1px dashed var(--mauve-12);
+  border-radius: 14px;
+  padding: 30px 26px;
+  text-align: center;
+  background: var(--bg-card);
+}
+.empty p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  max-width: 34em;
+  margin: 0 auto 14px;
+}
+
+.notes {
+  margin-top: 40px;
+}
+.notes h2 {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--text-heading);
+  margin: 0 0 10px;
+}
+.notes p {
+  font-size: 0.85rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin: 0;
+  white-space: pre-line;
+}
+
+.near-section { display: block; margin-top: 44px; }
+.near-section h2 {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--text-heading);
+  margin: 0 0 14px;
+}
+.near-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
+  gap: 8px;
+}
+.near {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding: 12px 14px;
+  min-height: 56px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.2s, transform 0.2s;
+}
+.near:hover {
+  border-color: rgba(124, 108, 242, 0.25);
+  transform: translateY(-1px);
+}
+.near-pin {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  color: var(--idol-purple);
+  background: var(--bg-purple-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.near-txt { min-width: 0; }
+.near-name {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.near-meta {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.foot-note {
+  margin-top: 40px;
+  font-size: 0.7rem;
+  color: var(--text-label);
+  line-height: 1.8;
+}
+
+.venue-notice {
+  max-width: 480px;
+  margin: 80px auto;
+  text-align: center;
+}
+.venue-notice h1 {
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+}
+.venue-notice p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; gap: 20px; }
+  .next-date { font-size: 1.8rem; }
+  .day { grid-template-columns: 52px 1fr; gap: 12px; }
+  .day-num { font-size: 1.25rem; }
+  .show { padding: 10px 8px; gap: 10px; }
+  .show-time { width: 68px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .near, .show, .show-out { transition: none; }
+}

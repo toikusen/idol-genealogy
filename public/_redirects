@@ -4,6 +4,7 @@
 /member/:id  /member/:id/  200
 /group/:id   /group/:id/   200
 /company/:id /company/:id/ 200
+/venue/:id   /venue/:id/   200
 /learn/:slug /learn/:slug/ 200
 /members     /members/     200
 /about       /about/       200

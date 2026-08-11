@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { GoogleCalendarService } from './google-calendar.service';
+import { GoogleCalendarService, clearCalendarRawCache } from './google-calendar.service';
 import { Group, Member, Venue } from '../models';
 
 function mockMember(id: string, overrides: Partial<Member> = {}): Member {
@@ -41,6 +41,9 @@ describe('GoogleCalendarService', () => {
   let service: GoogleCalendarService;
 
   beforeEach(() => {
+    // rawCache is module-scoped so prerender shares one fetch across routes;
+    // that also means it survives TestBed teardown and would leak between specs.
+    clearCalendarRawCache();
     TestBed.configureTestingModule({
       providers: [GoogleCalendarService],
     });
@@ -494,12 +497,99 @@ describe('GoogleCalendarService', () => {
     };
     expect((service as any).matchesGroup(event, group)).toBeFalse();
   });
+
+  describe('fetch layer', () => {
+    function okResponse(body: unknown) {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(body) } as Response);
+    }
+
+    it('sends no Referer header in the browser (the browser sets it)', async () => {
+      const fetchSpy = spyOn(window, 'fetch').and.returnValue(okResponse({ items: [] }));
+      await (service as any).fetchUpcomingEvents(90);
+      expect(fetchSpy.calls.mostRecent().args[1]).toBeUndefined();
+    });
+
+    it('sends a Referer header when not running in a browser', async () => {
+      const fetchSpy = spyOn(window, 'fetch').and.returnValue(okResponse({ items: [] }));
+      (service as any).isBrowser = false;
+      await (service as any).fetchUpcomingEvents(90);
+      const init = fetchSpy.calls.mostRecent().args[1] as RequestInit;
+      expect((init.headers as Record<string, string>)['Referer']).toContain('http');
+    });
+
+    it('requests the Taipei time zone and a 250-event page size', async () => {
+      const fetchSpy = spyOn(window, 'fetch').and.returnValue(okResponse({ items: [] }));
+      await (service as any).fetchUpcomingEvents(90);
+      const url = fetchSpy.calls.mostRecent().args[0] as string;
+      expect(url).toContain('timeZone=Asia%2FTaipei');
+      expect(url).toContain('maxResults=250');
+    });
+
+    it('follows nextPageToken and concatenates pages', async () => {
+      const page1 = { items: [{ id: 'a', start: { dateTime: '2026-08-15T19:00:00+08:00' } }], nextPageToken: 'tok' };
+      const page2 = { items: [{ id: 'b', start: { dateTime: '2026-08-16T19:00:00+08:00' } }] };
+      const fetchSpy = spyOn(window, 'fetch').and.returnValues(okResponse(page1), okResponse(page2));
+      const events = await (service as any).fetchUpcomingEvents(90);
+      expect(events.map((e: any) => e.id)).toEqual(['a', 'b']);
+      expect(fetchSpy.calls.count()).toBe(2);
+      expect(fetchSpy.calls.mostRecent().args[0] as string).toContain('pageToken=tok');
+    });
+
+    it('drops a rejected fetch from the cache so the next page retries', async () => {
+      const fetchSpy = spyOn(window, 'fetch').and.returnValues(
+        Promise.resolve({ ok: false, status: 403 } as Response),
+        okResponse({ items: [] }),
+      );
+
+      await expectAsync((service as any).fetchUpcomingEvents(90)).toBeRejected();
+      await (service as any).fetchUpcomingEvents(90);
+
+      expect(fetchSpy.calls.count()).toBe(2);
+    });
+
+    it('shares one raw fetch across service instances (prerender reuse)', async () => {
+      const fetchSpy = spyOn(window, 'fetch').and.returnValue(okResponse({ items: [] }));
+      await (service as any).fetchUpcomingEvents(90);
+      const second = TestBed.inject(GoogleCalendarService);
+      await (second as any).fetchUpcomingEvents(90);
+      expect(fetchSpy.calls.count()).toBe(1);
+    });
+  });
+
+  describe('getUpcomingVenueEventsResult', () => {
+    it('reports unconfigured without calling the API', async () => {
+      spyOn(service, 'isConfigured').and.returnValue(false);
+      const fetchSpy = spyOn(window, 'fetch');
+      expect(await service.getUpcomingVenueEventsResult(baseVenue))
+        .toEqual({ events: [], status: 'unconfigured' });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('reports error rather than an empty schedule when the API fails', async () => {
+      spyOn(console, 'warn');
+      spyOn(window, 'fetch').and.returnValue(
+        Promise.resolve({ ok: false, status: 403 } as Response),
+      );
+      const result = await service.getUpcomingVenueEventsResult(baseVenue);
+      expect(result.status).toBe('error');
+      expect(result.events).toEqual([]);
+    });
+
+    it('reports ok with an empty list when the venue genuinely has no shows', async () => {
+      spyOn(window, 'fetch').and.returnValue(
+        Promise.resolve({ ok: true, json: () => Promise.resolve({ items: [] }) } as Response),
+      );
+      expect(await service.getUpcomingVenueEventsResult(baseVenue))
+        .toEqual({ events: [], status: 'ok' });
+    });
+  });
 });
 
 describe('matchesGroup', () => {
   let service: GoogleCalendarService;
 
   beforeEach(() => {
+    clearCalendarRawCache();
     TestBed.configureTestingModule({ providers: [GoogleCalendarService] });
     service = TestBed.inject(GoogleCalendarService);
   });
@@ -690,4 +780,5 @@ describe('matchesGroup', () => {
   it('does NOT match short alpha name with special char in location (below threshold)', () => {
     expect((service as any).matchesGroup(mkEvent('show', 'i<3 venue'), mkGroup('i<3'))).toBeFalse();
   });
+
 });

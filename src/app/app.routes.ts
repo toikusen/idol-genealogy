@@ -43,6 +43,9 @@ const companiesListResolver = lazyResolver(() =>
 const leaderboardPageResolver = lazyResolver(() =>
   import('./core/page-data.resolvers').then(m => m.leaderboardPageResolver)
 );
+const venuePageResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.venuePageResolver)
+);
 const staffGuard = lazyGuard(() =>
   import('./core/staff.guard').then(m => m.staffGuard)
 );
@@ -145,6 +148,12 @@ export const routes: Routes = [
     path: 'company/:id',
     resolve: { pageData: companyPageResolver },
     loadComponent: () => import('./pages/company-page/company-page.component').then(m => m.CompanyPageComponent)
+  },
+  {
+    path: 'venue/:id',
+    resolve: { pageData: venuePageResolver },
+    loadComponent: () =>
+      import('./pages/venue-page/venue-page.component').then(m => m.VenuePageComponent)
   },
   {
     path: 'privacy',

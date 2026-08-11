@@ -13,7 +13,7 @@ function isSpaRoute(pathname: string): boolean {
 // has no static HTML yet until the next deploy. Fall back to the SPA shell instead of 404
 // so the Angular app can fetch the entity from Supabase client-side.
 function isDynamicEntityRoute(pathname: string): boolean {
-  return /^\/(?:member|group|company)\/[^/]+\/?$/.test(pathname);
+  return /^\/(?:member|group|company|venue)\/[^/]+\/?$/.test(pathname);
 }
 
 // Constant-time string comparison to avoid leaking credential info via response timing.

@@ -1,4 +1,5 @@
-import { inject } from '@angular/core';
+import { inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ResolveFn } from '@angular/router';
 import {
   Company,
@@ -14,8 +15,12 @@ import {
   Proposal,
   RelatedGroup,
   Team,
+  Venue,
+  VenueCalendarEvent,
 } from '../models';
 import { CompanyService } from './company.service';
+import { CalendarStatus, GoogleCalendarService } from './google-calendar.service';
+import { VenueService } from './venue.service';
 import { GroupService } from './group.service';
 import { HistoryService } from './history.service';
 import { MemberService } from './member.service';
@@ -332,4 +337,72 @@ export const leaderboardPageResolver: ResolveFn<LeaderboardPageData> = async () 
     recentGroups: recentGroups.filter(isPublicGroupRecord).slice(0, 10),
     trendingGroups: trendingGroups.filter(isPublicGroupRecord).slice(0, 10),
   };
+};
+
+export interface VenuePageData {
+  id: string;
+  venue: Venue | null;
+  nearbyVenues: Venue[];
+  events: VenueCalendarEvent[];
+  /** Supabase lookup failed. Distinct from `venue: null`, which means it does not exist. */
+  error: boolean;
+  calendarStatus: CalendarStatus;
+}
+
+export const venuePageResolver: ResolveFn<VenuePageData> = async (route) => {
+  const venueService = inject(VenueService);
+  const calendar = inject(GoogleCalendarService);
+  const transferState = inject(TransferState);
+  const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  const id = route.paramMap.get('id') ?? '';
+  const stateKey = makeStateKey<VenuePageData>(`venue:${id}`);
+
+  // Hydration must render exactly what was prerendered. Without this the browser
+  // re-queries the Calendar API during hydration, and any difference (an outage,
+  // or a schedule edited since the nightly build) leaves the first paint mixing
+  // server and client output. The key is consumed once, so later SPA navigations
+  // back to this venue fetch fresh data.
+  if (isBrowser) {
+    const cached = transferState.get(stateKey, null);
+    if (cached) {
+      transferState.remove(stateKey);
+      return cached;
+    }
+  }
+
+  const store = (data: VenuePageData): VenuePageData => {
+    if (!isBrowser) transferState.set(stateKey, data);
+    return data;
+  };
+
+  let venue: Venue | null;
+  try {
+    venue = await venueService.getById(id);
+  } catch (error) {
+    // A transient Supabase failure must not render as "venue not found" — that
+    // would noindex a page that exists.
+    console.warn(`[venue] lookup failed for ${id}:`, error);
+    return store({ id, venue: null, nearbyVenues: [], events: [], error: true, calendarStatus: 'unconfigured' });
+  }
+
+  if (!venue) {
+    return store({ id, venue: null, nearbyVenues: [], events: [], error: false, calendarStatus: 'unconfigured' });
+  }
+
+  const [nearbyVenues, calendarResult] = await Promise.all([
+    venueService.getNearbyVenues(venue).catch(() => [] as Venue[]),
+    venue.is_active
+      ? calendar.getUpcomingVenueEventsResult(venue)
+      : Promise.resolve({ events: [] as VenueCalendarEvent[], status: 'unconfigured' as CalendarStatus }),
+  ]);
+
+  return store({
+    id,
+    venue,
+    nearbyVenues,
+    events: calendarResult.events,
+    error: false,
+    calendarStatus: calendarResult.status,
+  });
 };

@@ -8,12 +8,27 @@ import { Venue, VenueRegionFilter, VenueCalendarEvent } from '../../models';
 @Component({
   selector: 'app-venue-map',
   standalone: true,
-  template: `<div class="venue-map-container"></div>`,
+  template: `<div
+    class="venue-map-container"
+    [class.venue-map-container--compact]="compact"
+    role="application"
+    [attr.aria-label]="ariaLabel"
+  ></div>`,
   styleUrl: './venue-map.component.css',
 })
 export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() venues: Venue[] = [];
   @Input() activeRegion: VenueRegionFilter = 'all';
+  /** Shorter frame for single-venue pages. */
+  @Input() compact = false;
+  /**
+   * Popups are driven by the host (HomeComponent feeds them via refreshPopup).
+   * On a single-venue page there is no host to feed them and the page already
+   * shows everything a popup would, so the marker becomes a plain pin instead
+   * of a focusable button that opens a permanent "loading" bubble.
+   */
+  @Input() markerPopups = true;
+  @Input() ariaLabel = '演出場地地圖';
 
   @Output() regionChange          = new EventEmitter<VenueRegionFilter>();
   @Output() venuePopupOpened      = new EventEmitter<string>();
@@ -136,7 +151,7 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     for (const venue of withCoords) {
       const icon = L.divIcon({
         className: '',
-        html: `<div class="venue-marker">
+        html: `<div class="venue-marker" aria-label="${this.escapeHtml(venue.name)} 地圖標記">
           <div class="venue-marker__circle">${this.getVenueIcon()}</div>
           <div class="venue-marker__tail"></div>
         </div>`,
@@ -146,12 +161,32 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
       });
 
       const isMobile = window.innerWidth <= 640;
-      const marker = L.marker([venue.latitude!, venue.longitude!], { icon })
-        .addTo(this.map)
-        .bindPopup(this.buildPopupContent(venue, [], true, ''), {
+      // Leaflet gives divIcon markers keyboard focus and role="button"; without
+      // title/alt a screen reader announces an unlabelled button.
+      const marker = L.marker([venue.latitude!, venue.longitude!], {
+        icon,
+        title: venue.name,
+        alt: `${venue.name} 地圖標記`,
+        keyboard: this.markerPopups,
+      }).addTo(this.map);
+
+      if (this.markerPopups) {
+        marker.bindPopup(this.buildPopupContent(venue, [], true, ''), {
           maxWidth: 280,
           ...(isMobile ? { maxHeight: 220 } : {}),
         });
+      }
+
+      // Leaflet only forwards `alt` to <img> icons, so a divIcon marker would
+      // stay an unlabelled role="button". Set the name on the element itself.
+      // Without popups the marker does nothing, so it is decoration, not a control.
+      const markerEl = marker.getElement();
+      if (this.markerPopups) {
+        markerEl?.setAttribute('aria-label', `${venue.name} 地圖標記`);
+      } else {
+        markerEl?.setAttribute('aria-hidden', 'true');
+        markerEl?.removeAttribute('role');
+      }
 
       marker.on('click', () => {
         this.openPopupVenueId = venue.id;
