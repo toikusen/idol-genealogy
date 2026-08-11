@@ -87,6 +87,28 @@ describe('VenuePageComponent', () => {
     expect(el.textContent).not.toContain('目前沒有登錄的場次');
   });
 
+  it('previews three days and reveals the rest behind the toggle', async () => {
+    const events = Array.from({ length: 5 }, (_, i) =>
+      event({ id: `e${i}`, start: `2026-08-1${i + 1}T19:00:00+08:00` }));
+    const { fixture, el } = await render(makeData({ events }));
+
+    expect(el.querySelectorAll('.day').length).toBe(3);
+    const toggle = el.querySelector('.more') as HTMLButtonElement;
+    expect(toggle.textContent).toContain('展開全部 5 場');
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(el.querySelectorAll('.day').length).toBe(5);
+    expect(el.querySelector('.more')?.textContent).toContain('收合');
+  });
+
+  it('hides the toggle when every day already fits in the preview', async () => {
+    const { el } = await render(makeData({ events: [event()] }));
+
+    expect(el.querySelector('.more')).toBeNull();
+  });
+
   it('shows the empty state only when the calendar genuinely returned nothing', async () => {
     const { el } = await render(makeData({ events: [], calendarStatus: 'ok' }));
 

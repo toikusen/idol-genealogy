@@ -25,6 +25,8 @@ export interface ScheduleDay {
   shows: { event: VenueCalendarEvent; time: string }[];
 }
 
+const SCHEDULE_PREVIEW_DAYS = 3;
+
 @Component({
   selector: 'app-venue-page',
   standalone: true,
@@ -40,6 +42,7 @@ export class VenuePageComponent implements OnInit {
   loadError = false;
   notFound = false;
   addressCopied = false;
+  showAllShows = false;
 
   venueType: string | null = null;
   cityLabel = '';
@@ -72,6 +75,7 @@ export class VenuePageComponent implements OnInit {
     this.loadError = false;
     this.notFound = false;
     this.addressCopied = false;
+    this.showAllShows = false;
     this.venueType = null;
     this.cityLabel = '';
     this.regionText = '';
@@ -174,6 +178,15 @@ export class VenuePageComponent implements OnInit {
         ],
       },
     ]);
+  }
+
+  /** The rail opens on the next three days; the rest sits behind the toggle. */
+  get visibleScheduleDays(): ScheduleDay[] {
+    return this.showAllShows ? this.scheduleDays : this.scheduleDays.slice(0, SCHEDULE_PREVIEW_DAYS);
+  }
+
+  get hasHiddenDays(): boolean {
+    return this.scheduleDays.length > SCHEDULE_PREVIEW_DAYS;
   }
 
   get venuesForMap(): Venue[] {

@@ -7,6 +7,11 @@ describe('VenueMapComponent', () => {
   let component: VenueMapComponent;
 
   beforeEach(async () => {
+    // The component lazy-loads leaflet; zone.js does not track the module
+    // fetch, so whenStable() would return before the map exists on a cold
+    // cache. Warm it here and the import resolves in a tracked microtask.
+    await import('leaflet');
+
     await TestBed.configureTestingModule({
       imports: [VenueMapComponent],
       providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],

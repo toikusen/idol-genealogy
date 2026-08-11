@@ -1080,6 +1080,14 @@
               >+ 提案新增場地</button>
             </div>
 
+            <!-- Discoverability hint: the venue name is a link to the detail page -->
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(124,108,242,0.07);border:1px solid rgba(124,108,242,0.2);border-radius:10px;padding:11px 14px;margin-bottom:20px;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7c6cf2" stroke-width="1.7" aria-hidden="true" style="flex-shrink:0;">
+                <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+              </svg>
+              <span style="font-size:0.78rem;color:var(--text-purple);line-height:1.5;">點場地名稱可進入詳細頁,查看完整演出行程與地圖。</span>
+            </div>
+
             <!-- Region filter — between map and list -->
             <div style="background:rgba(124,108,242,0.05);border:1px solid rgba(124,108,242,0.15);border-radius:8px;padding:10px 14px;margin-bottom:20px;">
               <div style="font-size:0.65rem;color:rgba(124,108,242,0.6);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;font-weight:600;">
@@ -1156,16 +1164,7 @@
       <!-- Non-interactive container: the name link and the disclosure button are
            siblings. Nesting an <a> inside a <button> (or inside a click-handling
            div) is invalid and breaks keyboard and screen-reader behaviour. -->
-      <article
-        style="
-          background:var(--bg-card);border:1px solid var(--border-subtle);
-          border-radius:10px;margin-bottom:8px;
-          box-shadow:var(--shadow-sm);overflow:hidden;
-          transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;
-        "
-        [style.border-color]="expandedVenueIds.has(venue.id) ? 'rgba(124,108,242,0.55)' : ''"
-        [style.box-shadow]="expandedVenueIds.has(venue.id) ? 'var(--shadow-md)' : 'var(--shadow-sm)'"
-      >
+      <article class="venue-card" [class.venue-card--open]="expandedVenueIds.has(venue.id)">
         <!-- Card row -->
         <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;">
 
@@ -1185,9 +1184,12 @@
           <div style="flex:1;min-width:0;">
             <a
               [routerLink]="['/venue', venue.id]"
-              style="display:block;font-size:0.88rem;font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;padding:12px 0;margin:-12px 0 -10px;"
+              style="display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:0.94rem;font-weight:500;color:var(--text-purple);text-decoration:none;padding:12px 0;margin:-12px 0 -10px;"
             >
-              {{venue.name}}
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{venue.name}}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink:0;opacity:0.7;">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
             </a>
             <div style="font-size:0.7rem;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
               {{venue.address}}
@@ -1200,7 +1202,13 @@
           </div>
 
           <!-- Buttons -->
-          <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+            <a
+              [routerLink]="['/venue', venue.id]"
+              style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;padding:6px 12px;border-radius:20px;background:rgba(124,108,242,0.1);border:1px solid rgba(124,108,242,0.28);color:var(--text-purple);text-decoration:none;white-space:nowrap;"
+              [attr.aria-label]="venue.name + ' 場地詳細頁'"
+            >查看詳情 <span aria-hidden="true">→</span></a>
+            <div style="display:flex;align-items:center;gap:5px;">
             @if (calendarLoaded && (venueEventCounts.get(venue.id) ?? 0) > 0) {
               <button
                 type="button"
@@ -1238,6 +1246,7 @@
                 <path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/>
               </svg>
             </button>
+            </div>
           </div>
         </div>
 

@@ -12,13 +12,14 @@
   }
 }
 
-/* Single-venue pages need a band, not a browsing surface. */
+/* Single-venue pages need a band, not a browsing surface. The host can
+   shrink it further (the venue page uses it as an aside thumbnail). */
 .venue-map-container--compact {
-  height: 220px;
+  height: var(--venue-map-compact-height, 220px);
 }
 
 @media (max-width: 640px) {
   .venue-map-container--compact {
-    height: 200px;
+    height: var(--venue-map-compact-height, 200px);
   }
 }
