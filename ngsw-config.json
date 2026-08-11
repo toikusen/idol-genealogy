@@ -38,7 +38,8 @@
         "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/groups**",
         "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/members**",
         "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/companies**",
-        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/group_events**"
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/group_events**",
+        "https://ziiagdrrytyrmzoeegjk.supabase.co/rest/v1/venues**"
       ],
       "cacheConfig": {
         "strategy": "freshness",
