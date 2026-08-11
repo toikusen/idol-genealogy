@@ -26,6 +26,7 @@ const KNOWLEDGE_ROUTES = [
   '/learn/member-group-company-relationships',
   '/learn/data-source-and-correction',
   '/learn/upcoming-events-and-venues',
+  '/learn/taiwan-underground-idol-info',
 ];
 
 function escapeXml(value) {

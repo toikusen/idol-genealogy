@@ -108,7 +108,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Set page-level SEO
     this.seo.setPage(
       'Idol Maps | 台灣地下偶像資料庫',
-      '台灣地下偶像成員與團體的完整資料庫。查詢成員履歷、團體歷史、場地資訊與近期活動行程。',
+      '台灣地下偶像資訊站，收錄成員與團體的完整資料庫。查詢成員履歷、團體歷史、場地資訊與近期活動行程。',
       siteUrl('/')
     );
     this.seo.setJsonLdGraph([
@@ -137,7 +137,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體、公司關係、演出場地與近期活動行程。',
         foundingDate: '2024',
         areaServed: '台灣',
-        knowsAbout: ['台灣地下偶像', '偶像團體', '偶像成員歷程', '偶像演出場地', '地下偶像活動行程'],
+        knowsAbout: ['台灣地下偶像', '地下偶像資訊', '偶像團體', '偶像成員歷程', '偶像演出場地', '地下偶像活動行程'],
       },
       {
         '@type': 'FAQPage',
