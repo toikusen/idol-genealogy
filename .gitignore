@@ -94,3 +94,6 @@ docs/superpowers/specs/2026-05-13-venues-tab-design.md
 .env
 .env.*
 !.env.example
+
+# One-off view-data backups (contain session tokens) — never commit
+view-backup-*.json
