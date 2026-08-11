@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>/venue/:id 設計預覽 — Idol Maps</title>
+<style>
+@font-face {
+  font-family: 'JF Openhuninn';
+  src: url('public/fonts/jf-openhuninn-2.1.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* ── Tokens: copied from src/styles.css, no new colors invented ── */
+:root {
+  --font-sans: 'JF Openhuninn', ui-sans-serif, system-ui, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --idol-purple: #7c6cf2;
+  --bg-page: #fdf6fb;
+  --bg-surface: rgba(255, 255, 255, 0.85);
+  --bg-card: rgba(255, 255, 255, 0.6);
+  --border-subtle: rgba(232, 121, 160, 0.10);
+  --border-default: rgba(232, 121, 160, 0.18);
+  --border-divider: rgba(200, 160, 200, 0.12);
+  --text-primary: #2d1b2e;
+  --text-heading: #3a2040;
+  --text-secondary: #7a5a7a;
+  --text-faint: rgba(122, 90, 122, 0.50);
+  --text-faint-65: rgba(122, 90, 122, 0.65);
+  --text-label: rgba(122, 90, 122, 0.92);
+  --text-link: #c04070;
+  --mauve-05: rgba(122, 90, 122, 0.05);
+  --mauve-12: rgba(122, 90, 122, 0.12);
+  --event-date-color: #a85848;
+  --section-event-muted: rgba(200, 112, 106, 0.20);
+  --shadow-xs: 0 1px 4px rgba(45, 27, 46, 0.05);
+  --shadow-sm: 0 2px 12px rgba(45, 27, 46, 0.07);
+  --shadow-md: 0 4px 24px rgba(45, 27, 46, 0.10);
+  --purple-tint: rgba(124, 108, 242, 0.08);
+  --purple-line: rgba(124, 108, 242, 0.25);
+}
+[data-theme="dark"] {
+  --bg-page: #160c18;
+  --bg-surface: rgba(30, 15, 32, 0.92);
+  --bg-card: rgba(35, 18, 38, 0.75);
+  --border-subtle: rgba(232, 121, 160, 0.14);
+  --border-default: rgba(232, 121, 160, 0.22);
+  --border-divider: rgba(200, 160, 200, 0.18);
+  --text-primary: #f0e4f2;
+  --text-heading: #e8d4ec;
+  --text-secondary: #c8a0c8;
+  --text-faint: rgba(210, 175, 210, 0.50);
+  --text-faint-65: rgba(210, 175, 210, 0.65);
+  --text-label: rgba(210, 175, 210, 0.92);
+  --text-link: #e879a0;
+  --mauve-05: rgba(210, 175, 210, 0.05);
+  --mauve-12: rgba(210, 175, 210, 0.12);
+  --event-date-color: #e8956e;
+  --shadow-xs: 0 1px 4px rgba(0, 0, 0, 0.40);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.50);
+  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.60);
+  --purple-tint: rgba(124, 108, 242, 0.14);
+  --purple-line: rgba(124, 108, 242, 0.40);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg-page);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  padding: 32px 20px 80px;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid var(--idol-purple); outline-offset: 3px; border-radius: 4px; }
+
+/* ── Preview chrome (not part of the design) ── */
+.pv-bar {
+  max-width: 880px; margin: 0 auto 28px; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; font-size: 0.7rem; color: var(--text-faint);
+}
+.pv-bar strong { font-weight: 500; color: var(--text-secondary); letter-spacing: 0.04em; }
+.pv-toggle {
+  font-family: inherit; font-size: 0.68rem; cursor: pointer;
+  padding: 6px 12px; border-radius: 20px; color: var(--text-secondary);
+  background: var(--bg-card); border: 1px solid var(--border-default);
+}
+.pv-label {
+  max-width: 880px; margin: 56px auto 14px; font-size: 0.63rem; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--text-faint); display: flex; align-items: center; gap: 10px;
+}
+.pv-label::after { content: ""; flex: 1; height: 1px; background: var(--mauve-12); }
+
+/* ── Page shell ── */
+.page { max-width: 880px; margin: 0 auto; }
+.crumbs { font-size: 0.72rem; color: var(--text-label); margin-bottom: 22px; }
+.crumbs a:hover { color: var(--text-link); }
+.crumbs span { margin: 0 6px; }
+
+/* ── Hero ── */
+.eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.eyebrow span {
+  font-size: 0.66rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--text-label); white-space: nowrap;
+}
+.eyebrow::after {
+  content: ""; flex: 1; height: 1px;
+  background: linear-gradient(to right, var(--purple-line), transparent);
+}
+.hero { display: grid; grid-template-columns: 1fr 264px; gap: 28px; align-items: start; }
+h1 {
+  font-size: clamp(1.75rem, 4vw, 2.4rem); font-weight: 400; line-height: 1.2;
+  letter-spacing: 0.01em; color: var(--text-heading); margin-bottom: 10px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+.chip {
+  font-size: 0.68rem; padding: 3px 9px; border-radius: 20px; letter-spacing: 0.04em;
+  background: var(--mauve-05); border: 1px solid var(--mauve-12); color: var(--text-secondary);
+}
+.chip--live { background: var(--purple-tint); border-color: var(--purple-line); color: var(--text-secondary); }
+
+.addr { display: flex; gap: 9px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 14px; }
+.addr svg { flex-shrink: 0; margin-top: 3px; color: var(--idol-purple); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; font-family: inherit;
+  font-size: 0.78rem; min-height: 44px; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+  color: var(--text-secondary); background: var(--bg-card);
+  border: 1px solid var(--border-default); box-shadow: var(--shadow-xs);
+  transition: border-color .2s, color .2s, transform .2s;
+}
+.btn:hover { border-color: var(--purple-line); color: var(--text-primary); transform: translateY(-1px); }
+.btn--primary { background: var(--purple-tint); border-color: var(--purple-line); color: var(--text-primary); }
+.btn--primary svg { color: var(--idol-purple); }
+
+/* ── Signature: next-show card ── */
+.next {
+  background: var(--bg-surface); border: 1px solid var(--border-default);
+  border-radius: 14px; padding: 18px 20px 20px; box-shadow: var(--shadow-md);
+  position: relative; overflow: hidden;
+}
+.next::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 3px;
+  background: linear-gradient(to bottom, var(--event-date-color), transparent);
+}
+.next-label {
+  font-size: 0.68rem; letter-spacing: 0.18em;
+  color: var(--text-label); margin-bottom: 10px;
+}
+.next-date {
+  font-size: 2.1rem; font-weight: 400; line-height: 1; letter-spacing: -0.01em;
+  color: var(--event-date-color); font-variant-numeric: tabular-nums; margin-bottom: 4px;
+}
+.next-date small { font-size: 0.9rem; margin-left: 7px; letter-spacing: 0.06em; }
+.next-time { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 12px; font-variant-numeric: tabular-nums; }
+.next-title { font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); }
+.next-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; min-height: 44px; font-size: 0.76rem; color: var(--text-link); }
+.next-link:hover { text-decoration: underline; }
+
+/* ── Map band ── */
+.map {
+  height: 220px; margin: 32px 0; border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);
+  background:
+    repeating-linear-gradient(0deg, var(--mauve-05) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, var(--mauve-05) 0 1px, transparent 1px 34px),
+    var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; color: var(--text-faint); letter-spacing: 0.1em;
+}
+
+/* ── Signature: schedule rail ── */
+.sec-head {
+  display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px;
+}
+.sec-head h2 { font-size: 1.05rem; font-weight: 400; color: var(--text-heading); letter-spacing: 0.02em; }
+.sec-head em { font-style: normal; font-size: 0.72rem; color: var(--text-label); font-variant-numeric: tabular-nums; }
+.sec-note { font-size: 0.72rem; color: var(--text-label); line-height: 1.7; margin-bottom: 18px; }
+
+.day { display: grid; grid-template-columns: 68px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid var(--border-divider); }
+.day:last-of-type { border-bottom: 1px solid var(--border-divider); }
+.day-mark { text-align: right; padding-top: 2px; }
+.day-num {
+  font-size: 1.5rem; line-height: 1; font-variant-numeric: tabular-nums;
+  color: var(--event-date-color); letter-spacing: -0.02em;
+}
+.day-num i { font-style: normal; font-size: 0.8rem; color: var(--text-label); margin-right: 3px; }
+.day-week { font-size: 0.7rem; color: var(--text-label); margin-top: 5px; letter-spacing: 0.1em; }
+.day--soon .day-num { font-weight: 500; }
+.day--soon .day-week {
+  color: var(--text-primary); background: var(--section-event-muted);
+  border-radius: 20px; padding: 1px 7px; display: inline-block; letter-spacing: 0.06em;
+}
+
+.shows { display: flex; flex-direction: column; gap: 2px; }
+.show {
+  display: flex; align-items: baseline; gap: 14px; padding: 12px; min-height: 44px;
+  border-radius: 9px; transition: background .18s;
+}
+a.show:hover { background: var(--bg-card); }
+.show-time { font-size: 0.78rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; flex-shrink: 0; width: 46px; }
+.show-title { font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); flex: 1; }
+.show-out { flex-shrink: 0; color: var(--text-secondary); opacity: 0; transition: opacity .18s; }
+a.show:hover .show-out { opacity: 1; }
+
+/* ── Empty state ── */
+.empty {
+  border: 1px dashed var(--mauve-12); border-radius: 14px; padding: 30px 26px;
+  text-align: center; background: var(--bg-card);
+}
+.empty p { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.75; max-width: 34em; margin: 0 auto 14px; }
+
+/* ── Nearby venues ── */
+.near-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); gap: 8px; }
+.near {
+  display: flex; gap: 11px; align-items: center; padding: 12px 14px; min-height: 56px; border-radius: 10px;
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-xs); transition: border-color .2s, transform .2s;
+}
+.near:hover { border-color: var(--purple-line); transform: translateY(-1px); }
+.near-pin {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; color: var(--idol-purple);
+  background: var(--purple-tint); display: flex; align-items: center; justify-content: center;
+}
+.near-name { display: block; font-size: 0.8rem; color: var(--text-primary); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.near-meta { display: block; font-size: 0.7rem; color: var(--text-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.near-txt { min-width: 0; }
+
+.foot-note { margin-top: 26px; font-size: 0.7rem; color: var(--text-label); line-height: 1.8; }
+
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; gap: 20px; }
+  .next-date { font-size: 1.8rem; }
+  .day { grid-template-columns: 52px 1fr; gap: 12px; }
+  .day-num { font-size: 1.25rem; }
+  .show { padding: 7px 8px; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="pv-bar">
+  <strong>/venue/:id — 設計預覽</strong>
+  <button class="pv-toggle" onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'">切換深色 / 淺色</button>
+</div>
+
+<main class="page">
+
+  <nav class="crumbs">
+    <a href="#">首頁</a><span>/</span><a href="#">場地</a><span>/</span>杰克音樂 Jack's Studio
+  </nav>
+
+  <div class="eyebrow"><span>北部 · Live House</span></div>
+
+  <div class="hero">
+    <div>
+      <h1>杰克音樂 Jack's Studio</h1>
+      <div class="chips">
+        <span class="chip chip--live">營業中</span>
+        <span class="chip">Live House</span>
+        <span class="chip">台北 · 萬華區</span>
+      </div>
+
+      <p class="addr">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+        10862 臺北市萬華區昆明街 76 號
+      </p>
+
+      <div class="actions">
+        <a class="btn btn--primary" href="#">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 20l-6-3V4l6 3m0 13l6-3m-6 3V7m6 10l6 3V7l-6-3m0 13V4m0 0L9 7"/></svg>
+          開啟地圖
+        </a>
+        <button class="btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          複製地址
+        </button>
+        <!-- 電話按鈕:條件式。49 筆場地目前 phone 全為空，實務上不會出現 -->
+      </div>
+    </div>
+
+    <aside class="next">
+      <p class="next-label">下一場</p>
+      <p class="next-date">08/15<small>週六</small></p>
+      <p class="next-time">19:00–21:00</p>
+      <p class="next-title">偶像小夜曲 vol.42</p>
+      <a class="next-link" href="#">
+        主辦活動頁
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg>
+      </a>
+    </aside>
+  </div>
+
+  <div class="map">地圖（沿用既有 VenueMapComponent，單點模式）</div>
+
+  <section>
+    <div class="sec-head">
+      <h2>近期演出</h2>
+      <em>未來 90 天 · 6 場</em>
+    </div>
+    <p class="sec-note">場次整理自公開行事曆，實際出演者與開演時間以主辦方公告為準。</p>
+
+    <div class="day day--soon">
+      <div class="day-mark">
+        <div class="day-num"><i>08</i>15</div>
+        <div class="day-week">週六</div>
+      </div>
+      <div class="shows">
+        <a class="show" href="#">
+          <span class="show-time">19:00</span>
+          <span class="show-title">偶像小夜曲 vol.42</span>
+          <svg class="show-out" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="day">
+      <div class="day-mark">
+        <div class="day-num"><i>08</i>16</div>
+        <div class="day-week">週日</div>
+      </div>
+      <div class="shows">
+        <a class="show" href="#">
+          <span class="show-time">14:00</span>
+          <span class="show-title">午後定期公演 #18</span>
+          <svg class="show-out" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        </a>
+        <a class="show" href="#">
+          <span class="show-time">18:30</span>
+          <span class="show-title">夏日對バン祭 DAY2</span>
+          <svg class="show-out" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="day">
+      <div class="day-mark">
+        <div class="day-num"><i>08</i>22</div>
+        <div class="day-week">週六</div>
+      </div>
+      <div class="shows">
+        <a class="show" href="#">
+          <span class="show-time">19:00</span>
+          <span class="show-title">生誕祭 — 昆明街之夜</span>
+          <svg class="show-out" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="day">
+      <div class="day-mark">
+        <div class="day-num"><i>09</i>05</div>
+        <div class="day-week">週六</div>
+      </div>
+      <div class="shows">
+        <a class="show" href="#">
+          <span class="show-time">全日</span>
+          <span class="show-title">秋season 開幕 — 出演者陸續公布</span>
+          <svg class="show-out" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="pv-label">近期演出 — 空狀態（49 個場地裡多數會長這樣）</div>
+  <div class="empty">
+    <p>目前沒有登錄的場次。地下偶像的行程多半在演出前 2–4 週才公布，可以先看看同區域的其他場地。</p>
+    <a class="btn" href="#">看北部其他場地</a>
+  </div>
+
+  <div class="pv-label">同區域場地（內部連結）</div>
+  <div class="near-grid">
+    <a class="near" href="#"><span class="near-pin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span class="near-txt"><span class="near-name">狀態音樂</span><span class="near-meta">Live House · 新北板橋</span></span></a>
+    <a class="near" href="#"><span class="near-pin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span class="near-txt"><span class="near-name">月讀館貝洛音樂中心 PEPEROLL</span><span class="near-meta">Live House · 台北中正</span></span></a>
+    <a class="near" href="#"><span class="near-pin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span class="near-txt"><span class="near-name">魔法劇場</span><span class="near-meta">劇場 · 台北萬華</span></span></a>
+    <a class="near" href="#"><span class="near-pin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span class="near-txt"><span class="near-name">海馬207音樂藝文餐坊</span><span class="near-meta">展演空間 · 台北萬華</span></span></a>
+    <a class="near" href="#"><span class="near-pin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span class="near-txt"><span class="near-name">好聲藝集 Sounds Good</span><span class="near-meta">展演空間 · 台北內湖</span></span></a>
+    <a class="near" href="#"><span class="near-pin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span class="near-txt"><span class="near-name">齊人藝術 Qiren Arts Studio</span><span class="near-meta">展演空間 · 台北中山</span></span></a>
+  </div>
+
+  <p class="foot-note">
+    場地資料由社群貢獻者維護，資訊有誤可透過「提議修改」回報。<br>
+    最後更新 2026-08-11
+  </p>
+
+</main>
+</body>
+</html>
