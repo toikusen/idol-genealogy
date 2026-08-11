@@ -113,7 +113,9 @@
         } @else {
           <p class="sec-note">場次整理自公開行事曆,實際出演者與開演時間以主辦方公告為準。</p>
 
-          @if (scheduleDays.length === 0) {
+          @if (scheduleLoading) {
+            <p class="loading-inline" aria-live="polite">讀取場次中…</p>
+          } @else if (scheduleDays.length === 0) {
             <div class="empty">
               <p>目前沒有登錄的場次。地下偶像的行程多半在演出前 2–4 週才公布,可以先看看同區域的其他場地。</p>
               <a class="btn" routerLink="/" [queryParams]="regionQueryParams">看{{ regionText }}其他場地</a>

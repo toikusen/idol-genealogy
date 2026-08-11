@@ -19,7 +19,7 @@ import {
   VenueCalendarEvent,
 } from '../models';
 import { CompanyService } from './company.service';
-import { CalendarStatus, GoogleCalendarService } from './google-calendar.service';
+import { CalendarResult, CalendarStatus, GoogleCalendarService } from './google-calendar.service';
 import { VenueService } from './venue.service';
 import { GroupService } from './group.service';
 import { HistoryService } from './history.service';
@@ -347,6 +347,12 @@ export interface VenuePageData {
   /** Supabase lookup failed. Distinct from `venue: null`, which means it does not exist. */
   error: boolean;
   calendarStatus: CalendarStatus;
+  /**
+   * Set in the browser only: the schedule is still on its way and the page is
+   * expected to render without it. Never serialised — the server awaits the
+   * calendar so prerendered HTML carries the full schedule.
+   */
+  pendingCalendar?: Promise<CalendarResult>;
 }
 
 export const venuePageResolver: ResolveFn<VenuePageData> = async (route) => {
@@ -390,13 +396,33 @@ export const venuePageResolver: ResolveFn<VenuePageData> = async (route) => {
     return store({ id, venue: null, nearbyVenues: [], events: [], error: false, calendarStatus: 'unconfigured' });
   }
 
-  const [nearbyVenues, calendarResult] = await Promise.all([
-    venueService.getNearbyVenues(venue).catch(() => [] as Venue[]),
-    venue.is_active
-      ? calendar.getUpcomingVenueEventsResult(venue)
-      : Promise.resolve({ events: [] as VenueCalendarEvent[], status: 'unconfigured' as CalendarStatus }),
-  ]);
+  // Both start now: awaiting one before creating the other would serialise them.
+  const nearbyPromise = venueService.getNearbyVenues(venue).catch(() => [] as Venue[]);
+  const calendarPromise = venue.is_active
+    ? calendar.getUpcomingVenueEventsResult(venue)
+    : Promise.resolve({ events: [] as VenueCalendarEvent[], status: 'unconfigured' as CalendarStatus });
 
+  const nearbyVenues = await nearbyPromise;
+
+  // A resolver holds the view — and the URL — until it settles, so anything it
+  // awaits is time the tap looks ignored. The venue and its neighbours come
+  // from the list's in-memory cache, but the calendar is a real request that
+  // the list may still have in flight: tapping a card the moment it appears
+  // cost 2.3s of dead screen on a throttled phone against 0.1s once the fetch
+  // had settled. The browser gets the page now and the schedule when it lands.
+  if (isBrowser) {
+    return {
+      id,
+      venue,
+      nearbyVenues,
+      events: [],
+      error: false,
+      calendarStatus: 'ok',
+      pendingCalendar: calendarPromise,
+    };
+  }
+
+  const calendarResult = await calendarPromise;
   return store({
     id,
     venue,

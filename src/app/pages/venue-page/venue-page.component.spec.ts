@@ -87,6 +87,41 @@ describe('VenuePageComponent', () => {
     expect(el.textContent).not.toContain('目前沒有登錄的場次');
   });
 
+  it('renders before the calendar lands, then fills the schedule in', async () => {
+    let land: (r: { events: VenueCalendarEvent[]; status: 'ok' }) => void = () => {};
+    const pendingCalendar = new Promise<{ events: VenueCalendarEvent[]; status: 'ok' }>(r => (land = r));
+    const { fixture, el } = await render(makeData({ events: [], pendingCalendar }));
+
+    // The venue is on screen immediately — the route was not held open.
+    expect(el.querySelector('.cover h1')?.textContent).toContain('杰克音樂');
+    expect(el.textContent).toContain('讀取場次中');
+    expect(el.textContent).not.toContain('目前沒有登錄的場次');
+
+    land({ events: [event()], status: 'ok' });
+    await pendingCalendar;
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('讀取場次中');
+    expect(el.querySelectorAll('.day').length).toBe(1);
+    expect(el.querySelector('.next-date')?.textContent).toContain('08/15');
+  });
+
+  it('drops a calendar result that arrives after navigating to another venue', async () => {
+    let land: (r: { events: VenueCalendarEvent[]; status: 'ok' }) => void = () => {};
+    const pendingCalendar = new Promise<{ events: VenueCalendarEvent[]; status: 'ok' }>(r => (land = r));
+    const { fixture, el } = await render(makeData({ events: [], pendingCalendar }));
+
+    routeData.next({ pageData: makeData({ id: 'v9', venue: { ...venue, id: 'v9', name: '狀態音樂' }, events: [] }) });
+    fixture.detectChanges();
+
+    land({ events: [event({ title: '前一個場地的場次' })], status: 'ok' });
+    await pendingCalendar;
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('前一個場地的場次');
+    expect(el.querySelector('h1')?.textContent).toContain('狀態音樂');
+  });
+
   it('previews three days and reveals the rest behind the toggle', async () => {
     const events = Array.from({ length: 5 }, (_, i) =>
       event({ id: `e${i}`, start: `2026-08-1${i + 1}T19:00:00+08:00` }));

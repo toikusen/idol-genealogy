@@ -43,6 +43,7 @@ export class VenuePageComponent implements OnInit {
   notFound = false;
   addressCopied = false;
   showAllShows = false;
+  scheduleLoading = false;
 
   venueType: string | null = null;
   cityLabel = '';
@@ -76,6 +77,7 @@ export class VenuePageComponent implements OnInit {
     this.notFound = false;
     this.addressCopied = false;
     this.showAllShows = false;
+    this.scheduleLoading = false;
     this.venueType = null;
     this.cityLabel = '';
     this.regionText = '';
@@ -126,6 +128,21 @@ export class VenuePageComponent implements OnInit {
     this.cityLabel = [city, district].filter(Boolean).join(' · ');
 
     this.applySeo(venue, city, district);
+
+    if (data.pendingCalendar) {
+      this.scheduleLoading = true;
+      data.pendingCalendar.then(result => {
+        // The component is reused across /venue/:id routes, so a slow calendar
+        // for the venue you just left must not overwrite the one on screen.
+        if (this.venue?.id !== venue.id) return;
+        this.scheduleLoading = false;
+        this.calendarStatus = result.status;
+        this.scheduleDays = groupByTaipeiDay(result.events);
+        this.eventCount = result.events.length;
+        // The description names the next show, which was unknown a moment ago.
+        this.applySeo(venue, city, district);
+      });
+    }
   }
 
   private applySeo(venue: Venue, city: string | null, district: string | null): void {

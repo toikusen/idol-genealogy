@@ -1,3 +1,4 @@
+import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { venuePageResolver, VenuePageData } from './page-data.resolvers';
@@ -21,9 +22,15 @@ const venue: Venue = {
 
 const route = { paramMap: convertToParamMap({ id: 'v1' }) } as unknown as ActivatedRouteSnapshot;
 
-function setup(venueService: Partial<VenueService>, calendar: Partial<GoogleCalendarService>) {
+function setup(
+  venueService: Partial<VenueService>,
+  calendar: Partial<GoogleCalendarService>,
+  platform: 'browser' | 'server' = 'browser',
+) {
+  TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [
+      { provide: PLATFORM_ID, useValue: platform },
       { provide: VenueService, useValue: { getNearbyVenues: () => Promise.resolve([]), ...venueService } },
       { provide: GoogleCalendarService, useValue: calendar },
     ],
@@ -34,17 +41,31 @@ function setup(venueService: Partial<VenueService>, calendar: Partial<GoogleCale
 }
 
 describe('venuePageResolver', () => {
-  it('returns the venue and events when everything succeeds', async () => {
-    const events = [{ id: 'e1', title: 'Show', start: '2026-08-15T19:00:00+08:00', end: null, location: null, url: null, isAllDay: false }];
+  const events = [{ id: 'e1', title: 'Show', start: '2026-08-15T19:00:00+08:00', end: null, location: null, url: null, isAllDay: false }];
+
+  it('hands the browser the venue now and the schedule later', async () => {
     const data = await setup(
       { getById: () => Promise.resolve(venue), getNearbyVenues: () => Promise.resolve([{ ...venue, id: 'v2' }]) },
       { getUpcomingVenueEventsResult: () => Promise.resolve({ events, status: 'ok' as const }) },
     );
 
+    // The route must not wait on the calendar — that is the tap latency.
     expect(data.venue).toEqual(venue);
-    expect(data.events.length).toBe(1);
     expect(data.nearbyVenues.length).toBe(1);
     expect(data.error).toBeFalse();
+    expect(data.events).toEqual([]);
+    expect(await data.pendingCalendar).toEqual({ events, status: 'ok' });
+  });
+
+  it('gives the server the full schedule, so prerendered HTML carries it', async () => {
+    const data = await setup(
+      { getById: () => Promise.resolve(venue) },
+      { getUpcomingVenueEventsResult: () => Promise.resolve({ events, status: 'ok' as const }) },
+      'server',
+    );
+
+    expect(data.pendingCalendar).toBeUndefined();
+    expect(data.events.length).toBe(1);
     expect(data.calendarStatus).toBe('ok');
   });
 
@@ -77,7 +98,7 @@ describe('venuePageResolver', () => {
 
     expect(data.venue).toEqual(venue);
     expect(data.error).toBeFalse();
-    expect(data.calendarStatus).toBe('error');
+    expect((await data.pendingCalendar)?.status).toBe('error');
   });
 
   it('passes through an unconfigured calendar', async () => {
@@ -86,7 +107,7 @@ describe('venuePageResolver', () => {
       { getUpcomingVenueEventsResult: () => Promise.resolve({ events: [], status: 'unconfigured' as const }) },
     );
 
-    expect(data.calendarStatus).toBe('unconfigured');
+    expect((await data.pendingCalendar)?.status).toBe('unconfigured');
   });
 
   it('does not query the calendar for a closed venue', async () => {
