@@ -1182,8 +1182,12 @@
 
           <!-- Info -->
           <div style="flex:1;min-width:0;">
+            <!-- AdSense auto ads show a full-screen vignette when a visitor
+                 clicks a link, which covers the page and reads as a freeze on a
+                 phone. Internal navigation opts out. -->
             <a
               [routerLink]="['/venue', venue.id]"
+              data-google-vignette="false"
               style="display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:0.94rem;font-weight:500;color:var(--text-purple);text-decoration:none;padding:12px 0;margin:-12px 0 -10px;"
             >
               <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{venue.name}}</span>
@@ -1247,6 +1251,7 @@
             <a
               class="venue-act venue-act--detail"
               [routerLink]="['/venue', venue.id]"
+              data-google-vignette="false"
               [attr.aria-label]="venue.name + ' 場地詳細頁'"
             >查看詳情 <span aria-hidden="true">→</span></a>
           </div>

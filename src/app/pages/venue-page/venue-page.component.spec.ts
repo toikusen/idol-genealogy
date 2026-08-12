@@ -266,6 +266,9 @@ describe('VenuePageComponent', () => {
 
     expect(map.markerPopups).toBeFalse();
     expect(map.compact).toBeTrue();
+    expect(map.fallbackHref).toBe(
+      'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(venue.address),
+    );
   });
 
   it('builds a title and description from the parsed address', async () => {

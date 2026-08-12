@@ -5,15 +5,60 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { Venue, VenueRegionFilter, VenueCalendarEvent } from '../../models';
 
+interface NavigatorFingerprint {
+  userAgent: string;
+  platform: string;
+  maxTouchPoints: number;
+}
+
+/**
+ * Every browser installed on iOS uses WebKit, including an app added to the
+ * Home Screen. Keep the check here (instead of in VenuePageComponent) so every
+ * compact Leaflet map gets the same safe behaviour.
+ */
+export function isIosWebKit(navigatorLike: NavigatorFingerprint): boolean {
+  const isIosDevice = /iPad|iPhone|iPod/i.test(navigatorLike.userAgent)
+    // iPadOS can request a desktop UA and identify itself as a touch Mac.
+    || (navigatorLike.platform === 'MacIntel' && navigatorLike.maxTouchPoints > 1);
+  return isIosDevice && /AppleWebKit/i.test(navigatorLike.userAgent);
+}
+
 @Component({
   selector: 'app-venue-map',
   standalone: true,
   template: `<div
-    class="venue-map-container"
-    [class.venue-map-container--compact]="compact"
-    role="application"
-    [attr.aria-label]="ariaLabel"
-  ></div>`,
+    class="venue-map-frame"
+    [class.venue-map-frame--has-fallback]="compact && fallbackHref"
+  >
+    <div
+      class="venue-map-container"
+      [class.venue-map-container--compact]="compact"
+      role="application"
+      [attr.aria-label]="ariaLabel"
+    ></div>
+
+    @if (compact && fallbackHref) {
+      <a
+        class="venue-map-fallback"
+        [href]="fallbackHref"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-map-fallback
+      >
+        <span class="venue-map-fallback__pin" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </span>
+        <span class="venue-map-fallback__copy">
+          <strong>在地圖中查看位置</strong>
+          <small>{{ venues.length > 0 ? venues[0].address : '' }}</small>
+        </span>
+        <span class="venue-map-fallback__arrow" aria-hidden="true">&#8599;</span>
+      </a>
+    }
+  </div>`,
   styleUrl: './venue-map.component.css',
 })
 export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -29,6 +74,8 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
    */
   @Input() markerPopups = true;
   @Input() ariaLabel = '演出場地地圖';
+  /** Link shown while a compact map loads and as the iOS-safe fallback. */
+  @Input() fallbackHref = '';
 
   @Output() regionChange          = new EventEmitter<VenueRegionFilter>();
   @Output() venuePopupOpened      = new EventEmitter<string>();
@@ -43,9 +90,21 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   async ngAfterViewInit(): Promise<void> {
     if (!this.isBrowser) return;
+    const container = this.el.nativeElement.querySelector('.venue-map-container') as HTMLElement;
+
+    // Leaflet 1.9.4's L.map() can lock iOS WebKit when this compact map is
+    // created during Angular hydration or immediately after a routed map is
+    // torn down. Safari and installed PWAs share that engine. The venue page
+    // already has a precise Maps URL, so prefer the lightweight location card
+    // there; the full browsing map and every non-iOS client remain interactive.
+    if (this.shouldUseStaticFallback()) {
+      container.setAttribute('aria-hidden', 'true');
+      container.removeAttribute('role');
+      return;
+    }
+
     const mod = await import('leaflet');
     const L = (mod as any).default ?? mod;
-    const container = this.el.nativeElement.querySelector('.venue-map-container') as HTMLElement;
     this.map = L.map(container, { zoomControl: true });
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
@@ -53,6 +112,9 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     }).addTo(this.map);
     this.map.setView([25.045, 121.51], 12);
     this.renderMarkers(L);
+    this.el.nativeElement
+      .querySelector('.venue-map-frame')
+      ?.classList.add('venue-map-frame--ready');
   }
 
   async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -65,6 +127,10 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.map?.remove();
+  }
+
+  private shouldUseStaticFallback(): boolean {
+    return this.compact && !!this.fallbackHref && isIosWebKit(window.navigator);
   }
 
   /** Called by HomeComponent via @ViewChild after loadVenueEvents resolves */
