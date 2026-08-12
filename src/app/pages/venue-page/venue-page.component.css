@@ -47,11 +47,6 @@
   border: 1px solid var(--mauve-12);
   color: var(--text-secondary);
 }
-.status--live {
-  background: rgba(124, 108, 242, 0.14);
-  border-color: rgba(124, 108, 242, 0.32);
-  color: var(--text-purple);
-}
 
 .eyebrow {
   font-size: 0.66rem;

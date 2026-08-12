@@ -20,9 +20,8 @@
     </nav>
 
     <header class="cover">
-      @if (v.is_active) {
-        <span class="status status--live">● 營業中</span>
-      } @else {
+      <!-- ponytail: only the exception is worth a badge;營業中 is every venue. -->
+      @if (!v.is_active) {
         <span class="status">已停業</span>
       }
 
