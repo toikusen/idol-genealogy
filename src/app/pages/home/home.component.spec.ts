@@ -320,4 +320,216 @@ describe('HomeComponent', () => {
       discardPeriodicTasks();
     }));
   });
+
+  // ── Events tab: schedule rendering, related-group chips, failure states ──
+
+  describe('events tab schedule', () => {
+    function scheduleEvent(overrides: any = {}) {
+      return {
+        id: 'e1', title: 'Test Show', start: '2026-08-12T19:00:00+08:00', end: null,
+        location: 'MOONDOG', url: 'https://example.com/e1', isAllDay: false,
+        relatedGroups: [], allDayEndDayKey: null, isOngoingAllDay: false,
+        ...overrides,
+      };
+    }
+
+    function scheduleResult(overrides: any = {}) {
+      return {
+        today: { dayKey: '2026-08-12', carryover: [], allDay: [], timed: [], ...(overrides.today ?? {}) },
+        upcoming: overrides.upcoming ?? [],
+        status: overrides.status ?? 'ok',
+      };
+    }
+
+    async function setupEvents(calendarStub: any, groupOverrides = {}) {
+      const { GoogleCalendarService } = await import('../../core/google-calendar.service');
+      await TestBed.configureTestingModule({
+        imports: [HomeComponent],
+        providers: [
+          provideRouter([]),
+          { provide: MemberService, useValue: emptyMemberService() },
+          { provide: GroupService, useValue: { ...emptyGroupService(), ...groupOverrides } },
+          { provide: CompanyService, useValue: emptyCompanyService() },
+          { provide: VenueService, useValue: { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([])) } },
+          { provide: GoogleCalendarService, useValue: calendarStub },
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              snapshot: {
+                data: { pageData: { recentMembers: [], memberCount: 0, groupCount: 0, companyCount: 0, topMembers: [], topGroups: [], upcomingBirthdays: [] } },
+                queryParamMap: { get: () => null },
+              },
+              queryParamMap: of(convertToParamMap({ tab: 'events' })),
+            },
+          },
+          { provide: SeoService, useValue: { setPage: jasmine.createSpy(), setJsonLd: jasmine.createSpy(), setJsonLdGraph: jasmine.createSpy() } },
+        ],
+      }).compileComponents();
+    }
+
+    function calendarStub(results: any[]) {
+      let call = 0;
+      return {
+        getSchedule: jasmine.createSpy('getSchedule').and.callFake(() =>
+          Promise.resolve(results[Math.min(call++, results.length - 1)])),
+        preloadForVenues: jasmine.createSpy().and.returnValue(Promise.resolve(new Map())),
+        getUpcomingVenueEvents: jasmine.createSpy().and.returnValue(Promise.resolve([])),
+        isConfigured: () => true,
+      };
+    }
+
+    it('loads the group catalog when the events tab is opened directly', fakeAsync(async () => {
+      const chips = [{ id: 'g1', name: 'TestGroup', color: '#f00' }];
+      const stub = calendarStub([
+        scheduleResult({ today: { dayKey: '2026-08-12', carryover: [], allDay: [], timed: [scheduleEvent()] } }),
+        scheduleResult({ today: { dayKey: '2026-08-12', carryover: [], allDay: [], timed: [scheduleEvent({ relatedGroups: chips })] } }),
+      ]);
+      const getAll = jasmine.createSpy().and.returnValue(Promise.resolve([group()]));
+      await setupEvents(stub, { getAll });
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      // The events tab must pull the catalog itself — nothing else does it.
+      expect(getAll).toHaveBeenCalled();
+      expect(stub.getSchedule).toHaveBeenCalledTimes(2);
+      const chipEls = fixture.nativeElement.querySelectorAll('.related-group-chip');
+      expect(chipEls.length).toBe(1);
+      expect(chipEls[0].textContent).toContain('TestGroup');
+      discardPeriodicTasks();
+    }));
+
+    it('still renders events when the group catalog fails, with no chips and no error', fakeAsync(async () => {
+      const stub = calendarStub([
+        scheduleResult({ today: { dayKey: '2026-08-12', carryover: [], allDay: [], timed: [scheduleEvent()] } }),
+      ]);
+      await setupEvents(stub, { getAll: jasmine.createSpy().and.returnValue(Promise.reject(new Error('nope'))) });
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('Test Show');
+      expect(text).not.toContain('行程暫時無法載入');
+      expect(fixture.nativeElement.querySelectorAll('.related-group-chip').length).toBe(0);
+      discardPeriodicTasks();
+    }));
+
+    it('shows a retry button on error, and never claims the day is empty', fakeAsync(async () => {
+      const stub = calendarStub([scheduleResult({ status: 'error' })]);
+      await setupEvents(stub);
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('行程暫時無法載入');
+      expect(text).not.toContain('今日暫無活動行程');
+      expect(fixture.nativeElement.querySelector('.schedule-retry')).toBeTruthy();
+      discardPeriodicTasks();
+    }));
+
+    it('offers no retry when the calendar is unconfigured', fakeAsync(async () => {
+      // Retrying without deployed credentials can only fail again.
+      const stub = calendarStub([scheduleResult({ status: 'unconfigured' })]);
+      await setupEvents(stub);
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('行程暫時無法載入');
+      expect(fixture.nativeElement.querySelector('.schedule-retry')).toBeNull();
+      discardPeriodicTasks();
+    }));
+
+    it('renders the today block on a genuinely empty day', fakeAsync(async () => {
+      const stub = calendarStub([scheduleResult()]);
+      await setupEvents(stub);
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('今日暫無活動行程');
+      expect(text).toContain('未來 14 天暫無已知活動');
+      expect(fixture.componentInstance.scheduleLoaded).toBeTrue();
+      discardPeriodicTasks();
+    }));
+
+    it('shows related-group chips on today’s all-day events too', fakeAsync(async () => {
+      const chips = [{ id: 'g1', name: 'TestGroup', color: '#f00' }];
+      const stub = calendarStub([
+        scheduleResult({
+          today: {
+            dayKey: '2026-08-12', carryover: [], timed: [],
+            allDay: [scheduleEvent({ id: 'a1', title: 'Festival', isAllDay: true, start: '2026-08-10', allDayEndDayKey: '2026-08-15', isOngoingAllDay: true, relatedGroups: chips })],
+          },
+        }),
+      ]);
+      await setupEvents(stub);
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('Festival');
+      expect(text).toContain('持續中');
+      expect(text).toContain('全天');
+      expect(fixture.nativeElement.querySelectorAll('.related-group-chip').length).toBe(1);
+      expect(fixture.nativeElement.querySelectorAll('a a').length).toBe(0);
+      discardPeriodicTasks();
+    }));
+
+    it('never nests an anchor inside the event card anchor', fakeAsync(async () => {
+      const chips = [{ id: 'g1', name: 'TestGroup', color: '#f00' }];
+      const stub = calendarStub([
+        scheduleResult({
+          today: { dayKey: '2026-08-12', carryover: [scheduleEvent({ id: 'c1', title: 'Carry' })], allDay: [], timed: [scheduleEvent({ relatedGroups: chips })] },
+          upcoming: [{ dayKey: '2026-08-13', events: [scheduleEvent({ id: 'u1', title: 'Later', relatedGroups: chips })] }],
+        }),
+      ]);
+      await setupEvents(stub);
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const nested = fixture.nativeElement.querySelectorAll('a a');
+      expect(nested.length).toBe(0);
+      discardPeriodicTasks();
+    }));
+
+    it('drops a late schedule response after the component is destroyed', fakeAsync(async () => {
+      let resolve!: (v: unknown) => void;
+      const stub = {
+        getSchedule: jasmine.createSpy().and.returnValue(new Promise(r => { resolve = r; })),
+        preloadForVenues: jasmine.createSpy().and.returnValue(Promise.resolve(new Map())),
+        getUpcomingVenueEvents: jasmine.createSpy().and.returnValue(Promise.resolve([])),
+        isConfigured: () => true,
+      };
+      await setupEvents(stub);
+
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      fixture.destroy();
+      resolve(scheduleResult({ today: { dayKey: '2026-08-12', carryover: [], allDay: [], timed: [scheduleEvent()] } }));
+      tick();
+
+      expect(fixture.componentInstance.schedule).toBeNull();
+      discardPeriodicTasks();
+    }));
+  });
 });

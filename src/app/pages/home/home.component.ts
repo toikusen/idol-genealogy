@@ -7,7 +7,8 @@ import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
-import { GoogleCalendarService } from '../../core/google-calendar.service';
+import { GoogleCalendarService, RelatedGroupRef, ScheduleEvent, ScheduleResult } from '../../core/google-calendar.service';
+import { addDays, taipeiDateParts, taipeiDayKey, taipeiTime } from '../../core/taipei-date.utils';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { Member, Group, Company, MemberRecentHeatEntry, GroupRecentHeatEntry, Venue, VenueCalendarEvent, VenueRegionFilter } from '../../models';
@@ -248,7 +249,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.companySections = this.buildCompanySections();
     }
     if (tab === 'events') {
-      void this.loadTodayEvents();
+      void this.loadSchedule();
     }
     if (tab === 'venues' && !this.venuesLoaded) {
       this.venuesLoading = true;
@@ -617,70 +618,86 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   readonly calendarUrl = 'https://calendar.google.com/calendar/u/0/embed?src=mr7kibfjcm3gu52v6t64lreras@group.calendar.google.com&ctz=Asia/Taipei&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0&bgcolor=%23FDF8FF';
 
-  todayDisplayDate = '';
-  todayEvents: VenueCalendarEvent[] = [];
-  todayEventsLoading = false;
-  private todayTargetDate: Date | null = null;
+  schedule: ScheduleResult | null = null;
+  scheduleLoaded = false;
+  scheduleLoading = false;
+  /** Guards against a slower group-less pass landing after the enriched one. */
+  private scheduleEpoch = 0;
 
-  private async loadTodayEvents(): Promise<void> {
-    if (this.todayEventsLoading || this.todayEvents.length > 0) return;
-    this.todayEventsLoading = true;
+  readonly maxChips = 4;
+
+  private async loadSchedule(): Promise<void> {
+    if (this.scheduleLoading || this.scheduleLoaded) return;
+    this.scheduleLoading = true;
+    const epoch = ++this.scheduleEpoch;
     try {
-      const now = new Date();
-      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      this.todayTargetDate = target;
-      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-      this.todayDisplayDate = `${target.getFullYear()}年${target.getMonth() + 1}月${target.getDate()}日（週${weekdays[target.getDay()]}）`;
-      this.todayEvents = await this.googleCalendarService.getEventsForDate(target);
-    } catch (err) {
-      console.warn('[今日活動] 載入失敗，顯示空狀態', err);
-      this.todayEvents = [];
+      // Render the schedule before the group catalog arrives; chips are an
+      // enhancement and must never gate the events themselves.
+      const base = await this.googleCalendarService.getSchedule([]);
+      if (epoch !== this.scheduleEpoch || this.destroyed) return;
+      this.schedule = base;
+      this.scheduleLoaded = true;
+      if (base.status !== 'ok') return;
+
+      await this.ensureBrowseCatalog().catch(() => undefined);
+      if (epoch !== this.scheduleEpoch || this.destroyed || this.allGroups.length === 0) return;
+
+      const enriched = await this.googleCalendarService.getSchedule(this.allGroups);
+      if (epoch !== this.scheduleEpoch || this.destroyed || enriched.status !== 'ok') return;
+      this.schedule = enriched;
     } finally {
-      this.todayEventsLoading = false;
+      if (epoch === this.scheduleEpoch) this.scheduleLoading = false;
     }
   }
 
-  get todayAllDayEvents(): VenueCalendarEvent[] {
-    return this.todayEvents.filter(e => e.isAllDay);
+  retrySchedule(): void {
+    if (this.scheduleLoading) return;
+    this.scheduleEpoch++;
+    this.schedule = null;
+    this.scheduleLoaded = false;
+    void this.loadSchedule();
   }
 
-  /** 昨夜延續：start 在目標日期之前（昨天開始、今天結束的跨夜活動） */
-  get todayCarryoverEvents(): VenueCalendarEvent[] {
-    return this.todayEvents.filter(e => !e.isAllDay && this.isCarryoverEvent(e));
+  get todayDisplayDate(): string {
+    if (!this.schedule) return '';
+    const { month, day, weekday } = taipeiDateParts(`${this.schedule.today.dayKey}T00:00:00+08:00`);
+    return `${month}/${day}（${weekday}）`;
   }
 
-  /** 主時間軸：今天開始的活動 */
-  get todayTimedEvents(): VenueCalendarEvent[] {
-    return this.todayEvents.filter(e => !e.isAllDay && !this.isCarryoverEvent(e));
+  get todayEventCount(): number {
+    const t = this.schedule?.today;
+    return t ? t.carryover.length + t.allDay.length + t.timed.length : 0;
   }
 
-  /** 活動開始日期早於今日（從昨天延伸進今天的跨夜場） */
-  isCarryoverEvent(event: VenueCalendarEvent): boolean {
-    if (!this.todayTargetDate) return false;
-    const start = new Date(event.start);
-    const t = this.todayTargetDate;
-    return (
-      start.getFullYear() < t.getFullYear() ||
-      (start.getFullYear() === t.getFullYear() && start.getMonth() < t.getMonth()) ||
-      (start.getFullYear() === t.getFullYear() && start.getMonth() === t.getMonth() && start.getDate() < t.getDate())
-    );
+  dayHeading(dayKey: string): string {
+    const { month, day, weekday } = taipeiDateParts(`${dayKey}T00:00:00+08:00`);
+    const prefix = this.schedule && dayKey === addDays(this.schedule.today.dayKey, 1) ? '明日 · ' : '';
+    return `${prefix}${month}/${day}（${weekday}）`;
   }
 
-  /** 今天開始、明天結束的跨夜活動 */
+  /** Start and end fall on different Taipei days. All-day events never qualify. */
   isOvernightEvent(event: VenueCalendarEvent): boolean {
     if (!event.end || event.isAllDay) return false;
-    const start = new Date(event.start);
-    const end = new Date(event.end);
-    return start.getDate() !== end.getDate() ||
-           start.getMonth() !== end.getMonth() ||
-           start.getFullYear() !== end.getFullYear();
+    return taipeiDayKey(event.start) !== taipeiDayKey(event.end);
+  }
+
+  allDayRange(event: ScheduleEvent): string {
+    const from = taipeiDateParts(`${taipeiDayKey(event.start)}T00:00:00+08:00`);
+    if (!event.allDayEndDayKey) return `${from.month}/${from.day}`;
+    const to = taipeiDateParts(`${event.allDayEndDayKey}T00:00:00+08:00`);
+    return `${from.month}/${from.day}–${to.month}/${to.day}`;
   }
 
   formatTodayEventTime(dateStr: string): string {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '';
-    return d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return dateStr ? taipeiTime(dateStr) : '';
+  }
+
+  visibleChips(event: ScheduleEvent): RelatedGroupRef[] {
+    return event.relatedGroups.slice(0, this.maxChips);
+  }
+
+  hiddenChipCount(event: ScheduleEvent): number {
+    return Math.max(0, event.relatedGroups.length - this.maxChips);
   }
 
   get hasResults(): boolean {

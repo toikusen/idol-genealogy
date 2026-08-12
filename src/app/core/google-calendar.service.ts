@@ -3,13 +3,60 @@ import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { Group, Member, Venue, VenueCalendarEvent } from '../models';
 import { SITE_URL } from './public-url.utils';
-import { taipeiStartOfDay } from './taipei-date.utils';
+import { addDays, taipeiDayKey, taipeiStartOfDay } from './taipei-date.utils';
 
 export type CalendarStatus = 'ok' | 'unconfigured' | 'error';
 
 export interface CalendarResult {
   events: VenueCalendarEvent[];
   status: CalendarStatus;
+}
+
+/** Minimal group shape for schedule chips — the full Group never reaches the view. */
+export interface RelatedGroupRef {
+  id: string;
+  name: string;
+  color: string;
+}
+
+/**
+ * Where a group name was found. The home page ranks summary hits above lineup
+ * hits, which a boolean could not express.
+ */
+export type StrictGroupMatch = 'summary' | 'lineup' | null;
+
+export interface ScheduleEvent extends VenueCalendarEvent {
+  /** Summary hits first, then lineup hits; each block sorted by name. */
+  relatedGroups: RelatedGroupRef[];
+  /** Last day an all-day event covers, inclusive. Null for single-day events. */
+  allDayEndDayKey: string | null;
+  /** Multi-day all-day event that started before today. */
+  isOngoingAllDay: boolean;
+}
+
+export interface ScheduleDay {
+  dayKey: string;
+  events: ScheduleEvent[];
+}
+
+export interface ScheduleResult {
+  today: {
+    dayKey: string;
+    carryover: ScheduleEvent[];
+    allDay: ScheduleEvent[];
+    timed: ScheduleEvent[];
+  };
+  /** Only days that actually have events. */
+  upcoming: ScheduleDay[];
+  status: CalendarStatus;
+}
+
+export interface ScheduleOptions {
+  /** `today+1` … `today+upcomingDays`. Today is always separate and uncapped. */
+  upcomingDays?: number;
+  /** Cap on upcoming *events*, not days. */
+  maxUpcoming?: number;
+  now?: Date;
 }
 
 interface GoogleCalendarEventDate {
@@ -115,12 +162,123 @@ export class GoogleCalendarService {
     return promise;
   }
 
-  async getEventsForDate(date: Date): Promise<VenueCalendarEvent[]> {
-    if (!this.isConfigured()) return [];
-    const timeMin = taipeiStartOfDay(date);
-    const timeMax = new Date(timeMin.getTime() + 24 * 60 * 60 * 1000);
-    const events = await this.fetchAllPages(timeMin, timeMax);
-    return events.map(e => this.toVenueEvent(e));
+  /**
+   * Today plus the next `upcomingDays` days, bucketed by Taipei date.
+   *
+   * Reads the same 90-day `fetchUpcomingEvents` cache the venue tab already
+   * fills, so opening the schedule costs no extra request.
+   *
+   * Order matters: the window filter, sort and cap run first, and only the
+   * surviving events are scanned against `groups`. Reversed, the reverse scan
+   * would run over all 90 days instead of the dozen events actually shown.
+   */
+  async getSchedule(groups: Group[], opts: ScheduleOptions = {}): Promise<ScheduleResult> {
+    const { upcomingDays = 14, maxUpcoming = 12, now = new Date() } = opts;
+    const todayKey = taipeiDayKey(now.toISOString());
+    const blank = (status: CalendarStatus): ScheduleResult => ({
+      today: { dayKey: todayKey, carryover: [], allDay: [], timed: [] },
+      upcoming: [],
+      status,
+    });
+
+    if (!this.isConfigured()) return blank('unconfigured');
+
+    let raw: GoogleCalendarEventResource[];
+    try {
+      raw = await this.fetchUpcomingEvents(90);
+    } catch (error) {
+      console.warn('[calendar] schedule unavailable:', error);
+      return blank('error');
+    }
+
+    const windowEndKey = addDays(todayKey, upcomingDays);
+    const carryover: GoogleCalendarEventResource[] = [];
+    const todayAllDay: GoogleCalendarEventResource[] = [];
+    const todayTimed: GoogleCalendarEventResource[] = [];
+    const upcoming: { dayKey: string; isAllDay: boolean; event: GoogleCalendarEventResource }[] = [];
+
+    for (const event of raw) {
+      // All-day events are classified first and never touch Date arithmetic:
+      // a bare `YYYY-MM-DD` parsed as a Date is UTC midnight, which renders as
+      // 08:00 in Taipei and lands on the wrong day near month boundaries.
+      if (this.isAllDayResource(event)) {
+        const startKey = event.start!.date!;
+        const lastKey = addDays(event.end?.date ?? addDays(startKey, 1), -1);
+        if (lastKey < todayKey) continue;
+        if (startKey <= todayKey) { todayAllDay.push(event); continue; }
+        if (startKey <= windowEndKey) upcoming.push({ dayKey: startKey, isAllDay: true, event });
+        continue;
+      }
+
+      const startIso = event.start?.dateTime;
+      if (!startIso) continue;
+      const startKey = taipeiDayKey(startIso);
+
+      if (startKey < todayKey) {
+        const endIso = event.end?.dateTime ?? event.end?.date;
+        if (endIso && new Date(endIso).getTime() > now.getTime()) carryover.push(event);
+        continue;
+      }
+      // Today's finished sets stay. Dropping them would shrink the day's list as
+      // the afternoon wears on, which is not what "today's schedule" means.
+      if (startKey === todayKey) { todayTimed.push(event); continue; }
+      if (startKey <= windowEndKey) upcoming.push({ dayKey: startKey, isAllDay: false, event });
+    }
+
+    const byStart = (a: GoogleCalendarEventResource, b: GoogleCalendarEventResource) =>
+      (a.start?.dateTime ?? '').localeCompare(b.start?.dateTime ?? '');
+    carryover.sort(byStart);
+    todayTimed.sort(byStart);
+    upcoming.sort((a, b) =>
+      a.dayKey.localeCompare(b.dayKey)
+      || Number(b.isAllDay) - Number(a.isAllDay)
+      || byStart(a.event, b.event));
+
+    const capped = upcoming.slice(0, maxUpcoming);
+    const index = this.buildRelatedGroupIndex(
+      [...carryover, ...todayAllDay, ...todayTimed, ...capped.map(u => u.event)],
+      groups,
+    );
+    const toSchedule = (event: GoogleCalendarEventResource) => this.toScheduleEvent(event, todayKey, index);
+
+    const days: ScheduleDay[] = [];
+    for (const { dayKey, event } of capped) {
+      const last = days[days.length - 1];
+      if (last?.dayKey === dayKey) last.events.push(toSchedule(event));
+      else days.push({ dayKey, events: [toSchedule(event)] });
+    }
+
+    return {
+      today: {
+        dayKey: todayKey,
+        carryover: carryover.map(toSchedule),
+        allDay: todayAllDay.map(toSchedule),
+        timed: todayTimed.map(toSchedule),
+      },
+      upcoming: days,
+      status: 'ok',
+    };
+  }
+
+  private isAllDayResource(event: GoogleCalendarEventResource): boolean {
+    return !!event.start?.date && !event.start?.dateTime;
+  }
+
+  private toScheduleEvent(
+    event: GoogleCalendarEventResource,
+    todayKey: string,
+    index: Map<string, RelatedGroupRef[]>,
+  ): ScheduleEvent {
+    const base = this.toVenueEvent(event);
+    let allDayEndDayKey: string | null = null;
+    let isOngoingAllDay = false;
+    if (this.isAllDayResource(event)) {
+      const startKey = event.start!.date!;
+      const lastKey = addDays(event.end?.date ?? addDays(startKey, 1), -1);
+      allDayEndDayKey = lastKey === startKey ? null : lastKey;
+      isOngoingAllDay = startKey < todayKey;
+    }
+    return { ...base, relatedGroups: index.get(event.id) ?? [], allDayEndDayKey, isOngoingAllDay };
   }
 
   getUpcomingMemberEvents(member: Member, daysAhead = 90): Promise<VenueCalendarEvent[]> {
@@ -140,6 +298,126 @@ export class GoogleCalendarService {
 
   private readonly GROUP_ORGANIZER_KEYWORDS = ['presents', '主辦', '主催'];
   private readonly GROUP_PERFORMER_KEYWORDS = ['演出陣容', '演出團體', '演出者', '出演者', '出演', '演出嘉賓', 'artist', 'guest', '嘉賓', 'ゲスト'];
+
+  /**
+   * Ends a lineup block. Everything from here on is pricing, house rules or
+   * credits — a group name in those is not a performer at this show.
+   */
+  private readonly LINEUP_BLOCK_END_KEYWORDS = [
+    '票價', '售票', '購票', '前售', '預售', '當日票', '入場費',
+    'チケット', '前売', '当日', 'ticket', 'price',
+    '注意', '須知', '規則', '禁止', '主辦', '主催', 'presents',
+  ];
+
+  private firstKeywordIndex(text: string, keywords: readonly string[]): number {
+    let best = -1;
+    for (const keyword of keywords) {
+      const at = text.indexOf(keyword);
+      if (at >= 0 && (best < 0 || at < best)) best = at;
+    }
+    return best;
+  }
+
+  /**
+   * The lineup portion of a description, NFKC-lowered and already cut at the
+   * first stop keyword — both across lines and *inside* a line.
+   *
+   * The inside-a-line cut is not redundant: `descriptionPhrases` splits on
+   * `[\n\r。；;、]` only, so `演出陣容：A／票價：支持 B` arrives as one phrase and
+   * a line-level check alone would hand B to the matcher.
+   *
+   * ponytail: only the first lineup block is read. A description with two
+   * separate lineup blocks loses the second — acceptable under "miss rather
+   * than mislabel"; revisit if real calendar entries turn out to have them.
+   */
+  private lineupPhrases(description: string): string[] {
+    if (!description) return [];
+    const phrases = this.descriptionPhrases(description);
+    const collected: string[] = [];
+
+    for (let i = 0; i < phrases.length; i++) {
+      const nfkc = phrases[i].normalize('NFKC').toLowerCase();
+      const keywordAt = this.firstKeywordIndex(nfkc, this.GROUP_PERFORMER_KEYWORDS);
+      if (keywordAt < 0) continue;
+
+      const sameLine = this.stripPerformerKeywords(this.cutAtStopKeyword(nfkc.slice(keywordAt)));
+      if (sameLine) collected.push(sameLine);
+
+      for (let j = i + 1; j < phrases.length; j++) {
+        const next = phrases[j].normalize('NFKC').toLowerCase();
+        const stopAt = this.firstKeywordIndex(next, this.LINEUP_BLOCK_END_KEYWORDS);
+        if (stopAt >= 0) {
+          const head = next.slice(0, stopAt).trim();
+          if (head) collected.push(head);
+          break;
+        }
+        collected.push(next);
+      }
+      break;
+    }
+
+    return collected.filter(Boolean);
+  }
+
+  private cutAtStopKeyword(text: string): string {
+    // Skip index 0 — that is the performer keyword the caller sliced from, and
+    // '当日' (stop) would otherwise clip a phrase opening with '出演'.
+    const stopAt = this.firstKeywordIndex(text.slice(1), this.LINEUP_BLOCK_END_KEYWORDS);
+    return stopAt < 0 ? text : text.slice(0, stopAt + 1);
+  }
+
+  /**
+   * Strict counterpart to `matchesGroup`, for the home schedule.
+   *
+   * `matchesGroup` is tuned for a group's own page, where a miss costs more
+   * than a stray hit. Inverted across every group on the site, its looser
+   * paths (location text, CJK bigram similarity) accumulate false positives on
+   * the most visible surface on the site, so neither is used here.
+   */
+  private matchGroupStrict(
+    summaryNfkc: string,
+    lineupPhrases: string[],
+    group: Group,
+  ): StrictGroupMatch {
+    const names = [group.name, group.name_jp].filter((n): n is string => !!n);
+    if (names.length === 0) return null;
+    if (this.groupNameInPhrase(names, summaryNfkc)) return 'summary';
+    if (lineupPhrases.some(phrase => this.groupNameInPhrase(names, phrase))) return 'lineup';
+    return null;
+  }
+
+  /**
+   * ponytail: O(events × groups) with the description parsed once per event.
+   * At the capped ~13 events × site group count that is well under a frame.
+   * If it ever shows up in a profile, pre-normalise the group names once
+   * instead of per comparison.
+   */
+  private buildRelatedGroupIndex(
+    events: GoogleCalendarEventResource[],
+    groups: Group[],
+  ): Map<string, RelatedGroupRef[]> {
+    const index = new Map<string, RelatedGroupRef[]>();
+    if (groups.length === 0) return index;
+
+    for (const event of events) {
+      if (index.has(event.id)) continue;
+      const summaryNfkc = (event.summary ?? '').normalize('NFKC').toLowerCase();
+      const lineup = this.lineupPhrases(event.description ?? '');
+      const summaryHits: RelatedGroupRef[] = [];
+      const lineupHits: RelatedGroupRef[] = [];
+
+      for (const group of groups) {
+        const match = this.matchGroupStrict(summaryNfkc, lineup, group);
+        if (!match) continue;
+        const ref: RelatedGroupRef = { id: group.id, name: group.name, color: group.color };
+        (match === 'summary' ? summaryHits : lineupHits).push(ref);
+      }
+
+      const byName = (a: RelatedGroupRef, b: RelatedGroupRef) => a.name.localeCompare(b.name, 'zh-Hant');
+      index.set(event.id, [...summaryHits.sort(byName), ...lineupHits.sort(byName)]);
+    }
+    return index;
+  }
 
   private stripNonCjk(s: string): string {
     return s.replace(/[^ぁ-ゖァ-ー一-鿿㐀-䶿a-z0-9]/g, '');

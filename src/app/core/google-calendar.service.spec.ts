@@ -782,3 +782,284 @@ describe('matchesGroup', () => {
   });
 
 });
+
+describe('GoogleCalendarService — getSchedule', () => {
+  let service: GoogleCalendarService;
+
+  // 2026-08-12 15:00 Taipei — an afternoon, so "today's morning shows must
+  // survive" is actually exercised.
+  const NOW = new Date('2026-08-12T15:00:00+08:00');
+
+  function grp(id: string, name: string): Group {
+    return { ...baseGroup, id, name, color: '#abc' };
+  }
+
+  function timed(id: string, start: string, end?: string, extra: Record<string, unknown> = {}) {
+    return {
+      id, summary: `Event ${id}`, status: 'confirmed',
+      start: { dateTime: start },
+      ...(end ? { end: { dateTime: end } } : {}),
+      ...extra,
+    };
+  }
+
+  function allDay(id: string, startDate: string, endDate: string) {
+    return {
+      id, summary: `AllDay ${id}`, status: 'confirmed',
+      start: { date: startDate }, end: { date: endDate },
+    };
+  }
+
+  function withRaw(events: unknown[]): void {
+    spyOn(service as any, 'fetchUpcomingEvents').and.returnValue(Promise.resolve(events));
+  }
+
+  const run = (groups: Group[] = []) => service.getSchedule(groups, { now: NOW });
+
+  beforeEach(() => {
+    clearCalendarRawCache();
+    TestBed.configureTestingModule({ providers: [GoogleCalendarService] });
+    service = TestBed.inject(GoogleCalendarService);
+  });
+
+  describe('bucketing', () => {
+    it('keeps today’s already-finished sets in the today bucket', async () => {
+      withRaw([timed('morning', '2026-08-12T10:00:00+08:00', '2026-08-12T12:00:00+08:00')]);
+      const result = await run();
+      expect(result.today.timed.map(e => e.id)).toEqual(['morning']);
+    });
+
+    it('puts a still-running event that started yesterday in carryover', async () => {
+      withRaw([timed('night', '2026-08-11T22:00:00+08:00', '2026-08-12T23:00:00+08:00')]);
+      const result = await run();
+      expect(result.today.carryover.map(e => e.id)).toEqual(['night']);
+      expect(result.today.timed).toEqual([]);
+    });
+
+    it('keeps a yesterday event ending exactly at midnight tonight', async () => {
+      // end === today 00:00 is still > now only if now is before it; at 15:00 it
+      // is not, so this one is genuinely over and must go.
+      withRaw([timed('edge', '2026-08-11T20:00:00+08:00', '2026-08-12T00:00:00+08:00')]);
+      const result = await run();
+      expect(result.today.carryover).toEqual([]);
+    });
+
+    it('keeps a yesterday event running until exactly the current instant', async () => {
+      withRaw([timed('edge', '2026-08-11T20:00:00+08:00', '2026-08-12T15:00:00+08:00')]);
+      const result = await run();
+      expect(result.today.carryover).toEqual([]);   // end <= now
+    });
+
+    it('keeps a today event that ends exactly at midnight tonight', async () => {
+      withRaw([timed('edge', '2026-08-12T22:00:00+08:00', '2026-08-13T00:00:00+08:00')]);
+      const result = await run();
+      expect(result.today.timed.map(e => e.id)).toEqual(['edge']);
+      expect(result.upcoming).toEqual([]);
+    });
+
+    it('drops a yesterday event that has already ended', async () => {
+      withRaw([timed('done', '2026-08-11T22:00:00+08:00', '2026-08-12T02:00:00+08:00')]);
+      const result = await run();
+      expect(result.today.carryover).toEqual([]);
+      expect(result.today.timed).toEqual([]);
+    });
+
+    it('buckets by Taipei day even when the host clock is UTC', async () => {
+      // 2026-08-14T01:00+08:00 is 2026-08-13T17:00Z — a UTC-based bucket would
+      // file this under the 13th.
+      withRaw([timed('late', '2026-08-14T01:00:00+08:00')]);
+      const result = await run();
+      expect(result.upcoming.map(d => d.dayKey)).toEqual(['2026-08-14']);
+    });
+
+    it('places a future overnight event only on its start day', async () => {
+      withRaw([timed('over', '2026-08-14T22:00:00+08:00', '2026-08-15T03:00:00+08:00')]);
+      const result = await run();
+      expect(result.upcoming.map(d => d.dayKey)).toEqual(['2026-08-14']);
+    });
+
+    it('limits upcoming to today+1 … today+14', async () => {
+      withRaw([
+        timed('in', '2026-08-26T19:00:00+08:00'),   // today + 14
+        timed('out', '2026-08-27T19:00:00+08:00'),  // today + 15
+      ]);
+      const result = await run();
+      expect(result.upcoming.flatMap(d => d.events.map(e => e.id))).toEqual(['in']);
+    });
+
+    it('caps upcoming by event count and emits no empty day buckets', async () => {
+      withRaw([
+        timed('a', '2026-08-13T19:00:00+08:00'),
+        timed('b', '2026-08-13T20:00:00+08:00'),
+        timed('c', '2026-08-14T19:00:00+08:00'),
+      ]);
+      const result = await service.getSchedule([], { now: NOW, maxUpcoming: 2 });
+      expect(result.upcoming.map(d => d.dayKey)).toEqual(['2026-08-13']);
+      expect(result.upcoming[0].events.map(e => e.id)).toEqual(['a', 'b']);
+    });
+  });
+
+  describe('all-day events', () => {
+    it('treats end.date as exclusive when computing the last covered day', async () => {
+      withRaw([allDay('festival', '2026-08-15', '2026-08-18')]);
+      const result = await run();
+      const event = result.upcoming[0].events[0];
+      expect(event.allDayEndDayKey).toBe('2026-08-17');
+    });
+
+    it('reports a single-day all-day event with a null end key', async () => {
+      withRaw([allDay('one', '2026-08-15', '2026-08-16')]);
+      const result = await run();
+      expect(result.upcoming[0].events[0].allDayEndDayKey).toBeNull();
+    });
+
+    it('never renders a bare date through the time formatter', async () => {
+      // A bare YYYY-MM-DD read as a Date is UTC midnight, which prints as 08:00
+      // in Taipei. The start must stay the raw date string.
+      withRaw([allDay('one', '2026-08-15', '2026-08-16')]);
+      const result = await run();
+      expect(result.upcoming[0].events[0].start).toBe('2026-08-15');
+      expect(result.upcoming[0].events[0].isAllDay).toBeTrue();
+    });
+
+    it('shows an ongoing multi-day all-day event in today’s all-day area, not carryover', async () => {
+      withRaw([allDay('ongoing', '2026-08-10', '2026-08-15')]);
+      const result = await run();
+      expect(result.today.allDay.map(e => e.id)).toEqual(['ongoing']);
+      expect(result.today.carryover).toEqual([]);
+      expect(result.today.allDay[0].isOngoingAllDay).toBeTrue();
+    });
+
+    it('drops an all-day event whose last covered day is before today', async () => {
+      withRaw([allDay('past', '2026-08-09', '2026-08-12')]);   // covers 09–11
+      const result = await run();
+      expect(result.today.allDay).toEqual([]);
+      expect(result.upcoming).toEqual([]);
+    });
+
+    it('handles a month boundary', async () => {
+      withRaw([allDay('cross', '2026-08-25', '2026-09-01')]);
+      const result = await run();
+      expect(result.upcoming[0].events[0].allDayEndDayKey).toBe('2026-08-31');
+    });
+
+    it('handles a year boundary', async () => {
+      const nye = new Date('2026-12-28T15:00:00+08:00');
+      const events = [allDay('newyear', '2026-12-30', '2027-01-03')];
+      spyOn(service as any, 'fetchUpcomingEvents').and.returnValue(Promise.resolve(events));
+      const result = await service.getSchedule([], { now: nye });
+      expect(result.upcoming[0].dayKey).toBe('2026-12-30');
+      expect(result.upcoming[0].events[0].allDayEndDayKey).toBe('2027-01-02');
+    });
+  });
+
+  describe('related groups (strict matching)', () => {
+    const alpha = grp('g-alpha', 'AlphaStar');
+    const beta = grp('g-beta', 'BetaMoon');
+
+    it('matches a group named in the summary', async () => {
+      withRaw([timed('e', '2026-08-12T19:00:00+08:00', undefined, { summary: 'AlphaStar 定期公演' })]);
+      const result = await run([alpha, beta]);
+      expect(result.today.timed[0].relatedGroups.map(g => g.id)).toEqual(['g-alpha']);
+    });
+
+    it('matches a group listed under a performer keyword', async () => {
+      withRaw([timed('e', '2026-08-12T19:00:00+08:00', undefined, {
+        summary: 'Idol Night', description: '演出陣容：\nAlphaStar\nBetaMoon',
+      })]);
+      const result = await run([alpha, beta]);
+      expect(result.today.timed[0].relatedGroups.map(g => g.id).sort()).toEqual(['g-alpha', 'g-beta']);
+    });
+
+    it('ranks summary hits above lineup hits', async () => {
+      withRaw([timed('e', '2026-08-12T19:00:00+08:00', undefined, {
+        summary: 'BetaMoon presents', description: '演出陣容：\nAlphaStar\nBetaMoon',
+      })]);
+      const result = await run([alpha, beta]);
+      expect(result.today.timed[0].relatedGroups.map(g => g.id)).toEqual(['g-beta', 'g-alpha']);
+    });
+
+    it('lists a group once when it hits both summary and lineup', async () => {
+      withRaw([timed('e', '2026-08-12T19:00:00+08:00', undefined, {
+        summary: 'AlphaStar 定期公演', description: '演出陣容：\nAlphaStar\nBetaMoon',
+      })]);
+      const result = await run([alpha, beta]);
+      const ids = result.today.timed[0].relatedGroups.map(g => g.id);
+      expect(ids).toEqual(['g-alpha', 'g-beta']);   // alpha once, ranked as a summary hit
+    });
+
+    it('does NOT match a group named only in the ticket block', async () => {
+      withRaw([timed('e', '2026-08-12T19:00:00+08:00', undefined, {
+        summary: 'Idol Night', description: '演出陣容：\nAlphaStar\n票價：\nBetaMoon 應援方案 1500',
+      })]);
+      const result = await run([alpha, beta]);
+      expect(result.today.timed[0].relatedGroups.map(g => g.id)).toEqual(['g-alpha']);
+    });
+
+    it('does NOT match a group named only in the house-rules block', async () => {
+      withRaw([timed('e', '2026-08-12T19:00:00+08:00', undefined, {
+        summary: 'Idol Night', description: '演出陣容：\nAlphaStar\n注意事項：\n禁止拍攝 BetaMoon 過往影片',
+      })]);
+      const result = await run([alpha, beta]);
+      expect(result.today.timed[0].relatedGroups.map(g => g.id)).toEqual(['g-alpha']);
+    });
+
+    it('cuts the lineup at a stop keyword inside a single phrase', async () => {
+      // `/` is not one of descriptionPhrases' separators, so this whole string
+      // arrives as one phrase — a line-level cut alone would let BetaMoon in.
+      withRaw([timed('e', '2026-08-12T19:00:00+08:00', undefined, {
+        summary: 'Idol Night', description: '演出陣容：AlphaStar／票價：支持 BetaMoon',
+      })]);
+      const result = await run([alpha, beta]);
+      expect(result.today.timed[0].relatedGroups.map(g => g.id)).toEqual(['g-alpha']);
+    });
+
+    it('does NOT match a group named only in the location', async () => {
+      withRaw([timed('e', '2026-08-12T19:00:00+08:00', undefined, {
+        summary: 'Idol Night', location: 'AlphaStar Hall',
+      })]);
+      const result = await run([alpha, beta]);
+      expect(result.today.timed[0].relatedGroups).toEqual([]);
+    });
+
+    it('returns no chips when no groups are supplied', async () => {
+      withRaw([timed('e', '2026-08-12T19:00:00+08:00', undefined, { summary: 'AlphaStar 定期公演' })]);
+      const result = await run([]);
+      expect(result.today.timed[0].relatedGroups).toEqual([]);
+    });
+
+    it('only scans events that survived the window and cap', async () => {
+      withRaw([
+        timed('kept', '2026-08-13T19:00:00+08:00', undefined, { summary: 'AlphaStar A' }),
+        timed('dropped', '2026-09-30T19:00:00+08:00', undefined, { summary: 'AlphaStar B' }),
+      ]);
+      const spy = spyOn(service as any, 'lineupPhrases').and.callThrough();
+      await run([alpha]);
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('status', () => {
+    it('reports unconfigured without fetching', async () => {
+      spyOn(service, 'isConfigured').and.returnValue(false);
+      const fetchSpy = spyOn(service as any, 'fetchUpcomingEvents');
+      const result = await run();
+      expect(result.status).toBe('unconfigured');
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('reports error rather than an empty day when the fetch fails', async () => {
+      spyOn(service as any, 'fetchUpcomingEvents').and.returnValue(Promise.reject(new Error('boom')));
+      const result = await run();
+      expect(result.status).toBe('error');
+      expect(result.today.timed).toEqual([]);
+    });
+
+    it('reports ok with empty buckets when there is genuinely nothing', async () => {
+      withRaw([]);
+      const result = await run();
+      expect(result.status).toBe('ok');
+      expect(result.upcoming).toEqual([]);
+    });
+  });
+});

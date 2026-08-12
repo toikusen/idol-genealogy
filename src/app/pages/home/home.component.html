@@ -847,7 +847,7 @@
             ">由OTAKU EVENT整理</span>
           </div>
 
-          <!-- ══ TODAY'S EVENTS ══ -->
+          <!-- ══ TODAY ══ -->
           <div class="today-events-panel">
 
             <!-- Panel header -->
@@ -856,52 +856,36 @@
                 <div class="today-events-label">TODAY · 今日活動</div>
                 <div class="today-events-date">{{ todayDisplayDate }}</div>
               </div>
-              <div class="today-events-count-badge">
-                {{ todayEvents.length }} 個活動
-              </div>
+              @if (scheduleLoaded && schedule?.status === 'ok') {
+                <div class="today-events-count-badge">{{ todayEventCount }} 個活動</div>
+              }
             </div>
 
-            <!-- Loading -->
-            @if (todayEventsLoading) {
+            @if (!scheduleLoaded) {
               <div class="today-empty">
                 <p class="today-empty-text" style="letter-spacing:0.12em;">載入中…</p>
               </div>
-            }
-
-            @if (!todayEventsLoading) {
-
-              <!-- ── 全天活動 ── -->
-              @if (todayAllDayEvents.length > 0) {
-                <div class="allday-section">
-                  <div class="allday-label">全天活動</div>
-                  <div class="allday-list">
-                    @for (event of todayAllDayEvents; track event.id) {
-                      @if (event.url) {
-                        <a class="allday-chip" [href]="event.url" target="_blank" rel="noopener noreferrer">
-                          <div class="allday-chip-bar"></div>
-                          <span class="allday-chip-title">{{ event.title }}</span>
-                          <svg class="allday-chip-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-                        </a>
-                      } @else {
-                        <div class="allday-chip allday-chip--no-link">
-                          <div class="allday-chip-bar"></div>
-                          <span class="allday-chip-title">{{ event.title }}</span>
-                        </div>
-                      }
-                    }
-                  </div>
-                </div>
-              }
+            } @else if (schedule && schedule.status !== 'ok') {
+              <!-- A failed fetch is not an empty day; saying "no events" here
+                   would be a claim the visitor has no way to check. -->
+              <div class="today-empty">
+                <div class="today-empty-icon" aria-hidden="true">!</div>
+                <p class="today-empty-text">行程暫時無法載入</p>
+                @if (schedule.status === 'error') {
+                  <button type="button" class="schedule-retry" (click)="retrySchedule()" [disabled]="scheduleLoading">
+                    重試
+                  </button>
+                }
+              </div>
+            } @else if (schedule) {
 
               <!-- ── 昨夜延續 ── -->
-              @if (todayCarryoverEvents.length > 0) {
+              @if (schedule.today.carryover.length > 0) {
                 <div class="carryover-section">
                   <div class="carryover-label">昨夜延續</div>
                   <div class="carryover-list">
-                    @for (event of todayCarryoverEvents; track event.id) {
-                      <a class="carryover-chip"
-                         [href]="event.url || calendarUrl"
-                         target="_blank" rel="noopener noreferrer">
+                    @for (event of schedule.today.carryover; track event.id) {
+                      <article class="carryover-chip">
                         <div class="carryover-time-col">
                           <span class="carryover-day-prefix">前日</span>
                           <span class="carryover-start-time">{{ formatTodayEventTime(event.start) }}</span>
@@ -912,7 +896,9 @@
                         </div>
                         <div class="carryover-bar"></div>
                         <div class="carryover-info">
-                          <div class="carryover-title">{{ event.title }}</div>
+                          <div class="carryover-title">
+                            <a class="event-title-link" [href]="event.url || calendarUrl" target="_blank" rel="noopener noreferrer">{{ event.title }}</a>
+                          </div>
                           @if (event.location) {
                             <div class="carryover-location">
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -922,63 +908,27 @@
                               {{ event.location }}
                             </div>
                           }
+                          <ng-container *ngTemplateOutlet="relatedGroupChips; context:{ $implicit: event }"></ng-container>
                         </div>
-                      </a>
+                      </article>
                     }
                   </div>
                 </div>
               }
 
-              <!-- ── 時間軸 ── -->
-              @if (todayTimedEvents.length > 0) {
+              <!-- ── 時間軸（全天在前，與 upcoming 同一套卡片） ── -->
+              @if (schedule.today.allDay.length + schedule.today.timed.length > 0) {
                 <div class="today-timeline" role="list">
-                  @for (event of todayTimedEvents; track event.id; let last = $last) {
-                    <div class="timeline-item"
-                         [class.timeline-item--overnight]="isOvernightEvent(event)"
-                         role="listitem">
-
-                      <!-- Time column -->
-                      <div class="timeline-time-col">
-                        <span class="timeline-time-start"
-                              [class.timeline-time-start--overnight]="isOvernightEvent(event)">
-                          {{ formatTodayEventTime(event.start) }}
-                        </span>
-                        <div class="timeline-dot"
-                             [class.timeline-dot--overnight]="isOvernightEvent(event)"></div>
-                        @if (event.end) {
-                          <div class="timeline-end-group">
-                            @if (isOvernightEvent(event)) {
-                              <span class="overnight-next-label">翌日</span>
-                            }
-                            <span class="timeline-time-end"
-                                  [class.timeline-time-end--overnight]="isOvernightEvent(event)">
-                              {{ formatTodayEventTime(event.end) }}
-                            </span>
-                          </div>
-                        }
-                      </div>
-
-                      <!-- Event card -->
-                      @if (event.url) {
-                        <a class="timeline-event-card"
-                           [class.timeline-event-card--overnight]="isOvernightEvent(event)"
-                           [href]="event.url" target="_blank" rel="noopener noreferrer">
-                          <ng-container *ngTemplateOutlet="timedCardContent; context:{ $implicit: event }"></ng-container>
-                        </a>
-                      } @else {
-                        <div class="timeline-event-card timeline-event-card--no-link"
-                             [class.timeline-event-card--overnight]="isOvernightEvent(event)">
-                          <ng-container *ngTemplateOutlet="timedCardContent; context:{ $implicit: event }"></ng-container>
-                        </div>
-                      }
-
-                    </div>
+                  @for (event of schedule.today.allDay; track event.id) {
+                    <ng-container *ngTemplateOutlet="scheduleRow; context:{ $implicit: event }"></ng-container>
+                  }
+                  @for (event of schedule.today.timed; track event.id) {
+                    <ng-container *ngTemplateOutlet="scheduleRow; context:{ $implicit: event }"></ng-container>
                   }
                 </div>
               }
 
-              <!-- 無活動（或載入失敗） -->
-              @if (todayEvents.length === 0) {
+              @if (todayEventCount === 0) {
                 <div class="today-empty">
                   <div class="today-empty-icon" aria-hidden="true">—</div>
                   <p class="today-empty-text">今日暫無活動行程</p>
@@ -989,27 +939,127 @@
 
           </div>
 
-          <!-- Timed event card content template -->
-          <ng-template #timedCardContent let-event>
-            @if (isOvernightEvent(event)) {
-              <span class="overnight-moon-badge" aria-label="跨夜活動">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                </svg>
-                跨夜
-              </span>
-            }
-            <div class="timeline-event-title">{{ event.title }}</div>
-            @if (event.location) {
-              <div class="timeline-event-location">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-                {{ event.location }}
+          <!-- ══ UPCOMING ══ -->
+          @if (scheduleLoaded && schedule?.status === 'ok') {
+            <div class="upcoming-section">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                <span style="
+                  font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase;
+                  color: rgba(200,112,106,0.55); white-space: nowrap;
+                ">UPCOMING · 即將到來</span>
+                <div style="flex:1; height:1px; background: linear-gradient(to right, rgba(200,112,106,0.15), transparent);"></div>
+              </div>
+
+              @if (schedule!.upcoming.length === 0) {
+                <p class="upcoming-empty">未來 14 天暫無已知活動</p>
+              }
+
+              @for (day of schedule!.upcoming; track day.dayKey) {
+                <div class="upcoming-day">
+                  <h3 class="upcoming-day-heading">{{ dayHeading(day.dayKey) }}</h3>
+                  <div class="today-timeline" role="list">
+                    @for (event of day.events; track event.id) {
+                      <ng-container *ngTemplateOutlet="scheduleRow; context:{ $implicit: event }"></ng-container>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Timeline row: time column + card. Used for today and every upcoming day. -->
+          <ng-template #scheduleRow let-event>
+            <div class="timeline-item"
+                 [class.timeline-item--overnight]="isOvernightEvent(event)"
+                 role="listitem">
+
+              <div class="timeline-time-col">
+                @if (event.isAllDay) {
+                  <span class="timeline-time-start">全天</span>
+                  <div class="timeline-dot"></div>
+                } @else {
+                  <span class="timeline-time-start"
+                        [class.timeline-time-start--overnight]="isOvernightEvent(event)">
+                    {{ formatTodayEventTime(event.start) }}
+                  </span>
+                  <div class="timeline-dot"
+                       [class.timeline-dot--overnight]="isOvernightEvent(event)"></div>
+                  @if (event.end) {
+                    <div class="timeline-end-group">
+                      @if (isOvernightEvent(event)) {
+                        <span class="overnight-next-label">翌日</span>
+                      }
+                      <span class="timeline-time-end"
+                            [class.timeline-time-end--overnight]="isOvernightEvent(event)">
+                        {{ formatTodayEventTime(event.end) }}
+                      </span>
+                    </div>
+                  }
+                }
+              </div>
+
+              <!-- An <article>, not an <a>: the group chips inside are links, and
+                   an <a> inside an <a> is invalid and breaks keyboard traversal.
+                   The title link is stretched over the card to keep the whole
+                   card tappable. -->
+              <article class="timeline-event-card"
+                       [class.timeline-event-card--overnight]="isOvernightEvent(event)"
+                       [class.timeline-event-card--no-link]="!event.url">
+                @if (isOvernightEvent(event)) {
+                  <span class="overnight-moon-badge" aria-label="跨夜活動">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                    跨夜
+                  </span>
+                }
+                <div class="timeline-event-title">
+                  @if (event.url) {
+                    <a class="event-title-link" [href]="event.url" target="_blank" rel="noopener noreferrer">{{ event.title }}</a>
+                  } @else {
+                    {{ event.title }}
+                  }
+                </div>
+                @if (event.isAllDay && event.allDayEndDayKey) {
+                  <div class="timeline-event-location">
+                    {{ allDayRange(event) }}@if (event.isOngoingAllDay) {<span> · 持續中</span>}
+                  </div>
+                }
+                @if (event.location) {
+                  <div class="timeline-event-location">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    {{ event.location }}
+                  </div>
+                }
+                <ng-container *ngTemplateOutlet="relatedGroupChips; context:{ $implicit: event }"></ng-container>
+              </article>
+
+            </div>
+          </ng-template>
+
+          <!-- Groups this site happens to have on file for the event. NOT a
+               lineup: the calendar text often omits performers, and the site
+               does not have every group. Labelled so it never reads as one. -->
+          <ng-template #relatedGroupChips let-event>
+            @if (event.relatedGroups.length > 0) {
+              <div class="related-groups">
+                <span class="related-groups-label">相關團體</span>
+                @for (group of visibleChips(event); track group.id) {
+                  <a class="related-group-chip" [routerLink]="['/group', group.id]">
+                    <span class="related-group-dot" [style.background]="group.color"></span>
+                    {{ group.name }}
+                  </a>
+                }
+                @if (hiddenChipCount(event) > 0) {
+                  <span class="related-group-more">+{{ hiddenChipCount(event) }}</span>
+                }
               </div>
             }
           </ng-template>
+
 
           <!-- ══ FULL CALENDAR ══ -->
           <div style="margin-top: 32px;">

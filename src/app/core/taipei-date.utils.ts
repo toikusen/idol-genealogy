@@ -22,6 +22,16 @@ export function taipeiDayKey(iso: string): string {
   return shifted.toISOString().slice(0, 10);
 }
 
+/**
+ * Shifts a `YYYY-MM-DD` day key by `days`, staying in string space.
+ * All-day calendar events carry bare dates; running them through `new Date()`
+ * would read them as UTC midnight and shift the day for anyone east of UTC.
+ */
+export function addDays(dayKey: string, days: number): string {
+  const [y, m, d] = dayKey.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
 export interface TaipeiDateParts {
   /** Zero-padded month, e.g. `08`. */
   month: string;
