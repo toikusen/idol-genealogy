@@ -243,6 +243,7 @@ export interface MemberSong {
   composer: string | null;
   lyricist: string | null;
   arranger: string | null;
+  choreographer: string | null;
   notes: string | null;
   sort_order: number;
   is_deleted: boolean;
@@ -260,6 +261,7 @@ export interface GroupSong {
   composer: string | null;
   lyricist: string | null;
   arranger: string | null;
+  choreographer: string | null;
   notes: string | null;
   sort_order: number;
   is_deleted: boolean;

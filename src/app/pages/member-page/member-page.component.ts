@@ -374,6 +374,7 @@ export class MemberPageComponent implements OnInit {
           composer: this.songFormData.composer || null,
           lyricist: this.songFormData.lyricist || null,
           arranger: this.songFormData.arranger || null,
+          choreographer: this.songFormData.choreographer || null,
           notes: this.songFormData.notes || null,
           sort_order: this.songFormData.sort_order ?? 1,
         });
@@ -389,6 +390,7 @@ export class MemberPageComponent implements OnInit {
           composer: this.songFormData.composer || null,
           lyricist: this.songFormData.lyricist || null,
           arranger: this.songFormData.arranger || null,
+          choreographer: this.songFormData.choreographer || null,
           notes: this.songFormData.notes || null,
           sort_order: this.songFormData.sort_order ?? 1,
         });

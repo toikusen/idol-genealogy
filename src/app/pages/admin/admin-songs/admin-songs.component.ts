@@ -29,6 +29,7 @@ interface AdminSongRow {
   composer: string | null;
   lyricist: string | null;
   arranger: string | null;
+  choreographer: string | null;
   notes: string | null;
   sort_order: number;
   created_at: string;
@@ -44,6 +45,7 @@ interface SongDraft {
   composer: string | null;
   lyricist: string | null;
   arranger: string | null;
+  choreographer: string | null;
   notes: string | null;
   sort_order: number | null;
 }
@@ -205,6 +207,7 @@ export class AdminSongsComponent implements OnInit {
       composer: row.composer,
       lyricist: row.lyricist,
       arranger: row.arranger,
+      choreographer: row.choreographer,
       notes: row.notes,
       sort_order: row.sort_order,
     };
@@ -250,6 +253,7 @@ export class AdminSongsComponent implements OnInit {
       composer: this.clean(this.draft.composer),
       lyricist: this.clean(this.draft.lyricist),
       arranger: this.clean(this.draft.arranger),
+      choreographer: this.clean(this.draft.choreographer),
       notes: this.clean(this.draft.notes),
       sort_order: Number(this.draft.sort_order),
     };
@@ -341,6 +345,7 @@ export class AdminSongsComponent implements OnInit {
         row.composer,
         row.lyricist,
         row.arranger,
+        row.choreographer,
         row.notes,
       ].some(value => (value ?? '').toLowerCase().includes(q));
     });
@@ -440,6 +445,7 @@ export class AdminSongsComponent implements OnInit {
       composer: song.composer,
       lyricist: song.lyricist,
       arranger: song.arranger,
+      choreographer: song.choreographer,
       notes: song.notes,
       sort_order: song.sort_order,
       created_at: song.created_at,
@@ -469,6 +475,7 @@ export class AdminSongsComponent implements OnInit {
       composer: song.composer,
       lyricist: song.lyricist,
       arranger: song.arranger,
+      choreographer: song.choreographer,
       notes: song.notes,
       sort_order: song.sort_order,
       created_at: song.created_at,
@@ -541,6 +548,7 @@ export class AdminSongsComponent implements OnInit {
       composer: null,
       lyricist: null,
       arranger: null,
+      choreographer: null,
       notes: null,
       sort_order: 1,
     };

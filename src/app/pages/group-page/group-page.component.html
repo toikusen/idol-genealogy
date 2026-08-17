@@ -842,7 +842,7 @@
                     <input id="song-title" type="text" [(ngModel)]="songFormData.title" placeholder="歌曲名稱"
                       class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                   </div>
-                  <div class="grid grid-cols-3 gap-3">
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
                       <label for="song-lyricist" class="block text-xs mb-1" style="color:var(--text-faint-65);">作詞</label>
                       <input id="song-lyricist" type="text" [(ngModel)]="songFormData.lyricist" placeholder="作詞者"
@@ -856,6 +856,11 @@
                     <div>
                       <label for="song-arranger" class="block text-xs mb-1" style="color:var(--text-faint-65);">編曲</label>
                       <input id="song-arranger" type="text" [(ngModel)]="songFormData.arranger" placeholder="編曲者"
+                        class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
+                    </div>
+                    <div>
+                      <label for="song-choreographer" class="block text-xs mb-1" style="color:var(--text-faint-65);">編舞</label>
+                      <input id="song-choreographer" type="text" [(ngModel)]="songFormData.choreographer" placeholder="編舞者"
                         class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                     </div>
                   </div>
@@ -977,6 +982,9 @@
                             }
                             @if (song.arranger) {
                               <span class="text-xs" style="color:var(--text-faint-55);">編曲：{{ song.arranger }}</span>
+                            }
+                            @if (song.choreographer) {
+                              <span class="text-xs" style="color:var(--text-faint-55);">編舞：{{ song.choreographer }}</span>
                             }
                             @if (song.release_date) {
                               <span class="text-xs" style="color:var(--text-faint-55);">發行時間：{{ song.release_date.slice(0,10).replaceAll('-','.') }}</span>

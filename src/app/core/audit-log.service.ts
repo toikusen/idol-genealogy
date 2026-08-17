@@ -52,11 +52,11 @@ const EDITABLE_FIELDS: Record<EditableAuditTable, Set<string>> = {
   ]),
   member_songs: new Set([
     'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger',
-    'notes', 'sort_order',
+    'choreographer', 'notes', 'sort_order',
   ]),
   group_songs: new Set([
     'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger',
-    'notes', 'sort_order',
+    'choreographer', 'notes', 'sort_order',
   ]),
   venues: new Set([
     'name', 'address', 'type', 'region', 'google_maps_url', 'phone', 'notes',
