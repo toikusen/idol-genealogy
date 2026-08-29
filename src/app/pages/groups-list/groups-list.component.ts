@@ -9,6 +9,7 @@ import { Group } from '../../models';
 import { siteUrl } from '../../core/public-url.utils';
 import { GroupsListPageData } from '../../core/page-data.resolvers';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
+import { kanaVariants } from '../../core/japanese.utils';
 
 const PAGE_SIZE = 36;
 
@@ -92,9 +93,11 @@ export class GroupsListComponent implements OnInit, OnDestroy {
   get filteredGroups(): Group[] {
     const q = this.searchQuery.trim().toLowerCase();
     if (!q) return this.allGroups;
-    return this.allGroups.filter(g =>
-      g.name.toLowerCase().includes(q) || (g.name_jp ?? '').toLowerCase().includes(q)
-    );
+    const variants = kanaVariants(q);
+    return this.allGroups.filter(g => {
+      const haystack = `${g.name} ${g.name_jp ?? ''}`.toLowerCase();
+      return variants.some(v => haystack.includes(v));
+    });
   }
 
   get totalPages(): number {
