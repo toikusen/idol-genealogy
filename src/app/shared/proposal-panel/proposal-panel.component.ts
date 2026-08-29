@@ -806,6 +806,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
 
   readonly historyStatusOptions = [
     { value: 'active', label: '正常在籍' },
+    { value: 'trainee', label: '研修' },
     { value: 'concurrent', label: '兼任' },
     { value: 'support', label: '支援' },
     { value: 'hiatus', label: '活休' },

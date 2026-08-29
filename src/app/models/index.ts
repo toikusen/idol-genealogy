@@ -71,7 +71,7 @@ export interface History {
   team_id: string | null;
   name_at_time: string | null;
   role: string | null;
-  status: 'active' | 'graduated' | 'transferred' | 'concurrent' | 'support' | 'hiatus' | 'withdrawn' | null;
+  status: 'active' | 'trainee' | 'graduated' | 'transferred' | 'concurrent' | 'support' | 'hiatus' | 'withdrawn' | null;
   joined_at: string;
   left_at: string | null;
   notes: string | null;

@@ -669,7 +669,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
             title: `新增歷程：${memberName} 加入`,
             occurredAt: h.created_at, link: `/group/${groupId}`, isNew: false, relatedGroupId: groupId });
         } else if (h.status !== 'active') {
-          const labelMap: Record<string, string> = { graduated: '畢業', withdrawn: '退出', hiatus: '活休', transferred: '移籍', concurrent: '兼任', support: '支援' };
+          const labelMap: Record<string, string> = { trainee: '研修', graduated: '畢業', withdrawn: '退出', hiatus: '活休', transferred: '移籍', concurrent: '兼任', support: '支援' };
           entries.push({ id: `ghist-${h.id}`, eventType: 'member_change',
             entityId: groupId, entityType: 'group',
             entityName: h.group?.name ?? '', photoUrl: h.group?.photo_url ?? null,
@@ -861,10 +861,10 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       return solo ? '個人活動中' : `更新為${g}活動中`;
     }
     if (solo) {
-      const m: Record<string, string> = { graduated: '結束個人活動', withdrawn: '結束個人活動', hiatus: '個人活休', transferred: '結束個人活動', concurrent: '兼任其他組合', support: '支援其他組合' };
+      const m: Record<string, string> = { trainee: '個人研修中', graduated: '結束個人活動', withdrawn: '結束個人活動', hiatus: '個人活休', transferred: '結束個人活動', concurrent: '兼任其他組合', support: '支援其他組合' };
       return m[status] ?? status;
     }
-    const m: Record<string, string> = { graduated: `從${g}畢業`, withdrawn: `從${g}退出`, hiatus: `在${g}活休`, transferred: `從${g}移籍`, concurrent: `兼任${g}`, support: `支援${g}` };
+    const m: Record<string, string> = { trainee: `在${g}研修`, graduated: `從${g}畢業`, withdrawn: `從${g}退出`, hiatus: `在${g}活休`, transferred: `從${g}移籍`, concurrent: `兼任${g}`, support: `支援${g}` };
     return m[status] ?? status;
   }
 }

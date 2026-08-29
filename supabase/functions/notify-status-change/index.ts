@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const NOTIFIABLE_STATUSES = ['active', 'graduated', 'withdrawn', 'hiatus', 'concurrent', 'support', 'transferred'];
+const NOTIFIABLE_STATUSES = ['active', 'trainee', 'graduated', 'withdrawn', 'hiatus', 'concurrent', 'support', 'transferred'];
 
 function statusLabel(
   status: string,
@@ -20,13 +20,13 @@ function statusLabel(
   }
   if (solo) {
     const m: Record<string, string> = {
-      graduated: '結束個人活動', withdrawn: '結束個人活動', hiatus: '個人活休',
+      trainee: '個人研修中', graduated: '結束個人活動', withdrawn: '結束個人活動', hiatus: '個人活休',
       transferred: '結束個人活動', concurrent: '兼任其他組合', support: '支援其他組合',
     };
     return `${prefix}${m[status] ?? status}`;
   }
   const m: Record<string, string> = {
-    graduated: `從${g}畢業`, withdrawn: `從${g}退出`, hiatus: `在${g}活休`,
+    trainee: `在${g}研修`, graduated: `從${g}畢業`, withdrawn: `從${g}退出`, hiatus: `在${g}活休`,
     transferred: `從${g}移籍`, concurrent: `兼任${g}`, support: `支援${g}`,
   };
   return `${prefix}${m[status] ?? status}`;

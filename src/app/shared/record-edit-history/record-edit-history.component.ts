@@ -109,7 +109,7 @@ export class RecordEditHistoryComponent implements OnInit {
   }
 
   private static readonly HISTORY_STATUS_LABELS: Record<string, string> = {
-    active: '正常在籍', concurrent: '兼任', support: '支援',
+    active: '正常在籍', trainee: '研修', concurrent: '兼任', support: '支援',
     hiatus: '活休', transferred: '移籍', graduated: '畢業', withdrawn: '脫退',
   };
 

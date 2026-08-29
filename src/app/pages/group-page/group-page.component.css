@@ -204,6 +204,11 @@
   color: #047857;
   border: 1px solid rgba(16, 185, 129, 0.26);
 }
+.status-badge--trainee {
+  background: rgba(20, 184, 166, 0.10);
+  color: #0f766e;
+  border: 1px solid rgba(20, 184, 166, 0.24);
+}
 .status-badge--graduated {
   background: rgba(156, 163, 175, 0.10);
   color: #6b7280;
@@ -253,6 +258,11 @@
   color: #34d399;
   background: rgba(52, 211, 153, 0.10);
   border-color: rgba(52, 211, 153, 0.24);
+}
+:host-context([data-theme="dark"]) .status-badge--trainee {
+  color: #5eead4;
+  background: rgba(94, 234, 212, 0.10);
+  border-color: rgba(94, 234, 212, 0.24);
 }
 :host-context([data-theme="dark"]) .status-badge--graduated {
   color: #9ca3af;

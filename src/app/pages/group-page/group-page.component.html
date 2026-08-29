@@ -554,6 +554,7 @@
                           style="align-self: flex-start; margin-top: 1px;"
                         >
                           @if (selectedHistory.status === 'active') { 活動中 }
+                          @if (selectedHistory.status === 'trainee') { 研修 }
                           @if (selectedHistory.status === 'graduated') { 畢業 }
                           @if (selectedHistory.status === 'transferred') { 移籍 }
                           @if (selectedHistory.status === 'concurrent') { 兼任 }

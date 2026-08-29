@@ -249,7 +249,7 @@ export class MemberPageComponent implements OnInit {
       .map(h => {
         const gName = h.group?.name || h.external_group_name || '';
         const from = h.joined_at ? h.joined_at.slice(0, 4) : null;
-        const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' || h.status === 'hiatus' ? '至今' : null);
+        const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' || h.status === 'trainee' || h.status === 'hiatus' ? '至今' : null);
         const range = from ? (to ? `${from}–${to}` : from) : '';
         return range ? `${gName}（${range}）` : gName;
       });
@@ -324,7 +324,7 @@ export class MemberPageComponent implements OnInit {
   }
 
   private buildActiveGroups(histories: History[]): Group[] {
-    const statuses = new Set(['active', 'concurrent', 'support']);
+    const statuses = new Set(['active', 'trainee', 'concurrent', 'support']);
     const seen = new Set<string>();
     return histories
       .filter(h => statuses.has(h.status ?? '') && h.group != null)
