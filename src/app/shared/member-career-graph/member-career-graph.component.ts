@@ -45,7 +45,7 @@ import { buildCareerGraph, CareerNode } from '../graph-utils';
                 <!-- Solo: clickable → member page (unless already on that member's page) -->
                 @if (currentMemberId !== node.memberId) {
                   <button
-                    (click)="navigate('/member/' + node.memberId + '/')"
+                    (click)="navigate('/member/' + node.memberId)"
                     class="border-2 border-dashed text-left transition-all hover:shadow-md hover:-translate-y-0.5 min-w-[110px] max-w-[140px] focus:outline-none"
                     [class.border-pink-400]="node.isCurrent"
                     [class.border-gray-300]="!node.isCurrent"
