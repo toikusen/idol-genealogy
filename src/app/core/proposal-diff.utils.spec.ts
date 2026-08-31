@@ -1,4 +1,4 @@
-import { getDiffFields, getDeleteSummary, getEffectiveProposed, getRelatedSubjectName, isReportProposal } from './proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, getEffectiveProposed, getRelatedSubjectName, isReportProposal, buildSongReportPayload } from './proposal-diff.utils';
 import { Proposal } from '../models';
 
 const baseProposal: Proposal = {
@@ -32,6 +32,36 @@ describe('isReportProposal', () => {
   it('is false for INSERT and DELETE, whose empty payloads are meaningful', () => {
     expect(isReportProposal({ ...baseProposal, operation: 'INSERT', proposed_data: {} })).toBe(false);
     expect(isReportProposal({ ...baseProposal, operation: 'DELETE', proposed_data: {} })).toBe(false);
+  });
+});
+
+describe('buildSongReportPayload', () => {
+  const song = { youtube_url: 'https://youtu.be/old' };
+
+  it('stays a bare report when no link is suggested', () => {
+    const payload = buildSongReportPayload(song, '   ');
+    expect(payload).toEqual({ proposed_data: {}, original_data: null });
+    expect(isReportProposal({ operation: 'UPDATE', proposed_data: payload.proposed_data })).toBe(true);
+  });
+
+  it('stays a bare report when the suggested link matches the current one', () => {
+    expect(buildSongReportPayload(song, 'https://youtu.be/old')).toEqual({ proposed_data: {}, original_data: null });
+  });
+
+  it('becomes a real one-field diff when a new link is suggested', () => {
+    const payload = buildSongReportPayload(song, '  https://youtu.be/new  ');
+    expect(payload).toEqual({
+      proposed_data: { youtube_url: 'https://youtu.be/new' },
+      original_data: { youtube_url: 'https://youtu.be/old' },
+    });
+    expect(isReportProposal({ operation: 'UPDATE', proposed_data: payload.proposed_data })).toBe(false);
+  });
+
+  it('handles a song that has no link yet', () => {
+    expect(buildSongReportPayload({ youtube_url: null }, 'https://youtu.be/new')).toEqual({
+      proposed_data: { youtube_url: 'https://youtu.be/new' },
+      original_data: { youtube_url: null },
+    });
   });
 });
 

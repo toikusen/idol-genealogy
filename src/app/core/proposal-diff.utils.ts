@@ -19,6 +19,23 @@ export function isReportProposal(p: { operation: string; proposed_data?: Record<
   return p.operation === 'UPDATE' && Object.keys(p.proposed_data ?? {}).length === 0;
 }
 
+/** Payload for the song 「回報問題」 flow. A bare report carries no field
+ *  changes — approving one only marks it handled. When the reporter supplies a
+ *  corrected YouTube link it becomes a real UPDATE diff that approving applies. */
+export function buildSongReportPayload(
+  song: { youtube_url?: string | null },
+  suggestedUrl: string,
+): { proposed_data: Record<string, any>; original_data: Record<string, any> | null } {
+  const url = suggestedUrl.trim();
+  if (!url || url === (song.youtube_url ?? '')) {
+    return { proposed_data: {}, original_data: null };
+  }
+  return {
+    proposed_data: { youtube_url: url },
+    original_data: { youtube_url: song.youtube_url ?? null },
+  };
+}
+
 /** One-line description of a DELETE proposal for the public edit-history
  *  summary. Never surfaces raw ids — history/song rows lead with uuid
  *  columns, so falls back to a table-kind label instead. */

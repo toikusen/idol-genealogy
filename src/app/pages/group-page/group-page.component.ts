@@ -13,7 +13,7 @@ import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { Group, GroupVideo, Member, Team, History, Proposal, RelatedGroup } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { ProposalService } from '../../core/proposal.service';
-import { getDiffFields, getDeleteSummary, getRelatedSubjectName, DiffField } from '../../core/proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, getRelatedSubjectName, buildSongReportPayload, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime, localDateMs } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { GroupSongService } from '../../core/group-song.service';
@@ -109,6 +109,7 @@ export class GroupPageComponent implements OnInit {
   songError = '';
   reportingSong: GroupSong | null = null;
   songReportNote = '';
+  songReportUrl = '';
   songReporterName = '';
   songReportSubmitting = false;
   songReportError = '';
@@ -668,6 +669,7 @@ export class GroupPageComponent implements OnInit {
   startReportSong(song: GroupSong) {
     this.reportingSong = song;
     this.songReportNote = '';
+    this.songReportUrl = '';
     this.songReporterName = '';
     this.songReportError = '';
     this.songReportDone = false;
@@ -683,12 +685,13 @@ export class GroupPageComponent implements OnInit {
     this.songReportError = '';
     try {
       const session = await this.supabaseAuth.getSessionOnce();
+      const payload = buildSongReportPayload(this.reportingSong!, this.songReportUrl);
       await this.proposalService.submit({
         table_name: 'group_songs',
         record_id: this.reportingSong!.id,
         operation: 'UPDATE',
-        proposed_data: {},
-        original_data: null,
+        proposed_data: payload.proposed_data,
+        original_data: payload.original_data,
         submitter_id: session?.user?.id ?? null,
         submitter_name: this.songReporterName.trim() || (session?.user?.email ?? '匿名'),
         submitter_email: session?.user?.email ?? null,

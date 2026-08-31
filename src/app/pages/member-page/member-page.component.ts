@@ -12,7 +12,7 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { Member, History, Proposal, MemberSong, Group } from '../../models';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { ProposalService } from '../../core/proposal.service';
-import { getDiffFields, getDeleteSummary, getRelatedSubjectName, DiffField } from '../../core/proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, getRelatedSubjectName, buildSongReportPayload, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { GroupService } from '../../core/group.service';
@@ -86,6 +86,7 @@ export class MemberPageComponent implements OnInit {
   songError = '';
   reportingSong: MemberSong | null = null;
   songReportNote = '';
+  songReportUrl = '';
   songReporterName = '';
   songReportSubmitting = false;
   songReportError = '';
@@ -424,6 +425,7 @@ export class MemberPageComponent implements OnInit {
   startReportSong(song: MemberSong) {
     this.reportingSong = song;
     this.songReportNote = '';
+    this.songReportUrl = '';
     this.songReporterName = '';
     this.songReportError = '';
     this.songReportDone = false;
@@ -437,12 +439,13 @@ export class MemberPageComponent implements OnInit {
     this.songReportError = '';
     try {
       const session = await this.supabaseAuth.getSessionOnce();
+      const payload = buildSongReportPayload(this.reportingSong!, this.songReportUrl);
       await this.proposalService.submit({
         table_name: 'member_songs',
         record_id: this.reportingSong!.id,
         operation: 'UPDATE',
-        proposed_data: {},
-        original_data: null,
+        proposed_data: payload.proposed_data,
+        original_data: payload.original_data,
         submitter_id: session?.user?.id ?? null,
         submitter_name: this.songReporterName.trim() || (session?.user?.email ?? '匿名'),
         submitter_email: session?.user?.email ?? null,

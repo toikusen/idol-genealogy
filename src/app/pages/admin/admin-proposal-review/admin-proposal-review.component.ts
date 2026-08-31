@@ -19,6 +19,8 @@ import { Proposal } from '../../../models';
 })
 export class AdminProposalReviewComponent implements OnInit {
   proposal: Proposal | null = null;
+  /** Live target row, loaded only for report proposals (they carry no field data). */
+  reportTarget: Record<string, any> | null = null;
   memberMap = new Map<string, string>();
   currentMemberNameMap = new Map<string, string>();
   groupMap = new Map<string, string>();
@@ -57,6 +59,12 @@ export class AdminProposalReviewComponent implements OnInit {
           for (const g of groups) {
             this.groupMap.set(g.id, g.name ?? g.name_jp ?? g.id);
           }
+        }
+        if (this.isReport && this.proposal.record_id) {
+          // Best-effort: a deleted target just renders as "not found".
+          this.reportTarget = await this.proposalService
+            .getTargetRecord(this.proposal.table_name, this.proposal.record_id)
+            .catch(() => null);
         }
       }
     } catch (e: any) {
@@ -100,10 +108,19 @@ export class AdminProposalReviewComponent implements OnInit {
 
   /** Key-value pairs from original_data for DELETE proposal display */
   get deleteOriginalEntries(): { key: string; value: any }[] {
-    const src = this.proposal?.original_data ?? {};
+    return this.entriesFrom(this.proposal?.original_data);
+  }
+
+  /** The reported row as it stands now, so the reviewer knows what was reported. */
+  get reportTargetEntries(): { key: string; value: any }[] {
+    return this.entriesFrom(this.reportTarget);
+  }
+
+  private entriesFrom(src: Record<string, any> | null | undefined): { key: string; value: any }[] {
+    const data = src ?? {};
     return this.fields
-      .filter(f => src[f] != null && src[f] !== '')
-      .map(f => ({ key: f, value: src[f] }));
+      .filter(f => data[f] != null && data[f] !== '')
+      .map(f => ({ key: f, value: data[f] }));
   }
 
   fieldLabel(field: string): string {

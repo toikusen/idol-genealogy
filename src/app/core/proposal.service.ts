@@ -79,6 +79,18 @@ export class ProposalService {
     return data ?? null;
   }
 
+  /** Current state of a proposal's target row. Report proposals carry no field
+   *  data, so the review UI needs this to show which record was reported. */
+  async getTargetRecord(tableName: string, recordId: string): Promise<Record<string, any> | null> {
+    const { data, error } = await this.db
+      .from(tableName)
+      .select('*')
+      .eq('id', recordId)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as Record<string, any> | null) ?? null;
+  }
+
   /** Approve a proposal: apply data to target table, update status. Admin only. */
   async approve(proposal: Proposal, reviewedData?: Record<string, any>, note?: string): Promise<void> {
     const dataToApply = reviewedData ?? proposal.proposed_data;

@@ -86,9 +86,23 @@
 
     <!-- Report: free-text only, no fields to review -->
     @if (isReport) {
-      <div class="bg-blue-50 rounded-xl border border-blue-100 p-4 mb-6 text-sm text-blue-800">
-        <p class="font-medium mb-1">問題回報</p>
-        <p>這筆提案沒有欄位變更，只有上方的回報內容。核准不會改動任何資料，僅代表已處理；請自行到後台修正後再核准。</p>
+      <div class="bg-white rounded-xl border border-blue-100 overflow-hidden mb-6">
+        <div class="bg-blue-50 px-4 py-2 border-b border-blue-100">
+          <p class="text-xs font-medium text-blue-700">問題回報 · 被回報的{{ tableLabel(proposal.table_name) }}目前資料</p>
+        </div>
+        <div class="px-4 py-3 space-y-2 text-sm">
+          @if (reportTargetEntries.length) {
+            @for (entry of reportTargetEntries; track entry.key) {
+              <div class="flex gap-3">
+                <span class="text-gray-400 text-xs w-24 flex-shrink-0 pt-0.5">{{ fieldLabel(entry.key) }}</span>
+                <span class="text-gray-700 text-xs break-words">{{ resolveId(entry.key, entry.value) || '—' }}</span>
+              </div>
+            }
+          } @else {
+            <p class="text-xs text-gray-400">找不到這筆資料（可能已被刪除）</p>
+          }
+          <p class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">這筆提案沒有欄位變更，只有上方的回報內容。核准不會改動任何資料，僅代表已處理；請自行到後台修正後再核准。</p>
+        </div>
       </div>
     }
 

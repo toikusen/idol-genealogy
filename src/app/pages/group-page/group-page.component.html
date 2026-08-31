@@ -1023,6 +1023,8 @@
                         }
                         <textarea [(ngModel)]="songReportNote" rows="2" placeholder="例：作詞者名稱有誤，來源：…"
                           class="w-full rounded-lg px-3 py-1.5 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"></textarea>
+                        <input type="url" [(ngModel)]="songReportUrl" placeholder="建議的新 YouTube 連結（選填，填了審核後會直接套用）"
+                          class="w-full rounded-lg px-3 py-1.5 text-xs mt-2 focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                         @if (songReportError) {
                           <p class="text-xs text-red-500 mt-1">{{ songReportError }}</p>
                         }
