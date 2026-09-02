@@ -237,14 +237,6 @@
               >{{ getInitial(m) }}</div>
             }
 
-            <!-- Color dot -->
-            @if (m.color) {
-              <div style="
-                width: 6px; height: 6px; border-radius: 50%;
-                margin-top: -4px; flex-shrink: 0;
-              " [style.background]="safeColor(m.color)"></div>
-            }
-
             <!-- Name -->
             <div style="
               font-size: 0.85rem; font-weight: 500;
