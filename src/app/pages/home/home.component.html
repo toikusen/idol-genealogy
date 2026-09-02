@@ -577,10 +577,23 @@
           }
 
           <!-- Browse all -->
-          <div style="text-align:center;margin-top:28px;">
-            <a routerLink="/members" class="home-browse-pill home-browse-pill--member">瀏覽全部 {{ memberCount }} 位成員
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
-            </a>
+          <div style="text-align:center;margin-top:24px;">
+            <a routerLink="/members" [queryParams]="{ sort: 'recent' }"
+               style="font-size:0.8rem;color:var(--text-secondary);text-decoration:none;">查看更多最近更新 →</a>
+            <div style="margin-top:16px;">
+              <a routerLink="/members" class="home-browse-pill home-browse-pill--member">瀏覽全部 {{ memberCount }} 位成員
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
+              </a>
+            </div>
+            <div style="margin-top:10px;">
+              <a routerLink="/wanted" class="home-browse-pill home-browse-pill--contribute">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                協助補充資料　·　Contribute
+              </a>
+            </div>
           </div>
         </section>
       }
@@ -1463,6 +1476,9 @@
       }
     }
 
+    <!-- ══ Ad banner ══ -->
+    <app-ad-banner adSlot="4061570176"></app-ad-banner>
+
     <!-- ══ SITE INTRO (SEO + context for new visitors) ══ -->
     <section aria-label="關於本站" style="
       margin-top: 80px; padding: 40px 32px;
@@ -1557,26 +1573,8 @@
       </details>
     </section>
 
-    <!-- ══ Ad banner ══ -->
-    <app-ad-banner adSlot="4061570176"></app-ad-banner>
-
     <!-- ══ FOOTER ══ -->
     <footer style="margin-top: 80px; text-align: center;">
-
-      <!-- Contribute CTA -->
-      <div style="margin-bottom: 24px;">
-        <a
-          routerLink="/wanted"
-          class="home-browse-pill home-browse-pill--contribute"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          協助補充資料　·　Contribute
-        </a>
-      </div>
-
       <div style="height: 1px; width: 80px; margin: 0 auto 16px; background: linear-gradient(to right, transparent, rgba(232,121,160,0.25), transparent);"></div>
       <p style="
         font-style: italic; font-size: 0.78rem;

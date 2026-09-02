@@ -23,6 +23,30 @@
   border-color: rgba(200, 80, 80, 0.24);
 }
 
+.sort-toggle {
+  display: flex;
+  gap: 6px;
+  margin: -18px 0 24px;
+}
+
+.sort-toggle__btn {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  color: var(--text-faint-55);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.sort-toggle__btn--active {
+  background: rgba(232, 121, 160, 0.08);
+  border-color: rgba(232, 121, 160, 0.35);
+  color: #c05080;
+}
+
 .group-dropdown-panel {
   position: absolute; top: calc(100% + 4px); left: 0; right: 0;
   background: var(--bg-surface);
@@ -100,6 +124,7 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.40);
 }
 :host-context([data-theme="dark"]) .group-option-item--selected { color: #e879a0 !important; }
+:host-context([data-theme="dark"]) .sort-toggle__btn--active { color: #e879a0; }
 :host-context([data-theme="dark"]) .member-grid-card:hover,
 :host-context([data-theme="dark"]) .member-grid-card:focus-visible {
   background: var(--bg-card-hover);

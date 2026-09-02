@@ -13,6 +13,9 @@ import { MembersListPageData } from '../../core/page-data.resolvers';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 const PAGE_SIZE = 36;
 
+/** Order of the member grid, driven by the ?sort= query param. */
+export type MemberSortMode = 'name' | 'recent';
+
 @Component({
   selector: 'app-members-list',
   standalone: true,
@@ -33,6 +36,8 @@ export class MembersListComponent implements OnInit, OnDestroy {
   selectedGroupId = '';
   /** Raw ?page= value from the URL; use `page` (clamped) for display/slicing */
   currentPage = 1;
+  /** Current ?sort= mode; 'name' is the default and carries no query param. */
+  sortMode: MemberSortMode = 'name';
   private pageSub?: Subscription;
   private pageInitialized = false;
   groupDropdownOpen = false;
@@ -62,6 +67,12 @@ export class MembersListComponent implements OnInit, OnDestroy {
       const page = Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1);
       const changed = page !== this.currentPage;
       this.currentPage = page;
+
+      const sort: MemberSortMode = params.get('sort') === 'recent' ? 'recent' : 'name';
+      const sortChanged = sort !== this.sortMode;
+      this.sortMode = sort;
+      if (sortChanged && this.allMembers.length > 0) this.resortMembers();
+
       if (this.pageInitialized && changed && typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -112,9 +123,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
     groups: Group[],
     links: { member_id: string; group_id: string }[],
   ): void {
-    this.allMembers = [...members].sort((a, b) =>
-      (a.name_roman ?? a.name).localeCompare(b.name_roman ?? b.name, 'zh-TW')
-    );
+    this.allMembers = [...members].sort(this.compareMembers);
     this.allGroups = [...groups].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
     this.groupMemberIds.clear();
     for (const { member_id, group_id } of links) {
@@ -123,6 +132,27 @@ export class MembersListComponent implements OnInit, OnDestroy {
     }
     this.applySchemas();
     this.recomputeFilteredMembers();
+  }
+
+  /** ISO timestamps compare correctly as strings, so 'recent' needs no Date parsing. */
+  private compareMembers = (a: Member, b: Member): number =>
+    this.sortMode === 'recent'
+      ? (b.updated_at ?? '').localeCompare(a.updated_at ?? '')
+      : (a.name_roman ?? a.name).localeCompare(b.name_roman ?? b.name, 'zh-TW');
+
+  private resortMembers(): void {
+    this.allMembers = [...this.allMembers].sort(this.compareMembers);
+    this.recomputeFilteredMembers();
+  }
+
+  /** Navigates to the given sort mode, resetting pagination. */
+  setSort(mode: MemberSortMode): void {
+    if (mode === this.sortMode) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { sort: mode === 'name' ? null : mode, page: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   private async loadGroupLinks(members: Member[], groups: Group[]): Promise<void> {

@@ -161,6 +161,18 @@
       </div>
     </div>
 
+    <!-- Sort -->
+    <div role="group" aria-label="排序方式" class="sort-toggle">
+      <button type="button" (click)="setSort('name')"
+              [class.sort-toggle__btn--active]="sortMode === 'name'"
+              [attr.aria-pressed]="sortMode === 'name'"
+              class="sort-toggle__btn">名稱</button>
+      <button type="button" (click)="setSort('recent')"
+              [class.sort-toggle__btn--active]="sortMode === 'recent'"
+              [attr.aria-pressed]="sortMode === 'recent'"
+              class="sort-toggle__btn">最近更新</button>
+    </div>
+
     <!-- Loading -->
     @if (loading) {
       <div style="display:flex;justify-content:center;padding:80px 0;">

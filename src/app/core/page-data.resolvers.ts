@@ -242,7 +242,7 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
   const companyService = inject(CompanyService);
 
   const [recentMembers, memberCount, groupCount, companyCount, topMembers, topGroups, upcomingBirthdays] = await Promise.all([
-    memberService.getRecent(9).catch(() => [] as Member[]),
+    memberService.getRecent(12).catch(() => [] as Member[]),
     memberService.getCount().catch(() => 0),
     groupService.getPublicCount().catch(() => 0),
     companyService.getPublicCount().catch(() => 0),
