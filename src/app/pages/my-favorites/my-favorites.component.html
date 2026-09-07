@@ -78,6 +78,15 @@
   <!-- Main content area (shared) -->
   <main class="mf-main" role="tabpanel" id="tab-panel-main" aria-label="最愛內容" [attr.aria-labelledby]="'mob-tab-' + activeTab()">
     <div class="mf-content-inner">
+      <!-- Targeted nudge: these users already said what they care about, they just never
+           got asked. Opens the same soft prompt as favouriting does. -->
+      @if (activeTab() !== 'push' && favoriteCount() > 0 && pushOptIn.shouldOffer()) {
+        <button class="mf-push-nudge" (click)="pushOptIn.offer()">
+          <span>你收藏了 {{ favoriteCount() }} 個團體與成員，還沒開啟新活動通知</span>
+          <span class="mf-push-nudge-cta">開啟 →</span>
+        </button>
+      }
+
       @if (activeTab() !== 'push') {
         <app-favorites-feed
           [filter]="activeTab() === 'all' ? undefined : activeTab()"

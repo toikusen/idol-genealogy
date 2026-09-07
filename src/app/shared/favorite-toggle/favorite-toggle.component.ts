@@ -1,5 +1,6 @@
 import { Component, Input, OnDestroy, inject, signal } from '@angular/core';
 import { FavoritesService } from '../../core/favorites.service';
+import { PushOptInService } from '../../core/push-opt-in.service';
 import { FavoriteEntityType } from '../../models';
 
 @Component({
@@ -84,6 +85,7 @@ export class FavoriteToggleComponent implements OnDestroy {
   @Input({ required: true }) entityId!: string;
 
   private favService = inject(FavoritesService);
+  private pushOptIn = inject(PushOptInService);
   readonly loading = signal(false);
   readonly errorMessage = signal('');
   private errorTimer?: ReturnType<typeof setTimeout>;
@@ -97,11 +99,13 @@ export class FavoriteToggleComponent implements OnDestroy {
     this.loading.set(true);
     this.errorMessage.set('');
     const wasFav = this.isFav();
+    let added = false;
     try {
       if (wasFav) {
         await this.favService.remove(this.entityType, this.entityId);
       } else {
         await this.favService.add(this.entityType, this.entityId);
+        added = true;
       }
     } catch {
       // Service already rolls back the optimistic update; just surface feedback.
@@ -109,6 +113,11 @@ export class FavoriteToggleComponent implements OnDestroy {
     } finally {
       this.loading.set(false);
     }
+
+    // Deliberately outside the try: favouriting already succeeded, and a failure in this
+    // add-on must never be reported as "加入最愛失敗". Favouriting is the strongest signal
+    // of "tell me about this" we ever get, so it is the best moment to ask.
+    if (added) this.pushOptIn.offer(this.entityType);
   }
 
   private showError(message: string): void {

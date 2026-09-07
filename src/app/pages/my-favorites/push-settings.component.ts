@@ -228,15 +228,10 @@ export class PushSettingsComponent implements OnInit, OnDestroy {
     }
     await this.pushService.checkSubscription();
 
-    // Auto-prompt on first visit (permission not yet asked, not already subscribed).
-    // A granted-but-unsubscribed device is repaired app-wide by ensureSubscribed().
-    if (
-      this.pushService.isSupported() &&
-      this._permission() === 'default' &&
-      !this.pushService.isSubscribed()
-    ) {
-      await this.subscribe();
-    }
+    // No auto-prompt here. Raising the browser dialog just because someone opened this
+    // page risks a dismissal, which pins permission at 'denied' for good — the explicit
+    // 「開啟通知」button below is the prompt. A granted-but-unsubscribed device is repaired
+    // app-wide by ensureSubscribed().
   }
 
   ngOnDestroy(): void {

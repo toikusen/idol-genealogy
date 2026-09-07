@@ -9,7 +9,10 @@ const SUBSCRIBE_TIMEOUT_MS = 15_000;
 
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService {
-  private swPush = inject(SwPush);
+  // Optional: provideServiceWorker is only registered in the browser, so on the server
+  // there is no SwPush at all. This service is reachable from the root template now, which
+  // means it gets constructed during SSR — a required injection would crash the render.
+  private swPush = inject(SwPush, { optional: true });
   private supabase = inject(SupabaseService);
   private platformId = inject(PLATFORM_ID);
 
@@ -22,7 +25,7 @@ export class PushNotificationService {
     // iOS exposes Notification/PushManager only to a Home Screen web app, so this feature
     // check already enforces "install first" there without sniffing the UA — while not
     // locking Chrome (desktop and Android) out of a plain tab, where push does work.
-    return this.swPush.isEnabled && typeof Notification !== 'undefined' && 'PushManager' in window;
+    return !!this.swPush?.isEnabled && typeof Notification !== 'undefined' && 'PushManager' in window;
   }
 
   get permission(): NotificationPermission | 'default' {
@@ -31,7 +34,7 @@ export class PushNotificationService {
   }
 
   async checkSubscription(): Promise<void> {
-    if (!this.isSupported()) { this.isSubscribed.set(false); return; }
+    if (!this.isSupported() || !this.swPush) { this.isSubscribed.set(false); return; }
     const sub = await firstValueFrom(this.swPush.subscription);
     this.isSubscribed.set(!!sub);
   }
@@ -53,7 +56,7 @@ export class PushNotificationService {
    * between rotation and next open turn out to matter.
    */
   async ensureSubscribed(): Promise<void> {
-    if (!this.isSupported() || this.permission !== 'granted') return;
+    if (!this.isSupported() || !this.swPush || this.permission !== 'granted') return;
     try {
       const existing = await firstValueFrom(this.swPush.subscription);
       const sub = existing ?? await this.swPush.requestSubscription({
@@ -80,7 +83,7 @@ export class PushNotificationService {
   }
 
   async subscribe(): Promise<void> {
-    if (!this.isSupported()) throw new Error('Push not supported');
+    if (!this.isSupported() || !this.swPush) throw new Error('Push not supported');
     const session = await this.supabase.getSessionOnce();
     if (!session) throw new Error('Not logged in');
 
@@ -98,7 +101,7 @@ export class PushNotificationService {
   }
 
   async unsubscribe(): Promise<void> {
-    if (!this.isSupported()) return;
+    if (!this.isSupported() || !this.swPush) return;
     const session = await this.supabase.getSessionOnce();
     if (!session) return;
 

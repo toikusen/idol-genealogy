@@ -28,23 +28,20 @@ function setup(permission: NotificationPermission, subscribed: boolean) {
 }
 
 describe('PushSettingsComponent', () => {
-  it('prompts on first visit when permission has not been asked', async () => {
-    const { pushService, component } = setup('default', false);
-    await component.ngOnInit();
-    expect(pushService.subscribe).toHaveBeenCalled();
-  });
+  // Opening this page must never raise the browser permission dialog on its own: a
+  // dismissal pins permission at 'denied' and no app code can reopen it. The explicit
+  // 「開啟通知」button is the prompt.
+  for (const permission of ['default', 'granted', 'denied'] as NotificationPermission[]) {
+    it(`does not auto-prompt when permission is ${permission}`, async () => {
+      const { pushService, component } = setup(permission, false);
+      await component.ngOnInit();
+      expect(pushService.subscribe).not.toHaveBeenCalled();
+    });
+  }
 
-  it('does not prompt again once permission is granted', async () => {
-    // A granted-but-unsubscribed device is repaired by ensureSubscribed() at app start,
-    // not by this page — prompting here would fire on every visit.
-    const { pushService, component } = setup('granted', false);
+  it('still reports the current subscription state', async () => {
+    const { pushService, component } = setup('granted', true);
     await component.ngOnInit();
-    expect(pushService.subscribe).not.toHaveBeenCalled();
-  });
-
-  it('does not prompt when permission is denied', async () => {
-    const { pushService, component } = setup('denied', false);
-    await component.ngOnInit();
-    expect(pushService.subscribe).not.toHaveBeenCalled();
+    expect(pushService.checkSubscription).toHaveBeenCalled();
   });
 });

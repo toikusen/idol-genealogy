@@ -9,13 +9,14 @@ import type { SupabaseService } from './core/supabase.service';
 import { AnalyticsService } from './core/analytics.service';
 import { CookieBannerComponent } from './shared/cookie-banner/cookie-banner.component';
 import { PwaInstallPromptComponent } from './shared/pwa-install-prompt/pwa-install-prompt.component';
+import { PushOptInPromptComponent } from './shared/push-opt-in-prompt/push-opt-in-prompt.component';
 import { AdBannerComponent } from './shared/ad-banner/ad-banner.component';
 import { ThemeService } from './core/theme.service';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent, AdBannerComponent],
+  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent, PushOptInPromptComponent, AdBannerComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
