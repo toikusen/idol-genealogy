@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, Injector, PLATFORM_ID, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, NavigationEnd, NavigationStart, NavigationCancel, NavigationError } from '@angular/router';
-import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { AsyncPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, fromEvent, map, distinctUntilChanged } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -13,6 +13,11 @@ import { PushOptInPromptComponent } from './shared/push-opt-in-prompt/push-opt-i
 import { AdBannerComponent } from './shared/ad-banner/ad-banner.component';
 import { ThemeService } from './core/theme.service';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
+
+// Long-form prose routes where AdSense ad intent links/chips are welcome.
+// Everywhere else keeps the google-anno-skip class that index.html ships with,
+// so chips can't inject buttons into card grids, tables or data headings.
+export const AD_INTENT_ROUTES = /^\/(guide|learn\/[^/?#]+)(?:[?#]|$)/;
 
 @Component({
   selector: 'app-root',
@@ -37,6 +42,7 @@ export class AppComponent {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly doc = inject(DOCUMENT);
   // loadAuthChrome resolves a dynamic import before touching the injector, so
   // the component can be torn down in between — reading it then throws NG0205.
   private destroyed = false;
@@ -54,7 +60,9 @@ export class AppComponent {
         this.isNavigating.set(true);
       } else if (e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError) {
         if (e instanceof NavigationEnd) {
-          analytics.trackPageView((e as NavigationEnd).urlAfterRedirects);
+          const url = (e as NavigationEnd).urlAfterRedirects;
+          analytics.trackPageView(url);
+          this.doc.body.classList.toggle('google-anno-skip', !AD_INTENT_ROUTES.test(url));
           if (!this.navigationComplete()) this.navigationComplete.set(true);
         }
         this.isNavigating.set(false);
