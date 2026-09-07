@@ -228,7 +228,8 @@ export class PushSettingsComponent implements OnInit, OnDestroy {
     }
     await this.pushService.checkSubscription();
 
-    // Auto-prompt on first visit (permission not yet asked, not already subscribed)
+    // Auto-prompt on first visit (permission not yet asked, not already subscribed).
+    // A granted-but-unsubscribed device is repaired app-wide by ensureSubscribed().
     if (
       this.pushService.isSupported() &&
       this._permission() === 'default' &&

@@ -87,6 +87,10 @@ serve(async (req) => {
   );
 
   if (expiredEndpoints.length) {
+    // Log before deleting: a reaped row is the moment a device goes silent, and without
+    // this line there is no trace of it anywhere — no row history, no error, and the
+    // caller still sees HTTP 200.
+    console.log(`[send-push-notification] reaping ${expiredEndpoints.length} expired endpoint(s): ${expiredEndpoints.join(", ")}`);
     await supabase
       .from("push_subscriptions")
       .delete()

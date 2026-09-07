@@ -159,11 +159,13 @@ export class AppComponent {
       import('./core/supabase.service'),
       import('./core/admin-role.service'),
       import('./core/favorites.service'),
-    ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }]) => {
+      import('./core/push-notification.service'),
+    ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }, { PushNotificationService }]) => {
       if (this.destroyed) return;
       const supabase = this.injector.get(SupabaseService);
       const adminRole = this.injector.get(AdminRoleService);
       const favorites = this.injector.get(FavoritesService);
+      const push = this.injector.get(PushNotificationService);
       this.supabase = supabase;
 
       supabase.authState$.pipe(takeUntilDestroyed(this.destroyRef))
@@ -171,6 +173,9 @@ export class AppComponent {
           this.sessionSubject.next(session);
           if (session) {
             favorites.load(session.user.id).catch(() => {});
+            // Push endpoints expire without warning; repair the stored one on every app
+            // start so a reaped row cannot silence this device forever.
+            void push.ensureSubscribed();
             this.showLoginPill.set(false);
           } else {
             favorites.reset();
@@ -187,6 +192,7 @@ export class AppComponent {
           this.sessionSubject.next(session);
           if (session) {
             favorites.load(session.user.id).catch(() => {});
+            void push.ensureSubscribed();
             this.showLoginPill.set(false);
           } else {
             this.showLoginPill.set(true);

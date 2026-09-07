@@ -17,16 +17,12 @@ export class PushNotificationService {
 
   private get db() { return this.supabase.client; }
 
-  private isPwa(): boolean {
-    return (
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true
-    );
-  }
-
   isSupported(): boolean {
     if (!isPlatformBrowser(this.platformId)) return false;
-    return this.swPush.isEnabled && this.isPwa();
+    // iOS exposes Notification/PushManager only to a Home Screen web app, so this feature
+    // check already enforces "install first" there without sniffing the UA — while not
+    // locking Chrome (desktop and Android) out of a plain tab, where push does work.
+    return this.swPush.isEnabled && typeof Notification !== 'undefined' && 'PushManager' in window;
   }
 
   get permission(): NotificationPermission | 'default' {
@@ -38,6 +34,49 @@ export class PushNotificationService {
     if (!this.isSupported()) { this.isSubscribed.set(false); return; }
     const sub = await firstValueFrom(this.swPush.subscription);
     this.isSubscribed.set(!!sub);
+  }
+
+  /**
+   * Repairs the stored subscription on app start. A push service expires endpoints on its
+   * own schedule (Apple and FCM both do) and send-push-notification reaps the row on
+   * 404/410 — correctly — but nothing used to put a fresh one back, so the device went
+   * permanently silent while the settings page still reported "已開啟". Two cases:
+   * the browser kept a subscription the DB no longer has (re-upsert it), or the browser
+   * dropped it too (re-subscribe, silently, since permission is already granted).
+   *
+   * Never prompts: it bails out unless permission is already 'granted'.
+   *
+   * ponytail: repairs on app open, not the instant the endpoint rotates. Handling
+   * `pushsubscriptionchange` in the worker would close that window, but ngsw does not
+   * expose the event and a custom worker has no Supabase session to write with — it would
+   * need an Edge Function that re-keys a row by its old endpoint. Only worth it if pushes
+   * between rotation and next open turn out to matter.
+   */
+  async ensureSubscribed(): Promise<void> {
+    if (!this.isSupported() || this.permission !== 'granted') return;
+    try {
+      const existing = await firstValueFrom(this.swPush.subscription);
+      const sub = existing ?? await this.swPush.requestSubscription({
+        serverPublicKey: environment.vapidPublicKey,
+      });
+      await this.saveSubscription(sub);
+      this.isSubscribed.set(true);
+    } catch {
+      // ponytail: best-effort; the settings page still offers a manual re-subscribe
+    }
+  }
+
+  private async saveSubscription(sub: PushSubscription): Promise<void> {
+    const session = await this.supabase.getSessionOnce();
+    if (!session) return;
+    const json = sub.toJSON();
+    const { error } = await this.db.from('push_subscriptions').upsert({
+      user_id: session.user.id,
+      endpoint: sub.endpoint,
+      p256dh: json.keys?.['p256dh'] ?? '',
+      auth_key: json.keys?.['auth'] ?? '',
+    }, { onConflict: 'user_id,endpoint' });
+    if (error) throw new Error(error.message);
   }
 
   async subscribe(): Promise<void> {
@@ -54,14 +93,7 @@ export class PushNotificationService {
       timeout,
     ]);
 
-    const json = sub.toJSON();
-    const { error: upsertError } = await this.db.from('push_subscriptions').upsert({
-      user_id: session.user.id,
-      endpoint: sub.endpoint,
-      p256dh: json.keys?.['p256dh'] ?? '',
-      auth_key: json.keys?.['auth'] ?? '',
-    }, { onConflict: 'user_id,endpoint' });
-    if (upsertError) throw new Error(upsertError.message);
+    await this.saveSubscription(sub);
     this.isSubscribed.set(true);
   }
 
