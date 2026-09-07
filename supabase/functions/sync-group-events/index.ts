@@ -30,6 +30,15 @@ interface TimetreeApiResponse {
   public_events: TimetreeApiEvent[];
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DAYS_AHEAD = 90;
+
+/** Start of today in Taiwan time (UTC+8), as epoch ms. */
+function taiwanTodayStart(): number {
+  const utcOffsetMs = 8 * 60 * 60 * 1000;
+  return Math.floor((Date.now() + utcOffsetMs) / DAY_MS) * DAY_MS - utcOffsetMs;
+}
+
 function contentHash(event: CalendarEvent): string {
   const str = `${event.title}|${event.starts_at}|${event.location ?? ''}`;
   let hash = 0;
@@ -63,16 +72,14 @@ async function resolveAlias(timetreeUrl: string): Promise<string | null> {
   return null;
 }
 
-async function fetchTimetreeEvents(timetreeUrl: string, daysAhead = 90): Promise<CalendarEvent[]> {
+async function fetchTimetreeEvents(timetreeUrl: string, daysAhead = DAYS_AHEAD): Promise<CalendarEvent[]> {
   const alias = await resolveAlias(timetreeUrl);
   if (!alias) {
     console.error(`[timetree] cannot extract alias from: ${timetreeUrl}`);
     return [];
   }
 
-  const DAY_MS = 24 * 60 * 60 * 1000;
-  const utcOffsetMs = 8 * 60 * 60 * 1000;
-  const todayStart = Math.floor((Date.now() + utcOffsetMs) / DAY_MS) * DAY_MS - utcOffsetMs;
+  const todayStart = taiwanTodayStart();
   const from = todayStart;
   const to = todayStart + daysAhead * DAY_MS;
 
@@ -159,7 +166,15 @@ serve(async (req) => {
 
   let totalNew = 0;
   const now = new Date().toISOString();
-  const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  const threeMonthsAgo = new Date(Date.now() - DAYS_AHEAD * DAY_MS).toISOString();
+
+  // The fetch window is [today, today + 90d] in Taiwan time, so its far edge rolls forward
+  // every Taipei midnight and events sitting just past it show up for the first time. Those
+  // are new to us but not new to the calendar, and pushing them produced a nightly 00:00
+  // burst of "活動預定 / 12月5日" placeholders. Adopt anything past the horizon the previous
+  // run already covered as already-notified. A genuine addition that lands exactly on the
+  // outermost day is silently adopted too — rare, and far cheaper than the nightly noise.
+  const rollHorizon = new Date(taiwanTodayStart() + (DAYS_AHEAD - 1) * DAY_MS).toISOString();
 
   // Fetch all groups in parallel, then upsert per group
   await Promise.all((groups ?? []).map(async (group) => {
@@ -183,6 +198,9 @@ serve(async (req) => {
       url: event.url ?? null,
       content_hash: contentHash(event),
       last_seen_at: now,
+      // Only ever applies to freshly inserted rows: the upsert below ignores duplicates,
+      // so an existing row's notified_at is never touched by this.
+      notified_at: event.starts_at > rollHorizon ? now : null,
     }));
 
     const { error } = await supabase
