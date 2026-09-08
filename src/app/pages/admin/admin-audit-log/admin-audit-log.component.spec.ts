@@ -262,3 +262,33 @@ describe('AdminAuditLogComponent — autocomplete', () => {
     expect(auditLogSpy.getAll).toHaveBeenCalled();
   });
 });
+
+describe('AdminAuditLogComponent — getOperatorName', () => {
+  let component: AdminAuditLogComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AdminAuditLogComponent],
+      providers: [
+        { provide: AuditLogService, useValue: jasmine.createSpyObj('AuditLogService', { getAll: Promise.resolve({ data: [], hasMore: false }) }) },
+        { provide: AdminRoleService, useValue: jasmine.createSpyObj('AdminRoleService', { getCurrentRole: Promise.resolve(null), getAll: Promise.resolve([]) }) },
+        { provide: MemberService, useValue: jasmine.createSpyObj('MemberService', { getAll: Promise.resolve([]), invalidateCache: undefined }) },
+        { provide: GroupService, useValue: jasmine.createSpyObj('GroupService', { getAll: Promise.resolve([]), getTeamsByGroup: Promise.resolve([]), invalidateCache: undefined }) },
+        { provide: CompanyService, useValue: jasmine.createSpyObj('CompanyService', { getAll: Promise.resolve([]), invalidateCache: undefined }) },
+      ],
+    }).compileComponents();
+    component = TestBed.createComponent(AdminAuditLogComponent).componentInstance;
+  });
+
+  it('labels rows stamped by the auto-graduate cron job as 系統自動', () => {
+    expect(component.getOperatorName(makeLog({ user_email: 'system@auto' }))).toBe('系統自動');
+  });
+
+  it('still shows — for rows with no operator', () => {
+    expect(component.getOperatorName(makeLog({ user_email: null }))).toBe('—');
+  });
+
+  it('falls back to the raw email when no display name is known', () => {
+    expect(component.getOperatorName(makeLog({ user_email: 'a@b.com' }))).toBe('a@b.com');
+  });
+});

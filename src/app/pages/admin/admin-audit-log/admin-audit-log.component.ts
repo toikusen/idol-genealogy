@@ -11,6 +11,9 @@ import { AuditLog, Company, Group, Member, Team } from '../../../models';
 import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 import { SupabaseImgPipe } from '../../../shared/supabase-img.pipe';
 
+/** Identity stamped on audit rows written by pg_cron jobs, not a real user. */
+const SYSTEM_ACTOR_EMAIL = 'system@auto';
+
 export interface AutocompleteItem {
   type: 'member' | 'group';
   id: string;
@@ -612,6 +615,8 @@ export class AdminAuditLogComponent implements OnInit {
   }
 
   getOperatorName(log: AuditLog): string {
+    // Stamped by auto_graduate_expired_history() (migration 104).
+    if (log.user_email === SYSTEM_ACTOR_EMAIL) return '系統自動';
     if (!log.user_email) return '—';
     return this.userNameMap.get(log.user_email) ?? log.user_email;
   }
