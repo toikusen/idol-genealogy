@@ -4,8 +4,6 @@ import { FavoritesService } from '../../core/favorites.service';
 import { SupabaseService } from '../../core/supabase.service';
 import { FavoriteEntityType, SpotlightEntity } from '../../models';
 
-const FAV_SEEN_KEY = (id: string) => `fav_seen_${id}`;
-
 interface ActivityData {
   count: number;
   lastAt: string;
@@ -210,9 +208,7 @@ export class FavoritesAvatarRowComponent {
 
   toggleSelect(item: { id: string; entityType: FavoriteEntityType; name: string; link: string }): void {
     if (this.editMode()) return;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(FAV_SEEN_KEY(item.id), new Date().toISOString());
-    }
+    void this.favService.markRead([item.id]);
     if (this.selectedId() === item.id) {
       this.entitySelect.emit(null);
     } else {

@@ -26,6 +26,21 @@ interface FeedGroup {
   items: FeedEntry[];
 }
 
+interface UpcomingEvent {
+  id: string;
+  groupId: string;
+  groupName: string;
+  photoUrl: string | null;
+  initials: string;
+  title: string;
+  location: string | null;
+  startsAt: string;
+  dayLabel: string;
+  timeLabel: string;
+  isToday: boolean;
+  link: string;
+}
+
 interface BirthdayItem {
   memberId: string;
   memberName: string;
@@ -52,9 +67,9 @@ interface TableCursors {
   disbanded?: string;
 }
 
-const LAST_VISITED_KEY = 'favorites_feed_last_visited';
 const PAGE_LIMIT = 20;
 const BIRTHDAY_DAYS = 14;
+const UPCOMING_LIMIT = 8;
 
 @Component({
   selector: 'app-favorites-feed',
@@ -117,18 +132,33 @@ const BIRTHDAY_DAYS = 14;
         </div>
       }
 
-      <!-- Type filter chips (context-aware) -->
-      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
-        @for (chip of visibleTypeChips(); track chip.value) {
-          <button (click)="typeFilter.set(chip.value)"
-            [style.background]="typeFilter() === chip.value ? 'rgba(232,121,160,0.15)' : 'transparent'"
-            [style.color]="typeFilter() === chip.value ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
-            [style.border]="typeFilter() === chip.value ? '1px solid rgba(232,121,160,0.35)' : '1px solid rgba(255,255,255,0.1)'"
-            style="padding:4px 12px;border-radius:20px;font-size:0.72rem;cursor:pointer;background:transparent;font-family:var(--font-sans);transition:all 0.15s;">
-            {{ chip.label }}
-          </button>
-        }
-      </div>
+      <!-- Upcoming schedule: what the groups you follow are doing next -->
+      @if (upcomingItems().length > 0) {
+        <div style="margin-bottom:16px;">
+          <div style="font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint-40);margin-bottom:8px;">接下來的行程</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            @for (e of upcomingItems(); track e.id) {
+              <a [routerLink]="e.link"
+                [style.border-left]="e.isToday ? '3px solid rgba(232,121,160,0.9)' : '3px solid rgba(232,121,160,0.25)'"
+                style="display:flex;gap:10px;padding:8px 12px;border-radius:0 10px 10px 0;background:rgba(232,121,160,0.05);text-decoration:none;">
+                <div style="flex-shrink:0;min-width:76px;">
+                  <div [style.color]="e.isToday ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
+                       style="font-size:0.72rem;font-weight:600;white-space:nowrap;">{{ e.dayLabel }}</div>
+                  @if (e.timeLabel) {
+                    <div style="font-size:0.68rem;color:var(--text-faint-40);">{{ e.timeLabel }}</div>
+                  }
+                </div>
+                <div style="min-width:0;">
+                  <div style="font-size:0.8rem;color:var(--text-primary);line-height:1.35;">{{ e.title }}</div>
+                  <div style="font-size:0.68rem;color:var(--text-faint-40);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ e.groupName }}@if (e.location) { · {{ e.location }}}
+                  </div>
+                </div>
+              </a>
+            }
+          </div>
+        </div>
+      }
 
       <!-- Birthday widget -->
       @if (birthdayItems().length > 0) {
@@ -158,6 +188,19 @@ const BIRTHDAY_DAYS = 14;
           </div>
         </div>
       }
+
+      <!-- Type filter chips (context-aware) -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+        @for (chip of visibleTypeChips(); track chip.value) {
+          <button (click)="typeFilter.set(chip.value)"
+            [style.background]="typeFilter() === chip.value ? 'rgba(232,121,160,0.15)' : 'transparent'"
+            [style.color]="typeFilter() === chip.value ? 'rgba(232,121,160,1)' : 'var(--text-faint-55)'"
+            [style.border]="typeFilter() === chip.value ? '1px solid rgba(232,121,160,0.35)' : '1px solid rgba(255,255,255,0.1)'"
+            style="padding:4px 12px;border-radius:20px;font-size:0.72rem;cursor:pointer;background:transparent;font-family:var(--font-sans);transition:all 0.15s;">
+            {{ chip.label }}
+          </button>
+        }
+      </div>
 
       <!-- Skeleton -->
       @if (loading()) {
@@ -277,6 +320,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   readonly loadingMore = signal(false);
   readonly error = signal(false);
   readonly items = signal<FeedEntry[]>([]);
+  readonly upcoming = signal<UpcomingEvent[]>([]);
   readonly birthdayItems = signal<BirthdayItem[]>([]);
   readonly newCount = signal(0);
   readonly hasMore = signal(false);
@@ -322,6 +366,13 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     }
 
     return groups.filter(g => g.items.length > 0);
+  });
+
+  /** The agenda answers "what is coming", so it follows the spotlight but not the type chips. */
+  readonly upcomingItems = computed<UpcomingEvent[]>(() => {
+    const spotlight = this.spotlightEntity();
+    const events = this.upcoming();
+    return spotlight ? events.filter(e => e.groupId === spotlight.id) : events;
   });
 
   readonly visibleTypeChips = computed(() => {
@@ -414,15 +465,7 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
   }
 
   markAllRead(): void {
-    if (this.isBrowser) {
-      const now = new Date().toISOString();
-      localStorage.setItem(LAST_VISITED_KEY, now);
-      const allIds = [
-        ...this.favService.favoriteIds('group'),
-        ...this.favService.favoriteIds('member'),
-      ];
-      allIds.forEach(id => localStorage.setItem(`fav_seen_${id}`, now));
-    }
+    void this.favService.markRead();
     this.newCount.set(0);
     this.items.update(list => list.map(item => ({ ...item, isNew: false })));
     this.activityCounts.emit({});
@@ -449,31 +492,30 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     this.loading.set(true);
     this.error.set(false);
     this.hasMore.set(false);
-    const previousVisit = this.isBrowser ? localStorage.getItem(LAST_VISITED_KEY) : null;
-    if (this.isBrowser) localStorage.setItem(LAST_VISITED_KEY, new Date().toISOString());
 
     const groupIds = this.filter === 'member' ? [] : this.favService.favoriteIds('group');
     const memberIds = this.filter === 'group' ? [] : this.favService.favoriteIds('member');
 
     try {
-      const [{ entries, mightHaveMore, nextCursors }, birthdayData] = await Promise.all([
+      const [{ entries, mightHaveMore, nextCursors }, birthdayData, upcomingData] = await Promise.all([
         this.fetchEntries(groupIds, memberIds, {}),
         memberIds.length ? this.fetchBirthdays(memberIds) : Promise.resolve([] as BirthdayItem[]),
+        groupIds.length ? this.fetchUpcoming(groupIds) : Promise.resolve([] as UpcomingEvent[]),
       ]);
 
       if (seq !== this._loadSeq) return;
 
       this._tableCursors = nextCursors;
       this.birthdayItems.set(birthdayData);
+      this.upcoming.set(upcomingData);
 
-      if (previousVisit || this.isBrowser) {
-        let count = 0;
-        for (const e of entries) {
-          const entitySeen = (this.isBrowser && localStorage.getItem(`fav_seen_${e.entityId}`)) || previousVisit;
-          if (entitySeen && e.occurredAt > entitySeen) { e.isNew = true; count++; }
-        }
-        this.newCount.set(count);
+      // Read state comes from the favorite row, so the badge agrees across devices.
+      let count = 0;
+      for (const e of entries) {
+        const readAt = this.favService.lastReadAt(e.entityId);
+        if (readAt && e.occurredAt > readAt) { e.isNew = true; count++; }
       }
+      this.newCount.set(count);
 
       this.items.set(entries);
       this.hasMore.set(mightHaveMore);
@@ -510,6 +552,49 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
     } finally {
       this.loadingMore.set(false);
     }
+  }
+
+  /**
+   * The forward-looking half of the page: what the groups you follow are actually doing next.
+   * Anchored to the start of today, not to "now" — an event that started this morning is
+   * still today's schedule, not history.
+   */
+  private async fetchUpcoming(groupIds: string[]): Promise<UpcomingEvent[]> {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const { data } = await this.supabase.client
+      .from('group_events')
+      .select('id, title, starts_at, location, group_id, groups(id, name, photo_url)')
+      .in('group_id', groupIds)
+      .gte('starts_at', todayStart.toISOString())
+      .order('starts_at', { ascending: true })
+      .limit(UPCOMING_LIMIT);
+
+    return (data ?? []).map((e: any) => {
+      const startsAt = new Date(e.starts_at);
+      const dayStart = new Date(startsAt.getFullYear(), startsAt.getMonth(), startsAt.getDate());
+      const days = Math.round((dayStart.getTime() - todayStart.getTime()) / 86_400_000);
+      const name: string = e.groups?.name ?? '';
+      const allDay = startsAt.getHours() === 0 && startsAt.getMinutes() === 0;
+      return {
+        id: e.id,
+        groupId: e.group_id,
+        groupName: name,
+        photoUrl: e.groups?.photo_url ?? null,
+        initials: name.slice(0, 2).toUpperCase(),
+        title: e.title,
+        location: e.location ?? null,
+        startsAt: e.starts_at,
+        dayLabel: days === 0 ? '今天'
+          : days === 1 ? '明天'
+          : `${startsAt.getMonth() + 1}/${startsAt.getDate()}（週${'日一二三四五六'[startsAt.getDay()]}）`,
+        // An all-day event is stored at midnight; "00:00" would read as a real start time.
+        timeLabel: allDay ? '' : `${startsAt.getHours()}:${String(startsAt.getMinutes()).padStart(2, '0')}`,
+        isToday: days === 0,
+        link: `/group/${e.group_id}`,
+      };
+    });
   }
 
   private async fetchBirthdays(memberIds: string[]): Promise<BirthdayItem[]> {

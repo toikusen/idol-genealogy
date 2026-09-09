@@ -312,6 +312,8 @@ export interface UserFavorite {
   entity_type: FavoriteEntityType;
   entity_id: string;
   created_at: string;
+  /** When this favorite's activity was last read. Absent on rows written before migration 105. */
+  last_read_at?: string;
 }
 
 export interface NotificationPrefs {

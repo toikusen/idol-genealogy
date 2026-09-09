@@ -13,7 +13,7 @@ function makeChain(rows: unknown[] = []) {
     catch: p.catch.bind(p),
     finally: p.finally.bind(p),
   };
-  ['select', 'in', 'eq', 'not', 'is', 'order', 'limit'].forEach(m => (chain[m] = () => chain));
+  ['select', 'in', 'eq', 'not', 'is', 'order', 'gte', 'limit'].forEach(m => (chain[m] = () => chain));
   return chain;
 }
 
@@ -23,6 +23,8 @@ describe('FavoritesFeedComponent', () => {
   const mockFavoritesService = {
     favoriteIds: (type: FavoriteEntityType) => _favs().filter(f => f.entity_type === type).map(f => f.entity_id),
     favorites: (type?: FavoriteEntityType) => type ? _favs().filter(f => f.entity_type === type) : _favs(),
+    lastReadAt: () => undefined,
+    markRead: () => Promise.resolve(),
   };
 
   const mockSupabaseService = {
@@ -84,13 +86,15 @@ describe('FavoritesFeedComponent — pagination and race guard', () => {
   function makeChainFixed(rows: unknown[]) {
     const p = Promise.resolve({ data: rows, error: null });
     const chain: any = { then: p.then.bind(p), catch: p.catch.bind(p), finally: p.finally.bind(p) };
-    ['select', 'in', 'eq', 'not', 'is', 'order', 'lt', 'limit'].forEach(m => (chain[m] = () => chain));
+    ['select', 'in', 'eq', 'not', 'is', 'order', 'gte', 'lt', 'limit'].forEach(m => (chain[m] = () => chain));
     return chain;
   }
 
   const mockFavs2 = {
     favoriteIds: (type: FavoriteEntityType) => _favs2().filter(f => f.entity_type === type).map(f => f.entity_id),
     favorites: (type?: FavoriteEntityType) => type ? _favs2().filter(f => f.entity_type === type) : _favs2(),
+    lastReadAt: () => undefined,
+    markRead: () => Promise.resolve(),
   };
 
   beforeEach(() => TestBed.resetTestingModule());
@@ -201,5 +205,141 @@ describe('FavoritesFeedComponent — pagination and race guard', () => {
     expect(f4.componentInstance.loading()).toBeFalse();
     // items reflects fresh loadFeed result, not a mix with stale appendPage
     expect(f4.componentInstance.hasMore()).toBeFalse();
+  }));
+});
+
+
+describe('FavoritesFeedComponent — upcoming schedule and server-side read state', () => {
+  const favs = [{ user_id: 'u1', entity_type: 'group' as FavoriteEntityType, entity_id: 'g1', created_at: '' }];
+
+  function chainOf(rows: unknown[]) {
+    const p = Promise.resolve({ data: rows, error: null });
+    const chain: any = { then: p.then.bind(p), catch: p.catch.bind(p), finally: p.finally.bind(p) };
+    ['select', 'in', 'eq', 'not', 'is', 'order', 'gte', 'lt', 'limit'].forEach(m => (chain[m] = () => chain));
+    return chain;
+  }
+
+  /** Only the named table returns rows; everything else comes back empty. */
+  function setup(table: string, rows: unknown[], lastReadAt?: string) {
+    const channel: any = { on: () => channel, subscribe: () => channel };
+    const markRead = jasmine.createSpy('markRead').and.returnValue(Promise.resolve());
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [FavoritesFeedComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: FavoritesService,
+          useValue: {
+            favoriteIds: (type: FavoriteEntityType) => favs.filter(f => f.entity_type === type).map(f => f.entity_id),
+            favorites: () => favs,
+            lastReadAt: () => lastReadAt,
+            markRead,
+          },
+        },
+        {
+          provide: SupabaseService,
+          useValue: {
+            client: {
+              from: (t: string) => chainOf(t === table ? rows : []),
+              channel: () => channel,
+              removeChannel: () => {},
+            },
+          },
+        },
+      ],
+    }).compileComponents();
+    return { fixture: TestBed.createComponent(FavoritesFeedComponent), markRead };
+  }
+
+  function eventAt(date: Date, extra: Record<string, unknown> = {}) {
+    return {
+      id: 'e1', title: '單獨公演', starts_at: date.toISOString(), location: 'Zepp',
+      group_id: 'g1', groups: { id: 'g1', name: 'G', photo_url: null }, ...extra,
+    };
+  }
+
+  it("labels an event later today as 今天, even after its start time has passed", fakeAsync(() => {
+    const earlierToday = new Date();
+    earlierToday.setHours(1, 30, 0, 0);
+    const { fixture } = setup('group_events', [eventAt(earlierToday)]);
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    const upcoming = fixture.componentInstance.upcomingItems();
+    expect(upcoming.length).toBe(1);
+    expect(upcoming[0].dayLabel).toBe('今天');
+    expect(upcoming[0].isToday).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('接下來的行程');
+  }));
+
+  it('shows a weekday label for a later date and hides 00:00 as a time', fakeAsync(() => {
+    const later = new Date();
+    later.setDate(later.getDate() + 5);
+    later.setHours(0, 0, 0, 0);
+    const { fixture } = setup('group_events', [eventAt(later)]);
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    const item = fixture.componentInstance.upcomingItems()[0];
+    expect(item.dayLabel).toContain('週');
+    expect(item.timeLabel).toBe('');
+  }));
+
+  it('hides the agenda for a spotlighted entity that owns none of the events', fakeAsync(() => {
+    const today = new Date();
+    today.setHours(20, 0, 0, 0);
+    const { fixture } = setup('group_events', [eventAt(today)]);
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.upcomingItems().length).toBe(1);
+
+    fixture.componentRef.setInput('spotlightEntity', { id: 'm9', entityType: 'member', name: 'M', link: '/member/m9' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.upcomingItems().length).toBe(0);
+  }));
+
+  it('flags activity newer than the stored read time as new', fakeAsync(() => {
+    const song = { id: 's1', title: 'Song', created_at: '2026-01-02T00:00:00.000Z', group: { id: 'g1', name: 'G', photo_url: null } };
+    const { fixture } = setup('group_songs', [song], '2026-01-01T00:00:00.000Z');
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.newCount()).toBe(1);
+  }));
+
+  it('treats activity older than the stored read time as already seen', fakeAsync(() => {
+    const song = { id: 's1', title: 'Song', created_at: '2026-01-02T00:00:00.000Z', group: { id: 'g1', name: 'G', photo_url: null } };
+    const { fixture } = setup('group_songs', [song], '2026-02-01T00:00:00.000Z');
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.newCount()).toBe(0);
+  }));
+
+  it('markAllRead persists to the service instead of localStorage', fakeAsync(() => {
+    const song = { id: 's1', title: 'Song', created_at: '2026-01-02T00:00:00.000Z', group: { id: 'g1', name: 'G', photo_url: null } };
+    const { fixture, markRead } = setup('group_songs', [song], '2026-01-01T00:00:00.000Z');
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    fixture.componentInstance.markAllRead();
+
+    expect(markRead).toHaveBeenCalled();
+    expect(fixture.componentInstance.newCount()).toBe(0);
+    expect(fixture.componentInstance.items().every(i => !i.isNew)).toBeTrue();
   }));
 });

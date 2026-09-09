@@ -5,6 +5,12 @@ import { FavoriteEntityType, UserFavorite } from '../models';
 @Injectable({ providedIn: 'root' })
 export class FavoritesService {
   private readonly _favorites = signal<UserFavorite[]>([]);
+  /**
+   * Read state lives in its own Signal, not on the rows in `_favorites`.
+   * Consumers re-fetch their feed whenever `_favorites` changes, and marking something
+   * read must not trigger that re-fetch.
+   */
+  private readonly _readAt = signal<Record<string, string>>({});
   private _userId: string | null = null;
   private _loaded = false;
 
@@ -24,7 +30,39 @@ export class FavoritesService {
     const raw = data ?? [];
     const valid = await this.pruneDeleted(userId, raw);
     this._favorites.set(valid);
+    this._readAt.set(Object.fromEntries(
+      valid.filter(f => f.last_read_at).map(f => [f.entity_id, f.last_read_at as string])
+    ));
     this._loaded = true;
+  }
+
+  /** When this favorite's activity was last read, on any device. */
+  lastReadAt(entityId: string): string | undefined {
+    return this._readAt()[entityId];
+  }
+
+  /**
+   * Marks favorites read, or all of them when `entityIds` is omitted.
+   * A failed write is logged, not rolled back: the badge reappears on the next load,
+   * which is the harmless direction to fail in.
+   */
+  async markRead(entityIds?: string[]): Promise<void> {
+    if (!this._userId) return;
+    const targets = entityIds ?? this._favorites().map(f => f.entity_id);
+    if (targets.length === 0) return;
+
+    const now = new Date().toISOString();
+    this._readAt.update(prev => ({
+      ...prev,
+      ...Object.fromEntries(targets.map(id => [id, now])),
+    }));
+
+    let q = this.db.from('user_favorites')
+      .update({ last_read_at: now })
+      .eq('user_id', this._userId);
+    if (entityIds) q = q.in('entity_id', entityIds);
+    const { error } = await q;
+    if (error) console.error('Failed to persist favorites read state', error);
   }
 
   /** Remove favorites whose group/member no longer exists in the DB. */
@@ -105,14 +143,18 @@ export class FavoritesService {
     if (this.isFavorite(type, entityId)) return;
 
     const prev = this._favorites();
+    const now = new Date().toISOString();
     const entry: UserFavorite = {
       user_id: this._userId,
       entity_type: type,
       entity_id: entityId,
-      created_at: new Date().toISOString(),
+      created_at: now,
+      last_read_at: now,
     };
-    // Optimistic update
+    // Optimistic update. Read state starts at "now" so following something does not
+    // immediately flag its entire back catalogue as new activity.
     this._favorites.update(favs => [...favs, entry]);
+    this._readAt.update(r => ({ ...r, [entityId]: now }));
     const { error } = await this.db.from('user_favorites').insert({
       user_id: this._userId,
       entity_type: type,
@@ -147,7 +189,13 @@ export class FavoritesService {
 
   reset(): void {
     this._favorites.set([]);
+    this._readAt.set({});
     this._userId = null;
     this._loaded = false;
+  }
+
+  /** False for anonymous visitors — they get sent to /login instead of a silent no-op. */
+  isSignedIn(): boolean {
+    return this._userId !== null;
   }
 }
