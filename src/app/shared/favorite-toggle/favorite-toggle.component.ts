@@ -1,6 +1,8 @@
 import { Component, Input, OnDestroy, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
 import { PushOptInService } from '../../core/push-opt-in.service';
+import { SupabaseService } from '../../core/supabase.service';
 import { FavoriteEntityType } from '../../models';
 
 @Component({
@@ -86,6 +88,8 @@ export class FavoriteToggleComponent implements OnDestroy {
 
   private favService = inject(FavoritesService);
   private pushOptIn = inject(PushOptInService);
+  private supabase = inject(SupabaseService);
+  private router = inject(Router);
   readonly loading = signal(false);
   readonly errorMessage = signal('');
   private errorTimer?: ReturnType<typeof setTimeout>;
@@ -98,6 +102,16 @@ export class FavoriteToggleComponent implements OnDestroy {
     if (this.loading()) return;
     this.loading.set(true);
     this.errorMessage.set('');
+
+    // Anonymous visitors are most of the traffic, so the heart is always rendered.
+    // ponytail: the favourite is not carried through the login round-trip — it is one
+    // extra tap on the page they land back on, not worth a pending-favourite store.
+    if (!this.favService.isSignedIn() && !(await this.resumeSession())) {
+      this.loading.set(false);
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+
     const wasFav = this.isFav();
     let added = false;
     try {
@@ -118,6 +132,19 @@ export class FavoriteToggleComponent implements OnDestroy {
     // add-on must never be reported as "加入最愛失敗". Favouriting is the strongest signal
     // of "tell me about this" we ever get, so it is the best moment to ask.
     if (added) this.pushOptIn.offer(this.entityType);
+  }
+
+  /**
+   * The heart ships in prerendered HTML, but FavoritesService is lazy-loaded and only
+   * learns the user id once its first query is away — so "no user yet" is not proof of
+   * anonymity. Returns true when a real session exists, adopting it for this tap.
+   */
+  private async resumeSession(): Promise<boolean> {
+    const session = await this.supabase.getSessionOnce().catch(() => null);
+    if (!session) return false;
+    // load() claims the user id before it queries, so even a failed load can still write.
+    await this.favService.load(session.user.id).catch(() => {});
+    return true;
   }
 
   private showError(message: string): void {
