@@ -428,8 +428,12 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       void this.loadFeed();
     });
     effect(() => {
-      this.spotlightEntity();
+      const spotlight = this.spotlightEntity();
       this.typeFilter.set('all');
+      // Opening one entity's activity is what reading it means here. The feed owns read
+      // state for both, so the badge that sent the user to that avatar cannot clear on
+      // the avatar while its entries still sit here marked new.
+      if (spotlight) this.markEntityRead(spotlight.id);
     });
   }
 
@@ -462,6 +466,18 @@ export class FavoritesFeedComponent implements OnChanges, OnDestroy {
       };
     }
     this.activityCounts.emit(counts);
+  }
+
+  /**
+   * Reading one entity: persist it, then drop its entries' new marks and re-derive the
+   * header count from what is left. The parent clears that avatar's own badge.
+   */
+  private markEntityRead(entityId: string): void {
+    void this.favService.markRead([entityId]);
+    this.items.update(list =>
+      list.map(item => (item.entityId === entityId ? { ...item, isNew: false } : item))
+    );
+    this.newCount.set(this.items().filter(item => item.isNew).length);
   }
 
   markAllRead(): void {

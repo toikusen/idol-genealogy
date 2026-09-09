@@ -328,6 +328,38 @@ describe('FavoritesFeedComponent — upcoming schedule and server-side read stat
     expect(fixture.componentInstance.newCount()).toBe(0);
   }));
 
+  it('clears the new marks and the header count when an entity is opened', fakeAsync(() => {
+    const song = { id: 's1', title: 'Song', created_at: '2026-01-02T00:00:00.000Z', group: { id: 'g1', name: 'G', photo_url: null } };
+    const { fixture, markRead } = setup('group_songs', [song], '2026-01-01T00:00:00.000Z');
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.newCount()).toBe(1);
+
+    fixture.componentRef.setInput('spotlightEntity', { id: 'g1', entityType: 'group', name: 'G', link: '/group/g1' });
+    fixture.detectChanges();
+
+    expect(markRead).toHaveBeenCalledWith(['g1']);
+    expect(fixture.componentInstance.newCount()).toBe(0);
+    expect(fixture.componentInstance.items().every(i => !i.isNew)).toBeTrue();
+  }));
+
+  it('leaves other entities unread when one of them is opened', fakeAsync(() => {
+    const song = { id: 's1', title: 'Song', created_at: '2026-01-02T00:00:00.000Z', group: { id: 'g1', name: 'G', photo_url: null } };
+    const { fixture, markRead } = setup('group_songs', [song], '2026-01-01T00:00:00.000Z');
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('spotlightEntity', { id: 'm9', entityType: 'member', name: 'M', link: '/member/m9' });
+    fixture.detectChanges();
+
+    expect(markRead).toHaveBeenCalledWith(['m9']);
+    expect(fixture.componentInstance.newCount()).toBe(1);
+  }));
+
   it('markAllRead persists to the service instead of localStorage', fakeAsync(() => {
     const song = { id: 's1', title: 'Song', created_at: '2026-01-02T00:00:00.000Z', group: { id: 'g1', name: 'G', photo_url: null } };
     const { fixture, markRead } = setup('group_songs', [song], '2026-01-01T00:00:00.000Z');

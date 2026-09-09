@@ -208,7 +208,7 @@ export class FavoritesAvatarRowComponent {
 
   toggleSelect(item: { id: string; entityType: FavoriteEntityType; name: string; link: string }): void {
     if (this.editMode()) return;
-    void this.favService.markRead([item.id]);
+    // Selecting is only a filter gesture; the feed owns what counts as read.
     if (this.selectedId() === item.id) {
       this.entitySelect.emit(null);
     } else {
