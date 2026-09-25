@@ -125,8 +125,8 @@ a.skrank-row:hover {
 .skrank-photo {
   display: block;
   width: 54px;
-  aspect-ratio: 3 / 4;
-  border-radius: 8px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
   overflow: hidden;
   background: linear-gradient(135deg, var(--skel-from), var(--skel-to));
 }
@@ -136,7 +136,7 @@ a.skrank-row:hover {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 25%;
+  transform: scale(1.05);
 }
 
 .skrank-info {

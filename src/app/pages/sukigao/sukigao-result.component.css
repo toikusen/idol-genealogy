@@ -76,28 +76,34 @@
 .skr-cell__photo {
   position: relative;
   display: block;
-  aspect-ratio: 3 / 4;
-  border-radius: 10px;
+  aspect-ratio: 1 / 1;
+}
+
+.skr-cell__circle {
+  position: absolute;
+  inset: 3%;
+  display: block;
+  border-radius: 50%;
   overflow: hidden;
   background: linear-gradient(135deg, var(--skel-from), var(--skel-to));
 }
 
-.skr-cell__photo img {
+.skr-cell__circle img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 25%;
+  transform: scale(1.05);
 }
 
-.skr-pos-1 .skr-cell__photo {
+.skr-pos-1 .skr-cell__circle {
   box-shadow: 0 0 0 3px var(--idol-pink), 0 6px 18px var(--pink-glow-35);
 }
 
 .skr-cell__rank {
   position: absolute;
-  left: 5px;
-  top: 5px;
+  left: 0;
+  top: 0;
   display: inline-flex;
   align-items: center;
   gap: 2px;
