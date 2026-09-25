@@ -26,6 +26,11 @@ describe('SukigaoService', () => {
     service = TestBed.inject(SukigaoService);
   });
 
+  // Unless a test says otherwise, the edge endpoint is unavailable.
+  beforeEach(() => {
+    spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 404 }));
+  });
+
   describe('buildPool', () => {
     it('counts members and distinct groups dynamically', () => {
       const pool = buildPool([
@@ -46,6 +51,31 @@ describe('SukigaoService', () => {
       const pool = buildPool([row('1'), row('2', { updated_at: '2026-09-20T10:00:00+00:00' })]);
       expect(pool.version).toBe('2:2026-09-20T10:00:00+00:00');
     });
+  });
+
+  it('getPool() prefers the edge-cached endpoint', async () => {
+    const fetchSpy = (window.fetch as jasmine.Spy).and.resolveTo(
+      new Response(JSON.stringify([row('1'), row('2')]), { headers: { 'Content-Type': 'application/json' } }),
+    );
+    const pool = await service.getPool();
+    expect(fetchSpy).toHaveBeenCalledWith('/api/sukigao-candidates', jasmine.any(Object));
+    expect(pool.candidates.length).toBe(2);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('getPool() falls back to Supabase when the edge endpoint fails', async () => {
+    (window.fetch as jasmine.Spy).and.resolveTo(new Response('nope', { status: 502 }));
+    rpc.and.resolveTo({ data: [row('1')], error: null });
+    const pool = await service.getPool();
+    expect(rpc).toHaveBeenCalledOnceWith('get_sukigao_candidates');
+    expect(pool.candidates.length).toBe(1);
+  });
+
+  it('getPool() falls back when the edge returns HTML (e.g. SPA shell)', async () => {
+    (window.fetch as jasmine.Spy).and.resolveTo(new Response('<html>', { headers: { 'Content-Type': 'text/html' } }));
+    rpc.and.resolveTo({ data: [row('1')], error: null });
+    await service.getPool();
+    expect(rpc).toHaveBeenCalled();
   });
 
   it('getPool() calls the candidates RPC once and caches it', async () => {
