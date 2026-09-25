@@ -5,15 +5,77 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { Venue, VenueRegionFilter, VenueCalendarEvent } from '../../models';
 
+interface NavigatorFingerprint {
+  userAgent: string;
+  platform: string;
+  maxTouchPoints: number;
+}
+
+/**
+ * Every browser installed on iOS uses WebKit, including an app added to the
+ * Home Screen. Keep the check here (instead of in VenuePageComponent) so every
+ * compact Leaflet map gets the same safe behaviour.
+ */
+export function isIosWebKit(navigatorLike: NavigatorFingerprint): boolean {
+  const isIosDevice = /iPad|iPhone|iPod/i.test(navigatorLike.userAgent)
+    // iPadOS can request a desktop UA and identify itself as a touch Mac.
+    || (navigatorLike.platform === 'MacIntel' && navigatorLike.maxTouchPoints > 1);
+  return isIosDevice && /AppleWebKit/i.test(navigatorLike.userAgent);
+}
+
 @Component({
   selector: 'app-venue-map',
   standalone: true,
-  template: `<div class="venue-map-container"></div>`,
+  template: `<div
+    class="venue-map-frame"
+    [class.venue-map-frame--has-fallback]="compact && fallbackHref"
+  >
+    <div
+      class="venue-map-container"
+      [class.venue-map-container--compact]="compact"
+      role="application"
+      [attr.aria-label]="ariaLabel"
+    ></div>
+
+    @if (compact && fallbackHref) {
+      <a
+        class="venue-map-fallback"
+        [href]="fallbackHref"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-map-fallback
+      >
+        <span class="venue-map-fallback__pin" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </span>
+        <span class="venue-map-fallback__copy">
+          <strong>在地圖中查看位置</strong>
+          <small>{{ venues.length > 0 ? venues[0].address : '' }}</small>
+        </span>
+        <span class="venue-map-fallback__arrow" aria-hidden="true">&#8599;</span>
+      </a>
+    }
+  </div>`,
   styleUrl: './venue-map.component.css',
 })
 export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() venues: Venue[] = [];
   @Input() activeRegion: VenueRegionFilter = 'all';
+  /** Shorter frame for single-venue pages. */
+  @Input() compact = false;
+  /**
+   * Popups are driven by the host (HomeComponent feeds them via refreshPopup).
+   * On a single-venue page there is no host to feed them and the page already
+   * shows everything a popup would, so the marker becomes a plain pin instead
+   * of a focusable button that opens a permanent "loading" bubble.
+   */
+  @Input() markerPopups = true;
+  @Input() ariaLabel = '演出場地地圖';
+  /** Link shown while a compact map loads and as the iOS-safe fallback. */
+  @Input() fallbackHref = '';
 
   @Output() regionChange          = new EventEmitter<VenueRegionFilter>();
   @Output() venuePopupOpened      = new EventEmitter<string>();
@@ -28,9 +90,21 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   async ngAfterViewInit(): Promise<void> {
     if (!this.isBrowser) return;
+    const container = this.el.nativeElement.querySelector('.venue-map-container') as HTMLElement;
+
+    // Leaflet 1.9.4's L.map() can lock iOS WebKit when this compact map is
+    // created during Angular hydration or immediately after a routed map is
+    // torn down. Safari and installed PWAs share that engine. The venue page
+    // already has a precise Maps URL, so prefer the lightweight location card
+    // there; the full browsing map and every non-iOS client remain interactive.
+    if (this.shouldUseStaticFallback()) {
+      container.setAttribute('aria-hidden', 'true');
+      container.removeAttribute('role');
+      return;
+    }
+
     const mod = await import('leaflet');
     const L = (mod as any).default ?? mod;
-    const container = this.el.nativeElement.querySelector('.venue-map-container') as HTMLElement;
     this.map = L.map(container, { zoomControl: true });
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
@@ -38,6 +112,9 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     }).addTo(this.map);
     this.map.setView([25.045, 121.51], 12);
     this.renderMarkers(L);
+    this.el.nativeElement
+      .querySelector('.venue-map-frame')
+      ?.classList.add('venue-map-frame--ready');
   }
 
   async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -50,6 +127,10 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.map?.remove();
+  }
+
+  private shouldUseStaticFallback(): boolean {
+    return this.compact && !!this.fallbackHref && isIosWebKit(window.navigator);
   }
 
   /** Called by HomeComponent via @ViewChild after loadVenueEvents resolves */
@@ -65,6 +146,20 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
       false,
       error,
     ));
+  }
+
+  /** Called by HomeComponent when a venue is expanded in the list */
+  focusVenue(venueId: string): void {
+    const marker = this.markers.get(venueId);
+    if (!marker || !this.map?.hasLayer(marker)) return;
+    this.map.panTo(marker.getLatLng());
+    this.openPopupVenueId = venueId;
+    marker.openPopup();
+    const el = marker.getElement()?.querySelector('.venue-marker') as HTMLElement | null;
+    if (!el) return;
+    el.classList.remove('venue-marker--focus');
+    void el.offsetWidth; // restart CSS animation on repeat clicks
+    el.classList.add('venue-marker--focus');
   }
 
   private readonly MARKER_COLOR = '#4f46e5';
@@ -89,6 +184,13 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
         width:10px; height:10px; background:${this.MARKER_COLOR};
         transform:rotate(45deg);
         margin-top:-6px; z-index:0;
+      }
+      .venue-marker--focus .venue-marker__circle {
+        animation: venue-marker-pulse 1.2s ease-out 2;
+      }
+      @keyframes venue-marker-pulse {
+        0%   { box-shadow:0 0 0 0 rgba(79,70,229,0.45); }
+        100% { box-shadow:0 0 0 14px rgba(79,70,229,0); }
       }
     `;
     document.head.appendChild(style);
@@ -115,7 +217,7 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     for (const venue of withCoords) {
       const icon = L.divIcon({
         className: '',
-        html: `<div class="venue-marker">
+        html: `<div class="venue-marker" aria-label="${this.escapeHtml(venue.name)} 地圖標記">
           <div class="venue-marker__circle">${this.getVenueIcon()}</div>
           <div class="venue-marker__tail"></div>
         </div>`,
@@ -125,12 +227,32 @@ export class VenueMapComponent implements AfterViewInit, OnChanges, OnDestroy {
       });
 
       const isMobile = window.innerWidth <= 640;
-      const marker = L.marker([venue.latitude!, venue.longitude!], { icon })
-        .addTo(this.map)
-        .bindPopup(this.buildPopupContent(venue, [], true, ''), {
+      // Leaflet gives divIcon markers keyboard focus and role="button"; without
+      // title/alt a screen reader announces an unlabelled button.
+      const marker = L.marker([venue.latitude!, venue.longitude!], {
+        icon,
+        title: venue.name,
+        alt: `${venue.name} 地圖標記`,
+        keyboard: this.markerPopups,
+      }).addTo(this.map);
+
+      if (this.markerPopups) {
+        marker.bindPopup(this.buildPopupContent(venue, [], true, ''), {
           maxWidth: 280,
           ...(isMobile ? { maxHeight: 220 } : {}),
         });
+      }
+
+      // Leaflet only forwards `alt` to <img> icons, so a divIcon marker would
+      // stay an unlabelled role="button". Set the name on the element itself.
+      // Without popups the marker does nothing, so it is decoration, not a control.
+      const markerEl = marker.getElement();
+      if (this.markerPopups) {
+        markerEl?.setAttribute('aria-label', `${venue.name} 地圖標記`);
+      } else {
+        markerEl?.setAttribute('aria-hidden', 'true');
+        markerEl?.removeAttribute('role');
+      }
 
       marker.on('click', () => {
         this.openPopupVenueId = venue.id;

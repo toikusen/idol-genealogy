@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { MemberService } from './member.service';
+import { GroupService } from './group.service';
+import { CompanyService } from './company.service';
 import { Proposal } from '../models';
 import { PROPOSAL_ALLOWED_FIELDS } from './proposal-fields.config';
+import { isReportProposal } from './proposal-diff.utils';
 
 export interface ContributorEntry {
   submitter_id: string;
@@ -14,18 +18,27 @@ export interface ContributorEntry {
 export class ProposalService {
   private get db() { return this.supabase.client; }
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(
+    private supabase: SupabaseService,
+    private memberService: MemberService,
+    private groupService: GroupService,
+    private companyService: CompanyService,
+  ) {}
 
   /** Submit a proposal (works for anonymous and logged-in users) */
   async submit(proposal: Omit<Proposal, 'id' | 'status' | 'created_at' | 'reviewed_at' | 'reviewed_by' | 'reviewer_note' | 'reviewed_data'>): Promise<void> {
     // Client-side rate limit: anonymous users, max 5 proposals per 10 min
     if (!proposal.submitter_id) {
-      const { count } = await this.db
+      const { count, error: rateLimitError } = await this.db
         .from('proposals')
         .select('*', { count: 'exact', head: true })
         .eq('submitter_name', proposal.submitter_name)
         .is('submitter_id', null)
         .gte('created_at', new Date(Date.now() - 10 * 60 * 1000).toISOString());
+      // Fail closed: if we can't verify the rate limit, don't let the submission through.
+      if (rateLimitError) {
+        throw new Error('目前無法送出，請稍後再試');
+      }
       if ((count ?? 0) >= 5) {
         throw new Error('送出過於頻繁，請稍後再試');
       }
@@ -66,34 +79,59 @@ export class ProposalService {
     return data ?? null;
   }
 
+  /** Current state of a proposal's target row. Report proposals carry no field
+   *  data, so the review UI needs this to show which record was reported. */
+  async getTargetRecord(tableName: string, recordId: string): Promise<Record<string, any> | null> {
+    const { data, error } = await this.db
+      .from(tableName)
+      .select('*')
+      .eq('id', recordId)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as Record<string, any> | null) ?? null;
+  }
+
   /** Approve a proposal: apply data to target table, update status. Admin only. */
   async approve(proposal: Proposal, reviewedData?: Record<string, any>, note?: string): Promise<void> {
     const dataToApply = reviewedData ?? proposal.proposed_data;
     let applyError: any;
+    // INSERT proposals carry no record_id (the row doesn't exist yet). Capture the
+    // new row's id so the record's edit-history panel can find this proposal.
+    let insertedId: string | null = null;
 
     if (proposal.operation === 'INSERT') {
-      const { error } = await this.db.from(proposal.table_name).insert(dataToApply);
+      const { data, error } = await this.db
+        .from(proposal.table_name)
+        .insert(dataToApply)
+        .select('id')
+        .single();
       applyError = error;
+      insertedId = (data as { id?: string } | null)?.id ?? null;
     } else if (proposal.operation === 'DELETE') {
       const { error } = await this.db
         .from(proposal.table_name)
         .delete()
         .eq('id', proposal.record_id!);
       applyError = error;
-    } else {
+    } else if (!isReportProposal({ operation: proposal.operation, proposed_data: dataToApply })) {
       const { error } = await this.db
         .from(proposal.table_name)
         .update(dataToApply)
         .eq('id', proposal.record_id!);
       applyError = error;
     }
+    // Report proposals carry no fields to apply; approving one only marks it handled.
     if (applyError) throw applyError;
+    // Approve writes bypass the entity services, so their getAll() caches
+    // would keep serving pre-approval data (e.g. audit log showing raw ids).
+    this.invalidateTableCache(proposal.table_name);
 
     const session = await this.supabase.getSessionOnce();
     const { error } = await this.db
       .from('proposals')
       .update({
         status: 'approved',
+        record_id: insertedId ?? proposal.record_id,
         reviewed_data: reviewedData ?? null,
         reviewer_note: note ?? null,
         reviewed_at: new Date().toISOString(),
@@ -101,6 +139,12 @@ export class ProposalService {
       })
       .eq('id', proposal.id);
     if (error) throw error;
+  }
+
+  private invalidateTableCache(tableName: string): void {
+    if (tableName === 'members') this.memberService.invalidateCache();
+    if (tableName === 'groups') this.groupService.invalidateCache();
+    if (tableName === 'companies') this.companyService.invalidateCache();
   }
 
   /** Reject a proposal. Admin only. */

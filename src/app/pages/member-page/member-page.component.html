@@ -112,7 +112,9 @@
                     [src]="member.photo_url | supabaseImg:320"
                     [alt]="member.name"
                     class="member-portrait"
-                    loading="lazy"
+                    width="160"
+                    height="160"
+                    fetchpriority="high"
                   />
                 </button>
               } @else {
@@ -147,13 +149,11 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                   }
                 </button>
-                @if (isLoggedIn) {
-                  <app-favorite-toggle
-                    entityType="member"
-                    [entityId]="member.id"
-                    style="flex-shrink:0;"
-                  />
-                }
+                <app-favorite-toggle
+                  entityType="member"
+                  [entityId]="member.id"
+                  style="flex-shrink:0;"
+                />
               </div>
             </div>
 
@@ -181,13 +181,11 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 }
               </button>
-              @if (isLoggedIn) {
-                <app-favorite-toggle
-                  entityType="member"
-                  [entityId]="member.id"
-                  style="flex-shrink:0;"
-                />
-              }
+              <app-favorite-toggle
+                entityType="member"
+                [entityId]="member.id"
+                style="flex-shrink:0;"
+              />
             </div>
 
             <!-- Color + Emoji symbol -->
@@ -303,16 +301,6 @@
                 class="report-btn"
               >⚑ 回報問題</button>
             </div>
-
-            <!-- Intro (mirrors meta description so crawlers get body text) -->
-            @if (pageDescription) {
-              <p style="
-                font-size: 0.82rem; line-height: 1.85;
-                color: var(--text-faint-60);
-                margin-top: 16px;
-                padding-left: 14px;
-              ">{{ pageDescription }}</p>
-            }
 
             <!-- Notes -->
             @if (member.notes) {
@@ -530,7 +518,7 @@
                 <input id="msong-title" type="text" [(ngModel)]="songFormData.title" placeholder="歌曲名稱"
                   class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
               </div>
-              <div class="grid grid-cols-3 gap-3">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <label for="msong-lyricist" class="block text-xs mb-1" style="color:var(--text-faint-65);">作詞</label>
                   <input id="msong-lyricist" type="text" [(ngModel)]="songFormData.lyricist" placeholder="作詞者"
@@ -544,6 +532,11 @@
                 <div>
                   <label for="msong-arranger" class="block text-xs mb-1" style="color:var(--text-faint-65);">編曲</label>
                   <input id="msong-arranger" type="text" [(ngModel)]="songFormData.arranger" placeholder="編曲者"
+                    class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
+                </div>
+                <div>
+                  <label for="msong-choreographer" class="block text-xs mb-1" style="color:var(--text-faint-65);">編舞</label>
+                  <input id="msong-choreographer" type="text" [(ngModel)]="songFormData.choreographer" placeholder="編舞者"
                     class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                 </div>
               </div>
@@ -644,8 +637,8 @@
                 }
 
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-start justify-between gap-2">
-                    <div class="min-w-0">
+                  <div class="flex flex-col sm:flex-row items-start justify-between gap-2">
+                    <div class="min-w-0 w-full sm:w-auto">
                       @if (song.sort_order >= 1) {
                         <p class="text-xs mb-0.5" style="color:var(--text-faint-55);">第 {{ song.sort_order }} 首原創單曲</p>
                       }
@@ -660,6 +653,9 @@
                         @if (song.arranger) {
                           <span class="text-xs" style="color:var(--text-faint-55);">編曲：{{ song.arranger }}</span>
                         }
+                        @if (song.choreographer) {
+                          <span class="text-xs" style="color:var(--text-faint-55);">編舞：{{ song.choreographer }}</span>
+                        }
                         @if (song.release_date) {
                           <span class="text-xs" style="color:var(--text-faint-55);">發行時間：{{ song.release_date.slice(0,10).replaceAll('-','.') }}</span>
                         }
@@ -670,7 +666,7 @@
                         <button type="button" (click)="openEditSong(song)" class="song-action-btn song-action-btn--edit">
                           編輯
                         </button>
-                        <button type="button" (click)="deleteSong(song)" class="song-action-btn song-action-btn--danger">
+                        <button type="button" (click)="deleteSong(song)" [disabled]="deletingSongId === song.id" class="song-action-btn song-action-btn--danger">
                           刪除
                         </button>
                       }
@@ -696,6 +692,8 @@
                     }
                     <textarea [(ngModel)]="songReportNote" rows="2" placeholder="例：作詞者名稱有誤，來源：…"
                       class="w-full rounded-lg px-3 py-1.5 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"></textarea>
+                    <input type="url" [(ngModel)]="songReportUrl" placeholder="建議的新 YouTube 連結（選填，填了審核後會直接套用）"
+                      class="w-full rounded-lg px-3 py-1.5 text-xs mt-2 focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                     @if (songReportError) {
                       <p class="text-xs text-red-500 mt-1">{{ songReportError }}</p>
                     }

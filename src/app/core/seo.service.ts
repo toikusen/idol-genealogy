@@ -24,6 +24,7 @@ export class SeoService {
     // Reset page-scoped SEO state so simple content pages do not inherit stale
     // robots directives or JSON-LD from a previously visited detail page.
     this.clearJsonLd();
+    this.clearEventsJsonLd();
     this.setRobotsNoIndex(false);
     this.title.setTitle(pageTitle);
     this.meta.updateTag({ name: 'description', content: description });
@@ -78,6 +79,29 @@ export class SeoService {
 
   clearJsonLd(): void {
     const existing = this.doc.head.querySelector('#ld-json');
+    if (existing) this.doc.head.removeChild(existing);
+  }
+
+  /**
+   * Separate JSON-LD slot for calendar events, which load client-side only
+   * (Google Calendar / TimeTree) and therefore cannot be part of the
+   * prerendered #ld-json graph. Googlebot's JS renderer picks this up.
+   */
+  setEventsJsonLd(schemas: object[]): void {
+    this.clearEventsJsonLd();
+    if (schemas.length === 0) return;
+    const script = this.doc.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'ld-json-events';
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': schemas,
+    });
+    this.doc.head.appendChild(script);
+  }
+
+  clearEventsJsonLd(): void {
+    const existing = this.doc.head.querySelector('#ld-json-events');
     if (existing) this.doc.head.removeChild(existing);
   }
 

@@ -1,7 +1,8 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, DestroyRef, HostListener, PLATFORM_ID, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
@@ -9,11 +10,11 @@ import { ViewCountService } from '../../core/view-count.service';
 import { GroupTreeComponent } from '../../shared/group-tree/group-tree.component';
 import { GroupConnectionGraphComponent } from '../../shared/group-connection-graph/group-connection-graph.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
-import { Group, GroupVideo, Member, Team, History, Proposal } from '../../models';
+import { Group, GroupVideo, Member, Team, History, Proposal, RelatedGroup } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { ProposalService } from '../../core/proposal.service';
-import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
-import { formatRelativeTime } from '../../core/time.utils';
+import { getDiffFields, getDeleteSummary, getRelatedSubjectName, buildSongReportPayload, DiffField } from '../../core/proposal-diff.utils';
+import { formatRelativeTime, localDateMs } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { GroupSongService } from '../../core/group-song.service';
 import { SupabaseService } from '../../core/supabase.service';
@@ -31,12 +32,12 @@ import {
   isPublicCompanyRecord,
   isPublicGroupRecord,
   isPublicMemberRecord,
-  sanitizePublicGroupRecord,
 } from '../../core/public-record.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
 import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
+import { GanttTooltipComponent } from '../../shared/gantt-tooltip/gantt-tooltip.component';
 import {
   photographyBadgeColor,
   photographyBadgeTextColor,
@@ -59,11 +60,11 @@ interface GanttRow {
 @Component({
   selector: 'app-group-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent],
+  imports: [CommonModule, FormsModule, RouterLink, GroupTreeComponent, GroupConnectionGraphComponent, SafeUrlPipe, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent, GanttTooltipComponent],
   templateUrl: './group-page.component.html',
   styleUrl: './group-page.component.css',
 })
-export class GroupPageComponent implements OnInit, OnDestroy {
+export class GroupPageComponent implements OnInit {
   group: Group | null = null;
   eventGroups: Group[] = [];
   companyName: string | null = null;
@@ -71,8 +72,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   histories: History[] = [];
   allMemberHistories: History[] = [];
   videos: GroupVideo[] = [];
-  similarGroups: Group[] = [];
-  similarGroupCompanyNames = new Map<string, string>();
+  private readonly platformId = inject(PLATFORM_ID);
+  similarGroups: RelatedGroup[] = [];
   carouselIndex = 0;
   carouselVisibleCount = 2;
   selectedHistory: History | null = null;
@@ -108,6 +109,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   songError = '';
   reportingSong: GroupSong | null = null;
   songReportNote = '';
+  songReportUrl = '';
   songReporterName = '';
   songReportSubmitting = false;
   songReportError = '';
@@ -131,16 +133,24 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   photographyStatusLabel = photographyStatusLabel;
 
   get latestEditSummary(): string {
-    if (!this.lastProposal) return '';
-    const submitter = this.lastProposal.submitter_name || '貢獻者';
-    const relative = this.formatRelativeTime(this.lastProposal.reviewed_at);
-    if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
-      return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
+    const p = this.lastProposal;
+    if (!p) return '';
+    const submitter = p.submitter_name || '貢獻者';
+    const relative = this.formatRelativeTime(p.reviewed_at);
+    const subject = getRelatedSubjectName(p, 'member_id', id => this.allMembers.find(m => m.id === id)?.name);
+    if (p.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
+      const target = subject ? `${subject}的` : '';
+      return `${relative} · ${submitter} 更新了${target}「${this.lastProposalDiffFields[0].label}」`;
     }
-    if (this.lastProposal.operation === 'DELETE' && this.lastProposalDiffFields.length > 0) {
-      return `${relative} · ${submitter} 刪除了「${this.lastProposalDiffFields[0].newValue === '—' ? this.lastProposalDiffFields[0].oldValue : this.lastProposalDiffFields[0].label}」`;
+    if (p.operation === 'DELETE') {
+      return `${relative} · ${submitter} ${getDeleteSummary(p)}`;
     }
-    return `${relative} · ${submitter}${this.lastProposal.operation === 'INSERT' ? ' 建立頁面' : ' 補充'}`;
+    if (p.operation === 'INSERT') {
+      if (p.table_name === 'history') return `${relative} · ${submitter} 新增了${subject ? `${subject}的` : ''}歷程紀錄`;
+      if (p.table_name === 'group_songs') return `${relative} · ${submitter} 新增了歌曲${subject ? `「${subject}」` : ''}`;
+      return `${relative} · ${submitter} 建立頁面`;
+    }
+    return `${relative} · ${submitter} 補充`;
   }
 
   get editorialSuggestions(): string[] {
@@ -159,8 +169,10 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   tooltipHistory: History | null = null;
   tooltipX = 0;
   tooltipY = 0;
+  selectedBarId: string | null = null;
   private _routeSub?: Subscription;
   private currentLoadId: string | null = null;
+  deletingSongId: string | null = null;
 
   private getCarouselVisibleCount(): number {
     return typeof window !== 'undefined' && window.innerWidth >= 768 ? 5 : 2;
@@ -179,6 +191,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     private historyService: HistoryService,
     private memberService: MemberService,
     private companyService: CompanyService,
+    private destroyRef: DestroyRef,
   ) {}
 
   @HostListener('window:resize')
@@ -190,18 +203,6 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async resolveSimilarGroupCompanyNames(): Promise<void> {
-    const needsLookup = this.similarGroups.filter(g => g.company_id && !g.company);
-    if (!needsLookup.length) return;
-    const companies = await this.companyService.getAll().catch(() => []);
-    const nameById = new Map(companies.map(c => [c.id, c.name]));
-    this.similarGroupCompanyNames = new Map(
-      needsLookup
-        .filter(g => nameById.has(g.company_id!))
-        .map(g => [g.company_id!, nameById.get(g.company_id!)!])
-    );
-  }
-
   get carouselCanPrev(): boolean { return this.carouselIndex > 0; }
   get carouselCanNext(): boolean {
     return this.carouselIndex < this.similarGroups.length - this.carouselVisibleCount;
@@ -209,21 +210,26 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   carouselPrev() { if (this.carouselCanPrev) this.carouselIndex--; }
   carouselNext() { if (this.carouselCanNext) this.carouselIndex++; }
 
+  onRelatedClick(toGroupId: string): void {
+    if (this.group) this.viewCount.logRelatedClick(this.group.id, toGroupId);
+  }
+
   ngOnInit() {
     this.carouselVisibleCount = this.getCarouselVisibleCount();
-    this.supabaseAuth.authState$.subscribe(s => {
+    this.supabaseAuth.authState$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(s => {
       this.isLoggedIn = !!s?.user;
       this.currentUserId = s?.user?.id ?? null;
     });
-    this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
-    this._routeSub = this.route.data.subscribe(({ pageData }) => {
+    this.adminRole.isAdmin$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(v => { this.isAdmin = v; });
+    this._routeSub = this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ pageData }) => {
       const data = pageData as GroupPageData;
       this.applyPageData(data);
       if (data.group && !data.error) {
         this.loadDeferredData(data.id, data.group);
+        this.loadChannelVideos(data.group);
       }
     });
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['propose'] === 'true') {
         this.showGroupProposalPanel = true;
       }
@@ -236,19 +242,26 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         window.history.replaceState(window.history.state, '', currentUrl.href);
       }
     });
-    this.route.fragment.subscribe(fragment => {
-      if (fragment === 'propose') {
-        this.showGroupProposalPanel = true;
-      }
-    });
-    this.route.fragment.subscribe(fragment => {
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fragment => {
       if (fragment === 'propose') {
         this.showGroupProposalPanel = true;
       }
     });
   }
 
-  ngOnDestroy() { this._routeSub?.unsubscribe(); }
+  /**
+   * Loads the channel's top videos. Browser-only: loadDeferredData runs during
+   * SSR, and the prerender build must not depend on YouTube being reachable.
+   */
+  private async loadChannelVideos(group: import('../../models').Group): Promise<void> {
+    this.videos = [];
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const channelId = group.youtube_channel_id;
+    const videos = await this.groupService.getChannelVideos(channelId, [group.name, group.name_jp]);
+    // Route may have changed while the request was in flight.
+    if (this.group?.youtube_channel_id === channelId) this.videos = videos;
+  }
 
   private async loadDeferredData(id: string, group: import('../../models').Group): Promise<void> {
     this.currentLoadId = id;
@@ -259,16 +272,15 @@ export class GroupPageComponent implements OnInit, OnDestroy {
         publicHistories.map(h => h.member_id).filter((mid): mid is string => !!mid)
       )];
 
-      const [company, proposals, historyProposals, songProposals, allMemberHistories, allMembers, similarGroups, songs, videos] = await Promise.all([
+      const [company, proposals, historyProposals, songProposals, allMemberHistories, allMembers, similarGroups, songs] = await Promise.all([
         (!this.companyName && group.company_id) ? this.companyService.getById(group.company_id).catch(() => null) : Promise.resolve(null),
         this.proposalService.getApprovedByRecord('groups', id).catch(() => []),
         this.proposalService.getApprovedHistoryByField('group_id', id).catch(() => [] as Proposal[]),
         this.proposalService.getApprovedSongsByField('group_songs', 'group_id', id).catch(() => [] as Proposal[]),
         this.historyService.getByMembers(memberIds).catch(() => []),
         this.memberService.getAll().catch(() => []),
-        group.style ? this.groupService.getSimilarByStyle(group.style.split(','), id).catch(() => []) : Promise.resolve([]),
+        this.groupService.getRelated(id).catch(() => []),
         this.groupSongService.getByGroup(id).catch(() => []),
-        this.groupService.getVideosByGroup(id).catch(() => []),
       ]);
 
       if (this.currentLoadId === id && !this._routeSub?.closed) {
@@ -286,10 +298,8 @@ export class GroupPageComponent implements OnInit, OnDestroy {
           .filter(isPublicMemberRecord)
           .map(m => ({ id: m.id, name: m.name ?? m.name_roman ?? m.id }))
           .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
-        this.similarGroups = similarGroups.filter(isPublicGroupRecord).map(sanitizePublicGroupRecord);
-        await this.resolveSimilarGroupCompanyNames();
+        this.similarGroups = similarGroups;
         this.songs = songs;
-        this.videos = videos;
         if (this.pendingEditSongId) {
           const song = this.songs.find(s => s.id === this.pendingEditSongId);
           if (song) this.openEditSong(song);
@@ -312,9 +322,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.teams = pageData.teams;
     this.histories = pageData.histories;
     this.allMemberHistories = pageData.allMemberHistories;
-    this.videos = pageData.videos;
     this.similarGroups = pageData.similarGroups;
-    this.resolveSimilarGroupCompanyNames();
     this.carouselIndex = 0;
     this.lastProposal = pageData.lastProposal;
     this.allMembers = pageData.allMembers;
@@ -380,11 +388,6 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       this.snsUrls.youtube,
     ].filter((v): v is string => !!v);
 
-    const styleGenres = (pageData.group.style ?? '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
     const musicGroupSchema: Record<string, any> = {
       '@type': 'MusicGroup',
       name: displayName,
@@ -396,7 +399,6 @@ export class GroupPageComponent implements OnInit, OnDestroy {
       ...(pageData.group.founded_at && { foundingDate: pageData.group.founded_at }),
       ...(pageData.group.disbanded_at && { dissolutionDate: pageData.group.disbanded_at }),
       ...(pageData.group.photo_url && { image: pageData.group.photo_url }),
-      ...(styleGenres.length > 0 && { genre: styleGenres }),
       ...(sameAs.length > 0 && { sameAs }),
       ...(pageData.companyName && {
         parentOrganization: {
@@ -525,12 +527,12 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
     const now = Date.now();
     const endBound = group?.disbanded_at
-      ? Math.max(new Date(group.disbanded_at).getTime(), now)
+      ? Math.max(localDateMs(group.disbanded_at), now)
       : now;
 
-    const minMs = Math.min(...histories.map(h => new Date(h.joined_at).getTime()));
+    const minMs = Math.min(...histories.map(h => localDateMs(h.joined_at)));
     const maxMs = Math.max(
-      ...histories.map(h => h.left_at ? new Date(h.left_at).getTime() : endBound),
+      ...histories.map(h => h.left_at ? localDateMs(h.left_at) : endBound),
       endBound
     );
     const totalMs = maxMs - minMs || 1;
@@ -538,7 +540,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     // Group by member_id; sort each member's histories by joined_at
     const memberMap = new Map<string, History[]>();
     for (const h of [...histories].sort((a, b) =>
-      new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime()
+      localDateMs(a.joined_at) - localDateMs(b.joined_at)
     )) {
       if (!memberMap.has(h.member_id)) memberMap.set(h.member_id, []);
       memberMap.get(h.member_id)!.push(h);
@@ -546,17 +548,17 @@ export class GroupPageComponent implements OnInit, OnDestroy {
 
     this.ganttRows = [...memberMap.values()].map(memberHistories => {
       const primaryHistory =
-        memberHistories.find(h => !h.left_at || new Date(h.left_at).getTime() > now)
+        memberHistories.find(h => !h.left_at || localDateMs(h.left_at) > now)
         ?? memberHistories[memberHistories.length - 1];
 
       const segments: GanttSegment[] = memberHistories.map(h => {
-        const start = new Date(h.joined_at).getTime();
-        const end = h.left_at ? new Date(h.left_at).getTime() : maxMs;
+        const start = localDateMs(h.joined_at);
+        const end = h.left_at ? localDateMs(h.left_at) : maxMs;
         return {
           history: h,
           leftPct: (start - minMs) / totalMs * 100,
           widthPct: Math.max((end - start) / totalMs * 100, 0.5),
-          isActive: !h.left_at || new Date(h.left_at).getTime() > now,
+          isActive: !h.left_at || localDateMs(h.left_at) > now,
         };
       });
 
@@ -613,12 +615,13 @@ export class GroupPageComponent implements OnInit, OnDestroy {
           composer: this.songFormData.composer || null,
           lyricist: this.songFormData.lyricist || null,
           arranger: this.songFormData.arranger || null,
+          choreographer: this.songFormData.choreographer || null,
           notes: this.songFormData.notes || null,
           sort_order: this.songFormData.sort_order ?? 0,
         });
         this.songs = this.songs.map(s => s.id === updated.id ? updated : s)
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-        await this.proposalService.recordDirectEdit('group_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(() => {});
+        await this.proposalService.recordDirectEdit('group_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       } else {
         const created = await this.groupSongService.create({
           group_id: id,
@@ -628,12 +631,13 @@ export class GroupPageComponent implements OnInit, OnDestroy {
           composer: this.songFormData.composer || null,
           lyricist: this.songFormData.lyricist || null,
           arranger: this.songFormData.arranger || null,
+          choreographer: this.songFormData.choreographer || null,
           notes: this.songFormData.notes || null,
           sort_order: this.songFormData.sort_order ?? 0,
         });
         this.songs = [...this.songs, created]
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-        await this.proposalService.recordDirectEdit('group_songs', created.id, {}, created, 'INSERT').catch(() => {});
+        await this.proposalService.recordDirectEdit('group_songs', created.id, {}, created, 'INSERT').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       }
       this.cancelSongForm();
     } catch (e: any) {
@@ -644,13 +648,17 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   }
 
   async deleteSong(song: GroupSong) {
+    if (this.deletingSongId) return;
     if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
+    this.deletingSongId = song.id;
     try {
       await this.groupSongService.delete(song.id);
-      await this.proposalService.recordDirectEdit('group_songs', song.id, song, {}, 'DELETE').catch(() => {});
+      await this.proposalService.recordDirectEdit('group_songs', song.id, song, {}, 'DELETE').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       this.songs = this.songs.filter(s => s.id !== song.id);
     } catch (e: any) {
       alert(e.message ?? '刪除失敗');
+    } finally {
+      this.deletingSongId = null;
     }
   }
 
@@ -661,6 +669,7 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   startReportSong(song: GroupSong) {
     this.reportingSong = song;
     this.songReportNote = '';
+    this.songReportUrl = '';
     this.songReporterName = '';
     this.songReportError = '';
     this.songReportDone = false;
@@ -676,12 +685,13 @@ export class GroupPageComponent implements OnInit, OnDestroy {
     this.songReportError = '';
     try {
       const session = await this.supabaseAuth.getSessionOnce();
+      const payload = buildSongReportPayload(this.reportingSong!, this.songReportUrl);
       await this.proposalService.submit({
         table_name: 'group_songs',
         record_id: this.reportingSong!.id,
         operation: 'UPDATE',
-        proposed_data: {},
-        original_data: null,
+        proposed_data: payload.proposed_data,
+        original_data: payload.original_data,
         submitter_id: session?.user?.id ?? null,
         submitter_name: this.songReporterName.trim() || (session?.user?.email ?? '匿名'),
         submitter_email: session?.user?.email ?? null,
@@ -719,7 +729,22 @@ export class GroupPageComponent implements OnInit, OnDestroy {
   }
 
   onBarMouseLeave() {
-    this.tooltipHistory = null;
+    if (!this.selectedBarId) {
+      this.tooltipHistory = null;
+    }
+  }
+
+  /** Touch/click support: tapping a bar toggles its tooltip since touch devices have no hover. */
+  onBarClick(event: MouseEvent, history: History) {
+    if (this.selectedBarId === history.id) {
+      this.selectedBarId = null;
+      this.tooltipHistory = null;
+      return;
+    }
+    this.selectedBarId = history.id;
+    this.tooltipHistory = history;
+    this.tooltipX = event.clientX;
+    this.tooltipY = event.clientY;
   }
 
   hexToRgb(hex: string): string {

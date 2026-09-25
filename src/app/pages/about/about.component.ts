@@ -46,7 +46,7 @@ export class AboutComponent implements OnInit {
         description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體、公司關係、演出場地與近期活動行程。',
         foundingDate: '2024',
         areaServed: '台灣',
-        knowsAbout: ['台灣地下偶像', '偶像團體', '偶像成員歷程', '偶像演出場地', '地下偶像活動行程'],
+        knowsAbout: ['台灣地下偶像', '地下偶像資訊', '偶像團體', '偶像成員歷程', '偶像演出場地', '地下偶像活動行程'],
         contactPoint: {
           '@type': 'ContactPoint',
           contactType: 'customer support',

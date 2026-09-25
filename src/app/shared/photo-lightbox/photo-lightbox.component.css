@@ -29,8 +29,8 @@
 }
 
 .lb-photo {
-  max-width: min(90vw, 600px);
-  max-height: min(85vh, 800px);
+  max-width: min(90vw, 850px);
+  max-height: min(85vh, 1000px);
   object-fit: contain;
   border-radius: 10px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);

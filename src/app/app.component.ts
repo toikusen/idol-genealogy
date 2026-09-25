@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, Injector, PLATFORM_ID, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, NavigationEnd, NavigationStart, NavigationCancel, NavigationError } from '@angular/router';
-import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { AsyncPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, fromEvent, map, distinctUntilChanged } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,13 +9,19 @@ import type { SupabaseService } from './core/supabase.service';
 import { AnalyticsService } from './core/analytics.service';
 import { CookieBannerComponent } from './shared/cookie-banner/cookie-banner.component';
 import { PwaInstallPromptComponent } from './shared/pwa-install-prompt/pwa-install-prompt.component';
+import { PushOptInPromptComponent } from './shared/push-opt-in-prompt/push-opt-in-prompt.component';
 import { AdBannerComponent } from './shared/ad-banner/ad-banner.component';
 import { ThemeService } from './core/theme.service';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
+// Long-form prose routes where AdSense ad intent links/chips are welcome.
+// Everywhere else keeps the google-anno-skip class that index.html ships with,
+// so chips can't inject buttons into card grids, tables or data headings.
+export const AD_INTENT_ROUTES = /^\/(guide|learn\/[^/?#]+)(?:[?#]|$)/;
+
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent, AdBannerComponent],
+  imports: [RouterOutlet, RouterLink, AsyncPipe, CookieBannerComponent, PwaInstallPromptComponent, PushOptInPromptComponent, AdBannerComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -36,6 +42,10 @@ export class AppComponent {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly doc = inject(DOCUMENT);
+  // loadAuthChrome resolves a dynamic import before touching the injector, so
+  // the component can be torn down in between — reading it then throws NG0205.
+  private destroyed = false;
   private readonly swUpdate = inject(SwUpdate, { optional: true });
   private authChromePromise: Promise<void> | null = null;
   private supabase: SupabaseService | null = null;
@@ -50,7 +60,9 @@ export class AppComponent {
         this.isNavigating.set(true);
       } else if (e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError) {
         if (e instanceof NavigationEnd) {
-          analytics.trackPageView((e as NavigationEnd).urlAfterRedirects);
+          const url = (e as NavigationEnd).urlAfterRedirects;
+          analytics.trackPageView(url);
+          this.doc.body.classList.toggle('google-anno-skip', !AD_INTENT_ROUTES.test(url));
           if (!this.navigationComplete()) this.navigationComplete.set(true);
         }
         this.isNavigating.set(false);
@@ -150,15 +162,19 @@ export class AppComponent {
   private loadAuthChrome(): Promise<void> {
     if (!this.isBrowser) return Promise.resolve();
     if (this.authChromePromise) return this.authChromePromise;
+    this.destroyRef.onDestroy(() => { this.destroyed = true; });
 
     this.authChromePromise = Promise.all([
       import('./core/supabase.service'),
       import('./core/admin-role.service'),
       import('./core/favorites.service'),
-    ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }]) => {
+      import('./core/push-notification.service'),
+    ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }, { PushNotificationService }]) => {
+      if (this.destroyed) return;
       const supabase = this.injector.get(SupabaseService);
       const adminRole = this.injector.get(AdminRoleService);
       const favorites = this.injector.get(FavoritesService);
+      const push = this.injector.get(PushNotificationService);
       this.supabase = supabase;
 
       supabase.authState$.pipe(takeUntilDestroyed(this.destroyRef))
@@ -166,6 +182,9 @@ export class AppComponent {
           this.sessionSubject.next(session);
           if (session) {
             favorites.load(session.user.id).catch(() => {});
+            // Push endpoints expire without warning; repair the stored one on every app
+            // start so a reaped row cannot silence this device forever.
+            void push.ensureSubscribed();
             this.showLoginPill.set(false);
           } else {
             favorites.reset();
@@ -182,6 +201,7 @@ export class AppComponent {
           this.sessionSubject.next(session);
           if (session) {
             favorites.load(session.user.id).catch(() => {});
+            void push.ensureSubscribed();
             this.showLoginPill.set(false);
           } else {
             this.showLoginPill.set(true);

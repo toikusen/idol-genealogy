@@ -43,6 +43,9 @@ const companiesListResolver = lazyResolver(() =>
 const leaderboardPageResolver = lazyResolver(() =>
   import('./core/page-data.resolvers').then(m => m.leaderboardPageResolver)
 );
+const venuePageResolver = lazyResolver(() =>
+  import('./core/page-data.resolvers').then(m => m.venuePageResolver)
+);
 const staffGuard = lazyGuard(() =>
   import('./core/staff.guard').then(m => m.staffGuard)
 );
@@ -99,6 +102,15 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/leaderboard/leaderboard.component').then(m => m.LeaderboardComponent)
   },
   {
+    path: 'sukigao',
+    loadComponent: () => import('./pages/sukigao/sukigao.component').then(m => m.SukigaoComponent)
+  },
+  {
+    path: 'sukigao/ranking',
+    loadComponent: () =>
+      import('./pages/sukigao-ranking/sukigao-ranking.component').then(m => m.SukigaoRankingComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent)
   },
@@ -145,6 +157,12 @@ export const routes: Routes = [
     path: 'company/:id',
     resolve: { pageData: companyPageResolver },
     loadComponent: () => import('./pages/company-page/company-page.component').then(m => m.CompanyPageComponent)
+  },
+  {
+    path: 'venue/:id',
+    resolve: { pageData: venuePageResolver },
+    loadComponent: () =>
+      import('./pages/venue-page/venue-page.component').then(m => m.VenuePageComponent)
   },
   {
     path: 'privacy',

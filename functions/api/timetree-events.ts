@@ -111,6 +111,12 @@ export const onRequest: PagesFunction = async ({ request }) => {
     } while (cursor && page < MAX_PAGES);
 
     const futureEvents = allEvents.filter(e => new Date(e.start).getTime() >= from);
+    // ponytail: FIFO cap at 200, switch to LRU if hit rate matters
+    if (cache.size >= 200) {
+      const now = Date.now();
+      for (const [key, entry] of cache) if (entry.expiresAt <= now) cache.delete(key);
+      if (cache.size >= 200) cache.delete(cache.keys().next().value as string);
+    }
     cache.set(cacheKey, { data: futureEvents, expiresAt: Date.now() + CACHE_TTL_MS });
     return Response.json(futureEvents);
   } catch {

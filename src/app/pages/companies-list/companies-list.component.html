@@ -26,7 +26,7 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(232,121,160,0.55)" stroke-width="1.8" style="flex-shrink:0;">
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
       </svg>
-      <input type="text" [(ngModel)]="searchQuery" aria-label="搜尋經紀公司名稱" placeholder="搜尋公司…"
+      <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" aria-label="搜尋經紀公司名稱" placeholder="搜尋公司…"
         style="border: none; background: transparent; padding: 11px 0; font-size: 0.9rem; color: var(--text-primary); width: 100%;" />
     </div>
 
@@ -36,15 +36,22 @@
       </div>
     }
 
-    @if (!loading && filteredCompanies.length === 0) {
+    @if (!loading && loadError) {
+      <div style="text-align:center;padding:80px 0;">
+        <p style="font-size:1rem;color:rgba(200,80,80,0.75);margin-bottom:14px;">載入失敗，請重試</p>
+        <button type="button" (click)="retryLoad()" style="padding:8px 22px;border-radius:20px;border:1px solid rgba(232,121,160,0.35);background:transparent;color:var(--text-primary);font-size:0.85rem;letter-spacing:0.05em;cursor:pointer;">重試</button>
+      </div>
+    }
+
+    @if (!loading && !loadError && filteredCompanies.length === 0) {
       <div style="text-align:center;padding:80px 0;">
         <p style="font-size:1rem;color:var(--text-faint-45);">查無結果</p>
       </div>
     }
 
-    @if (!loading && filteredCompanies.length > 0) {
+    @if (!loading && !loadError && filteredCompanies.length > 0) {
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px;">
-        @for (c of filteredCompanies; track c.id) {
+        @for (c of pagedCompanies; track c.id) {
           <a [routerLink]="'/company/' + c.id" class="entity-grid-card" style="
             display: flex; flex-direction: column; align-items: center;
             padding: 16px 10px 12px;
@@ -63,6 +70,39 @@
           </a>
         }
       </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:28px;">
+
+          <button
+            (click)="setPage(page - 1)"
+            [disabled]="page === 1"
+            class="pagination-nav-btn"
+            [style.opacity]="page === 1 ? '0.35' : '1'"
+          >← 上一頁</button>
+
+          @for (p of pageNumbers; track p) {
+            <a
+              [routerLink]="[]"
+              [queryParams]="p === 1 ? {} : { page: p }"
+              class="pagination-page-btn"
+              [class.pagination-page-btn--active]="p === page"
+              [style.fontWeight]="p === page ? '600' : '400'"
+            >{{ p }}</a>
+          }
+
+          <button
+            (click)="setPage(page + 1)"
+            [disabled]="page === totalPages"
+            class="pagination-nav-btn"
+            [style.opacity]="page === totalPages ? '0.35' : '1'"
+          >下一頁 →</button>
+
+        </div>
+
+        <p style="text-align: center; margin-top: 14px; font-size: 0.72rem; color: var(--text-faint-40); letter-spacing: 0.08em;">第 {{ page }} 頁，共 {{ totalPages }} 頁・{{ filteredCompanies.length }} 家</p>
+      }
     }
 
   </div>

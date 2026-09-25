@@ -1,12 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { ProposalService } from './proposal.service';
 import { SupabaseService } from './supabase.service';
+import { MemberService } from './member.service';
 
 describe('ProposalService', () => {
   let service: ProposalService;
   let mockDb: any;
   let insertSpy: jasmine.Spy;
   let rpcSpy: jasmine.Spy;
+  let proposalUpdateSpy: jasmine.Spy;
 
   beforeEach(() => {
     insertSpy = jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null }));
@@ -23,18 +25,35 @@ describe('ProposalService', () => {
       return { eq: jasmine.createSpy('eq').and.returnValue(eqChain) };
     };
 
+    proposalUpdateSpy = jasmine.createSpy('update').and.returnValue({
+      eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
+    });
+
     mockDb = {
       from: jasmine.createSpy('from').and.callFake((table: string) => {
         if (table === 'proposals') {
           return {
             insert: insertSpy,
             select: jasmine.createSpy('select').and.returnValue(createSelectChain()),
-            update: jasmine.createSpy('update').and.returnValue({
-              eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
-            }),
+            update: proposalUpdateSpy,
           };
         }
-        return { select: jasmine.createSpy('select').and.returnValue(createSelectChain()) };
+        return {
+          select: jasmine.createSpy('select').and.returnValue(createSelectChain()),
+          insert: jasmine.createSpy('insert').and.returnValue({
+            select: jasmine.createSpy('select').and.returnValue({
+              single: jasmine.createSpy('single').and.returnValue(
+                Promise.resolve({ data: { id: 'new-record-id' }, error: null })
+              ),
+            }),
+          }),
+          update: jasmine.createSpy('update').and.returnValue({
+            eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
+          }),
+          delete: jasmine.createSpy('delete').and.returnValue({
+            eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null }))
+          }),
+        };
       }),
       rpc: rpcSpy,
     };
@@ -70,6 +89,112 @@ describe('ProposalService', () => {
   it('getPendingCount() should return 0 for empty result', async () => {
     const count = await service.getPendingCount();
     expect(count).toBe(0);
+  });
+
+  describe('submit() anonymous rate limit', () => {
+    const anonymousProposal = {
+      table_name: 'members' as const,
+      record_id: 'uuid-123',
+      operation: 'UPDATE' as const,
+      proposed_data: { name: 'Test' },
+      original_data: { name: 'Old' },
+      submitter_name: 'Tester',
+      submitter_id: null,
+      submitter_email: null,
+      submitter_note: null,
+    };
+
+    function mockRateLimitResult(result: { count?: number | null; error?: any }) {
+      mockDb.from = jasmine.createSpy('from').and.callFake((table: string) => {
+        if (table === 'proposals') {
+          return {
+            insert: insertSpy,
+            select: jasmine.createSpy('select').and.returnValue({
+              eq: jasmine.createSpy('eq').and.returnValue({
+                is: jasmine.createSpy('is').and.returnValue({
+                  gte: jasmine.createSpy('gte').and.returnValue(Promise.resolve(result)),
+                }),
+              }),
+            }),
+          };
+        }
+        return {};
+      });
+    }
+
+    it('throws a rate-limit error when count >= 5', async () => {
+      mockRateLimitResult({ count: 5, error: null });
+      await expectAsync(service.submit(anonymousProposal)).toBeRejectedWithError('送出過於頻繁，請稍後再試');
+      expect(insertSpy).not.toHaveBeenCalled();
+    });
+
+    it('fails closed and throws when the rate-limit query errors', async () => {
+      mockRateLimitResult({ count: undefined, error: { message: 'db error' } });
+      await expectAsync(service.submit(anonymousProposal)).toBeRejectedWithError('目前無法送出，請稍後再試');
+      expect(insertSpy).not.toHaveBeenCalled();
+    });
+
+    it('calls insert when count < 5', async () => {
+      mockRateLimitResult({ count: 2, error: null });
+      await service.submit(anonymousProposal);
+      expect(insertSpy).toHaveBeenCalledWith(anonymousProposal);
+    });
+  });
+
+  describe('approve', () => {
+    it('invalidates the member cache after applying a members proposal', async () => {
+      const memberService = TestBed.inject(MemberService);
+      const spy = spyOn(memberService, 'invalidateCache');
+      await service.approve({
+        id: 'p1',
+        table_name: 'members',
+        record_id: null,
+        operation: 'INSERT',
+        proposed_data: { name: '和希' },
+      } as any);
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('stores the new row id as record_id when approving an INSERT', async () => {
+      await service.approve({
+        id: 'p1',
+        table_name: 'companies',
+        record_id: null,
+        operation: 'INSERT',
+        proposed_data: { name: '新公司' },
+      } as any);
+      expect(proposalUpdateSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ record_id: 'new-record-id' })
+      );
+    });
+
+    it('does not touch the target table when approving a report (empty UPDATE)', async () => {
+      await service.approve({
+        id: 'p3',
+        table_name: 'group_songs',
+        record_id: 'song-1',
+        operation: 'UPDATE',
+        proposed_data: {},
+        submitter_note: '這首歌的作曲者寫錯了',
+      } as any);
+      expect(mockDb.from).not.toHaveBeenCalledWith('group_songs');
+      expect(proposalUpdateSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ status: 'approved', record_id: 'song-1' })
+      );
+    });
+
+    it('keeps the existing record_id when approving an UPDATE', async () => {
+      await service.approve({
+        id: 'p2',
+        table_name: 'companies',
+        record_id: 'existing-id',
+        operation: 'UPDATE',
+        proposed_data: { name: '改名' },
+      } as any);
+      expect(proposalUpdateSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ record_id: 'existing-id' })
+      );
+    });
   });
 
   describe('getApprovedByRecord', () => {

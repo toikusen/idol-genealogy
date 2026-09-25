@@ -1,12 +1,14 @@
-import { Component, OnInit, OnDestroy, PLATFORM_ID, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, PLATFORM_ID, inject, ViewChild, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
-import { GoogleCalendarService } from '../../core/google-calendar.service';
+import { GoogleCalendarService, RelatedGroupRef, ScheduleEvent, ScheduleResult } from '../../core/google-calendar.service';
+import { addDays, taipeiDateParts, taipeiDayKey, taipeiTime } from '../../core/taipei-date.utils';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { Member, Group, Company, MemberRecentHeatEntry, GroupRecentHeatEntry, Venue, VenueCalendarEvent, VenueRegionFilter } from '../../models';
@@ -25,6 +27,10 @@ import {
   sanitizePublicGroupRecord,
   sanitizePublicMemberRecord,
 } from '../../core/public-record.utils';
+
+type HomeTab = 'members' | 'groups' | 'companies' | 'events' | 'venues';
+const HOME_TABS: readonly HomeTab[] = ['members', 'groups', 'companies', 'events', 'venues'];
+const VENUE_REGION_FILTERS: readonly VenueRegionFilter[] = ['all', 'north', 'central', 'south'];
 
 @Component({
   selector: 'app-home',
@@ -68,11 +74,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   allSoloMembers: Member[] = [];
   topMembers: MemberRecentHeatEntry[] = [];
   topGroups: GroupRecentHeatEntry[] = [];
-  activeTab: 'members' | 'groups' | 'companies' | 'events' | 'venues' = 'members';
+  activeTab: HomeTab = 'members';
   private soloMembersLoaded = false;
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly venueService = inject(VenueService);
+  private readonly destroyRef = inject(DestroyRef);
   private destroyed = false;
 
   activeGroups: Group[] = [];
@@ -95,13 +102,14 @@ export class HomeComponent implements OnInit, OnDestroy {
     private seo: SeoService,
     private analytics: AnalyticsService,
     private route: ActivatedRoute,
+    private router: Router,
   ) {}
 
   async ngOnInit() {
     // Set page-level SEO
     this.seo.setPage(
       'Idol Maps | 台灣地下偶像資料庫',
-      '台灣地下偶像成員與團體的完整資料庫。查詢成員履歷、團體歷史、場地資訊與近期活動行程。',
+      '台灣地下偶像資訊站，收錄成員與團體的完整資料庫。查詢成員履歷、團體歷史、場地資訊與近期活動行程。',
       siteUrl('/')
     );
     this.seo.setJsonLdGraph([
@@ -130,7 +138,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體、公司關係、演出場地與近期活動行程。',
         foundingDate: '2024',
         areaServed: '台灣',
-        knowsAbout: ['台灣地下偶像', '偶像團體', '偶像成員歷程', '偶像演出場地', '地下偶像活動行程'],
+        knowsAbout: ['台灣地下偶像', '地下偶像資訊', '偶像團體', '偶像成員歷程', '偶像演出場地', '地下偶像活動行程'],
       },
       {
         '@type': 'FAQPage',
@@ -198,12 +206,39 @@ export class HomeComponent implements OnInit, OnDestroy {
       await this.search();
     }
 
+    // ?tab=/?region= are the single source of truth for the active tab and venue
+    // filter; subscribing (not snapshot) keeps the view in sync on back/forward.
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const tabParam = params.get('tab');
+      const tab: HomeTab = tabParam && (HOME_TABS as readonly string[]).includes(tabParam)
+        ? (tabParam as HomeTab)
+        : 'members';
+      if (tab !== this.activeTab) {
+        this.activeTab = tab;
+        void this.loadTabData(tab);
+      }
+      const regionParam = params.get('region');
+      this.activeVenueRegionFilter = regionParam && (VENUE_REGION_FILTERS as readonly string[]).includes(regionParam)
+        ? (regionParam as VenueRegionFilter)
+        : 'all';
+    });
   }
 
-  async setTab(tab: 'members' | 'groups' | 'companies' | 'events' | 'venues') {
+  async setTab(tab: HomeTab) {
     if (tab === this.activeTab) return;
+    // Apply optimistically for instant feedback; the queryParamMap subscription
+    // only kicks in when the URL changes underneath us (back/forward).
     this.activeTab = tab;
     this.analytics.trackEvent('home_tab_switch', { tab });
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'members' ? null : tab },
+      queryParamsHandling: 'merge',
+    });
+    await this.loadTabData(tab);
+  }
+
+  private async loadTabData(tab: HomeTab): Promise<void> {
     if (tab === 'groups' || tab === 'companies') {
       await this.ensureBrowseCatalog();
     }
@@ -214,7 +249,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.companySections = this.buildCompanySections();
     }
     if (tab === 'events') {
-      void this.loadTodayEvents();
+      void this.loadSchedule();
     }
     if (tab === 'venues' && !this.venuesLoaded) {
       this.venuesLoading = true;
@@ -376,7 +411,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   venuesNorth: Venue[] = [];
   venuesCentral: Venue[] = [];
   venuesSouth: Venue[] = [];
-  activeVenueRegionFilter: VenueRegionFilter = 'north';
+  activeVenueRegionFilter: VenueRegionFilter = 'all';
   readonly venueRegionFilters: { key: VenueRegionFilter; label: string }[] = [
     { key: 'all', label: '全部' },
     { key: 'north', label: '北部' },
@@ -386,16 +421,25 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   setVenueRegionFilter(filter: VenueRegionFilter) {
     this.activeVenueRegionFilter = filter;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { region: filter === 'all' ? null : filter },
+      queryParamsHandling: 'merge',
+    });
   }
 
   async onVenuePopupOpened(venueId: string): Promise<void> {
     const venue = this.venues.find(v => v.id === venueId);
     if (!venue) return;
     this.trackVenueView(venue, 'map_popup');
+    await this.refreshVenuePopup(venue);
+  }
+
+  private async refreshVenuePopup(venue: Venue): Promise<void> {
     await this.loadVenueEvents(venue);
-    const events = this.venueEvents.get(venueId) ?? [];
-    const error  = this.venueEventsError.get(venueId) ?? '';
-    this.venueMapRef?.refreshPopup(venueId, events, error);
+    const events = this.venueEvents.get(venue.id) ?? [];
+    const error  = this.venueEventsError.get(venue.id) ?? '';
+    this.venueMapRef?.refreshPopup(venue.id, events, error);
   }
 
   onVenueProposalRequested(venueId: string): void {
@@ -427,8 +471,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.expandedVenueIds.delete(venue.id);
     } else {
       this.expandedVenueIds.add(venue.id);
+      this.venueMapRef?.focusVenue(venue.id);
       this.trackVenueView(venue, 'list_expand');
-      void this.loadVenueEvents(venue);
+      void this.refreshVenuePopup(venue);
     }
   }
 
@@ -573,70 +618,86 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   readonly calendarUrl = 'https://calendar.google.com/calendar/u/0/embed?src=mr7kibfjcm3gu52v6t64lreras@group.calendar.google.com&ctz=Asia/Taipei&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0&bgcolor=%23FDF8FF';
 
-  todayDisplayDate = '';
-  todayEvents: VenueCalendarEvent[] = [];
-  todayEventsLoading = false;
-  private todayTargetDate: Date | null = null;
+  schedule: ScheduleResult | null = null;
+  scheduleLoaded = false;
+  scheduleLoading = false;
+  /** Guards against a slower group-less pass landing after the enriched one. */
+  private scheduleEpoch = 0;
 
-  private async loadTodayEvents(): Promise<void> {
-    if (this.todayEventsLoading || this.todayEvents.length > 0) return;
-    this.todayEventsLoading = true;
+  readonly maxChips = 4;
+
+  private async loadSchedule(): Promise<void> {
+    if (this.scheduleLoading || this.scheduleLoaded) return;
+    this.scheduleLoading = true;
+    const epoch = ++this.scheduleEpoch;
     try {
-      const now = new Date();
-      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      this.todayTargetDate = target;
-      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-      this.todayDisplayDate = `${target.getFullYear()}年${target.getMonth() + 1}月${target.getDate()}日（週${weekdays[target.getDay()]}）`;
-      this.todayEvents = await this.googleCalendarService.getEventsForDate(target);
-    } catch (err) {
-      console.warn('[今日活動] 載入失敗，顯示空狀態', err);
-      this.todayEvents = [];
+      // Render the schedule before the group catalog arrives; chips are an
+      // enhancement and must never gate the events themselves.
+      const base = await this.googleCalendarService.getSchedule([]);
+      if (epoch !== this.scheduleEpoch || this.destroyed) return;
+      this.schedule = base;
+      this.scheduleLoaded = true;
+      if (base.status !== 'ok') return;
+
+      await this.ensureBrowseCatalog().catch(() => undefined);
+      if (epoch !== this.scheduleEpoch || this.destroyed || this.allGroups.length === 0) return;
+
+      const enriched = await this.googleCalendarService.getSchedule(this.allGroups);
+      if (epoch !== this.scheduleEpoch || this.destroyed || enriched.status !== 'ok') return;
+      this.schedule = enriched;
     } finally {
-      this.todayEventsLoading = false;
+      if (epoch === this.scheduleEpoch) this.scheduleLoading = false;
     }
   }
 
-  get todayAllDayEvents(): VenueCalendarEvent[] {
-    return this.todayEvents.filter(e => e.isAllDay);
+  retrySchedule(): void {
+    if (this.scheduleLoading) return;
+    this.scheduleEpoch++;
+    this.schedule = null;
+    this.scheduleLoaded = false;
+    void this.loadSchedule();
   }
 
-  /** 昨夜延續：start 在目標日期之前（昨天開始、今天結束的跨夜活動） */
-  get todayCarryoverEvents(): VenueCalendarEvent[] {
-    return this.todayEvents.filter(e => !e.isAllDay && this.isCarryoverEvent(e));
+  get todayDisplayDate(): string {
+    if (!this.schedule) return '';
+    const { month, day, weekday } = taipeiDateParts(`${this.schedule.today.dayKey}T00:00:00+08:00`);
+    return `${month}/${day}（${weekday}）`;
   }
 
-  /** 主時間軸：今天開始的活動 */
-  get todayTimedEvents(): VenueCalendarEvent[] {
-    return this.todayEvents.filter(e => !e.isAllDay && !this.isCarryoverEvent(e));
+  get todayEventCount(): number {
+    const t = this.schedule?.today;
+    return t ? t.carryover.length + t.allDay.length + t.timed.length : 0;
   }
 
-  /** 活動開始日期早於今日（從昨天延伸進今天的跨夜場） */
-  isCarryoverEvent(event: VenueCalendarEvent): boolean {
-    if (!this.todayTargetDate) return false;
-    const start = new Date(event.start);
-    const t = this.todayTargetDate;
-    return (
-      start.getFullYear() < t.getFullYear() ||
-      (start.getFullYear() === t.getFullYear() && start.getMonth() < t.getMonth()) ||
-      (start.getFullYear() === t.getFullYear() && start.getMonth() === t.getMonth() && start.getDate() < t.getDate())
-    );
+  dayHeading(dayKey: string): string {
+    const { month, day, weekday } = taipeiDateParts(`${dayKey}T00:00:00+08:00`);
+    const prefix = this.schedule && dayKey === addDays(this.schedule.today.dayKey, 1) ? '明日 · ' : '';
+    return `${prefix}${month}/${day}（${weekday}）`;
   }
 
-  /** 今天開始、明天結束的跨夜活動 */
+  /** Start and end fall on different Taipei days. All-day events never qualify. */
   isOvernightEvent(event: VenueCalendarEvent): boolean {
     if (!event.end || event.isAllDay) return false;
-    const start = new Date(event.start);
-    const end = new Date(event.end);
-    return start.getDate() !== end.getDate() ||
-           start.getMonth() !== end.getMonth() ||
-           start.getFullYear() !== end.getFullYear();
+    return taipeiDayKey(event.start) !== taipeiDayKey(event.end);
+  }
+
+  allDayRange(event: ScheduleEvent): string {
+    const from = taipeiDateParts(`${taipeiDayKey(event.start)}T00:00:00+08:00`);
+    if (!event.allDayEndDayKey) return `${from.month}/${from.day}`;
+    const to = taipeiDateParts(`${event.allDayEndDayKey}T00:00:00+08:00`);
+    return `${from.month}/${from.day}–${to.month}/${to.day}`;
   }
 
   formatTodayEventTime(dateStr: string): string {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '';
-    return d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return dateStr ? taipeiTime(dateStr) : '';
+  }
+
+  visibleChips(event: ScheduleEvent): RelatedGroupRef[] {
+    return event.relatedGroups.slice(0, this.maxChips);
+  }
+
+  hiddenChipCount(event: ScheduleEvent): number {
+    return Math.max(0, event.relatedGroups.length - this.maxChips);
   }
 
   get hasResults(): boolean {

@@ -63,6 +63,8 @@
   --text-pink-65: rgba(232, 121, 160, 0.65);
   --text-link: #c04070;
   --text-ghost: rgba(184, 160, 184, 0.60);
+  /* --idol-purple is 3.74:1 — this is the darkened purple that is safe as text. */
+  --text-purple: #5a44b0;
 
   /* ── Mauve tints (non-text: borders, backgrounds) ── */
   --mauve-04: rgba(122, 90, 122, 0.04);
@@ -219,6 +221,7 @@ h1, h2, h3 {
     --text-pink-65: rgba(240, 150, 185, 0.65);
     --text-link: #e879a0;
     --text-ghost: rgba(190, 155, 190, 0.60);
+    --text-purple: #b9a8ff;
 
     /* Mauve tints */
     --mauve-04: rgba(210, 175, 210, 0.04);

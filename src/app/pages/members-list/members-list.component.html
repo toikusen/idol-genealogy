@@ -72,6 +72,14 @@
           </svg>
         </button>
 
+        @if (linksError) {
+          <button type="button" (click)="retryLinks()" style="
+            position:absolute; top:100%; left:0; margin-top:4px;
+            background:none; border:none; padding:0; cursor:pointer;
+            font-size:0.72rem; color:#c05080; text-decoration:underline;
+          ">重試</button>
+        }
+
         <!-- Dropdown panel -->
         @if (groupDropdownOpen) {
           <!-- Backdrop to close -->
@@ -153,6 +161,18 @@
       </div>
     </div>
 
+    <!-- Sort -->
+    <div role="group" aria-label="排序方式" class="sort-toggle">
+      <button type="button" (click)="setSort('name')"
+              [class.sort-toggle__btn--active]="sortMode === 'name'"
+              [attr.aria-pressed]="sortMode === 'name'"
+              class="sort-toggle__btn">名稱</button>
+      <button type="button" (click)="setSort('recent')"
+              [class.sort-toggle__btn--active]="sortMode === 'recent'"
+              [attr.aria-pressed]="sortMode === 'recent'"
+              class="sort-toggle__btn">最近更新</button>
+    </div>
+
     <!-- Loading -->
     @if (loading) {
       <div style="display:flex;justify-content:center;padding:80px 0;">
@@ -165,15 +185,23 @@
       </div>
     }
 
+    <!-- Error -->
+    @if (!loading && loadError) {
+      <div style="text-align:center;padding:80px 0;">
+        <p style="font-size:1rem;color:rgba(200,80,80,0.75);margin-bottom:14px;">載入失敗，請重試</p>
+        <button type="button" (click)="retryLoad()" style="padding:8px 22px;border-radius:20px;border:1px solid rgba(232,121,160,0.35);background:transparent;color:var(--text-primary);font-size:0.85rem;letter-spacing:0.05em;cursor:pointer;">重試</button>
+      </div>
+    }
+
     <!-- Empty -->
-    @if (!loading && filteredMembers.length === 0) {
+    @if (!loading && !loadError && filteredMembers.length === 0) {
       <div style="text-align:center;padding:80px 0;">
         <p style="font-size:1rem;color:var(--text-faint-45);">查無結果</p>
       </div>
     }
 
     <!-- Grid -->
-    @if (!loading && filteredMembers.length > 0) {
+    @if (!loading && !loadError && filteredMembers.length > 0) {
       <div style="
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -207,14 +235,6 @@
               [style.background]="safeColor(m.color) + '33'"
               [style.color]="safeColor(m.color)"
               >{{ getInitial(m) }}</div>
-            }
-
-            <!-- Color dot -->
-            @if (m.color) {
-              <div style="
-                width: 6px; height: 6px; border-radius: 50%;
-                margin-top: -4px; flex-shrink: 0;
-              " [style.background]="safeColor(m.color)"></div>
             }
 
             <!-- Name -->

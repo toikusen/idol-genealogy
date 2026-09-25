@@ -129,7 +129,7 @@ export class MemberService {
     const { data: activeHistories, error: historyError } = await this.db
       .from('history')
       .select('member_id')
-      .eq('status', 'active');
+      .in('status', ['active', 'trainee']);
     if (historyError) throw historyError;
     const activeMemberIds = new Set((activeHistories ?? []).map(h => h.member_id));
 

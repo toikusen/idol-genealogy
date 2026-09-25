@@ -40,11 +40,12 @@ export interface Group {
   disbanded_announced_at: string | null;
   notes: string | null;
   is_trainee: boolean;
-  style: string | null;
   instagram: string | null;
   facebook: string | null;
   x: string | null;
   youtube: string | null;
+  /** Resolved UC... ID for `youtube`; null when unresolved. See migration 092. */
+  youtube_channel_id: string | null;
   timetree_url: string | null;
   photo_status: PhotographyPolicyStatus | null;
   photo_notes: string | null;
@@ -70,7 +71,7 @@ export interface History {
   team_id: string | null;
   name_at_time: string | null;
   role: string | null;
-  status: 'active' | 'graduated' | 'transferred' | 'concurrent' | 'support' | 'hiatus' | 'withdrawn' | null;
+  status: 'active' | 'trainee' | 'graduated' | 'transferred' | 'concurrent' | 'support' | 'hiatus' | 'withdrawn' | null;
   joined_at: string;
   left_at: string | null;
   notes: string | null;
@@ -85,13 +86,13 @@ export interface History {
   member?: Member;
 }
 
+/** A video from the group's YouTube channel feed, served by /api/youtube-videos. */
 export interface GroupVideo {
-  id: string;
-  group_id: string;
-  url: string;
-  title: string | null;
-  sort_order: number;
-  created_at: string;
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  publishedAt: string;
+  views: number;
 }
 
 export interface Company {
@@ -122,11 +123,6 @@ export interface TeamMember {
   sort_order: number;
   created_at: string;
   updated_at: string;
-}
-
-export interface SearchResult {
-  members: Member[];
-  groups: Group[];
 }
 
 export interface UserRole {
@@ -194,6 +190,23 @@ export interface MemberRecentHeatEntry {
   recent_visitors: number;
 }
 
+/**
+ * A "其他人也看了" card. `reason` is set only when it tells the reader something
+ * the card does not already show (currently: a member who was in both groups);
+ * null otherwise, and the line is hidden.
+ */
+export interface RelatedGroup {
+  id: string;
+  name: string;
+  name_jp: string | null;
+  photo_url: string | null;
+  color: string | null;
+  company_name: string | null;
+  reason: string | null;
+  tier: number;
+  score: number;
+}
+
 export interface GroupRecentHeatEntry {
   id: string;
   name: string;
@@ -230,6 +243,7 @@ export interface MemberSong {
   composer: string | null;
   lyricist: string | null;
   arranger: string | null;
+  choreographer: string | null;
   notes: string | null;
   sort_order: number;
   is_deleted: boolean;
@@ -247,6 +261,7 @@ export interface GroupSong {
   composer: string | null;
   lyricist: string | null;
   arranger: string | null;
+  choreographer: string | null;
   notes: string | null;
   sort_order: number;
   is_deleted: boolean;
@@ -297,17 +312,8 @@ export interface UserFavorite {
   entity_type: FavoriteEntityType;
   entity_id: string;
   created_at: string;
-}
-
-export interface FeedItem {
-  id: string;
-  entity_type: FavoriteEntityType;
-  entity_id: string;
-  entity_name: string;
-  event_type: 'event' | 'song' | 'member_change';
-  title: string;
-  occurred_at: string;
-  url?: string;
+  /** When this favorite's activity was last read. Absent on rows written before migration 105. */
+  last_read_at?: string;
 }
 
 export interface NotificationPrefs {
@@ -325,3 +331,29 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   notify_birthday: true,
   notify_disbanded: true,
 };
+
+/** A face in the 顏控9選 pool, from get_sukigao_candidates (see migration 106). */
+export interface SukigaoCandidate {
+  id: string;
+  name: string;
+  photoUrl: string;
+  groupNames: string[];
+  color: string | null;
+}
+
+export interface SukigaoResult {
+  memberId: string;
+  rank: number;
+}
+
+export type SukigaoRankingMode = 'top9' | 'first';
+
+export interface SukigaoRankingEntry {
+  member_id: string;
+  name: string;
+  photo_url: string | null;
+  color: string | null;
+  group_name: string | null;
+  top9_count: number;
+  first_place_count: number;
+}

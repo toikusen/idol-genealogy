@@ -164,11 +164,11 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     } else {
       this.editing.birthdate = null;
     }
-    if (this.editing.photo_status === ('' as any)) this.editing.photo_status = null;
-    if (this.editing.video_status === ('' as any)) this.editing.video_status = null;
-    if (this.editing.photo_notes === '') this.editing.photo_notes = null;
-    if (this.editing.video_notes === '') this.editing.video_notes = null;
-    if (this.editing.photography_source === '') this.editing.photography_source = null;
+    // A cleared input gives '', which fails maid_url's https:// check and the
+    // photo_status/video_status enums. Blank means "no value" for every member field.
+    for (const [key, value] of Object.entries(this.editing)) {
+      if (value === '') (this.editing as any)[key] = null;
+    }
     this.saving = true;
     try {
       if (this.isEdit && this.editing.id) {
@@ -229,7 +229,7 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
         const result = await this.igPhoto.fetchPhotoUrl(m.instagram!);
         if (result.photo_url) {
           await this.memberService.update(m.id, { photo_url: result.photo_url });
-          await this.proposalService.recordDirectEdit('members', m.id, m, { ...m, photo_url: result.photo_url }).catch(() => {});
+          await this.proposalService.recordDirectEdit('members', m.id, m, { ...m, photo_url: result.photo_url }).catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
           ok++;
         } else {
           fail++;
@@ -255,5 +255,9 @@ export class AdminMembersComponent implements OnInit, OnDestroy {
     } catch (e: any) {
       alert(e.message || '刪除失敗，請先刪除相關歷史記錄。');
     }
+  }
+
+  trackById(_index: number, item: { id: string }): string {
+    return item.id;
   }
 }

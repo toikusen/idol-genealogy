@@ -146,7 +146,7 @@ describe('AdminAuditLogComponent — autocomplete', () => {
     { id: 'm2', name: '山田花子', name_roman: 'Hanako', name_hiragana: null, emoji: null, photo_url: null, color: null, color_name: null, birthdate: null, nickname: null, instagram: null, facebook: null, x: null, maid_url: null, notes: null, company_id: null, no_sns: false, photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null, updated_at: '', created_at: '' },
   ];
   const mockGroups: Group[] = [
-    { id: 'g1', name: 'AKB48', name_jp: null, photo_url: null, color: '#fff', company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null, notes: null, is_trainee: false, style: null, instagram: null, facebook: null, x: null, youtube: null, timetree_url: null, photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null, updated_at: '', created_at: '' },
+    { id: 'g1', name: 'AKB48', name_jp: null, photo_url: null, color: '#fff', company: null, company_id: null, founded_at: null, disbanded_at: null, disbanded_announced_at: null, notes: null, is_trainee: false, instagram: null, facebook: null, x: null, youtube: null, youtube_channel_id: null, timetree_url: null, photo_status: null, photo_notes: null, video_status: null, video_notes: null, photography_source: null, updated_at: '', created_at: '' },
   ];
 
   beforeEach(async () => {
@@ -228,14 +228,14 @@ describe('AdminAuditLogComponent — autocomplete', () => {
     expect(auditLogSpy.getAll).toHaveBeenCalled();
   });
 
-  it('computeAutocompleteResults shows name_jp as display name when group has name_jp', () => {
+  it('computeAutocompleteResults prefers group name over name_jp as display name', () => {
     component.groups = [
       { id: 'g2', name: 'AKB48', name_jp: 'エイケービー48', photo_url: null } as any,
     ];
     component.autocompleteQuery = 'AKB';
     const results = component.computeAutocompleteResults();
     expect(results.length).toBe(1);
-    expect(results[0].name).toBe('エイケービー48');
+    expect(results[0].name).toBe('AKB48');
   });
 
   it('onFilterChange() resets pagination and calls load()', async () => {
@@ -260,5 +260,35 @@ describe('AdminAuditLogComponent — autocomplete', () => {
     expect(component.dateTo).toBe('');
     expect(component.cursorStack).toEqual([]);
     expect(auditLogSpy.getAll).toHaveBeenCalled();
+  });
+});
+
+describe('AdminAuditLogComponent — getOperatorName', () => {
+  let component: AdminAuditLogComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AdminAuditLogComponent],
+      providers: [
+        { provide: AuditLogService, useValue: jasmine.createSpyObj('AuditLogService', { getAll: Promise.resolve({ data: [], hasMore: false }) }) },
+        { provide: AdminRoleService, useValue: jasmine.createSpyObj('AdminRoleService', { getCurrentRole: Promise.resolve(null), getAll: Promise.resolve([]) }) },
+        { provide: MemberService, useValue: jasmine.createSpyObj('MemberService', { getAll: Promise.resolve([]), invalidateCache: undefined }) },
+        { provide: GroupService, useValue: jasmine.createSpyObj('GroupService', { getAll: Promise.resolve([]), getTeamsByGroup: Promise.resolve([]), invalidateCache: undefined }) },
+        { provide: CompanyService, useValue: jasmine.createSpyObj('CompanyService', { getAll: Promise.resolve([]), invalidateCache: undefined }) },
+      ],
+    }).compileComponents();
+    component = TestBed.createComponent(AdminAuditLogComponent).componentInstance;
+  });
+
+  it('labels rows stamped by the auto-graduate cron job as 系統自動', () => {
+    expect(component.getOperatorName(makeLog({ user_email: 'system@auto' }))).toBe('系統自動');
+  });
+
+  it('still shows — for rows with no operator', () => {
+    expect(component.getOperatorName(makeLog({ user_email: null }))).toBe('—');
+  });
+
+  it('falls back to the raw email when no display name is known', () => {
+    expect(component.getOperatorName(makeLog({ user_email: 'a@b.com' }))).toBe('a@b.com');
   });
 });

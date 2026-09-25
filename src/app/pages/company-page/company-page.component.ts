@@ -1,5 +1,6 @@
 // src/app/pages/company-page/company-page.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -8,7 +9,7 @@ import { ProposalService } from '../../core/proposal.service';
 import { Company, Group, Member, Proposal } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
-import { formatRelativeTime } from '../../core/time.utils';
+import { formatRelativeTime, formatYmd } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { companyPath, siteUrl } from '../../core/public-url.utils';
 import { CompanyPageData } from '../../core/page-data.resolvers';
@@ -17,11 +18,12 @@ import { AnalyticsService } from '../../core/analytics.service';
 import { normalizeSnsUrl, normalizeWebsiteUrl } from '../../core/sns-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
+import { CompanyGroupsTimelineComponent } from '../../shared/company-groups-timeline/company-groups-timeline.component';
 
 @Component({
   selector: 'app-company-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, PhotoLightboxComponent],
+  imports: [CommonModule, RouterLink, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, PhotoLightboxComponent, CompanyGroupsTimelineComponent],
   templateUrl: './company-page.component.html',
   styleUrl: './company-page.component.css',
 })
@@ -54,12 +56,19 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
   private routeDataSub?: Subscription;
   private currentLoadId: string | null = null;
 
+  timelineGroups: Group[] = [];
+  proposalGroup: Group | null = null;
+
   get lastProposalDiffFields(): DiffField[] {
     return this.lastProposal ? getDiffFields(this.lastProposal) : [];
   }
 
   formatRelativeTime(date: string | null): string {
     return formatRelativeTime(date);
+  }
+
+  get foundedLabel(): string {
+    return formatYmd(this.company?.founded_at ?? null);
   }
 
   get latestEditSummary(): string {
@@ -89,27 +98,27 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     private seo: SeoService,
     private proposalService: ProposalService,
     private analytics: AnalyticsService,
+    private destroyRef: DestroyRef,
   ) {}
 
   ngOnDestroy() {
-    this.routeDataSub?.unsubscribe();
     this.seo.clearJsonLd?.();
   }
 
   ngOnInit() {
-    this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
+    this.routeDataSub = this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ pageData }) => {
       const data = pageData as CompanyPageData;
       this.applyPageData(data);
       if (data.company && !data.error) {
         this.loadDeferredData(data.id);
       }
     });
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['propose'] === 'true') {
         this.showProposalPanel = true;
       }
     });
-    this.route.fragment.subscribe(fragment => {
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fragment => {
       if (fragment === 'propose') {
         this.showProposalPanel = true;
       }
@@ -124,6 +133,10 @@ export class CompanyPageComponent implements OnInit, OnDestroy {
     this.disbandedGroups = pageData.disbandedGroups;
     this.soloMembers = pageData.soloMembers;
     this.lastProposal = pageData.lastProposal;
+    // ponytail: no dated group means nothing to plot — hide the whole section, hint included
+    const allGroups = [...pageData.activeGroups, ...pageData.disbandedGroups];
+    this.timelineGroups = allGroups.some(g => g.founded_at) ? allGroups : [];
+    this.proposalGroup = null;
 
     if (!pageData.company || pageData.error) {
       this.seo.setPage(

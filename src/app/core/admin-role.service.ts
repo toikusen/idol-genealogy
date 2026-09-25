@@ -100,11 +100,17 @@ export class AdminRoleService implements OnDestroy {
   async getCurrentRole(): Promise<UserRole | null> {
     const session = await this.supabase.getSessionOnce();
     if (!session?.user?.email) return null;
-    const { data } = await this.supabase.client
+    const { data, error } = await this.supabase.client
       .from('user_roles')
       .select('*')
       .eq('email', session.user.email)
       .limit(1);
+    if (error) {
+      // Fail safe: callers treat null as "no role" (fewest privileges), and none
+      // of them can recover from a throw during page init.
+      console.error('getCurrentRole failed', error);
+      return null;
+    }
     return data?.[0] ?? null;
   }
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Group, GroupVideo, Team, GroupLeaderboardEntry, GroupRecentHeatEntry, GroupTrendingEntry } from '../models';
+import { Group, GroupVideo, Team, GroupLeaderboardEntry, GroupRecentHeatEntry, GroupTrendingEntry, RelatedGroup } from '../models';
+import { isChannelId } from './youtube-feed.utils';
 import { kanaVariants } from './japanese.utils';
 import { isPublicGroupRecord } from './public-record.utils';
 import { isNotFoundError } from './supabase.utils';
@@ -123,38 +124,56 @@ export class GroupService {
     this.invalidateCache();
   }
 
-  async getSimilarByStyle(styles: string[], excludeId: string): Promise<Group[]> {
-    const orFilter = styles.map(s => `style.like.%${s}%`).join(',');
-    const { data, error } = await this.db
-      .from('groups').select('*')
-      .or(orFilter)
-      .neq('id', excludeId)
-      .is('disbanded_at', null);
+  /**
+   * Groups to recommend alongside `groupId`, best first: co-visited by other
+   * readers, then same company / shared member / same debut era as fallback.
+   * All of it is derived server-side, so a group needs no extra curation to
+   * show up here.
+   */
+  async getRelated(groupId: string, limit = 12): Promise<RelatedGroup[]> {
+    const { data, error } = await this.db.rpc(
+      'get_related_groups', { p_group_id: groupId, p_limit: limit }
+    );
     if (error) throw error;
-    return data ?? [];
+    return ((data ?? []) as RelatedGroup[]).filter(isPublicGroupRecord);
   }
 
-  async getVideosByGroup(groupId: string): Promise<GroupVideo[]> {
-    const { data, error } = await this.db
-      .from('group_videos').select('*').eq('group_id', groupId).order('sort_order');
-    if (error) {
-      if ((error as any).code === 'PGRST205') return []; // table not yet migrated
-      throw error;
+  /**
+   * Top videos from the group's YouTube channel, ranked by view count.
+   *
+   * Browser-only — callers must guard with isPlatformBrowser. Returns [] on any
+   * failure: a missing video strip is not worth surfacing an error on a group page.
+   */
+  async getChannelVideos(channelId: string | null, names: (string | null)[] = []): Promise<GroupVideo[]> {
+    if (!isChannelId(channelId)) return [];
+
+    const query = new URLSearchParams({ channel: channelId! });
+    // Sent so a company channel shared by several groups can be filtered down to
+    // this group's videos. Ignored when nothing in the channel matches.
+    for (const name of names) if (name?.trim()) query.append('match', name.trim());
+
+    try {
+      const res = await fetch(`/api/youtube-videos?${query}`);
+      return res.ok ? await res.json() : [];
+    } catch {
+      return [];
     }
-    return data ?? [];
   }
 
-  async createVideo(video: Omit<GroupVideo, 'id' | 'created_at'>): Promise<void> {
-    const { error } = await this.db.from('group_videos').insert(video);
-    if (error) {
-      if ((error as any).code === 'PGRST205') throw new Error('請先在 Supabase 執行 015_create_group_videos.sql');
-      throw error;
-    }
-  }
-
-  async deleteVideo(id: string): Promise<void> {
-    const { error } = await this.db.from('group_videos').delete().eq('id', id);
-    if (error) throw error;
+  /**
+   * Resolves a YouTube channel URL to its UC... ID via the server (the browser
+   * cannot fetch youtube.com directly — CORS).
+   *
+   * Returns the ID, or null when the URL is genuinely not a channel. Throws on a
+   * transient upstream failure so callers can leave a stored ID untouched
+   * instead of nulling it out.
+   */
+  async resolveYouTubeChannelId(url: string): Promise<string | null> {
+    const res = await fetch(`/api/youtube-channel-id?url=${encodeURIComponent(url)}`);
+    if (res.status === 400) return null; // not a channel URL
+    if (!res.ok) throw new Error('YouTube 暫時無法連線,頻道 ID 未更新');
+    const { channelId } = await res.json() as { channelId: string | null };
+    return channelId;
   }
 
   async createTeam(team: Partial<Team>): Promise<void> {

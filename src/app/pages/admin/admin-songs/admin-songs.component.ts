@@ -29,6 +29,7 @@ interface AdminSongRow {
   composer: string | null;
   lyricist: string | null;
   arranger: string | null;
+  choreographer: string | null;
   notes: string | null;
   sort_order: number;
   created_at: string;
@@ -44,6 +45,7 @@ interface SongDraft {
   composer: string | null;
   lyricist: string | null;
   arranger: string | null;
+  choreographer: string | null;
   notes: string | null;
   sort_order: number | null;
 }
@@ -205,6 +207,7 @@ export class AdminSongsComponent implements OnInit {
       composer: row.composer,
       lyricist: row.lyricist,
       arranger: row.arranger,
+      choreographer: row.choreographer,
       notes: row.notes,
       sort_order: row.sort_order,
     };
@@ -250,6 +253,7 @@ export class AdminSongsComponent implements OnInit {
       composer: this.clean(this.draft.composer),
       lyricist: this.clean(this.draft.lyricist),
       arranger: this.clean(this.draft.arranger),
+      choreographer: this.clean(this.draft.choreographer),
       notes: this.clean(this.draft.notes),
       sort_order: Number(this.draft.sort_order),
     };
@@ -262,12 +266,12 @@ export class AdminSongsComponent implements OnInit {
           const updated = await this.memberSongService.update(originalRow.id, payload);
           this.memberSongs = this.memberSongs.map(song => song.id === updated.id ? updated : song);
           const original = { ...originalRow, member_id: originalRow.ownerId };
-          await this.proposalService.recordDirectEdit('member_songs', originalRow.id, original, { ...original, ...payload }).catch(() => {});
+          await this.proposalService.recordDirectEdit('member_songs', originalRow.id, original, { ...original, ...payload }).catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
         } else {
           const updated = await this.groupSongService.update(originalRow.id, payload);
           this.groupSongs = this.groupSongs.map(song => song.id === updated.id ? updated : song);
           const original = { ...originalRow, group_id: originalRow.ownerId };
-          await this.proposalService.recordDirectEdit('group_songs', originalRow.id, original, { ...original, ...payload }).catch(() => {});
+          await this.proposalService.recordDirectEdit('group_songs', originalRow.id, original, { ...original, ...payload }).catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
         }
       } else if (kind === 'member') {
         const created = await this.memberSongService.create({
@@ -275,14 +279,14 @@ export class AdminSongsComponent implements OnInit {
           ...payload,
         });
         this.memberSongs = [created, ...this.memberSongs];
-        await this.proposalService.recordDirectEdit('member_songs', created.id, {}, created, 'INSERT').catch(() => {});
+        await this.proposalService.recordDirectEdit('member_songs', created.id, {}, created, 'INSERT').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       } else {
         const created = await this.groupSongService.create({
           group_id: this.draft.ownerId,
           ...payload,
         });
         this.groupSongs = [created, ...this.groupSongs];
-        await this.proposalService.recordDirectEdit('group_songs', created.id, {}, created, 'INSERT').catch(() => {});
+        await this.proposalService.recordDirectEdit('group_songs', created.id, {}, created, 'INSERT').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       }
       this.rebuildSongRows(kind);
       this.syncActiveTabState();
@@ -299,12 +303,12 @@ export class AdminSongsComponent implements OnInit {
     try {
       if (row.kind === 'member') {
         await this.memberSongService.delete(row.id);
-        await this.proposalService.recordDirectEdit('member_songs', row.id, { ...row, member_id: row.ownerId }, {}, 'DELETE').catch(() => {});
+        await this.proposalService.recordDirectEdit('member_songs', row.id, { ...row, member_id: row.ownerId }, {}, 'DELETE').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
         this.memberSongs = this.memberSongs.filter(song => song.id !== row.id);
         this.rebuildSongRows('member');
       } else {
         await this.groupSongService.delete(row.id);
-        await this.proposalService.recordDirectEdit('group_songs', row.id, { ...row, group_id: row.ownerId }, {}, 'DELETE').catch(() => {});
+        await this.proposalService.recordDirectEdit('group_songs', row.id, { ...row, group_id: row.ownerId }, {}, 'DELETE').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
         this.groupSongs = this.groupSongs.filter(song => song.id !== row.id);
         this.rebuildSongRows('group');
       }
@@ -341,6 +345,7 @@ export class AdminSongsComponent implements OnInit {
         row.composer,
         row.lyricist,
         row.arranger,
+        row.choreographer,
         row.notes,
       ].some(value => (value ?? '').toLowerCase().includes(q));
     });
@@ -440,6 +445,7 @@ export class AdminSongsComponent implements OnInit {
       composer: song.composer,
       lyricist: song.lyricist,
       arranger: song.arranger,
+      choreographer: song.choreographer,
       notes: song.notes,
       sort_order: song.sort_order,
       created_at: song.created_at,
@@ -469,6 +475,7 @@ export class AdminSongsComponent implements OnInit {
       composer: song.composer,
       lyricist: song.lyricist,
       arranger: song.arranger,
+      choreographer: song.choreographer,
       notes: song.notes,
       sort_order: song.sort_order,
       created_at: song.created_at,
@@ -541,6 +548,7 @@ export class AdminSongsComponent implements OnInit {
       composer: null,
       lyricist: null,
       arranger: null,
+      choreographer: null,
       notes: null,
       sort_order: 1,
     };

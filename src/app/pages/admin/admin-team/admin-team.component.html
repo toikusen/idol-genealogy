@@ -23,7 +23,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
-        <tr *ngFor="let m of members" class="hover:bg-gray-50 transition-colors">
+        <tr *ngFor="let m of members; trackBy: trackById" class="hover:bg-gray-50 transition-colors">
           <td class="px-4 py-3">
             <img *ngIf="m.photo_url" [src]="m.photo_url" [alt]="m.name"
               class="w-8 h-8 rounded-full object-cover"/>

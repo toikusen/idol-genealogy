@@ -12,6 +12,67 @@ export function getEffectiveProposed(p: Proposal): Record<string, any> {
   return (p.reviewed_data ?? p.proposed_data ?? {});
 }
 
+/** A report carries only a free-text submitter_note — the song "回報問題" flow
+ *  submits one as an UPDATE with empty proposed_data. There is nothing to write
+ *  to the target table, so approving it just marks the report handled. */
+export function isReportProposal(p: { operation: string; proposed_data?: Record<string, any> | null }): boolean {
+  return p.operation === 'UPDATE' && Object.keys(p.proposed_data ?? {}).length === 0;
+}
+
+/** Payload for the song 「回報問題」 flow. A bare report carries no field
+ *  changes — approving one only marks it handled. When the reporter supplies a
+ *  corrected YouTube link it becomes a real UPDATE diff that approving applies. */
+export function buildSongReportPayload(
+  song: { youtube_url?: string | null },
+  suggestedUrl: string,
+): { proposed_data: Record<string, any>; original_data: Record<string, any> | null } {
+  const url = suggestedUrl.trim();
+  if (!url || url === (song.youtube_url ?? '')) {
+    return { proposed_data: {}, original_data: null };
+  }
+  return {
+    proposed_data: { youtube_url: url },
+    original_data: { youtube_url: song.youtube_url ?? null },
+  };
+}
+
+/** One-line description of a DELETE proposal for the public edit-history
+ *  summary. Never surfaces raw ids — history/song rows lead with uuid
+ *  columns, so falls back to a table-kind label instead. */
+export function getDeleteSummary(p: Proposal): string {
+  const original = (p.original_data ?? {}) as Record<string, any>;
+  if (p.table_name === 'member_songs' || p.table_name === 'group_songs') {
+    return original['title'] ? `刪除了歌曲「${original['title']}」` : '刪除了歌曲';
+  }
+  if (p.table_name === 'history') {
+    return original['name_at_time']
+      ? `刪除了「${original['name_at_time']}」的歷程紀錄`
+      : '刪除了一筆歷程紀錄';
+  }
+  return original['name'] ? `刪除了「${original['name']}」` : '刪除了資料';
+}
+
+/** Who/what a related-record proposal belongs to when shown on another
+ *  record's page — the member of a history row on a group page
+ *  (subjectIdField 'member_id'), the group on a member page ('group_id'),
+ *  or a song's title. Null for main-record proposals. */
+export function getRelatedSubjectName(
+  p: Proposal,
+  subjectIdField: 'member_id' | 'group_id',
+  resolveName: (id: string) => string | undefined,
+): string | null {
+  const data = { ...(p.original_data ?? {}), ...getEffectiveProposed(p) };
+  if (p.table_name === 'history') {
+    const resolved = data[subjectIdField] ? resolveName(data[subjectIdField]) : undefined;
+    if (resolved) return resolved;
+    return subjectIdField === 'member_id' ? (data['name_at_time'] ?? null) : null;
+  }
+  if (p.table_name === 'member_songs' || p.table_name === 'group_songs') {
+    return data['title'] ?? null;
+  }
+  return null;
+}
+
 export function getDiffFields(p: Proposal): DiffField[] {
   const proposed = getEffectiveProposed(p);
   const allowedKeys: string[] = PROPOSAL_ALLOWED_FIELDS[p.table_name] ?? Object.keys(proposed);

@@ -4,7 +4,7 @@ import { ProposalService } from '../../core/proposal.service';
 import { CompanyService } from '../../core/company.service';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
-import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
+import { getDiffFields, getRelatedSubjectName, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { photographyStatusLabel } from '../../core/photography-policy.utils';
 import { SupabaseImgPipe } from '../supabase-img.pipe';
@@ -109,7 +109,7 @@ export class RecordEditHistoryComponent implements OnInit {
   }
 
   private static readonly HISTORY_STATUS_LABELS: Record<string, string> = {
-    active: '正常在籍', concurrent: '兼任', support: '支援',
+    active: '正常在籍', trainee: '研修', concurrent: '兼任', support: '支援',
     hiatus: '活休', transferred: '移籍', graduated: '畢業', withdrawn: '脫退',
   };
 
@@ -126,6 +126,14 @@ export class RecordEditHistoryComponent implements OnInit {
 
   getDiffFields(p: Proposal): DiffField[] {
     return getDiffFields(p);
+  }
+
+  /** Who/what a merged related-record proposal belongs to (e.g. which member's
+   *  history row was edited when viewing a group's history panel). */
+  getSubjectLabel(p: Proposal): string | null {
+    return this.relatedHistoryField === 'group_id'
+      ? getRelatedSubjectName(p, 'member_id', id => this.memberNameMap[id])
+      : getRelatedSubjectName(p, 'group_id', id => this.groupNameMap[id]);
   }
 
   formatRelativeTime(date: string | null): string {

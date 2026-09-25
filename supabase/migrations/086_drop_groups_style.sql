@@ -1,0 +1,21 @@
+-- Drop groups.style.
+--
+-- It existed to drive the "其他人也看了" recommendations, which 085 replaced with
+-- co-visit data and structural relations. Nothing reads it any more, and an
+-- unmaintained column that still counts toward the completeness score just
+-- makes every group look less complete than it is.
+--
+-- Also removed alongside this column:
+--   - completeness.utils.ts   3 optional group fields → 2
+--   - MusicGroup JSON-LD      the `genre` property
+--   - admin group form        the 風格 chips
+--   - audit_log tracked fields
+--
+-- The audit_log rows that recorded past style edits are left alone; the admin
+-- log still has a 風格 label so that old history stays readable.
+--
+-- IRREVERSIBLE: whatever styles were filled in are gone after this runs. Dump
+-- them first if you might want them back:
+--   select id, name, style from groups where style is not null;
+
+alter table groups drop column if exists style;

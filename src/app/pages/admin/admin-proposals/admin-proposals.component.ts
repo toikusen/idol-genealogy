@@ -48,7 +48,7 @@ export class AdminProposalsComponent implements OnInit {
           this.memberMap.set(m.id, m.name ?? m.name_roman ?? m.id);
         }
         for (const g of groups) {
-          this.groupMap.set(g.id, g.name_jp ?? g.name ?? g.id);
+          this.groupMap.set(g.id, g.name ?? g.name_jp ?? g.id);
         }
       }
     } catch (e: any) {

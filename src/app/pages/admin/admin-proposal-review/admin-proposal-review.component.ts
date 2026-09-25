@@ -8,6 +8,7 @@ import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../../core/proposal-fields.config';
 import { normalizeHistoryNameAtTime } from '../../../core/history-name-at-time.utils';
+import { isReportProposal } from '../../../core/proposal-diff.utils';
 import { Proposal } from '../../../models';
 
 @Component({
@@ -18,6 +19,8 @@ import { Proposal } from '../../../models';
 })
 export class AdminProposalReviewComponent implements OnInit {
   proposal: Proposal | null = null;
+  /** Live target row, loaded only for report proposals (they carry no field data). */
+  reportTarget: Record<string, any> | null = null;
   memberMap = new Map<string, string>();
   currentMemberNameMap = new Map<string, string>();
   groupMap = new Map<string, string>();
@@ -54,8 +57,14 @@ export class AdminProposalReviewComponent implements OnInit {
             this.currentMemberNameMap.set(m.id, m.name);
           }
           for (const g of groups) {
-            this.groupMap.set(g.id, g.name_jp ?? g.name ?? g.id);
+            this.groupMap.set(g.id, g.name ?? g.name_jp ?? g.id);
           }
+        }
+        if (this.isReport && this.proposal.record_id) {
+          // Best-effort: a deleted target just renders as "not found".
+          this.reportTarget = await this.proposalService
+            .getTargetRecord(this.proposal.table_name, this.proposal.record_id)
+            .catch(() => null);
         }
       }
     } catch (e: any) {
@@ -92,12 +101,26 @@ export class AdminProposalReviewComponent implements OnInit {
     return PROPOSAL_ALLOWED_FIELDS[this.proposal.table_name] ?? [];
   }
 
+  /** Free-text report with no field changes (song 「回報問題」). Nothing to apply. */
+  get isReport(): boolean {
+    return !!this.proposal && isReportProposal(this.proposal);
+  }
+
   /** Key-value pairs from original_data for DELETE proposal display */
   get deleteOriginalEntries(): { key: string; value: any }[] {
-    const src = this.proposal?.original_data ?? {};
+    return this.entriesFrom(this.proposal?.original_data);
+  }
+
+  /** The reported row as it stands now, so the reviewer knows what was reported. */
+  get reportTargetEntries(): { key: string; value: any }[] {
+    return this.entriesFrom(this.reportTarget);
+  }
+
+  private entriesFrom(src: Record<string, any> | null | undefined): { key: string; value: any }[] {
+    const data = src ?? {};
     return this.fields
-      .filter(f => src[f] != null && src[f] !== '')
-      .map(f => ({ key: f, value: src[f] }));
+      .filter(f => data[f] != null && data[f] !== '')
+      .map(f => ({ key: f, value: data[f] }));
   }
 
   fieldLabel(field: string): string {
@@ -118,7 +141,10 @@ export class AdminProposalReviewComponent implements OnInit {
   }
 
   tableLabel(t: string): string {
-    return { members: '成員', groups: '團體', history: '歷程', companies: '公司' }[t] ?? t;
+    return {
+      members: '成員', groups: '團體', history: '歷程', companies: '公司',
+      venues: '場地', member_songs: '成員歌曲', group_songs: '團體歌曲',
+    }[t] ?? t;
   }
 
   async approve() {

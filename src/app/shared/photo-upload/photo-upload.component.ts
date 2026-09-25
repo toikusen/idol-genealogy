@@ -8,7 +8,7 @@ const ALLOWED = new Set(['image/jpeg', 'image/png']);
 
 const CIRCLE_R = 130;   // 顯示圓半徑 px
 const CONTAINER = 300;  // 裁切框尺寸 px
-const OUTPUT = 400;     // 輸出圖片尺寸 px
+const OUTPUT_MAX = 1000; // 輸出圖片尺寸上限 px(不超過來源實際像素，避免放大）
 
 @Component({
   selector: 'app-photo-upload',
@@ -366,18 +366,20 @@ export class PhotoUploadComponent implements ControlValueAccessor, AfterViewChec
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
+        // 圓形選取範圍對應的來源像素直徑；輸出不超過它，避免無中生有的放大
+        const output = Math.min(OUTPUT_MAX, Math.round((CIRCLE_R * 2) / this.scale));
         const canvas = document.createElement('canvas');
-        canvas.width = OUTPUT;
-        canvas.height = OUTPUT;
+        canvas.width = output;
+        canvas.height = output;
         const ctx = canvas.getContext('2d')!;
         ctx.beginPath();
-        ctx.arc(OUTPUT / 2, OUTPUT / 2, OUTPUT / 2, 0, Math.PI * 2);
+        ctx.arc(output / 2, output / 2, output / 2, 0, Math.PI * 2);
         ctx.clip();
-        const ratio = (OUTPUT / 2) / CIRCLE_R;
+        const ratio = (output / 2) / CIRCLE_R;
         const dw = this.naturalW * this.scale * ratio;
         const dh = this.naturalH * this.scale * ratio;
-        const dx = OUTPUT / 2 + this.offsetX * ratio - dw / 2;
-        const dy = OUTPUT / 2 + this.offsetY * ratio - dh / 2;
+        const dx = output / 2 + this.offsetX * ratio - dw / 2;
+        const dy = output / 2 + this.offsetY * ratio - dh / 2;
         ctx.drawImage(img, dx, dy, dw, dh);
         canvas.toBlob(b => b ? resolve(b) : reject(new Error('裁切失敗')), 'image/jpeg', 0.92);
       };

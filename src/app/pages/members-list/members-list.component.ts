@@ -13,6 +13,9 @@ import { MembersListPageData } from '../../core/page-data.resolvers';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 const PAGE_SIZE = 36;
 
+/** Order of the member grid, driven by the ?sort= query param. */
+export type MemberSortMode = 'name' | 'recent';
+
 @Component({
   selector: 'app-members-list',
   standalone: true,
@@ -27,11 +30,14 @@ export class MembersListComponent implements OnInit, OnDestroy {
   private groupMemberIds = new Map<string, Set<string>>();
   private isDestroyed = false;
   loading = true;
+  loadError = false;
 
   searchQuery = '';
   selectedGroupId = '';
   /** Raw ?page= value from the URL; use `page` (clamped) for display/slicing */
   currentPage = 1;
+  /** Current ?sort= mode; 'name' is the default and carries no query param. */
+  sortMode: MemberSortMode = 'name';
   private pageSub?: Subscription;
   private pageInitialized = false;
   groupDropdownOpen = false;
@@ -61,6 +67,12 @@ export class MembersListComponent implements OnInit, OnDestroy {
       const page = Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1);
       const changed = page !== this.currentPage;
       this.currentPage = page;
+
+      const sort: MemberSortMode = params.get('sort') === 'recent' ? 'recent' : 'name';
+      const sortChanged = sort !== this.sortMode;
+      this.sortMode = sort;
+      if (sortChanged && this.allMembers.length > 0) this.resortMembers();
+
       if (this.pageInitialized && changed && typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -75,6 +87,21 @@ export class MembersListComponent implements OnInit, OnDestroy {
       return;
     }
 
+    await this.fetchMembers();
+  }
+
+  ngOnDestroy() {
+    this.isDestroyed = true;
+    this.pageSub?.unsubscribe();
+  }
+
+  async retryLoad() {
+    this.loading = true;
+    await this.fetchMembers();
+  }
+
+  private async fetchMembers(): Promise<void> {
+    this.loadError = false;
     try {
       const [members, groups] = await Promise.all([
         this.memberService.getAll(),
@@ -83,14 +110,12 @@ export class MembersListComponent implements OnInit, OnDestroy {
       if (this.isDestroyed) return;
       this.applyPageData(members, groups, []);
       void this.loadGroupLinks(members, groups);
+    } catch {
+      if (this.isDestroyed) return;
+      this.loadError = true;
     } finally {
       this.loading = false;
     }
-  }
-
-  ngOnDestroy() {
-    this.isDestroyed = true;
-    this.pageSub?.unsubscribe();
   }
 
   private applyPageData(
@@ -98,9 +123,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
     groups: Group[],
     links: { member_id: string; group_id: string }[],
   ): void {
-    this.allMembers = [...members].sort((a, b) =>
-      (a.name_roman ?? a.name).localeCompare(b.name_roman ?? b.name, 'zh-TW')
-    );
+    this.allMembers = [...members].sort(this.compareMembers);
     this.allGroups = [...groups].sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
     this.groupMemberIds.clear();
     for (const { member_id, group_id } of links) {
@@ -108,6 +131,28 @@ export class MembersListComponent implements OnInit, OnDestroy {
       this.groupMemberIds.get(group_id)!.add(member_id);
     }
     this.applySchemas();
+    this.recomputeFilteredMembers();
+  }
+
+  /** ISO timestamps compare correctly as strings, so 'recent' needs no Date parsing. */
+  private compareMembers = (a: Member, b: Member): number =>
+    this.sortMode === 'recent'
+      ? (b.updated_at ?? '').localeCompare(a.updated_at ?? '')
+      : (a.name_roman ?? a.name).localeCompare(b.name_roman ?? b.name, 'zh-TW');
+
+  private resortMembers(): void {
+    this.allMembers = [...this.allMembers].sort(this.compareMembers);
+    this.recomputeFilteredMembers();
+  }
+
+  /** Navigates to the given sort mode, resetting pagination. */
+  setSort(mode: MemberSortMode): void {
+    if (mode === this.sortMode) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { sort: mode === 'name' ? null : mode, page: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   private async loadGroupLinks(members: Member[], groups: Group[]): Promise<void> {
@@ -118,6 +163,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
       if (this.isDestroyed) return;
       this.applyPageData(members, groups, links);
       this.linksLoaded = true;
+      this.recomputeFilteredMembers();
     } catch {
       if (this.isDestroyed) return;
       this.linksLoaded = false;
@@ -129,10 +175,13 @@ export class MembersListComponent implements OnInit, OnDestroy {
     }
   }
 
-  get filteredMembers(): Member[] {
+  /** Cached result of the member/search/group filter; recomputed only when an input changes (see `onFilterChange`/`applyPageData`) instead of on every CD cycle. */
+  private _filteredMembers: Member[] = [];
+
+  private recomputeFilteredMembers(): void {
     const q = this.searchQuery.trim().toLowerCase();
     const groupSet = this.selectedGroupId ? this.groupMemberIds.get(this.selectedGroupId) : null;
-    return this.allMembers.filter(m => {
+    this._filteredMembers = this.allMembers.filter(m => {
       const matchSearch = !q ||
         m.name.toLowerCase().includes(q) ||
         (m.name_hiragana ?? '').toLowerCase().includes(q) ||
@@ -142,6 +191,10 @@ export class MembersListComponent implements OnInit, OnDestroy {
       const matchGroup = !this.selectedGroupId || (this.linksLoaded && !!groupSet && groupSet.has(m.id));
       return matchSearch && matchGroup;
     });
+  }
+
+  get filteredMembers(): Member[] {
+    return this._filteredMembers;
   }
 
   get totalPages(): number {
@@ -170,6 +223,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
   }
 
   onFilterChange() {
+    this.recomputeFilteredMembers();
     if (this.currentPage !== 1) this.setPage(1);
   }
 
@@ -191,6 +245,11 @@ export class MembersListComponent implements OnInit, OnDestroy {
     if (this.linksError) return '團體篩選暫不可用';
     if (!this.linksLoaded) return '載入中…';
     return this.selectedGroupName;
+  }
+
+  retryLinks(): void {
+    if (!this.linksError) return;
+    void this.loadGroupLinks(this.allMembers, this.allGroups);
   }
 
   selectGroup(id: string) {

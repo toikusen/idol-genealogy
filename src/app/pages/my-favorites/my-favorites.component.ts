@@ -2,6 +2,7 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
+import { PushOptInService } from '../../core/push-opt-in.service';
 import { SupabaseService } from '../../core/supabase.service';
 import { SpotlightEntity } from '../../models';
 import { FavoritesAvatarRowComponent } from './favorites-avatar-row.component';
@@ -32,6 +33,12 @@ interface FavoritesTabOption {
 })
 export class MyFavoritesComponent implements OnInit {
   private favService = inject(FavoritesService);
+  readonly pushOptIn = inject(PushOptInService);
+
+  /** Favourites already saved but not reachable by push — what the nudge is about. */
+  favoriteCount(): number {
+    return this.favService.favorites().length;
+  }
   private supabase = inject(SupabaseService);
 
   readonly activeTab = signal<FavoritesTab>('all');

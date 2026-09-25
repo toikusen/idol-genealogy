@@ -4,7 +4,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { writeFileSync } from 'fs';
-import WebSocket from 'ws';
 const SITE_URL = 'https://idolmaps.com';
 
 // Cloudflare Pages sets CF_PAGES_BRANCH automatically on every build.
@@ -20,15 +19,14 @@ if (cfBranch && cfBranch !== PRODUCTION_BRANCH) {
 const SUPABASE_URL = process.env['SUPABASE_URL'] ?? 'https://ziiagdrrytyrmzoeegjk.supabase.co';
 const SUPABASE_ANON_KEY = process.env['SUPABASE_ANON_KEY'] ?? 'sb_publishable_PtKb4LIJeJN3cECUJllW7w_UFRVTbTv';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  realtime: { transport: WebSocket },
-});
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const KNOWLEDGE_ROUTES = [
   '/learn/how-to-read-idol-history',
   '/learn/member-group-company-relationships',
   '/learn/data-source-and-correction',
   '/learn/upcoming-events-and-venues',
+  '/learn/taiwan-underground-idol-info',
 ];
 
 function escapeXml(value) {
@@ -51,6 +49,16 @@ function shortText(value, fallback) {
   return text.length > 180 ? `${text.slice(0, 177)}...` : text;
 }
 
+// Google image sitemap extension — only absolute http(s) URLs are valid.
+function sitemapImage(entity) {
+  const url = typeof entity.photo_url === 'string' ? entity.photo_url.trim() : '';
+  if (!/^https?:\/\//.test(url)) return '';
+  return `
+    <image:image>
+      <image:loc>${escapeXml(url)}</image:loc>
+    </image:image>`;
+}
+
 function isTestName(value) {
   if (typeof value !== 'string') return false;
   const text = value.trim().toLowerCase();
@@ -60,7 +68,7 @@ function isTestName(value) {
 async function run() {
   const { data: members, error: membersError } = await supabase
     .from('members')
-    .select('id, name, updated_at, notes');
+    .select('id, name, updated_at, notes, photo_url');
   if (membersError) {
     console.error('Error fetching members:', membersError.message);
     process.exit(1);
@@ -68,7 +76,7 @@ async function run() {
 
   const { data: groups, error: groupsError } = await supabase
     .from('groups')
-    .select('id, name, updated_at');
+    .select('id, name, updated_at, photo_url');
   if (groupsError) {
     console.error('Error fetching groups:', groupsError.message);
     process.exit(1);
@@ -86,6 +94,17 @@ async function run() {
   }
   const publicCompanies = companies.filter(c => !isTestName(c.name));
 
+  const { data: venues, error: venuesError } = await supabase
+    .from('venues')
+    .select('id, name, is_active');
+  if (venuesError) {
+    console.error('Error fetching venues:', venuesError.message);
+    process.exit(1);
+  }
+  // Closed venues stay prerendered so old links keep working; the page itself
+  // emits noindex. Only active venues go in the sitemap.
+  const activeVenues = venues.filter(v => v.is_active);
+
   const indexableMembers = publicMembers;
   const indexableGroups = publicGroups;
   const indexableCompanies = publicCompanies;
@@ -97,6 +116,8 @@ async function run() {
     '/companies',
     '/contributors',
     '/leaderboard',
+    '/sukigao',
+    '/sukigao/ranking',
     '/wanted',
     '/guide',
     '/learn',
@@ -111,13 +132,15 @@ async function run() {
     ...indexableMembers.map(m => `/member/${m.id}`),
     ...indexableGroups.map(g => `/group/${g.id}`),
     ...indexableCompanies.map(c => `/company/${c.id}`),
+    ...venues.map(v => `/venue/${v.id}`),
   ];
   writeFileSync('prerender-routes.txt', routes.join('\n') + '\n', 'utf8');
   console.log(
     `prerender-routes.txt: ${routes.length} routes ` +
     `(${indexableMembers.length}/${publicMembers.length} public members, ` +
     `${indexableGroups.length}/${publicGroups.length} public groups, ` +
-    `${indexableCompanies.length}/${publicCompanies.length} public companies).`,
+    `${indexableCompanies.length}/${publicCompanies.length} public companies, ` +
+    `${activeVenues.length}/${venues.length} active venues).`,
   );
 
   const buildDate = new Date().toISOString().slice(0, 10);
@@ -138,10 +161,16 @@ async function run() {
     staticUrl('/about', 'monthly', '0.5'),
     staticUrl('/contributors', 'monthly', '0.5'),
     staticUrl('/leaderboard', 'daily', '0.6'),
+    staticUrl('/sukigao', 'weekly', '0.6'),
+    staticUrl('/sukigao/ranking', 'daily', '0.5'),
     staticUrl('/wanted', 'weekly', '0.5'),
     staticUrl('/guide', 'monthly', '0.5'),
     staticUrl('/learn', 'monthly', '0.7'),
     ...KNOWLEDGE_ROUTES.map(route => staticUrl(route, 'monthly', '0.75')),
+    // Venue pages carry no <lastmod>: `venues.updated_at` does not move when the
+    // schedule changes, and stamping the build date would claim a daily edit
+    // that most venues never have.
+    ...activeVenues.map(v => staticUrl(`/venue/${v.id}`, 'daily', '0.7')),
     staticUrl('/contact', 'monthly', '0.5'),
     staticUrl('/privacy', 'yearly', '0.3'),
     staticUrl('/terms', 'yearly', '0.3'),
@@ -149,13 +178,13 @@ async function run() {
     <loc>${SITE_URL}/member/${m.id}</loc>
     <lastmod>${(m.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.8</priority>${sitemapImage(m)}
   </url>`),
     ...indexableGroups.map(g => `  <url>
     <loc>${SITE_URL}/group/${g.id}</loc>
     <lastmod>${(g.updated_at ?? new Date().toISOString()).slice(0, 10)}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.7</priority>${sitemapImage(g)}
   </url>`),
     ...indexableCompanies.map(c => `  <url>
     <loc>${SITE_URL}/company/${c.id}</loc>
@@ -166,7 +195,7 @@ async function run() {
   ];
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${urlEntries.join('\n')}
 </urlset>`;
 

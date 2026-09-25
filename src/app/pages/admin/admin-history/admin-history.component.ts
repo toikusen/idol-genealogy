@@ -43,6 +43,7 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
 
   statusOptions = [
     { value: 'active', label: '正常在籍' },
+    { value: 'trainee', label: '研修' },
     { value: 'concurrent', label: '兼任' },
     { value: 'support', label: '支援' },
     { value: 'hiatus', label: '活休' },
@@ -214,5 +215,13 @@ export class AdminHistoryComponent implements OnInit, OnDestroy {
     } catch (e: any) {
       alert(e.message || '刪除失敗');
     }
+  }
+
+  trackById(_index: number, item: { id: string }): string {
+    return item.id;
+  }
+
+  trackByMemberId(_index: number, group: { memberId: string }): string {
+    return group.memberId;
   }
 }

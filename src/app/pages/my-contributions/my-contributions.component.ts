@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { SupabaseService } from '../../core/supabase.service';
 import { ProposalService } from '../../core/proposal.service';
 import { Proposal } from '../../models';
@@ -12,14 +13,17 @@ import { BADGES, TABLE_LABELS, getBadge, getNextBadge, Badge } from '../../core/
   imports: [CommonModule, RouterLink],
   templateUrl: './my-contributions.component.html',
 })
-export class MyContributionsComponent implements OnInit {
+export class MyContributionsComponent implements OnInit, OnDestroy {
   loading = true;
   error = false;
   displayName = '';
   proposals: Proposal[] = [];
 
   readonly PAGE_SIZE = 50;
-  page = 1;
+  /** Raw ?page= value from the URL; use `page` (clamped) for display/slicing */
+  currentPage = 1;
+  private pageSub?: Subscription;
+  private pageInitialized = false;
 
   readonly BADGES = BADGES;
   readonly TABLE_LABELS = TABLE_LABELS;
@@ -28,9 +32,20 @@ export class MyContributionsComponent implements OnInit {
     private supabase: SupabaseService,
     private proposalService: ProposalService,
     private router: Router,
+    private route: ActivatedRoute,
   ) {}
 
   async ngOnInit() {
+    this.pageSub = this.route.queryParamMap.subscribe(params => {
+      const page = Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1);
+      const changed = page !== this.currentPage;
+      this.currentPage = page;
+      if (this.pageInitialized && changed && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      this.pageInitialized = true;
+    });
+
     const session = await this.supabase.getSessionOnce();
     if (!session) { this.router.navigate(['/']); return; }
     this.displayName = session.user.user_metadata?.['display_name'] || '';
@@ -41,6 +56,10 @@ export class MyContributionsComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  ngOnDestroy() {
+    this.pageSub?.unsubscribe();
   }
 
   get approvedCount(): number {
@@ -93,7 +112,12 @@ export class MyContributionsComponent implements OnInit {
   }
 
   get totalPages(): number {
-    return Math.ceil(this.proposals.length / this.PAGE_SIZE);
+    return Math.max(1, Math.ceil(this.proposals.length / this.PAGE_SIZE));
+  }
+
+  /** currentPage clamped to the valid range (URL can carry an out-of-range value) */
+  get page(): number {
+    return Math.min(this.currentPage, this.totalPages);
   }
 
   get pagedProposals(): Proposal[] {
@@ -102,7 +126,12 @@ export class MyContributionsComponent implements OnInit {
   }
 
   goToPage(p: number) {
-    this.page = Math.max(1, Math.min(p, this.totalPages));
+    if (p < 1 || p > this.totalPages) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: p === 1 ? null : p },
+      queryParamsHandling: 'merge',
+    });
   }
 
   formatDate(iso: string): string {

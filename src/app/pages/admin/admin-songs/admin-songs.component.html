@@ -115,7 +115,8 @@
                 <span *ngIf="row.lyricist">作詞：{{ row.lyricist }}</span>
                 <span *ngIf="row.composer">作曲：{{ row.composer }}</span>
                 <span *ngIf="row.arranger">編曲：{{ row.arranger }}</span>
-                <span *ngIf="!row.lyricist && !row.composer && !row.arranger">—</span>
+                <span *ngIf="row.choreographer">編舞：{{ row.choreographer }}</span>
+                <span *ngIf="!row.lyricist && !row.composer && !row.arranger && !row.choreographer">—</span>
               </div>
             </td>
             <td class="px-4 py-3">
@@ -208,7 +209,7 @@
         />
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">作詞</label>
           <input
@@ -233,6 +234,15 @@
             type="text"
             [(ngModel)]="draft.arranger"
             placeholder="編曲者"
+            class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">編舞</label>
+          <input
+            type="text"
+            [(ngModel)]="draft.choreographer"
+            placeholder="編舞者"
             class="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
           />
         </div>

@@ -18,10 +18,10 @@ export const PROPOSAL_ALLOWED_FIELDS: Record<string, string[]> = {
     'role', 'notes',
   ],
   member_songs: [
-    'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger', 'notes',
+    'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger', 'choreographer', 'notes',
   ],
   group_songs: [
-    'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger', 'notes',
+    'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger', 'choreographer', 'notes',
   ],
   companies: [
     'name', 'description', 'founded_at', 'website', 'instagram', 'facebook', 'x', 'youtube', 'photo_url',
@@ -59,11 +59,11 @@ export const FIELD_LABELS: Record<string, Record<string, string>> = {
   },
   member_songs: {
     title: '歌曲名稱', release_date: '發行日期', youtube_url: 'YouTube 連結',
-    composer: '作曲', lyricist: '作詞', arranger: '編曲', notes: '備注',
+    composer: '作曲', lyricist: '作詞', arranger: '編曲', choreographer: '編舞', notes: '備注',
   },
   group_songs: {
     title: '歌曲名稱', release_date: '發行日期', youtube_url: 'YouTube 連結',
-    composer: '作曲', lyricist: '作詞', arranger: '編曲', notes: '備注',
+    composer: '作曲', lyricist: '作詞', arranger: '編曲', choreographer: '編舞', notes: '備注',
   },
   venues: {
     name: '場地名稱', address: '地址', type: '類型', region: '區域',

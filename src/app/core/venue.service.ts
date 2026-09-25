@@ -29,6 +29,53 @@ export class VenueService {
     return this._promise;
   }
 
+  /**
+   * Not filtered by `is_active`: closed venues keep working URLs, just noindex.
+   *
+   * Served from the list cache when it is warm. `getAll()` selects the same
+   * columns, so tapping a venue in the list would otherwise block the whole
+   * route on a round trip for a row already in memory — a full RTT of dead
+   * time on a phone, with nothing on screen until it lands.
+   */
+  async getById(id: string): Promise<Venue | null> {
+    const cached = this._cache?.find(v => v.id === id);
+    if (cached) return cached;
+
+    const { data, error } = await this.db.from('venues').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    return data ?? null;
+  }
+
+  /**
+   * Neighbours are taken by walking forward from this venue in name order and
+   * wrapping around, not by slicing the first N. The north region has 38 venues;
+   * a fixed slice would link the same six from every page and leave the rest
+   * with no inbound links at all. Walking the ring gives each venue a different
+   * set and makes the region a connected graph a crawler can traverse.
+   */
+  async getNearbyVenues(venue: Venue, limit = 6): Promise<Venue[]> {
+    const ring = await this.activeVenuesInRegion(venue.region);
+    const start = ring.findIndex(v => v.id === venue.id);
+    const others = start === -1
+      ? ring.filter(v => v.id !== venue.id)
+      : [...ring.slice(start + 1), ...ring.slice(0, start)];
+    return others.slice(0, limit);
+  }
+
+  /** `getAll()` already orders by region then name, so filtering keeps the ring order. */
+  private async activeVenuesInRegion(region: Venue['region']): Promise<Venue[]> {
+    if (this._cache) return this._cache.filter(v => v.region === region);
+
+    const { data, error } = await this.db
+      .from('venues')
+      .select('*')
+      .eq('region', region)
+      .eq('is_active', true)
+      .order('name');
+    if (error) throw error;
+    return (data ?? []) as Venue[];
+  }
+
   async getCount(): Promise<number> {
     if (this._cache) return this._cache.length;
     const venues = await this.getAll();

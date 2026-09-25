@@ -1,4 +1,5 @@
-import { inject } from '@angular/core';
+import { inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ResolveFn } from '@angular/router';
 import {
   Company,
@@ -6,16 +7,20 @@ import {
   GroupRecentHeatEntry,
   GroupSong,
   GroupTrendingEntry,
-  GroupVideo,
   History,
   Member,
   MemberRecentHeatEntry,
   MemberSong,
   MemberTrendingEntry,
   Proposal,
+  RelatedGroup,
   Team,
+  Venue,
+  VenueCalendarEvent,
 } from '../models';
 import { CompanyService } from './company.service';
+import { CalendarResult, CalendarStatus, GoogleCalendarService } from './google-calendar.service';
+import { VenueService } from './venue.service';
 import { GroupService } from './group.service';
 import { HistoryService } from './history.service';
 import { MemberService } from './member.service';
@@ -75,8 +80,7 @@ export interface GroupPageData {
   teams: Team[];
   histories: History[];
   allMemberHistories: History[];
-  videos: GroupVideo[];
-  similarGroups: Group[];
+  similarGroups: RelatedGroup[];
   allMembers: { id: string; name: string }[];
   lastProposal: Proposal | null;
   songs: GroupSong[];
@@ -165,7 +169,7 @@ export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
     if (!group) {
       return {
         id, group: null, companyName: null, teams, histories,
-        allMemberHistories: [], videos: [], similarGroups: [],
+        allMemberHistories: [], similarGroups: [],
         allMembers: [], lastProposal: null, songs: [], error: false,
       };
     }
@@ -179,13 +183,13 @@ export const groupPageResolver: ResolveFn<GroupPageData> = async (route) => {
     return {
       id, group, companyName, teams,
       histories: publicHistories,
-      allMemberHistories: [], videos: [], similarGroups: [],
+      allMemberHistories: [], similarGroups: [],
       allMembers: [], lastProposal: null, songs: [], error: false,
     };
   } catch {
     return {
       id, group: null, companyName: null, teams: [], histories: [],
-      allMemberHistories: [], videos: [], similarGroups: [],
+      allMemberHistories: [], similarGroups: [],
       allMembers: [], lastProposal: null, songs: [], error: true,
     };
   }
@@ -238,7 +242,7 @@ export const homePageResolver: ResolveFn<HomePageData> = async () => {
   const companyService = inject(CompanyService);
 
   const [recentMembers, memberCount, groupCount, companyCount, topMembers, topGroups, upcomingBirthdays] = await Promise.all([
-    memberService.getRecent(9).catch(() => [] as Member[]),
+    memberService.getRecent(12).catch(() => [] as Member[]),
     memberService.getCount().catch(() => 0),
     groupService.getPublicCount().catch(() => 0),
     companyService.getPublicCount().catch(() => 0),
@@ -333,4 +337,98 @@ export const leaderboardPageResolver: ResolveFn<LeaderboardPageData> = async () 
     recentGroups: recentGroups.filter(isPublicGroupRecord).slice(0, 10),
     trendingGroups: trendingGroups.filter(isPublicGroupRecord).slice(0, 10),
   };
+};
+
+export interface VenuePageData {
+  id: string;
+  venue: Venue | null;
+  nearbyVenues: Venue[];
+  events: VenueCalendarEvent[];
+  /** Supabase lookup failed. Distinct from `venue: null`, which means it does not exist. */
+  error: boolean;
+  calendarStatus: CalendarStatus;
+  /**
+   * Set in the browser only: the schedule is still on its way and the page is
+   * expected to render without it. Never serialised — the server awaits the
+   * calendar so prerendered HTML carries the full schedule.
+   */
+  pendingCalendar?: Promise<CalendarResult>;
+}
+
+export const venuePageResolver: ResolveFn<VenuePageData> = async (route) => {
+  const venueService = inject(VenueService);
+  const calendar = inject(GoogleCalendarService);
+  const transferState = inject(TransferState);
+  const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  const id = route.paramMap.get('id') ?? '';
+  const stateKey = makeStateKey<VenuePageData>(`venue:${id}`);
+
+  // Hydration must render exactly what was prerendered. Without this the browser
+  // re-queries the Calendar API during hydration, and any difference (an outage,
+  // or a schedule edited since the nightly build) leaves the first paint mixing
+  // server and client output. The key is consumed once, so later SPA navigations
+  // back to this venue fetch fresh data.
+  if (isBrowser) {
+    const cached = transferState.get(stateKey, null);
+    if (cached) {
+      transferState.remove(stateKey);
+      return cached;
+    }
+  }
+
+  const store = (data: VenuePageData): VenuePageData => {
+    if (!isBrowser) transferState.set(stateKey, data);
+    return data;
+  };
+
+  let venue: Venue | null;
+  try {
+    venue = await venueService.getById(id);
+  } catch (error) {
+    // A transient Supabase failure must not render as "venue not found" — that
+    // would noindex a page that exists.
+    console.warn(`[venue] lookup failed for ${id}:`, error);
+    return store({ id, venue: null, nearbyVenues: [], events: [], error: true, calendarStatus: 'unconfigured' });
+  }
+
+  if (!venue) {
+    return store({ id, venue: null, nearbyVenues: [], events: [], error: false, calendarStatus: 'unconfigured' });
+  }
+
+  // Both start now: awaiting one before creating the other would serialise them.
+  const nearbyPromise = venueService.getNearbyVenues(venue).catch(() => [] as Venue[]);
+  const calendarPromise = venue.is_active
+    ? calendar.getUpcomingVenueEventsResult(venue)
+    : Promise.resolve({ events: [] as VenueCalendarEvent[], status: 'unconfigured' as CalendarStatus });
+
+  const nearbyVenues = await nearbyPromise;
+
+  // A resolver holds the view — and the URL — until it settles, so anything it
+  // awaits is time the tap looks ignored. The venue and its neighbours come
+  // from the list's in-memory cache, but the calendar is a real request that
+  // the list may still have in flight: tapping a card the moment it appears
+  // cost 2.3s of dead screen on a throttled phone against 0.1s once the fetch
+  // had settled. The browser gets the page now and the schedule when it lands.
+  if (isBrowser) {
+    return {
+      id,
+      venue,
+      nearbyVenues,
+      events: [],
+      error: false,
+      calendarStatus: 'ok',
+      pendingCalendar: calendarPromise,
+    };
+  }
+
+  const calendarResult = await calendarPromise;
+  return store({
+    id,
+    venue,
+    nearbyVenues,
+    events: calendarResult.events,
+    error: false,
+    calendarStatus: calendarResult.status,
+  });
 };

@@ -17,26 +17,26 @@ const mockVenue: Venue = {
   updated_at: '2026-01-01T00:00:00Z',
 };
 
-const makeChainedOrderSpy = (result: unknown) => {
-  const finalOrder = jasmine.createSpy('order2').and.returnValue(Promise.resolve(result));
-  const firstOrder = jasmine.createSpy('order1').and.returnValue({ order: finalOrder });
-  return firstOrder;
+/** A thenable query builder: every filter returns itself, so any chain the
+ *  service builds resolves to `queryResult`. */
+const makeQuery = () => {
+  const q: Record<string, unknown> = {};
+  for (const method of ['eq', 'order', 'limit', 'in']) {
+    q[method] = jasmine.createSpy(method).and.returnValue(q);
+  }
+  q['maybeSingle'] = jasmine.createSpy('maybeSingle').and.callFake(() => Promise.resolve(queryResult));
+  q['then'] = (onOk: unknown, onErr: unknown) =>
+    Promise.resolve(queryResult).then(onOk as never, onErr as never);
+  return q;
 };
 
-const makeOrderSpy = (result: unknown) =>
-  jasmine.createSpy('order').and.returnValue(Promise.resolve(result));
-
-const makeSelectSpy = (result: unknown) =>
-  jasmine.createSpy('select').and.returnValue({
-    eq: jasmine.createSpy('eq').and.returnValue({
-      order: makeChainedOrderSpy({ data: [mockVenue], error: null }),
-    }),
-    order: makeOrderSpy(result),
-  });
+/** What the next query resolves to. Tests that assert "no query happened" rely
+ *  on `from` never being called, not on this value. */
+let queryResult: { data: unknown; error: unknown } = { data: [mockVenue], error: null };
 
 const mockClient = {
   from: jasmine.createSpy('from').and.callFake(() => ({
-    select: makeSelectSpy({ data: [mockVenue], error: null }),
+    select: jasmine.createSpy('select').and.callFake(makeQuery),
     insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ error: null })),
     update: jasmine.createSpy('update').and.returnValue({
       eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve({ error: null })),
@@ -55,6 +55,7 @@ describe('VenueService', () => {
       ],
     });
     service = TestBed.inject(VenueService);
+    queryResult = { data: [mockVenue], error: null };
     mockClient.from.calls.reset();
   });
 
@@ -77,6 +78,37 @@ describe('VenueService', () => {
   it('getCount() returns number of active venues', async () => {
     const count = await service.getCount();
     expect(typeof count).toBe('number');
+  });
+
+  it('getById() answers from the list cache instead of a second round trip', async () => {
+    await service.getAll();
+    mockClient.from.calls.reset();
+
+    expect(await service.getById('v-1')).toBe(mockVenue);
+    expect(mockClient.from).not.toHaveBeenCalled();
+  });
+
+  it('getById() still queries for a venue the list cache cannot hold', async () => {
+    // getAll() filters on is_active, so a closed venue is never in the cache.
+    await service.getAll();
+    const closed: Venue = { ...mockVenue, id: 'v-closed', is_active: false };
+    queryResult = { data: closed, error: null };
+    mockClient.from.calls.reset();
+
+    expect(await service.getById('v-closed')).toEqual(closed);
+    expect(mockClient.from).toHaveBeenCalledWith('venues');
+  });
+
+  it('getNearbyVenues() walks the cached region ring without querying', async () => {
+    const ring: Venue[] = ['a', 'b', 'c'].map(n => ({ ...mockVenue, id: n, name: n }));
+    queryResult = { data: [...ring, { ...mockVenue, id: 's', name: 's', region: 'south' }], error: null };
+    await service.getAll();
+    mockClient.from.calls.reset();
+
+    const nearby = await service.getNearbyVenues(ring[1]);
+
+    expect(nearby.map(v => v.id)).toEqual(['c', 'a']);
+    expect(mockClient.from).not.toHaveBeenCalled();
   });
 
   it('invalidateCache() clears cache so next getAll() re-fetches', async () => {

@@ -38,7 +38,7 @@ const EDITABLE_FIELDS: Record<EditableAuditTable, Set<string>> = {
   groups: new Set([
     'name', 'name_jp', 'color', 'founded_at', 'disbanded_at',
     'instagram', 'facebook', 'x', 'youtube', 'company_id', 'company', 'photo_url',
-    'notes', 'is_trainee', 'style',
+    'notes', 'is_trainee',
     'photo_status', 'photo_notes', 'video_status', 'video_notes', 'photography_source',
   ]),
   history: new Set([
@@ -52,11 +52,11 @@ const EDITABLE_FIELDS: Record<EditableAuditTable, Set<string>> = {
   ]),
   member_songs: new Set([
     'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger',
-    'notes', 'sort_order',
+    'choreographer', 'notes', 'sort_order',
   ]),
   group_songs: new Set([
     'title', 'release_date', 'youtube_url', 'composer', 'lyricist', 'arranger',
-    'notes', 'sort_order',
+    'choreographer', 'notes', 'sort_order',
   ]),
   venues: new Set([
     'name', 'address', 'type', 'region', 'google_maps_url', 'phone', 'notes',

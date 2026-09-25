@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -11,7 +12,7 @@ import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-pan
 import { Member, History, Proposal, MemberSong, Group } from '../../models';
 import { GroupEventsComponent } from '../../shared/group-events/group-events.component';
 import { ProposalService } from '../../core/proposal.service';
-import { getDiffFields, DiffField } from '../../core/proposal-diff.utils';
+import { getDiffFields, getDeleteSummary, getRelatedSubjectName, buildSongReportPayload, DiffField } from '../../core/proposal-diff.utils';
 import { formatRelativeTime } from '../../core/time.utils';
 import { RecordEditHistoryComponent } from '../../shared/record-edit-history/record-edit-history.component';
 import { GroupService } from '../../core/group.service';
@@ -41,7 +42,7 @@ import {
   templateUrl: './member-page.component.html',
   styleUrl: './member-page.component.css',
 })
-export class MemberPageComponent implements OnInit, OnDestroy {
+export class MemberPageComponent implements OnInit {
   member: Member | null = null;
   histories: History[] = [];
   activeGroups: Group[] = [];
@@ -61,8 +62,6 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   companyName: string | null = null;
   companyId: string | null = null;
   adEligible = false;
-  /** Mirrors the meta description so the page has crawlable body text */
-  pageDescription = '';
   photographyBadgeColor = photographyBadgeColor;
   photographyBadgeTextColor = photographyBadgeTextColor;
   photographyBadgeBorderColor = photographyBadgeBorderColor;
@@ -87,10 +86,12 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   songError = '';
   reportingSong: MemberSong | null = null;
   songReportNote = '';
+  songReportUrl = '';
   songReporterName = '';
   songReportSubmitting = false;
   songReportError = '';
   songReportDone = false;
+  deletingSongId: string | null = null;
   private routeDataSub?: Subscription;
   private currentLoadId: string | null = null;
 
@@ -103,22 +104,23 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   }
 
   get latestEditSummary(): string {
-    if (!this.lastProposal) return '';
-    const submitter = this.lastProposal.submitter_name || '貢獻者';
-    const relative = this.formatRelativeTime(this.lastProposal.reviewed_at);
-    if (this.lastProposal.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
-      return `${relative} · ${submitter} 更新了「${this.lastProposalDiffFields[0].label}」`;
+    const p = this.lastProposal;
+    if (!p) return '';
+    const submitter = p.submitter_name || '貢獻者';
+    const relative = this.formatRelativeTime(p.reviewed_at);
+    const subject = getRelatedSubjectName(p, 'group_id', id => this.allGroupsList.find(g => g.id === id)?.name);
+    if (p.operation === 'UPDATE' && this.lastProposalDiffFields.length > 0) {
+      const target = subject ? `${subject}的` : '';
+      return `${relative} · ${submitter} 更新了${target}「${this.lastProposalDiffFields[0].label}」`;
     }
-    if (this.lastProposal.operation === 'DELETE' && this.lastProposalDiffFields.length > 0) {
-      return `${relative} · ${submitter} 刪除了「${this.lastProposalDiffFields[0].newValue === '—' ? this.lastProposalDiffFields[0].oldValue : this.lastProposalDiffFields[0].label}」`;
+    if (p.operation === 'DELETE') {
+      return `${relative} · ${submitter} ${getDeleteSummary(p)}`;
     }
-    if (this.lastProposal.operation === 'INSERT') {
-      const insertLabel: Record<string, string> = {
-        members: '建立頁面',
-        history: '新增歷程紀錄',
-        member_songs: '新增歌曲',
-      };
-      return `${relative} · ${submitter} ${insertLabel[this.lastProposal.table_name] ?? '新增資料'}`;
+    if (p.operation === 'INSERT') {
+      if (p.table_name === 'history') return `${relative} · ${submitter} 新增了${subject ? `${subject}的` : ''}歷程紀錄`;
+      if (p.table_name === 'member_songs') return `${relative} · ${submitter} 新增了歌曲${subject ? `「${subject}」` : ''}`;
+      if (p.table_name === 'members') return `${relative} · ${submitter} 建立頁面`;
+      return `${relative} · ${submitter} 新增資料`;
     }
     return `${relative} · ${submitter} 補充`;
   }
@@ -144,22 +146,23 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     private supabaseAuth: SupabaseService,
     private adminRole: AdminRoleService,
     private groupService: GroupService,
+    private destroyRef: DestroyRef,
   ) {}
 
   async ngOnInit() {
-    this.supabaseAuth.authState$.subscribe(s => {
+    this.supabaseAuth.authState$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(s => {
       this.isLoggedIn = !!s?.user;
       this.currentUserId = s?.user?.id ?? null;
     });
-    this.adminRole.isAdmin$.subscribe(v => { this.isAdmin = v; });
-    this.routeDataSub = this.route.data.subscribe(({ pageData }) => {
+    this.adminRole.isAdmin$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(v => { this.isAdmin = v; });
+    this.routeDataSub = this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ pageData }) => {
       const data = pageData as MemberPageData;
       this.applyPageData(data);
       if (data.member && !data.error) {
         this.loadDeferredData(data.member.id);
       }
     });
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['propose'] === 'true') {
         this.showProposalPanel = true;
       }
@@ -167,15 +170,11 @@ export class MemberPageComponent implements OnInit, OnDestroy {
         this.pendingEditSongId = params['editSongId'];
       }
     });
-    this.route.fragment.subscribe(fragment => {
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fragment => {
       if (fragment === 'propose') {
         this.showProposalPanel = true;
       }
     });
-  }
-
-  ngOnDestroy() {
-    this.routeDataSub?.unsubscribe();
   }
 
   private async loadDeferredData(memberId: string): Promise<void> {
@@ -234,7 +233,6 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       this.seo.setRobotsNoIndex(true);
       this.seo.clearJsonLd();
       this.adEligible = false;
-      this.pageDescription = '';
       this.activeGroups = [];
       this.snsUrls = { instagram: null, facebook: null, x: null, maid: null };
       return;
@@ -252,7 +250,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       .map(h => {
         const gName = h.group?.name || h.external_group_name || '';
         const from = h.joined_at ? h.joined_at.slice(0, 4) : null;
-        const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' || h.status === 'hiatus' ? '至今' : null);
+        const to = h.left_at ? h.left_at.slice(0, 4) : (h.status === 'active' || h.status === 'trainee' || h.status === 'hiatus' ? '至今' : null);
         const range = from ? (to ? `${from}–${to}` : from) : '';
         return range ? `${gName}（${range}）` : gName;
       });
@@ -262,7 +260,6 @@ export class MemberPageComponent implements OnInit, OnDestroy {
       ? `${nameStr}是台灣地下偶像，曾隸屬${groupParts.join('、')}。查看活動歷程、所屬團體與近期演出資訊。`
       : `${displayName}的完整資料，包含所屬團體、活動記錄與近期演出資訊。`;
 
-    this.pageDescription = description;
     this.seo.setPage(
       `${displayName} - Idol Maps`,
       description,
@@ -328,7 +325,7 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   }
 
   private buildActiveGroups(histories: History[]): Group[] {
-    const statuses = new Set(['active', 'concurrent', 'support']);
+    const statuses = new Set(['active', 'trainee', 'concurrent', 'support']);
     const seen = new Set<string>();
     return histories
       .filter(h => statuses.has(h.status ?? '') && h.group != null)
@@ -378,12 +375,13 @@ export class MemberPageComponent implements OnInit, OnDestroy {
           composer: this.songFormData.composer || null,
           lyricist: this.songFormData.lyricist || null,
           arranger: this.songFormData.arranger || null,
+          choreographer: this.songFormData.choreographer || null,
           notes: this.songFormData.notes || null,
           sort_order: this.songFormData.sort_order ?? 1,
         });
         this.memberSongs = this.memberSongs.map(s => s.id === updated.id ? updated : s)
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-        await this.proposalService.recordDirectEdit('member_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(() => {});
+        await this.proposalService.recordDirectEdit('member_songs', originalSong.id, originalSong, { ...originalSong, ...updated }).catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       } else {
         const created = await this.memberSongService.create({
           member_id: memberId,
@@ -393,12 +391,13 @@ export class MemberPageComponent implements OnInit, OnDestroy {
           composer: this.songFormData.composer || null,
           lyricist: this.songFormData.lyricist || null,
           arranger: this.songFormData.arranger || null,
+          choreographer: this.songFormData.choreographer || null,
           notes: this.songFormData.notes || null,
           sort_order: this.songFormData.sort_order ?? 1,
         });
         this.memberSongs = [...this.memberSongs, created]
           .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-        await this.proposalService.recordDirectEdit('member_songs', created.id, {}, created, 'INSERT').catch(() => {});
+        await this.proposalService.recordDirectEdit('member_songs', created.id, {}, created, 'INSERT').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       }
       this.cancelSongForm();
     } catch (e: any) {
@@ -409,19 +408,24 @@ export class MemberPageComponent implements OnInit, OnDestroy {
   }
 
   async deleteSong(song: MemberSong) {
+    if (this.deletingSongId) return;
     if (!confirm(`確定要刪除「${song.title}」嗎？`)) return;
+    this.deletingSongId = song.id;
     try {
       await this.memberSongService.delete(song.id);
-      await this.proposalService.recordDirectEdit('member_songs', song.id, song, {}, 'DELETE').catch(() => {});
+      await this.proposalService.recordDirectEdit('member_songs', song.id, song, {}, 'DELETE').catch(e => console.error('[EditHistory] recordDirectEdit failed:', e));
       this.memberSongs = this.memberSongs.filter(s => s.id !== song.id);
     } catch (e: any) {
       alert(e.message ?? '刪除失敗');
+    } finally {
+      this.deletingSongId = null;
     }
   }
 
   startReportSong(song: MemberSong) {
     this.reportingSong = song;
     this.songReportNote = '';
+    this.songReportUrl = '';
     this.songReporterName = '';
     this.songReportError = '';
     this.songReportDone = false;
@@ -435,12 +439,13 @@ export class MemberPageComponent implements OnInit, OnDestroy {
     this.songReportError = '';
     try {
       const session = await this.supabaseAuth.getSessionOnce();
+      const payload = buildSongReportPayload(this.reportingSong!, this.songReportUrl);
       await this.proposalService.submit({
         table_name: 'member_songs',
         record_id: this.reportingSong!.id,
         operation: 'UPDATE',
-        proposed_data: {},
-        original_data: null,
+        proposed_data: payload.proposed_data,
+        original_data: payload.original_data,
         submitter_id: session?.user?.id ?? null,
         submitter_name: this.songReporterName.trim() || (session?.user?.email ?? '匿名'),
         submitter_email: session?.user?.email ?? null,

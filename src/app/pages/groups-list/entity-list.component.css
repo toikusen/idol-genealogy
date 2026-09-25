@@ -31,3 +31,36 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
   border-color: rgba(232, 121, 160, 0.28) !important;
 }
+
+/* ── Pagination ── */
+.pagination-nav-btn {
+  padding: 7px 14px; border-radius: 8px;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-card);
+  font-size: 0.82rem; color: var(--text-secondary);
+  cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pagination-page-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  text-decoration: none;
+  border: 1px solid rgba(232, 121, 160, 0.2);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.85rem; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.pagination-page-btn--active {
+  background: rgba(232, 121, 160, 0.12) !important;
+  color: #c05080 !important;
+  border-color: rgba(232, 121, 160, 0.6) !important;
+}
+
+:host-context([data-theme="dark"]) .pagination-nav-btn {
+  border-color: var(--border-subtle);
+}
+:host-context([data-theme="dark"]) .pagination-page-btn--active {
+  background: rgba(232, 121, 160, 0.15) !important;
+  color: #e879a0 !important;
+  border-color: rgba(232, 121, 160, 0.52) !important;
+}

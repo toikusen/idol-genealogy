@@ -1,0 +1,424 @@
+.sk-page {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1rem 16px 7rem;
+  color: var(--text-primary);
+}
+
+.sk-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-faint-60);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+
+.sk-back:hover {
+  color: var(--text-secondary);
+}
+
+.sk-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Loading / error ── */
+.sk-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 0;
+  text-align: center;
+  color: var(--text-faint-70);
+  font-size: 0.9rem;
+}
+
+.sk-state p {
+  margin: 0;
+}
+
+.sk-state__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
+.sk-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 80px);
+  gap: 8px;
+}
+
+.sk-skeleton {
+  display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--skel-from), var(--skel-to), var(--skel-from));
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes sk-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── Intro ── */
+.sk-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.sk-intro > .sk-back {
+  align-self: flex-start;
+}
+
+.sk-intro__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0.75rem 0 1rem;
+  line-height: 1.1;
+}
+
+.sk-intro__kicker {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.4em;
+  color: var(--text-pink);
+}
+
+.sk-intro__main {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  background: linear-gradient(135deg, #e879a0, #b064d8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.sk-intro__lead {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.9;
+  color: var(--text-secondary);
+}
+
+.sk-intro__preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 1.5rem;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-md);
+  transform: rotate(-2deg);
+}
+
+.sk-intro__tile {
+  display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--skel-from), var(--skel-to));
+}
+
+.sk-intro__tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+}
+
+.sk-intro__note {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  line-height: 1.9;
+  color: var(--text-faint-70);
+}
+
+.sk-intro__count {
+  min-height: 1.6em;
+  margin: 0 0 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-link);
+}
+
+.sk-intro__count-loading {
+  font-weight: 400;
+  color: var(--text-faint-60);
+}
+
+.sk-intro__cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 360px;
+}
+
+.sk-btn--wide {
+  width: 100%;
+  min-height: 54px;
+  font-size: 1rem;
+}
+
+.sk-intro__how {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 1.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  text-align: left;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.sk-intro__how summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 32px;
+}
+
+.sk-intro__how ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.sk-intro__how p {
+  margin: 0;
+  color: var(--text-faint-65);
+}
+
+/* ── Stage header ── */
+.sk-stage-head {
+  margin: 0.25rem 0 1rem;
+  text-align: center;
+}
+
+.sk-stage-head__chip {
+  display: inline-block;
+  margin: 0 0 0.4rem;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--bg-pink-tint-hover);
+  color: var(--text-link);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.sk-stage-head__chip--final {
+  background: linear-gradient(135deg, #ec7fa8, #b064d8);
+  color: #fff;
+  letter-spacing: 0.4em;
+}
+
+.sk-stage-head__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-heading);
+}
+
+.sk-stage-head__q {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.sk-stage-head__q strong {
+  color: var(--text-link);
+}
+
+.sk-stage-head__hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--text-faint-60);
+}
+
+/* ── Progress ── */
+.sk-progress {
+  margin-bottom: 0.9rem;
+}
+
+.sk-progress__label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  color: var(--text-faint-65);
+  font-variant-numeric: tabular-nums;
+}
+
+.sk-progress__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--mauve-07);
+  overflow: hidden;
+}
+
+.sk-progress__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ec7fa8, #b064d8);
+  transition: width 0.3s ease;
+}
+
+/* ── Grids ── */
+/* A logical batch is always 12; only the column count changes. */
+.sk-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.sk-grid--batch {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sk-grid--group {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 440px;
+  margin: 0 auto;
+  gap: 12px;
+}
+
+.sk-versus {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.sk-versus__vs {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-link);
+  pointer-events: none;
+}
+
+.sk-final-hint {
+  margin: 0.9rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-faint-60);
+}
+
+.sk-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-faint-65);
+}
+
+/* ── Action bar ──
+   Inline rather than sticky: the app's floating login pill (bottom-left) and
+   theme toggle (bottom-right) would sit on top of a sticky bottom bar. */
+.sk-actionbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-xs);
+}
+
+.sk-actionbar--center {
+  justify-content: center;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.sk-actionbar__count {
+  font-size: 0.78rem;
+  color: var(--text-faint-70);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sk-actionbar__spacer {
+  min-width: 72px;
+}
+
+@media (min-width: 640px) {
+  .sk-grid--batch {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .sk-intro__main {
+    font-size: 3.4rem;
+  }
+
+  .sk-intro__preview {
+    max-width: 360px;
+  }
+
+  .sk-stage-head__title {
+    font-size: 1.6rem;
+  }
+
+  .sk-versus {
+    gap: 24px;
+  }
+}
+
+@media (min-width: 960px) {
+  .sk-page {
+    max-width: 880px;
+  }
+
+  .sk-grid--batch {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}

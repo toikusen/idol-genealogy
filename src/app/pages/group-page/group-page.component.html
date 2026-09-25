@@ -149,13 +149,11 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 }
               </button>
-              @if (isLoggedIn) {
-                <app-favorite-toggle
-                  entityType="group"
-                  [entityId]="group.id"
-                  style="flex-shrink:0;"
-                />
-              }
+              <app-favorite-toggle
+                entityType="group"
+                [entityId]="group.id"
+                style="flex-shrink:0;"
+              />
             </div>
           </div>
 
@@ -179,13 +177,11 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               }
             </button>
-            @if (isLoggedIn) {
-              <app-favorite-toggle
-                entityType="group"
-                [entityId]="group.id"
-                style="flex-shrink:0;"
-              />
-            }
+            <app-favorite-toggle
+              entityType="group"
+              [entityId]="group.id"
+              style="flex-shrink:0;"
+            />
           </div>
 
 
@@ -329,7 +325,7 @@
                   outline: 2px solid rgba(232,121,160,0.2);
                   flex-shrink: 0;
                 " [style.outline-color]="group.color + '44'">
-                  <img [src]="group.photo_url | supabaseImg:280" [alt]="group.name" loading="lazy" style="
+                  <img [src]="group.photo_url | supabaseImg:280" [alt]="group.name" width="140" height="140" fetchpriority="high" style="
                     width: 100%; height: 100%; object-fit: cover;
                     display: block;
                   ">
@@ -554,6 +550,7 @@
                           style="align-self: flex-start; margin-top: 1px;"
                         >
                           @if (selectedHistory.status === 'active') { 活動中 }
+                          @if (selectedHistory.status === 'trainee') { 研修 }
                           @if (selectedHistory.status === 'graduated') { 畢業 }
                           @if (selectedHistory.status === 'transferred') { 移籍 }
                           @if (selectedHistory.status === 'concurrent') { 兼任 }
@@ -740,6 +737,7 @@
                       (mouseenter)="onBarMouseEnter($event, seg.history)"
                       (mousemove)="onBarMouseMove($event)"
                       (mouseleave)="onBarMouseLeave()"
+                      (click)="onBarClick($event, seg.history)"
                       ></div>
                     }
                   </div>
@@ -841,7 +839,7 @@
                     <input id="song-title" type="text" [(ngModel)]="songFormData.title" placeholder="歌曲名稱"
                       class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                   </div>
-                  <div class="grid grid-cols-3 gap-3">
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
                       <label for="song-lyricist" class="block text-xs mb-1" style="color:var(--text-faint-65);">作詞</label>
                       <input id="song-lyricist" type="text" [(ngModel)]="songFormData.lyricist" placeholder="作詞者"
@@ -855,6 +853,11 @@
                     <div>
                       <label for="song-arranger" class="block text-xs mb-1" style="color:var(--text-faint-65);">編曲</label>
                       <input id="song-arranger" type="text" [(ngModel)]="songFormData.arranger" placeholder="編曲者"
+                        class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
+                    </div>
+                    <div>
+                      <label for="song-choreographer" class="block text-xs mb-1" style="color:var(--text-faint-65);">編舞</label>
+                      <input id="song-choreographer" type="text" [(ngModel)]="songFormData.choreographer" placeholder="編舞者"
                         class="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                     </div>
                   </div>
@@ -961,8 +964,8 @@
 
                     <!-- 歌曲資訊 -->
                     <div class="flex-1 min-w-0">
-                      <div class="flex items-start justify-between gap-2">
-                        <div class="min-w-0">
+                      <div class="flex flex-col sm:flex-row items-start justify-between gap-2">
+                        <div class="min-w-0 w-full sm:w-auto">
                           @if (song.sort_order >= 1) {
                             <p class="text-xs mb-0.5" style="color:var(--text-faint-55);">第 {{ song.sort_order }} 首原創單曲</p>
                           }
@@ -977,6 +980,9 @@
                             @if (song.arranger) {
                               <span class="text-xs" style="color:var(--text-faint-55);">編曲：{{ song.arranger }}</span>
                             }
+                            @if (song.choreographer) {
+                              <span class="text-xs" style="color:var(--text-faint-55);">編舞：{{ song.choreographer }}</span>
+                            }
                             @if (song.release_date) {
                               <span class="text-xs" style="color:var(--text-faint-55);">發行時間：{{ song.release_date.slice(0,10).replaceAll('-','.') }}</span>
                             }
@@ -987,7 +993,7 @@
                             <button type="button" (click)="openEditSong(song)" class="song-action-btn song-action-btn--edit">
                               編輯
                             </button>
-                            <button type="button" (click)="deleteSong(song)" class="song-action-btn song-action-btn--danger">
+                            <button type="button" (click)="deleteSong(song)" [disabled]="deletingSongId === song.id" class="song-action-btn song-action-btn--danger">
                               刪除
                             </button>
                           }
@@ -1013,6 +1019,8 @@
                         }
                         <textarea [(ngModel)]="songReportNote" rows="2" placeholder="例：作詞者名稱有誤，來源：…"
                           class="w-full rounded-lg px-3 py-1.5 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"></textarea>
+                        <input type="url" [(ngModel)]="songReportUrl" placeholder="建議的新 YouTube 連結（選填，填了審核後會直接套用）"
+                          class="w-full rounded-lg px-3 py-1.5 text-xs mt-2 focus:outline-none focus:ring-2 focus:ring-pink-300" style="border:1px solid var(--border-default);background:var(--bg-surface);color:var(--text-primary);"/>
                         @if (songReportError) {
                           <p class="text-xs text-red-500 mt-1">{{ songReportError }}</p>
                         }
@@ -1045,7 +1053,7 @@
         </div>
       }
 
-      <!-- ══ Featured videos ══ -->
+      <!-- ══ Popular videos (auto-fetched from the group's YouTube channel) ══ -->
       @if (videos.length > 0) {
         <section style="margin-top: 48px; margin-bottom: 16px;">
 
@@ -1056,14 +1064,14 @@
               font-size: 0.72rem; letter-spacing: 0.25em;
               text-transform: uppercase; color: var(--text-label);
               white-space: nowrap;
-            ">精選影片</span>
+            ">熱門影片</span>
             <div style="flex: 1; height: 1px; background: linear-gradient(to right, rgba(232,121,160,0.18), transparent);"></div>
           </div>
 
           <!-- Video cards -->
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;">
-            @for (v of videos; track v.id) {
-              @if (extractYouTubeId(v.url); as vid) {
+            @for (v of videos; track v.videoId) {
+              @let vid = v.videoId;
                 <div class="video-card" style="
                   border-radius: 4px; overflow: hidden;
                   background: var(--bg-card);
@@ -1088,7 +1096,7 @@
                       style="position: relative; cursor: pointer; overflow: hidden;"
                     >
                       <img
-                        [src]="'https://img.youtube.com/vi/' + vid + '/hqdefault.jpg'"
+                        [src]="v.thumbnail"
                         loading="lazy"
                         style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; transition: transform 0.3s;"
                         class="video-thumb"
@@ -1130,7 +1138,6 @@
                   }
 
                 </div>
-              }
             }
           </div>
         </section>
@@ -1163,7 +1170,11 @@
               >
                 @for (g of similarGroups; track g.id) {
                   <div class="similar-carousel-slide" [style.width]="(100 / carouselVisibleCount) + '%'">
-                    <a [routerLink]="'/group/' + g.id" class="similar-card">
+                    <a
+                      [routerLink]="'/group/' + g.id"
+                      (click)="onRelatedClick(g.id)"
+                      class="similar-card"
+                    >
                       <!-- Color bar -->
                       <div style="height: 3px;" [style.background]="g.color"></div>
 
@@ -1176,23 +1187,23 @@
                             color: var(--text-primary); margin: 0;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                             line-height: 1.3;
-                          ">{{ g.name_jp || g.name }}</p>
+                          ">{{ g.name }}</p>
                         </div>
 
-                        @if (g.name_jp) {
-                          <p style="
-                            font-style: italic; font-size: 0.72rem;
-                            color: var(--text-faint); margin: 0 0 5px;
-                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                          ">{{ g.name }}</p>
-                        }
-
-                        @if (g.company || (g.company_id && similarGroupCompanyNames.get(g.company_id))) {
+                        @if (g.company_name) {
                           <p style="
                             font-size: 0.72rem; letter-spacing: 0.05em;
                             color: var(--text-faint-45); margin: 0;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                          ">{{ g.company || similarGroupCompanyNames.get(g.company_id!) }}</p>
+                          ">{{ g.company_name }}</p>
+                        }
+
+                        @if (g.reason) {
+                          <p style="
+                            font-size: 0.66rem; letter-spacing: 0.04em;
+                            color: var(--text-label); margin: 8px 0 0;
+                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                          ">{{ g.reason }}</p>
                         }
                       </div>
                     </a>
@@ -1353,91 +1364,15 @@
 
 <!-- ══ Gantt Tooltip ══ -->
 @if (tooltipHistory && group) {
-  <div
-    class="gantt-tooltip"
-    style="
-      position: fixed;
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%, calc(-100% - 14px));
-    "
-    [style.left.px]="tooltipX"
-    [style.top.px]="tooltipY"
-  >
-    <!-- Card -->
-    <div style="
-      position: relative;
-      background: rgba(13, 6, 15, 0.97);
-      border: 1px solid rgba(232,121,160,0.16);
-      border-radius: 9px;
-      padding: 11px 15px 12px;
-      min-width: 155px;
-      box-shadow:
-        0 12px 40px rgba(6, 3, 10, 0.6),
-        0 2px 8px rgba(232,121,160,0.08),
-        inset 0 1px 0 rgba(255,220,240,0.05);
-    ">
-      <!-- Accent glow line -->
-      <div style="
-        position: absolute; top: 0; left: 16px; right: 16px; height: 1px;
-        border-radius: 4px;
-        opacity: 0.7;
-      " [style.background]="'linear-gradient(to right, transparent, ' + group.color + ' 40%, ' + group.color + ' 60%, transparent)'"></div>
-
-      <!-- Member name -->
-      <div style="
-        font-size: 0.82rem;
-        color: rgba(255, 238, 250, 0.93);
-        letter-spacing: 0.06em;
-        margin-bottom: 8px;
-        white-space: nowrap;
-      ">{{ tooltipHistory.name_at_time || tooltipHistory.member?.name || tooltipHistory.member?.name_roman || '—' }}</div>
-
-      <!-- Divider -->
-      <div style="
-        height: 1px; margin-bottom: 8px;
-        background: linear-gradient(to right, rgba(232,121,160,0.12), rgba(124,108,242,0.08), transparent);
-      "></div>
-
-      <!-- Label -->
-      <div style="
-        font-size: 0.56rem; letter-spacing: 0.32em;
-        color: rgba(200,160,195,0.4); text-transform: uppercase;
-        margin-bottom: 5px;
-      ">在籍期間</div>
-
-      <!-- Date range -->
-      <div style="
-        display: flex; align-items: center; gap: 8px;
-        font-size: 0.73rem; letter-spacing: 0.03em;
-        white-space: nowrap;
-      ">
-        <span style="color: rgba(240, 215, 232, 0.82);">{{ formatDateShort(tooltipHistory.joined_at) }}</span>
-        <span style="
-          display: inline-flex; align-items: center; gap: 0;
-          color: rgba(232,121,160,0.45); font-size: 0.65rem; letter-spacing: 0;
-        ">→</span>
-        @if (!tooltipHistory.left_at) {
-          <span style="
-            font-size: 0.68rem; letter-spacing: 0.18em;
-            font-weight: 500;
-          " [style.color]="group.color">現在</span>
-        } @else {
-          <span style="color: rgba(240, 215, 232, 0.82);">{{ formatDateShort(tooltipHistory.left_at) }}</span>
-        }
-      </div>
-    </div>
-
-    <!-- Arrow -->
-    <div style="
-      position: absolute; bottom: -5px; left: 50%;
-      transform: translateX(-50%) rotate(45deg);
-      width: 9px; height: 9px;
-      background: rgba(13, 6, 15, 0.94);
-      border-right: 1px solid rgba(232,121,160,0.16);
-      border-bottom: 1px solid rgba(232,121,160,0.16);
-    "></div>
-  </div>
+  <app-gantt-tooltip
+    [x]="tooltipX"
+    [y]="tooltipY"
+    [title]="tooltipHistory.name_at_time || tooltipHistory.member?.name || tooltipHistory.member?.name_roman || '—'"
+    label="在籍期間"
+    [from]="formatDateShort(tooltipHistory.joined_at)"
+    [to]="tooltipHistory.left_at ? formatDateShort(tooltipHistory.left_at) : null"
+    [accentColor]="group.color"
+  />
 }
 
 @if (group) {

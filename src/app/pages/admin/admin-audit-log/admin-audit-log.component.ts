@@ -11,6 +11,9 @@ import { AuditLog, Company, Group, Member, Team } from '../../../models';
 import { PhotoUploadComponent } from '../../../shared/photo-upload/photo-upload.component';
 import { SupabaseImgPipe } from '../../../shared/supabase-img.pipe';
 
+/** Identity stamped on audit rows written by pg_cron jobs, not a real user. */
+const SYSTEM_ACTOR_EMAIL = 'system@auto';
+
 export interface AutocompleteItem {
   type: 'member' | 'group';
   id: string;
@@ -147,7 +150,6 @@ export class AdminAuditLogComponent implements OnInit {
       { key: 'x', type: 'url' },
       { key: 'youtube', type: 'url' },
       { key: 'is_trainee', type: 'checkbox' },
-      { key: 'style', type: 'text' },
       { key: 'notes', type: 'textarea' },
       { key: 'photo_status', type: 'select' },
       { key: 'photo_notes', type: 'text' },
@@ -187,6 +189,7 @@ export class AdminAuditLogComponent implements OnInit {
       { key: 'composer', type: 'text' },
       { key: 'lyricist', type: 'text' },
       { key: 'arranger', type: 'text' },
+      { key: 'choreographer', type: 'text' },
       { key: 'sort_order', type: 'number' },
       { key: 'notes', type: 'textarea' },
     ],
@@ -197,6 +200,7 @@ export class AdminAuditLogComponent implements OnInit {
       { key: 'composer', type: 'text' },
       { key: 'lyricist', type: 'text' },
       { key: 'arranger', type: 'text' },
+      { key: 'choreographer', type: 'text' },
       { key: 'sort_order', type: 'number' },
       { key: 'notes', type: 'textarea' },
     ],
@@ -223,6 +227,8 @@ export class AdminAuditLogComponent implements OnInit {
     groups: {
       company: '自定義公司名稱',
       is_trainee: '研修・見習',
+      // Column dropped in 086, but audit rows written before that still
+      // reference it — keep the label so old history renders 風格, not "style".
       style: '風格',
       notes: '備注',
     },
@@ -238,6 +244,7 @@ export class AdminAuditLogComponent implements OnInit {
       composer: '作曲',
       lyricist: '作詞',
       arranger: '編曲',
+      choreographer: '編舞',
       sort_order: '排序',
       notes: '備注',
     },
@@ -248,6 +255,7 @@ export class AdminAuditLogComponent implements OnInit {
       composer: '作曲',
       lyricist: '作詞',
       arranger: '編曲',
+      choreographer: '編舞',
       sort_order: '排序',
       notes: '備注',
     },
@@ -285,13 +293,21 @@ export class AdminAuditLogComponent implements OnInit {
   async ngOnInit() {
     const role = await this.adminRole.getCurrentRole();
     this.currentUserEmail = role?.email ?? '';
-    this.isEditorOnly = role?.role === 'editor';
+    // Fail closed: a null role (no role OR role lookup failure) must not unlock
+    // the edit/revert actions on other people's records.
+    this.isEditorOnly = role?.role !== 'admin' && role?.role !== 'superadmin';
 
     await this.loadLookupData();
     await this.load();
   }
 
   private async loadLookupData() {
+    // Names must reflect the DB at page load, not a cache from earlier in the
+    // session (or a write made in another session) — otherwise logs fall back
+    // to showing raw record ids.
+    this.memberService.invalidateCache();
+    this.groupService.invalidateCache();
+    this.companyService.invalidateCache();
     const [roles, members, groups, companies] = await Promise.all([
       this.adminRole.getAll().catch(() => []),
       this.memberService.getAll().catch(() => []),
@@ -312,7 +328,7 @@ export class AdminAuditLogComponent implements OnInit {
       this.memberMap.set(m.id, m.name ?? m.name_roman ?? m.id);
     }
     for (const g of groups) {
-      this.groupMap.set(g.id, g.name_jp ?? g.name ?? g.id);
+      this.groupMap.set(g.id, g.name ?? g.name_jp ?? g.id);
     }
     for (const c of companies) {
       this.companyMap.set(c.id, c.name ?? c.id);
@@ -363,7 +379,7 @@ export class AdminAuditLogComponent implements OnInit {
         (g.name_jp ?? '').toLowerCase().includes(q)
       )
       .slice(0, 5)
-      .map(g => ({ type: 'group' as const, id: g.id, name: g.name_jp ?? g.name, photo_url: g.photo_url }));
+      .map(g => ({ type: 'group' as const, id: g.id, name: g.name || g.name_jp || g.id, photo_url: g.photo_url }));
 
     return [...memberResults, ...groupResults];
   }
@@ -516,7 +532,7 @@ export class AdminAuditLogComponent implements OnInit {
           ?? src['name'] ?? src['name_roman'] ?? '—';
       case 'groups':
         return this.groupMap.get(log.record_id)
-          ?? src['name_jp'] ?? src['name'] ?? '—';
+          ?? src['name'] ?? src['name_jp'] ?? '—';
       case 'companies':
         return this.companyMap.get(log.record_id)
           ?? src['name'] ?? '—';
@@ -599,6 +615,8 @@ export class AdminAuditLogComponent implements OnInit {
   }
 
   getOperatorName(log: AuditLog): string {
+    // Stamped by auto_graduate_expired_history() (migration 104).
+    if (log.user_email === SYSTEM_ACTOR_EMAIL) return '系統自動';
     if (!log.user_email) return '—';
     return this.userNameMap.get(log.user_email) ?? log.user_email;
   }
@@ -690,7 +708,7 @@ export class AdminAuditLogComponent implements OnInit {
       case 'group_id':
         return [
           { value: null, label: '— 無 —' },
-          ...this.groups.map(g => ({ value: g.id, label: g.name_jp || g.name || g.id })),
+          ...this.groups.map(g => ({ value: g.id, label: g.name || g.name_jp || g.id })),
         ];
       case 'team_id':
         return [

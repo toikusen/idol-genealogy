@@ -104,6 +104,9 @@ interface TimelineSegment {
                   @if (seg.concurrent) {
                     <span class="text-xs text-idol-purple font-medium">兼任</span>
                   }
+                  @if (seg.history.status === 'trainee') {
+                    <span class="text-xs text-teal-600 font-medium">研修</span>
+                  }
                   @if (seg.history.status === 'graduated') {
                     <span class="text-xs text-gray-400">畢業</span>
                   }

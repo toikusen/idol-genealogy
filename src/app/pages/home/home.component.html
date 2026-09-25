@@ -59,7 +59,7 @@
             [(ngModel)]="query"
             (input)="onQueryChange()"
             aria-label="搜尋成員或團體"
-            placeholder="搜尋成員或團體　Search members and groups…"
+            placeholder="搜尋成員或團體…"
             style="
               flex: 1; border: none; outline: none; box-shadow: none; background: transparent;
               padding: 20px 16px;
@@ -577,10 +577,28 @@
           }
 
           <!-- Browse all -->
-          <div style="text-align:center;margin-top:28px;">
-            <a routerLink="/members" class="home-browse-pill home-browse-pill--member">瀏覽全部 {{ memberCount }} 位成員
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
-            </a>
+          <div style="text-align:center;margin-top:24px;">
+            <a routerLink="/members" [queryParams]="{ sort: 'recent' }"
+               style="font-size:0.8rem;color:var(--text-secondary);text-decoration:none;">查看更多最近更新 →</a>
+            <div style="margin-top:16px;">
+              <a routerLink="/members" class="home-browse-pill home-browse-pill--member">瀏覽全部 {{ memberCount }} 位成員
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
+              </a>
+            </div>
+            <div style="margin-top:10px;">
+              <a routerLink="/sukigao" class="home-browse-pill home-browse-pill--member">💗 台灣地偶顏控9選
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
+              </a>
+            </div>
+            <div style="margin-top:10px;">
+              <a routerLink="/wanted" class="home-browse-pill home-browse-pill--contribute">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                協助補充資料　·　Contribute
+              </a>
+            </div>
           </div>
         </section>
       }
@@ -847,7 +865,7 @@
             ">由OTAKU EVENT整理</span>
           </div>
 
-          <!-- ══ TODAY'S EVENTS ══ -->
+          <!-- ══ TODAY ══ -->
           <div class="today-events-panel">
 
             <!-- Panel header -->
@@ -856,52 +874,36 @@
                 <div class="today-events-label">TODAY · 今日活動</div>
                 <div class="today-events-date">{{ todayDisplayDate }}</div>
               </div>
-              <div class="today-events-count-badge">
-                {{ todayEvents.length }} 個活動
-              </div>
+              @if (scheduleLoaded && schedule?.status === 'ok') {
+                <div class="today-events-count-badge">{{ todayEventCount }} 個活動</div>
+              }
             </div>
 
-            <!-- Loading -->
-            @if (todayEventsLoading) {
+            @if (!scheduleLoaded) {
               <div class="today-empty">
                 <p class="today-empty-text" style="letter-spacing:0.12em;">載入中…</p>
               </div>
-            }
-
-            @if (!todayEventsLoading) {
-
-              <!-- ── 全天活動 ── -->
-              @if (todayAllDayEvents.length > 0) {
-                <div class="allday-section">
-                  <div class="allday-label">全天活動</div>
-                  <div class="allday-list">
-                    @for (event of todayAllDayEvents; track event.id) {
-                      @if (event.url) {
-                        <a class="allday-chip" [href]="event.url" target="_blank" rel="noopener noreferrer">
-                          <div class="allday-chip-bar"></div>
-                          <span class="allday-chip-title">{{ event.title }}</span>
-                          <svg class="allday-chip-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-                        </a>
-                      } @else {
-                        <div class="allday-chip allday-chip--no-link">
-                          <div class="allday-chip-bar"></div>
-                          <span class="allday-chip-title">{{ event.title }}</span>
-                        </div>
-                      }
-                    }
-                  </div>
-                </div>
-              }
+            } @else if (schedule && schedule.status !== 'ok') {
+              <!-- A failed fetch is not an empty day; saying "no events" here
+                   would be a claim the visitor has no way to check. -->
+              <div class="today-empty">
+                <div class="today-empty-icon" aria-hidden="true">!</div>
+                <p class="today-empty-text">行程暫時無法載入</p>
+                @if (schedule.status === 'error') {
+                  <button type="button" class="schedule-retry" (click)="retrySchedule()" [disabled]="scheduleLoading">
+                    重試
+                  </button>
+                }
+              </div>
+            } @else if (schedule) {
 
               <!-- ── 昨夜延續 ── -->
-              @if (todayCarryoverEvents.length > 0) {
+              @if (schedule.today.carryover.length > 0) {
                 <div class="carryover-section">
                   <div class="carryover-label">昨夜延續</div>
                   <div class="carryover-list">
-                    @for (event of todayCarryoverEvents; track event.id) {
-                      <a class="carryover-chip"
-                         [href]="event.url || calendarUrl"
-                         target="_blank" rel="noopener noreferrer">
+                    @for (event of schedule.today.carryover; track event.id) {
+                      <article class="carryover-chip">
                         <div class="carryover-time-col">
                           <span class="carryover-day-prefix">前日</span>
                           <span class="carryover-start-time">{{ formatTodayEventTime(event.start) }}</span>
@@ -912,7 +914,9 @@
                         </div>
                         <div class="carryover-bar"></div>
                         <div class="carryover-info">
-                          <div class="carryover-title">{{ event.title }}</div>
+                          <div class="carryover-title">
+                            <a class="event-title-link" [href]="event.url || calendarUrl" target="_blank" rel="noopener noreferrer">{{ event.title }}</a>
+                          </div>
                           @if (event.location) {
                             <div class="carryover-location">
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -922,63 +926,27 @@
                               {{ event.location }}
                             </div>
                           }
+                          <ng-container *ngTemplateOutlet="relatedGroupChips; context:{ $implicit: event }"></ng-container>
                         </div>
-                      </a>
+                      </article>
                     }
                   </div>
                 </div>
               }
 
-              <!-- ── 時間軸 ── -->
-              @if (todayTimedEvents.length > 0) {
+              <!-- ── 時間軸（全天在前，與 upcoming 同一套卡片） ── -->
+              @if (schedule.today.allDay.length + schedule.today.timed.length > 0) {
                 <div class="today-timeline" role="list">
-                  @for (event of todayTimedEvents; track event.id; let last = $last) {
-                    <div class="timeline-item"
-                         [class.timeline-item--overnight]="isOvernightEvent(event)"
-                         role="listitem">
-
-                      <!-- Time column -->
-                      <div class="timeline-time-col">
-                        <span class="timeline-time-start"
-                              [class.timeline-time-start--overnight]="isOvernightEvent(event)">
-                          {{ formatTodayEventTime(event.start) }}
-                        </span>
-                        <div class="timeline-dot"
-                             [class.timeline-dot--overnight]="isOvernightEvent(event)"></div>
-                        @if (event.end) {
-                          <div class="timeline-end-group">
-                            @if (isOvernightEvent(event)) {
-                              <span class="overnight-next-label">翌日</span>
-                            }
-                            <span class="timeline-time-end"
-                                  [class.timeline-time-end--overnight]="isOvernightEvent(event)">
-                              {{ formatTodayEventTime(event.end) }}
-                            </span>
-                          </div>
-                        }
-                      </div>
-
-                      <!-- Event card -->
-                      @if (event.url) {
-                        <a class="timeline-event-card"
-                           [class.timeline-event-card--overnight]="isOvernightEvent(event)"
-                           [href]="event.url" target="_blank" rel="noopener noreferrer">
-                          <ng-container *ngTemplateOutlet="timedCardContent; context:{ $implicit: event }"></ng-container>
-                        </a>
-                      } @else {
-                        <div class="timeline-event-card timeline-event-card--no-link"
-                             [class.timeline-event-card--overnight]="isOvernightEvent(event)">
-                          <ng-container *ngTemplateOutlet="timedCardContent; context:{ $implicit: event }"></ng-container>
-                        </div>
-                      }
-
-                    </div>
+                  @for (event of schedule.today.allDay; track event.id) {
+                    <ng-container *ngTemplateOutlet="scheduleRow; context:{ $implicit: event }"></ng-container>
+                  }
+                  @for (event of schedule.today.timed; track event.id) {
+                    <ng-container *ngTemplateOutlet="scheduleRow; context:{ $implicit: event }"></ng-container>
                   }
                 </div>
               }
 
-              <!-- 無活動（或載入失敗） -->
-              @if (todayEvents.length === 0) {
+              @if (todayEventCount === 0) {
                 <div class="today-empty">
                   <div class="today-empty-icon" aria-hidden="true">—</div>
                   <p class="today-empty-text">今日暫無活動行程</p>
@@ -989,27 +957,127 @@
 
           </div>
 
-          <!-- Timed event card content template -->
-          <ng-template #timedCardContent let-event>
-            @if (isOvernightEvent(event)) {
-              <span class="overnight-moon-badge" aria-label="跨夜活動">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                </svg>
-                跨夜
-              </span>
-            }
-            <div class="timeline-event-title">{{ event.title }}</div>
-            @if (event.location) {
-              <div class="timeline-event-location">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-                {{ event.location }}
+          <!-- ══ UPCOMING ══ -->
+          @if (scheduleLoaded && schedule?.status === 'ok') {
+            <div class="upcoming-section">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                <span style="
+                  font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase;
+                  color: rgba(200,112,106,0.55); white-space: nowrap;
+                ">UPCOMING · 即將到來</span>
+                <div style="flex:1; height:1px; background: linear-gradient(to right, rgba(200,112,106,0.15), transparent);"></div>
+              </div>
+
+              @if (schedule!.upcoming.length === 0) {
+                <p class="upcoming-empty">未來 14 天暫無已知活動</p>
+              }
+
+              @for (day of schedule!.upcoming; track day.dayKey) {
+                <div class="upcoming-day">
+                  <h3 class="upcoming-day-heading">{{ dayHeading(day.dayKey) }}</h3>
+                  <div class="today-timeline" role="list">
+                    @for (event of day.events; track event.id) {
+                      <ng-container *ngTemplateOutlet="scheduleRow; context:{ $implicit: event }"></ng-container>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Timeline row: time column + card. Used for today and every upcoming day. -->
+          <ng-template #scheduleRow let-event>
+            <div class="timeline-item"
+                 [class.timeline-item--overnight]="isOvernightEvent(event)"
+                 role="listitem">
+
+              <div class="timeline-time-col">
+                @if (event.isAllDay) {
+                  <span class="timeline-time-start">全天</span>
+                  <div class="timeline-dot"></div>
+                } @else {
+                  <span class="timeline-time-start"
+                        [class.timeline-time-start--overnight]="isOvernightEvent(event)">
+                    {{ formatTodayEventTime(event.start) }}
+                  </span>
+                  <div class="timeline-dot"
+                       [class.timeline-dot--overnight]="isOvernightEvent(event)"></div>
+                  @if (event.end) {
+                    <div class="timeline-end-group">
+                      @if (isOvernightEvent(event)) {
+                        <span class="overnight-next-label">翌日</span>
+                      }
+                      <span class="timeline-time-end"
+                            [class.timeline-time-end--overnight]="isOvernightEvent(event)">
+                        {{ formatTodayEventTime(event.end) }}
+                      </span>
+                    </div>
+                  }
+                }
+              </div>
+
+              <!-- An <article>, not an <a>: the group chips inside are links, and
+                   an <a> inside an <a> is invalid and breaks keyboard traversal.
+                   The title link is stretched over the card to keep the whole
+                   card tappable. -->
+              <article class="timeline-event-card"
+                       [class.timeline-event-card--overnight]="isOvernightEvent(event)"
+                       [class.timeline-event-card--no-link]="!event.url">
+                @if (isOvernightEvent(event)) {
+                  <span class="overnight-moon-badge" aria-label="跨夜活動">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                    跨夜
+                  </span>
+                }
+                <div class="timeline-event-title">
+                  @if (event.url) {
+                    <a class="event-title-link" [href]="event.url" target="_blank" rel="noopener noreferrer">{{ event.title }}</a>
+                  } @else {
+                    {{ event.title }}
+                  }
+                </div>
+                @if (event.isAllDay && event.allDayEndDayKey) {
+                  <div class="timeline-event-location">
+                    {{ allDayRange(event) }}@if (event.isOngoingAllDay) {<span> · 持續中</span>}
+                  </div>
+                }
+                @if (event.location) {
+                  <div class="timeline-event-location">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    {{ event.location }}
+                  </div>
+                }
+                <ng-container *ngTemplateOutlet="relatedGroupChips; context:{ $implicit: event }"></ng-container>
+              </article>
+
+            </div>
+          </ng-template>
+
+          <!-- Groups this site happens to have on file for the event. NOT a
+               lineup: the calendar text often omits performers, and the site
+               does not have every group. Labelled so it never reads as one. -->
+          <ng-template #relatedGroupChips let-event>
+            @if (event.relatedGroups.length > 0) {
+              <div class="related-groups">
+                <span class="related-groups-label">相關團體</span>
+                @for (group of visibleChips(event); track group.id) {
+                  <a class="related-group-chip" [routerLink]="['/group', group.id]">
+                    <span class="related-group-dot" [style.background]="group.color"></span>
+                    {{ group.name }}
+                  </a>
+                }
+                @if (hiddenChipCount(event) > 0) {
+                  <span class="related-group-more">+{{ hiddenChipCount(event) }}</span>
+                }
               </div>
             }
           </ng-template>
+
 
           <!-- ══ FULL CALENDAR ══ -->
           <div style="margin-top: 32px;">
@@ -1078,6 +1146,14 @@
                 (click)="openVenueInsertPanel()"
                 style="font-size:0.72rem;color:#7c6cf2;background:rgba(124,108,242,0.07);border:1px solid rgba(124,108,242,0.2);border-radius:20px;padding:5px 14px;cursor:pointer;"
               >+ 提案新增場地</button>
+            </div>
+
+            <!-- Discoverability hint: the venue name is a link to the detail page -->
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(124,108,242,0.07);border:1px solid rgba(124,108,242,0.2);border-radius:10px;padding:11px 14px;margin-bottom:20px;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7c6cf2" stroke-width="1.7" aria-hidden="true" style="flex-shrink:0;">
+                <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+              </svg>
+              <span style="font-size:0.78rem;color:var(--text-purple);line-height:1.5;">點場地名稱可進入詳細頁,查看完整演出行程與地圖。</span>
             </div>
 
             <!-- Region filter — between map and list -->
@@ -1153,19 +1229,12 @@
 
     <!-- Venue card template -->
     <ng-template #venueCard let-venue>
-      <div
-        (click)="toggleVenue(venue)"
-        style="
-          background:var(--bg-card);border:1px solid var(--border-subtle);
-          border-radius:10px;margin-bottom:8px;
-          box-shadow:var(--shadow-sm);overflow:hidden;
-          cursor:pointer;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;
-        "
-        [style.border-color]="expandedVenueIds.has(venue.id) ? 'rgba(124,108,242,0.55)' : ''"
-        [style.box-shadow]="expandedVenueIds.has(venue.id) ? 'var(--shadow-md)' : 'var(--shadow-sm)'"
-      >
+      <!-- Non-interactive container: the name link and the disclosure button are
+           siblings. Nesting an <a> inside a <button> (or inside a click-handling
+           div) is invalid and breaks keyboard and screen-reader behaviour. -->
+      <article class="venue-card" [class.venue-card--open]="expandedVenueIds.has(venue.id)">
         <!-- Card row -->
-        <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;">
+        <div class="venue-row">
 
           <!-- Accent strip -->
           <div style="width:3px;border-radius:2px;align-self:stretch;flex-shrink:0;background:linear-gradient(to bottom,#7c6cf2,#a5b4fc);">
@@ -1181,9 +1250,19 @@
 
           <!-- Info -->
           <div style="flex:1;min-width:0;">
-            <div style="font-size:0.88rem;font-weight:500;color:var(--text-primary);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-              {{venue.name}}
-            </div>
+            <!-- AdSense auto ads show a full-screen vignette when a visitor
+                 clicks a link, which covers the page and reads as a freeze on a
+                 phone. Internal navigation opts out. -->
+            <a
+              [routerLink]="['/venue', venue.id]"
+              data-google-vignette="false"
+              style="display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:0.94rem;font-weight:500;color:var(--text-purple);text-decoration:none;padding:12px 0;margin:-12px 0 -10px;"
+            >
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{venue.name}}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink:0;opacity:0.7;">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
+            </a>
             <div style="font-size:0.7rem;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
               {{venue.address}}
             </div>
@@ -1194,40 +1273,61 @@
             }
           </div>
 
-          <!-- Buttons -->
-          <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
-            @if (calendarLoaded && (venueEventCounts.get(venue.id) ?? 0) > 0) {
-              <span
-                (click)="toggleVenue(venue); $event.stopPropagation()"
-                style="display:inline-flex;align-items:center;justify-content:center;min-width:5.25rem;box-sizing:border-box;font-size:0.6rem;padding:4px 9px;border-radius:20px;border:1px solid rgba(232,121,160,0.55);color:#c9527a;background:rgba(232,121,160,0.08);font-weight:500;letter-spacing:0.04em;white-space:nowrap;cursor:pointer;"
-                [attr.aria-label]="'查看 ' + venue.name + ' 近期活動'"
-              >
-                近期活動 {{ venueEventCounts.get(venue.id) }}
-              </span>
-            } @else {
-              <span style="display:inline-flex;align-items:center;justify-content:center;min-width:5.25rem;box-sizing:border-box;font-size:0.6rem;padding:4px 9px;border-radius:20px;border:1px dashed rgba(232,121,160,0.28);color:rgba(232,121,160,0.45);background:rgba(232,121,160,0.04);letter-spacing:0.04em;white-space:nowrap;cursor:not-allowed;">
-                近期活動
-              </span>
-            }
+          <!-- Actions — one rail, weight rising left to right: utility, then the
+               shows disclosure, then the route out to the venue's own page. -->
+          <div class="venue-actions">
             <button
+              type="button"
+              class="venue-act venue-act--quiet venue-act--icon"
               (click)="copyAddress(venue.address, $event)"
-              style="width:30px;height:30px;border-radius:7px;border:1px solid var(--border-subtle);background:var(--bg-surface);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);cursor:pointer;"
               [attr.aria-label]="'複製 ' + venue.name + ' 地址'"
               title="複製地址"
             >
-              <svg width="13" height="13" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
                 <path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/>
               </svg>
             </button>
-            <span style="font-size:0.65rem;color:var(--text-faint);padding:0 2px;user-select:none;">
-              {{expandedVenueIds.has(venue.id) ? '▲' : '▼'}}
-            </span>
+
+            @if (calendarLoaded && (venueEventCounts.get(venue.id) ?? 0) > 0) {
+              <button
+                type="button"
+                class="venue-act venue-act--events"
+                (click)="toggleVenue(venue)"
+                [attr.aria-expanded]="expandedVenueIds.has(venue.id)"
+                [attr.aria-controls]="'venue-panel-' + venue.id"
+                [attr.aria-label]="'查看 ' + venue.name + ' 近期活動'"
+              >
+                近期活動 {{ venueEventCounts.get(venue.id) }}
+                <span aria-hidden="true">{{expandedVenueIds.has(venue.id) ? '▲' : '▼'}}</span>
+              </button>
+            } @else {
+              <!-- Still a button with no events: it opens the map panel, which was
+                   previously reachable by clicking anywhere on the card. -->
+              <button
+                type="button"
+                class="venue-act venue-act--quiet"
+                (click)="toggleVenue(venue)"
+                [attr.aria-expanded]="expandedVenueIds.has(venue.id)"
+                [attr.aria-controls]="'venue-panel-' + venue.id"
+                [attr.aria-label]="'查看 ' + venue.name + ' 地圖'"
+              >
+                地圖
+                <span aria-hidden="true">{{expandedVenueIds.has(venue.id) ? '▲' : '▼'}}</span>
+              </button>
+            }
+
+            <a
+              class="venue-act venue-act--detail"
+              [routerLink]="['/venue', venue.id]"
+              data-google-vignette="false"
+              [attr.aria-label]="venue.name + ' 場地詳細頁'"
+            >查看詳情 <span aria-hidden="true">→</span></a>
           </div>
         </div>
 
         <!-- Expanded map panel -->
         @if (expandedVenueIds.has(venue.id)) {
-          <div style="padding:0 16px 14px;">
+          <div [id]="'venue-panel-' + venue.id" style="padding:0 16px 14px;">
             <iframe
               [src]="venueMapUrl(venue.address) | safeUrl"
               width="100%"
@@ -1316,7 +1416,7 @@
             </div>
           </div>
         }
-      </div>
+      </article>
     </ng-template>
 
     <!-- ══ Proposal panels ══ -->
@@ -1380,6 +1480,9 @@
         />
       }
     }
+
+    <!-- ══ Ad banner ══ -->
+    <app-ad-banner adSlot="4061570176"></app-ad-banner>
 
     <!-- ══ SITE INTRO (SEO + context for new visitors) ══ -->
     <section aria-label="關於本站" style="
@@ -1475,26 +1578,8 @@
       </details>
     </section>
 
-    <!-- ══ Ad banner ══ -->
-    <app-ad-banner adSlot="4061570176"></app-ad-banner>
-
     <!-- ══ FOOTER ══ -->
     <footer style="margin-top: 80px; text-align: center;">
-
-      <!-- Contribute CTA -->
-      <div style="margin-bottom: 24px;">
-        <a
-          routerLink="/wanted"
-          class="home-browse-pill home-browse-pill--contribute"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          協助補充資料　·　Contribute
-        </a>
-      </div>
-
       <div style="height: 1px; width: 80px; margin: 0 auto 16px; background: linear-gradient(to right, transparent, rgba(232,121,160,0.25), transparent);"></div>
       <p style="
         font-style: italic; font-size: 0.78rem;

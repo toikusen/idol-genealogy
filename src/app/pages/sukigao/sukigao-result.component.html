@@ -1,0 +1,80 @@
+<section class="skr" aria-labelledby="skr-title">
+  <header class="skr-head">
+    <p class="skr-eyebrow">YOUR FACE 9</p>
+    <h2 id="skr-title" class="skr-title">你的<br />台灣地偶顏控9選</h2>
+    <p class="skr-sub">看來你就是喜歡這種臉 👀</p>
+  </header>
+
+  <ol class="skr-grid" aria-label="顏控9選結果">
+    @for (face of faces; track face.id; let i = $index) {
+      <li class="skr-cell" [class]="'skr-pos-' + (i + 1)">
+        <a [routerLink]="'/member/' + face.id" class="skr-cell__link" [attr.aria-label]="'第 ' + (i + 1) + ' 名：' + face.name">
+          <span class="skr-cell__photo">
+            @if (face.photoUrl) {
+              <img [src]="face.photoUrl | supabaseImg: (i === 0 ? 480 : 320) : 80" [alt]="face.name" width="300" height="400" decoding="async" />
+            }
+            <span class="skr-cell__rank" aria-hidden="true">
+              @if (i === 0) { 👑 } {{ i + 1 }}
+            </span>
+          </span>
+          <span class="skr-cell__name">{{ face.name }}</span>
+          <span class="skr-cell__group">{{ groupLabel(face) }}</span>
+        </a>
+      </li>
+    }
+  </ol>
+
+  <ol class="skr-list">
+    @for (face of faces; track face.id; let i = $index) {
+      <li><span class="skr-list__rank">{{ i + 1 }}.</span> {{ face.name }} <span class="skr-list__group">{{ groupLabel(face) }}</span></li>
+    }
+  </ol>
+
+  <div class="skr-actions">
+    <button type="button" class="sk-btn sk-btn--primary" (click)="share()">分享結果</button>
+    <div class="skr-actions__row">
+      <a class="sk-btn sk-btn--ghost" [href]="xShareUrl" target="_blank" rel="noopener noreferrer" (click)="onShareX()">分享到 X</a>
+      <button type="button" class="sk-btn sk-btn--ghost" (click)="copy()">複製結果</button>
+    </div>
+    <p class="skr-copy-status" role="status" aria-live="polite">
+      @if (copyStatus === 'copied') { 已複製到剪貼簿 }
+      @if (copyStatus === 'failed') { 無法自動複製，請手動截圖或選取文字 }
+    </p>
+  </div>
+
+  <div class="skr-submit">
+    @switch (submitState) {
+      @case ('done') {
+        <p class="skr-submit__done" role="status">💗 已加入今天的顏控排行{{ replaced ? '（已取代今天稍早的結果）' : '' }}</p>
+        <a routerLink="/sukigao/ranking" class="skr-submit__link">看看大家的顏控排行 →</a>
+      }
+      @default {
+        <button
+          type="button"
+          class="sk-btn sk-btn--submit"
+          [disabled]="submitState === 'sending'"
+          (click)="submitResult.emit()"
+        >
+          {{ submitState === 'sending' ? '送出中…' : '💗 將我的 TOP9 加入大家的顏控排行' }}
+        </button>
+        <p class="skr-submit__note">
+          不需要登入。<br />
+          不會提交姓名、Email 或社群帳號。<br />
+          同一個瀏覽器一天只會統計最後一次結果。
+        </p>
+        @if (submitState === 'error') {
+          <p class="skr-submit__error" role="alert">
+            結果已保留在這台裝置，但目前無法送出統計。<br />請稍後再試。
+          </p>
+        }
+      }
+    }
+  </div>
+
+  <div class="skr-footer">
+    <button type="button" class="sk-btn sk-btn--ghost" (click)="restart.emit()">再玩一次</button>
+    @if (canUndo) {
+      <button type="button" class="sk-link-btn" (click)="undo.emit()">← 回到上一個比較</button>
+    }
+  </div>
+</section>

@@ -55,4 +55,18 @@ export class ViewCountService {
     // and markViewed is not called, so the next load will retry the RPC.
     this.markViewed(type, id);
   }
+
+  /**
+   * Records that a reader followed a "其他人也看了" card, so the feature can be
+   * judged on whether anyone uses it. Fire-and-forget: navigation must not wait
+   * on it, and a failed log is not worth surfacing.
+   */
+  logRelatedClick(fromGroupId: string, toGroupId: string): void {
+    if (!this.isBrowser) return;
+    this.supabase.client.rpc('log_related_click', {
+      p_from_group_id: fromGroupId,
+      p_to_group_id: toGroupId,
+      p_session_token: this.getSessionToken(),
+    }).then(undefined, () => {});
+  }
 }
