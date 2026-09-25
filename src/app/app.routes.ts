@@ -102,6 +102,15 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/leaderboard/leaderboard.component').then(m => m.LeaderboardComponent)
   },
   {
+    path: 'sukigao',
+    loadComponent: () => import('./pages/sukigao/sukigao.component').then(m => m.SukigaoComponent)
+  },
+  {
+    path: 'sukigao/ranking',
+    loadComponent: () =>
+      import('./pages/sukigao-ranking/sukigao-ranking.component').then(m => m.SukigaoRankingComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent)
   },

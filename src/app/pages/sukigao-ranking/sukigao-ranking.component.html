@@ -1,0 +1,95 @@
+<main id="main-content" class="skrank">
+  <a routerLink="/sukigao" class="skrank-back">← 顏控9選</a>
+
+  <header class="skrank-head">
+    <h1 class="skrank-title">
+      <span class="skrank-title__kicker">大家的</span>
+      <span>台灣地偶顏控排行</span>
+    </h1>
+    <p class="skrank-sub">參與顏控9選的匿名結果統計</p>
+  </header>
+
+  <div class="skrank-tabs" role="tablist" aria-label="排行類型">
+    @for (tab of tabs; track tab.mode; let i = $index) {
+      <button
+        type="button"
+        role="tab"
+        class="skrank-tab"
+        [id]="'skrank-tab-' + tab.mode"
+        [class.skrank-tab--active]="mode() === tab.mode"
+        [attr.aria-selected]="mode() === tab.mode"
+        [attr.tabindex]="mode() === tab.mode ? 0 : -1"
+        aria-controls="skrank-panel"
+        (click)="selectTab(tab.mode)"
+        (keydown)="onTabKeydown($event, i)"
+      >{{ tab.label }}</button>
+    }
+  </div>
+
+  <section id="skrank-panel" role="tabpanel" [attr.aria-labelledby]="'skrank-tab-' + mode()" class="skrank-panel">
+    @switch (state()) {
+      @case ('loading') {
+        <ol class="skrank-list" aria-busy="true" aria-label="載入中">
+          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+            <li class="skrank-row skrank-row--skeleton" aria-hidden="true">
+              <span class="skrank-rank"></span>
+              <span class="skrank-photo"></span>
+              <span class="skrank-skel-lines"><span></span><span></span></span>
+            </li>
+          }
+        </ol>
+      }
+      @case ('error') {
+        <div class="skrank-empty" role="alert">
+          <p>排行載入失敗</p>
+          <button type="button" class="sk-btn" (click)="load()">重新載入</button>
+        </div>
+      }
+      @default {
+        @if (entries().length === 0) {
+          <div class="skrank-empty">
+            <p>還沒有人送出結果。</p>
+            <a routerLink="/sukigao" class="sk-btn sk-btn--primary">成為第一個送出的人</a>
+          </div>
+        } @else {
+          <ol class="skrank-list">
+            @for (entry of entries(); track entry.member_id; let i = $index) {
+              <li>
+                <a [routerLink]="'/member/' + entry.member_id" class="skrank-row">
+                  <span class="skrank-rank" [class.skrank-rank--top]="place(i) <= 3">{{ place(i) }}</span>
+                  <span class="skrank-photo">
+                    @if (entry.photo_url) {
+                      <img [src]="entry.photo_url | supabaseImg: 160 : 75" [alt]="entry.name" width="54" height="72" loading="lazy" decoding="async" />
+                    }
+                  </span>
+                  <span class="skrank-info">
+                    <span class="skrank-name">{{ entry.name }}</span>
+                    @if (entry.group_name) {
+                      <span class="skrank-group">{{ entry.group_name }}</span>
+                    }
+                  </span>
+                  <span class="skrank-count">{{ count(entry) | number }} <small>次</small></span>
+                </a>
+              </li>
+            }
+          </ol>
+          @if (entries().length >= limit) {
+            <p class="skrank-limit">僅顯示前 {{ limit }} 名</p>
+          }
+        }
+      }
+    }
+  </section>
+
+  <div class="skrank-cta">
+    <a routerLink="/sukigao" class="sk-btn sk-btn--primary">開始選我的顏控9選</a>
+  </div>
+
+  <aside class="skrank-disclaimer" aria-label="排行說明">
+    <p>
+      此排行僅統計參與「台灣地偶顏控9選」使用者的匿名結果，<br />
+      代表的是照片上的個人審美偏好，不代表人氣、實力或官方排名。<br />
+      不同時期收錄的成員與照片可能有所不同，因此每位成員被看到的機會也可能不同。
+    </p>
+  </aside>
+</main>

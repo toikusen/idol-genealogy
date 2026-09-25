@@ -331,3 +331,29 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   notify_birthday: true,
   notify_disbanded: true,
 };
+
+/** A face in the 顏控9選 pool, from get_sukigao_candidates (see migration 106). */
+export interface SukigaoCandidate {
+  id: string;
+  name: string;
+  photoUrl: string;
+  groupNames: string[];
+  color: string | null;
+}
+
+export interface SukigaoResult {
+  memberId: string;
+  rank: number;
+}
+
+export type SukigaoRankingMode = 'top9' | 'first';
+
+export interface SukigaoRankingEntry {
+  member_id: string;
+  name: string;
+  photo_url: string | null;
+  color: string | null;
+  group_name: string | null;
+  top9_count: number;
+  first_place_count: number;
+}
