@@ -47,6 +47,8 @@ export class SukigaoService {
   /** Metadata for every eligible face (no images are fetched here). */
   getPool(): Promise<SukigaoPool> {
     return this.poolCache.get('pool', async () => {
+      const edge = await fetchEdge<CandidateRow[]>('/api/sukigao-candidates');
+      if (edge) return buildPool(edge);
       const { data, error } = await this.supabase.client.rpc('get_sukigao_candidates');
       if (error) throw error;
       return buildPool((data ?? []) as CandidateRow[]);
@@ -59,14 +61,19 @@ export class SukigaoService {
    * enough to draw their card.
    */
   async getMembersByIds(ids: string[]): Promise<SukigaoCandidate[]> {
-    if (ids.length === 0) return [];
-    const { data, error } = await this.supabase.client
-      .from('members')
-      .select('id,name,photo_url,color')
-      .in('id', ids);
-    if (error) throw error;
-    return ((data ?? []) as { id: string; name: string; photo_url: string | null; color: string | null }[])
-      .map(m => ({ id: m.id, name: m.name, photoUrl: m.photo_url ?? '', groupNames: [], color: m.color, isCurrent: false }));
+    const out: SukigaoCandidate[] = [];
+    // Chunked: ids travel in the query string, which has a length limit.
+    for (let i = 0; i < ids.length; i += 100) {
+      const { data, error } = await this.supabase.client
+        .from('members')
+        .select('id,name,photo_url,color')
+        .in('id', ids.slice(i, i + 100));
+      if (error) throw error;
+      for (const m of (data ?? []) as { id: string; name: string; photo_url: string | null; color: string | null }[]) {
+        out.push({ id: m.id, name: m.name, photoUrl: m.photo_url ?? '', groupNames: [], color: m.color, isCurrent: false });
+      }
+    }
+    return out;
   }
 
   async submit(browserToken: string, memberIds: string[], candidateVersion: string): Promise<SukigaoSubmitResult> {
@@ -83,17 +90,41 @@ export class SukigaoService {
 
   getRanking(mode: SukigaoRankingMode, limit = SUKIGAO_RANKING_LIMIT): Promise<SukigaoRankingEntry[]> {
     return this.rankingCache.get(`${mode}:${limit}`, async () => {
-      const { data, error } = await this.supabase.client.rpc('get_sukigao_ranking', {
-        p_mode: mode,
-        p_limit: limit,
-      });
-      if (error) throw error;
-      return ((data ?? []) as SukigaoRankingEntry[]).map(row => ({
+      // The edge endpoint always serves the top 100, the only size the UI asks for.
+      let rows = limit === SUKIGAO_RANKING_LIMIT
+        ? await fetchEdge<SukigaoRankingEntry[]>(`/api/sukigao-ranking?mode=${mode}`)
+        : null;
+      if (!rows) {
+        const { data, error } = await this.supabase.client.rpc('get_sukigao_ranking', {
+          p_mode: mode,
+          p_limit: limit,
+        });
+        if (error) throw error;
+        rows = (data ?? []) as SukigaoRankingEntry[];
+      }
+      return rows.map(row => ({
         ...row,
         top9_count: Number(row.top9_count),
         first_place_count: Number(row.first_place_count),
       }));
     });
+  }
+}
+
+/**
+ * Reads one of the edge-cached /api/sukigao-* endpoints (functions/api). They
+ * absorb traffic bursts; when one is missing (ng serve, a failed deploy) or
+ * errors, callers fall back to Supabase directly, so this never throws.
+ */
+async function fetchEdge<T>(path: string): Promise<T | null> {
+  if (typeof fetch !== 'function' || typeof window === 'undefined') return null;
+  try {
+    const res = await fetch(path, { headers: { Accept: 'application/json' } });
+    if (!res.ok || !(res.headers.get('Content-Type') ?? '').includes('application/json')) return null;
+    const body: unknown = await res.json();
+    return Array.isArray(body) ? (body as T) : null;
+  } catch {
+    return null;
   }
 }
 

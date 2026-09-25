@@ -235,6 +235,35 @@ end $$;
 
 select pg_temp.expect_error($q$select * from get_sukigao_ranking('drop table members', 10)$q$, 'invalid ranking mode');
 
+-- ── 109: per-IP daily cap ───────────────────────────────────────────────────
+do $$
+declare
+  i int;
+  blocked boolean := false;
+begin
+  perform set_config('request.headers', '{"cf-connecting-ip":"203.0.113.7"}', true);
+  for i in 1..50 loop
+    perform submit_sukigao_result(
+      format('%s-3333-4333-8333-333333333333', lpad(to_hex(i), 8, '0')), pg_temp.ids(9), null);
+  end loop;
+  begin
+    perform submit_sukigao_result('ffffffff-3333-4333-8333-333333333333', pg_temp.ids(9), null);
+  exception when others then
+    blocked := sqlerrm like '%too many submissions today%';
+  end;
+  if not blocked then raise exception '51st submission from one IP should be rejected'; end if;
+  if exists (select 1 from sukigao_ip_daily where ip_hash like '%203.0.113.7%') then
+    raise exception 'raw IP must not be stored';
+  end if;
+
+  -- Another IP is unaffected; no IP header (direct DB use) skips the cap.
+  perform set_config('request.headers', '{"x-forwarded-for":"198.51.100.1, 10.0.0.1"}', true);
+  perform submit_sukigao_result('eeeeeeee-3333-4333-8333-333333333333', pg_temp.ids(9), null);
+  perform set_config('request.headers', '', true);
+  perform submit_sukigao_result('dddddddd-3333-4333-8333-333333333333', pg_temp.ids(9), null);
+  raise notice 'ok: per-IP daily cap (50) with hashed IPs';
+end $$;
+
 -- ── Direct access is blocked for anon / authenticated ──────────────────────
 set local role anon;
 

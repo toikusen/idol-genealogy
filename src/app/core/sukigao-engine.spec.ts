@@ -56,6 +56,16 @@ function playPreliminary(state: SukigaoGameState, perBatch: number): SukigaoGame
   return s;
 }
 
+/** One elimination group or one final comparison. */
+function stepOnce(state: SukigaoGameState, compare: (a: string, b: string) => number): SukigaoGameState {
+  if (state.stage === 'elimination') {
+    const group = currentGroup(state);
+    return submitEliminationGroup(state, [...group].sort(compare).slice(0, advanceCount(group.length)));
+  }
+  const pair = finalPair(state.final!)!;
+  return chooseFinal(state, compare(pair[0], pair[1]) < 0 ? pair[0] : pair[1]);
+}
+
 /** Plays everything after the preliminary with a hidden preference order. */
 function playBracket(state: SukigaoGameState, compare: (a: string, b: string) => number): SukigaoGameState {
   let s = state;
@@ -346,6 +356,21 @@ describe('sukigao engine', () => {
       expect(g.stage).toBe('result');
       expect(g.result![0]).toBe(truth[0]);
       expect(new Set(g.result!).size).toBe(9);
+    });
+
+    it('keeps the saved state small even in the worst case (445 faces, all picked)', () => {
+      const truth = seededShuffle(ids(445), 2);
+      let g = playPreliminary(newGame(445), 9);
+      let maxBytes = 0;
+      let guard = 0;
+      while (g.stage === 'elimination' || g.stage === 'final') {
+        if (++guard > 3000) fail('did not terminate');
+        maxBytes = Math.max(maxBytes, JSON.stringify(g).length);
+        g = stepOnce(g, byOrder(truth));
+      }
+      expect(g.stage).toBe('result');
+      // localStorage is ~5MB per origin (UTF-16 in some browsers); stay far below.
+      expect(maxBytes).toBeLessThan(1_000_000);
     });
 
     it('ends with exactly 9 distinct faces from the pool', () => {

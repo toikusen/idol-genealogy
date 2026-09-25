@@ -20,8 +20,12 @@ export const BATCH_SIZE = 9;
 export const MAX_PICKS_PER_BATCH = BATCH_SIZE;
 /** Elimination runs while the pool is larger than this. */
 export const ELIMINATION_THRESHOLD = 18;
-/** Undo depth kept in storage; the brackets never need more than ~120 steps. */
-const MAX_UNDO = 150;
+/**
+ * Undo depth kept in storage. Snapshots of an early elimination round carry
+ * every surviving id, so a deep stack in a 全部 game could outgrow the
+ * localStorage quota; 40 steps is plenty for "go back a few".
+ */
+const MAX_UNDO = 40;
 
 export type SukigaoStage = 'preliminary' | 'fill' | 'elimination' | 'final' | 'result';
 

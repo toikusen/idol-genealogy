@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs migrations 106–108 (顏控9選) + their SQL tests against a throwaway local
+# Runs migrations 106–109 (顏控9選) + their SQL tests against a throwaway local
 # Postgres. Needs initdb / pg_ctl / psql (e.g. apt install postgresql-16);
 # does not touch Supabase.
 set -euo pipefail
@@ -29,4 +29,5 @@ PSQL=(psql -X -q -v ON_ERROR_STOP=1 -h "$TMP" -p "$PORT" -U postgres -d postgres
 "${PSQL[@]}" -f "$ROOT/supabase/migrations/106_sukigao.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/migrations/107_sukigao_all_members.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/migrations/108_sukigao_is_current.sql"
+"${PSQL[@]}" -f "$ROOT/supabase/migrations/109_sukigao_load_hardening.sql"
 "${PSQL[@]}" -o /dev/null -f "$ROOT/supabase/tests/106_sukigao.test.sql"
