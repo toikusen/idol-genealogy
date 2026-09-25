@@ -219,12 +219,13 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     this.session.savePrefs({ scope: this.scope(), size });
   }
 
+  /** Fresh per visit; the preview only renders in the browser, so no hydration concern. */
+  private readonly previewSeed = this.session.newSeed();
+
   readonly previewFaces = computed(() => {
     const p = this.pool();
     if (!p) return [];
-    // Stable per day, so the hero doesn't reshuffle on every visit within a day.
-    const seed = Number(taipeiDayKey(new Date().toISOString()).replace(/-/g, ''));
-    return seededShuffle(p.candidates, seed).slice(0, 9);
+    return seededShuffle(p.candidates, this.previewSeed).slice(0, 9);
   });
 
   constructor() {
