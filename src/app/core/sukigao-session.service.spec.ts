@@ -30,12 +30,12 @@ describe('SukigaoSessionService', () => {
   it('serializes under the versioned key and restores the same state', () => {
     const g = game();
     service.save(g);
-    expect(localStorage.getItem(SUKIGAO_STATE_KEY)).toContain('"version":1');
+    expect(localStorage.getItem(SUKIGAO_STATE_KEY)).toContain('"version":2');
     expect(service.load()).toEqual(g);
   });
 
   it('drops state from another version', () => {
-    localStorage.setItem(SUKIGAO_STATE_KEY, JSON.stringify({ ...game(), version: 2 }));
+    localStorage.setItem(SUKIGAO_STATE_KEY, JSON.stringify({ ...game(), version: 99 }));
     expect(service.load()).toBeNull();
     expect(localStorage.getItem(SUKIGAO_STATE_KEY)).toBeNull();
   });
@@ -47,8 +47,22 @@ describe('SukigaoSessionService', () => {
   });
 
   it('drops structurally invalid state', () => {
-    localStorage.setItem(SUKIGAO_STATE_KEY, JSON.stringify({ version: 1, sessionId: 'x' }));
+    localStorage.setItem(SUKIGAO_STATE_KEY, JSON.stringify({ version: 2, sessionId: 'x' }));
     expect(service.load()).toBeNull();
+  });
+
+  it('drops v1 saves (12-face batches) under the old key', () => {
+    localStorage.setItem('idolmaps:sukigao:v1', JSON.stringify({ ...game(), version: 1 }));
+    expect(service.load()).toBeNull();
+    expect(localStorage.getItem('idolmaps:sukigao:v1')).toBeNull();
+  });
+
+  it('round-trips intro prefs and ignores junk', () => {
+    expect(service.loadPrefs()).toBeNull();
+    service.savePrefs({ scope: 'all', size: 216 });
+    expect(service.loadPrefs()).toEqual({ scope: 'all', size: 216 });
+    localStorage.setItem('idolmaps:sukigao:prefs', '{"scope":"nope","size":-1}');
+    expect(service.loadPrefs()).toBeNull();
   });
 
   it('clear() removes the game but keeps the browser id', () => {

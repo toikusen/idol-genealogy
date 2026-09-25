@@ -11,6 +11,11 @@ export interface SukigaoPool {
   groupCount: number;
 }
 
+/** Distinct group names among `candidates`, for the "XX 團體" count. */
+export function countGroups(candidates: readonly SukigaoCandidate[]): number {
+  return new Set(candidates.flatMap(c => c.groupNames)).size;
+}
+
 export interface SukigaoSubmitResult {
   submittedOn: string;
   replaced: boolean;
@@ -25,6 +30,8 @@ interface CandidateRow {
   color: string | null;
   group_names: string[] | null;
   updated_at: string | null;
+  /** Added in migration 108; absent before it runs, which reads as current. */
+  is_current?: boolean | null;
 }
 
 export const SUKIGAO_RANKING_LIMIT = 100;
@@ -59,7 +66,7 @@ export class SukigaoService {
       .in('id', ids);
     if (error) throw error;
     return ((data ?? []) as { id: string; name: string; photo_url: string | null; color: string | null }[])
-      .map(m => ({ id: m.id, name: m.name, photoUrl: m.photo_url ?? '', groupNames: [], color: m.color }));
+      .map(m => ({ id: m.id, name: m.name, photoUrl: m.photo_url ?? '', groupNames: [], color: m.color, isCurrent: false }));
   }
 
   async submit(browserToken: string, memberIds: string[], candidateVersion: string): Promise<SukigaoSubmitResult> {
@@ -105,6 +112,7 @@ export function buildPool(rows: CandidateRow[]): SukigaoPool {
       photoUrl: row.photo_url,
       groupNames,
       color: row.color,
+      isCurrent: row.is_current !== false,
     });
   }
   return { candidates, version: `${candidates.length}:${maxUpdated}`, groupCount: groups.size };

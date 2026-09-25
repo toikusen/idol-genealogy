@@ -17,11 +17,10 @@ import { AnalyticsService } from '../../core/analytics.service';
 import { siteUrl } from '../../core/public-url.utils';
 import { taipeiDayKey } from '../../core/taipei-date.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
-import { SukigaoPool, SukigaoService } from '../../core/sukigao.service';
-import { SukigaoSessionService } from '../../core/sukigao-session.service';
+import { SukigaoPool, SukigaoService, countGroups } from '../../core/sukigao.service';
+import { SukigaoScope, SukigaoSessionService } from '../../core/sukigao-session.service';
 import {
   BATCH_SIZE,
-  MAX_PICKS_PER_BATCH,
   SukigaoGameState,
   TOP_N,
   advanceCount,
@@ -43,6 +42,7 @@ import {
   poolIds,
   prevPreliminaryBatch,
   seededShuffle,
+  stratifiedSample,
   stageProgress,
   submitEliminationGroup,
   toggleFillPick,
@@ -55,7 +55,25 @@ import { SukigaoResultComponent, SukigaoShareMethod, SukigaoSubmitState } from '
 
 type ViewState = 'loading' | 'error' | 'intro' | 'game' | 'too-few';
 
-const FILL_PAGE_SIZE = 12;
+const FILL_PAGE_SIZE = 9;
+
+/** Pool sizes on the intro: multiples of 9 so every batch is a full 3×3. 0 = everyone. */
+const SIZE_OPTIONS = [
+  { size: 54, icon: '⚡', label: '快速' },
+  { size: 108, icon: '★', label: '標準' },
+  { size: 216, icon: '🔥', label: '認真' },
+  { size: 0, icon: '💯', label: '全部' },
+] as const;
+const DEFAULT_SIZE = 108;
+
+export interface SukigaoSizeOption {
+  size: number;
+  icon: string;
+  label: string;
+  count: number;
+  batches: number;
+  minutes: number;
+}
 const IMMERSIVE_CLASS = 'sukigao-immersive';
 const PRELOAD_WIDTH_GRID = 360;
 const PRELOAD_WIDTH_LARGE = 480;
@@ -81,7 +99,6 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   readonly TOP_N = TOP_N;
   readonly BATCH_SIZE = BATCH_SIZE;
-  readonly MAX_PICKS = MAX_PICKS_PER_BATCH;
 
   // Starts as 'intro' on both server and browser so hydration sees the same
   // markup; pool-dependent bits show placeholders until getPool() resolves.
@@ -155,6 +172,52 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     }
   });
 
+  // ── Intro: scope + size ──
+  readonly scope = signal<SukigaoScope>('current');
+  readonly sizeChoice = signal<number>(DEFAULT_SIZE);
+
+  readonly scopeCounts = computed(() => {
+    const all = this.pool()?.candidates ?? [];
+    return { current: all.filter(c => c.isCurrent).length, all: all.length };
+  });
+
+  readonly scopeCandidates = computed(() => {
+    const all = this.pool()?.candidates ?? [];
+    return this.scope() === 'current' ? all.filter(c => c.isCurrent) : all;
+  });
+
+  readonly scopeGroupCount = computed(() => countGroups(this.scopeCandidates()));
+
+  /** Size options that make sense for the scope; "全部" is always offered. */
+  readonly sizeOptions = computed<SukigaoSizeOption[]>(() => {
+    const total = this.scopeCandidates().length;
+    return SIZE_OPTIONS
+      .filter(o => o.size === 0 || o.size < total)
+      .map(o => {
+        const count = o.size === 0 ? total : o.size;
+        const batches = Math.ceil(count / BATCH_SIZE);
+        // ~10s per 3×3 batch plus ~1.5 min of elimination / final.
+        return { ...o, count, batches, minutes: Math.max(1, Math.round((batches * 10 + 90) / 60)) };
+      });
+  });
+
+  readonly selectedSize = computed(() => {
+    const options = this.sizeOptions();
+    return options.find(o => o.size === this.sizeChoice()) ?? options[options.length - 1];
+  });
+
+  readonly canStart = computed(() => this.scopeCandidates().length >= TOP_N);
+
+  selectScope(scope: SukigaoScope): void {
+    this.scope.set(scope);
+    this.session.savePrefs({ scope, size: this.sizeChoice() });
+  }
+
+  selectSize(size: number): void {
+    this.sizeChoice.set(size);
+    this.session.savePrefs({ scope: this.scope(), size });
+  }
+
   readonly previewFaces = computed(() => {
     const p = this.pool();
     if (!p) return [];
@@ -202,6 +265,11 @@ export class SukigaoComponent implements OnInit, OnDestroy {
         if (this.destroyed) return;
       }
       this.faces.set(faces);
+      const prefs = this.session.loadPrefs();
+      if (prefs) {
+        this.scope.set(prefs.scope);
+        this.sizeChoice.set(prefs.size);
+      }
       this.pool.set(pool);
       // Every visit lands on the intro; a saved game is offered via resume().
       if (saved) {
@@ -227,7 +295,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       // Placeholders below keep the session playable.
     }
     for (const id of missing) {
-      if (!faces.has(id)) faces.set(id, { id, name: '（資料已更新）', photoUrl: '', groupNames: [], color: null });
+      if (!faces.has(id)) faces.set(id, { id, name: '（資料已更新）', photoUrl: '', groupNames: [], color: null, isCurrent: false });
     }
   }
 
@@ -235,17 +303,26 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   start(): void {
     const pool = this.pool();
-    if (!pool || pool.candidates.length < TOP_N) return;
+    if (!pool || !this.canStart()) return;
     const current = this.game();
     if (current && current.stage !== 'result' && typeof window !== 'undefined'
         && !window.confirm('開始新的一局會清除上次的進度，確定嗎？')) {
       return;
     }
+    const seed = this.session.newSeed();
+    const scope = this.scope();
+    const count = this.selectedSize().count;
+    const ids = stratifiedSample(
+      this.scopeCandidates().map(c => ({ id: c.id, stratum: c.groupNames[0] ?? 'solo' })),
+      count,
+      seed,
+    );
     const game = createGame({
       sessionId: this.session.newSessionId(),
-      seed: this.session.newSeed(),
-      candidateVersion: pool.version,
-      candidateIds: pool.candidates.map(c => c.id),
+      seed,
+      // Scope and size ride along so aggregate stats can tell games apart.
+      candidateVersion: `${pool.version}|${scope}|${ids.length}`,
+      candidateIds: ids,
     });
     this.faces.set(new Map(pool.candidates.map(c => [c.id, c])));
     this.groupPicks.set([]);
@@ -254,7 +331,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     this.submitReplaced.set(false);
     this.commit(game);
     this.view.set('game');
-    this.analytics.trackEvent('sukigao_start', { candidate_count: pool.candidates.length });
+    this.analytics.trackEvent('sukigao_start', { candidate_count: ids.length, scope });
     this.scrollTop();
   }
 
@@ -463,7 +540,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   private resolve(ids: readonly string[]): SukigaoCandidate[] {
     const faces = this.faces();
-    return ids.map(id => faces.get(id) ?? { id, name: '…', photoUrl: '', groupNames: [], color: null });
+    return ids.map(id => faces.get(id) ?? { id, name: '…', photoUrl: '', groupNames: [], color: null, isCurrent: false });
   }
 
   /**

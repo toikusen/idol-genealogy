@@ -99,7 +99,15 @@ begin
   if (select group_names from get_sukigao_candidates() where name = 'overseas') <> array['AKB'] then
     raise exception 'candidates: overseas-only members show the external group';
   end if;
-  raise notice 'ok: candidate pool = every member with a photo';
+  -- 108: is_current matches the 106 "current" rule.
+  select array_agg(name order by name) into got from get_sukigao_candidates() where is_current;
+  want := array['disbanding_later', 'graduated_then_concurrent', 'solo', 'trainee']
+    || array(select format('m%s', lpad(i::text, 2, '0')) from generate_series(1, 12) i);
+  select array_agg(x order by x) into want from unnest(want) x;
+  if got is distinct from want then
+    raise exception 'candidates: is_current expected %, got %', want, got;
+  end if;
+  raise notice 'ok: candidate pool = every member with a photo, is_current flags 現役';
 end $$;
 
 -- ── Submit validation ──────────────────────────────────────────────────────
