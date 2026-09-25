@@ -6,13 +6,14 @@ import { siteUrl } from '../../core/public-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SUKIGAO_RANKING_LIMIT, SukigaoService } from '../../core/sukigao.service';
 import { SukigaoRankingEntry, SukigaoRankingMode } from '../../models';
+import { SukigaoEditCtaComponent } from '../sukigao/sukigao-edit-cta.component';
 
 type LoadState = 'loading' | 'ready' | 'error';
 
 @Component({
   selector: 'app-sukigao-ranking',
   standalone: true,
-  imports: [RouterLink, SupabaseImgPipe, DecimalPipe],
+  imports: [RouterLink, SupabaseImgPipe, DecimalPipe, SukigaoEditCtaComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sukigao-ranking.component.html',
   styleUrls: ['../sukigao/sukigao-buttons.css', './sukigao-ranking.component.css'],

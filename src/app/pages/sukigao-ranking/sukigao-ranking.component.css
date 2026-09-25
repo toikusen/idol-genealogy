@@ -50,6 +50,12 @@
   color: var(--text-faint-60);
 }
 
+.skrank-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-faint-55);
+}
+
 .skrank-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;

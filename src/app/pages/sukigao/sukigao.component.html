@@ -142,6 +142,8 @@
           </ol>
           <p>進度會自動存在這台裝置，關掉頁面也能繼續。</p>
         </details>
+
+        <app-sukigao-edit-cta variant="full" context="intro" />
       </section>
     }
 
@@ -193,6 +195,7 @@
                 {{ isLastBatch() ? '完成海選 →' : '下一組 →' }}
               </button>
             </div>
+            <app-sukigao-edit-cta variant="compact" context="preliminary" [faces]="batch()" />
           }
 
           <!-- 補選 -->
@@ -232,6 +235,7 @@
               <span class="sk-actionbar__count" aria-live="polite">候選 {{ poolSize() }} / {{ TOP_N }}</span>
               <button type="button" class="sk-btn sk-btn--primary" [disabled]="shortfall() > 0" (click)="confirmFill()">繼續 →</button>
             </div>
+            <app-sukigao-edit-cta variant="compact" context="fill" [faces]="fillItems()" />
           }
 
           <!-- ROUND 2: 候選淘汰 -->
@@ -279,6 +283,7 @@
               <span class="sk-actionbar__count">{{ groupPicks().length }} / {{ groupNeed() }}</span>
               <span class="sk-actionbar__spacer"></span>
             </div>
+            <app-sukigao-edit-cta variant="compact" context="elimination" [faces]="group()" />
           }
 
           <!-- ROUND 3: FINAL -->
@@ -327,6 +332,7 @@
             <div class="sk-actionbar sk-actionbar--center">
               <button type="button" class="sk-link-btn" [disabled]="!canUndo()" (click)="undo()">← 上一步</button>
             </div>
+            <app-sukigao-edit-cta variant="compact" context="final" [faces]="pair()" />
           }
 
           <!-- RESULT -->
@@ -346,6 +352,7 @@
               (undo)="undo()"
               (shared)="onShared($event)"
             />
+            <app-sukigao-edit-cta variant="full" context="result" [faces]="resultFaces()" />
           }
         }
       }
