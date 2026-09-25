@@ -1,7 +1,18 @@
 import { Injectable } from '@angular/core';
 import { SukigaoGameState, isGameState } from './sukigao-engine';
 
-export const SUKIGAO_STATE_KEY = 'idolmaps:sukigao:v1';
+export type SukigaoScope = 'current' | 'all';
+
+export interface SukigaoPrefs {
+  scope: SukigaoScope;
+  /** Pool size; 0 means everyone in the scope. */
+  size: number;
+}
+
+export const SUKIGAO_STATE_KEY = 'idolmaps:sukigao:v2';
+/** v1 saves used 12-face batches; they can't be resumed and are dropped. */
+const LEGACY_STATE_KEYS = ['idolmaps:sukigao:v1'];
+export const SUKIGAO_PREFS_KEY = 'idolmaps:sukigao:prefs';
 export const SUKIGAO_BROWSER_ID_KEY = 'idolmaps:sukigao:browser-id';
 
 /**
@@ -24,6 +35,11 @@ export class SukigaoSessionService {
   load(): SukigaoGameState | null {
     const storage = this.storage;
     if (!storage) return null;
+    try {
+      for (const key of LEGACY_STATE_KEYS) storage.removeItem(key);
+    } catch {
+      // ignore
+    }
     let raw: string | null;
     try {
       raw = storage.getItem(SUKIGAO_STATE_KEY);
@@ -52,6 +68,28 @@ export class SukigaoSessionService {
   clear(): void {
     try {
       this.storage?.removeItem(SUKIGAO_STATE_KEY);
+    } catch {
+      // ignore
+    }
+  }
+
+  /** Last scope / size picked on the intro, so the next visit starts there. */
+  loadPrefs(): SukigaoPrefs | null {
+    try {
+      const raw = this.storage?.getItem(SUKIGAO_PREFS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Partial<SukigaoPrefs>;
+      const scope = parsed.scope === 'all' || parsed.scope === 'current' ? parsed.scope : null;
+      const size = typeof parsed.size === 'number' && parsed.size >= 0 ? Math.floor(parsed.size) : null;
+      return scope && size !== null ? { scope, size } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  savePrefs(prefs: SukigaoPrefs): void {
+    try {
+      this.storage?.setItem(SUKIGAO_PREFS_KEY, JSON.stringify(prefs));
     } catch {
       // ignore
     }

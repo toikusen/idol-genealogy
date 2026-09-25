@@ -7,7 +7,7 @@
  * this file owns every rule in between.
  *
  * Flow:
- *   preliminary  12 faces per batch, pick up to 4 → pool
+ *   preliminary  9 faces per batch (3×3), pick any of them → pool
  *   fill         only when the pool is < 9: top up from faces not picked
  *   elimination  only while the pool is > 18: groups of 3–4, keep the top 2
  *   final        pairwise partial insertion ranking down to an ordered TOP 9
@@ -15,8 +15,9 @@
  */
 
 export const TOP_N = 9;
-export const BATCH_SIZE = 12;
-export const MAX_PICKS_PER_BATCH = 4;
+export const BATCH_SIZE = 9;
+/** Everyone on screen may be picked; the elimination rounds trim a big pool. */
+export const MAX_PICKS_PER_BATCH = BATCH_SIZE;
 /** Elimination runs while the pool is larger than this. */
 export const ELIMINATION_THRESHOLD = 18;
 /** Undo depth kept in storage; the brackets never need more than ~120 steps. */
@@ -55,6 +56,41 @@ export function seededShuffle<T>(items: readonly T[], seed: number): T[] {
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
+}
+
+// ── Pool sampling ──────────────────────────────────────────────────────────
+
+export interface SampleItem {
+  id: string;
+  /** Bucket to spread the sample across — the member's group, or 'solo'. */
+  stratum: string;
+}
+
+/**
+ * Picks `size` ids spread evenly across strata: every stratum is shuffled,
+ * then they take turns giving one id each until the sample is full, so a big
+ * group can't crowd out the small ones. Deterministic for a given seed.
+ * Returns every id (shuffled) when `size` covers the whole list.
+ */
+export function stratifiedSample(items: readonly SampleItem[], size: number, seed: number): string[] {
+  const unique = [...new Map(items.map(i => [i.id, i])).values()];
+  if (size >= unique.length) return seededShuffle(unique.map(i => i.id), seed);
+  const buckets = new Map<string, string[]>();
+  for (const item of unique) {
+    const bucket = buckets.get(item.stratum);
+    if (bucket) bucket.push(item.id);
+    else buckets.set(item.stratum, [item.id]);
+  }
+  const strata = seededShuffle([...buckets.keys()].sort(), seed);
+  const queues = strata.map((key, i) => seededShuffle(buckets.get(key)!, deriveSeed(seed, 100 + i)));
+  const picked: string[] = [];
+  for (let round = 0; picked.length < size; round++) {
+    for (const queue of queues) {
+      if (round < queue.length) picked.push(queue[round]);
+      if (picked.length >= size) break;
+    }
+  }
+  return picked;
 }
 
 // ── Elimination grouping ───────────────────────────────────────────────────
@@ -227,7 +263,7 @@ export interface SukigaoProgress {
 }
 
 export interface SukigaoGameState extends SukigaoProgress {
-  version: 1;
+  version: 2;
   sessionId: string;
   seed: number;
   candidateVersion: string;
@@ -256,7 +292,7 @@ export interface CreateGameInput {
 export function createGame(input: CreateGameInput): SukigaoGameState {
   const candidateIds = seededShuffle([...new Set(input.candidateIds)], input.seed);
   return {
-    version: 1,
+    version: 2,
     sessionId: input.sessionId,
     seed: input.seed >>> 0,
     candidateVersion: input.candidateVersion,
@@ -492,7 +528,7 @@ export function isGameState(value: unknown): value is SukigaoGameState {
   if (!value || typeof value !== 'object') return false;
   const v = value as Partial<SukigaoGameState>;
   const stages: SukigaoStage[] = ['preliminary', 'fill', 'elimination', 'final', 'result'];
-  return v.version === 1
+  return v.version === 2
     && typeof v.sessionId === 'string'
     && typeof v.seed === 'number'
     && typeof v.candidateVersion === 'string'

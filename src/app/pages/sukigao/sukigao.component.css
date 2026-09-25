@@ -3,7 +3,7 @@
   z-index: 1;
   max-width: 760px;
   margin: 0 auto;
-  padding: 1rem 16px 7rem;
+  padding: 1rem 12px 7rem;
   color: var(--text-primary);
 }
 
@@ -157,6 +157,125 @@
   color: var(--text-faint-70);
 }
 
+/* ── Intro setup: scope + size ── */
+.sk-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.sk-setup__label {
+  margin: 0 0 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--text-faint-65);
+}
+
+.sk-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--mauve-05);
+  border: 1px solid var(--border-subtle);
+}
+
+.sk-seg__opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-faint-70);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sk-seg__opt small {
+  font-size: 0.68rem;
+  color: var(--text-faint-55);
+}
+
+.sk-seg__opt--on {
+  background: var(--bg-surface);
+  color: var(--text-link);
+  font-weight: 600;
+  box-shadow: var(--shadow-xs);
+}
+
+.sk-sizes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sk-size {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon label"
+    "icon count"
+    "meta meta";
+  align-items: center;
+  column-gap: 8px;
+  padding: 10px 12px;
+  border: 2px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.sk-size--on {
+  border-color: var(--idol-pink);
+  background: var(--bg-pink-tint-hover);
+}
+
+.sk-size__icon {
+  grid-area: icon;
+  font-size: 1.3rem;
+}
+
+.sk-size__label {
+  grid-area: label;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.sk-size__count {
+  grid-area: count;
+  font-size: 0.8rem;
+  color: var(--text-link);
+  font-variant-numeric: tabular-nums;
+}
+
+.sk-size__meta {
+  grid-area: meta;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  color: var(--text-faint-60);
+}
+
+.sk-intro__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-faint-55);
+}
+
 .sk-intro__count {
   min-height: 1.6em;
   margin: 0 0 1.25rem;
@@ -301,19 +420,18 @@
 }
 
 /* ── Grids ── */
-/* A logical batch is always 12; only the column count changes. */
 .sk-grid {
   display: grid;
   gap: 8px;
 }
 
-/* On phones the 12 faces (3×4) should fit between the header and the sticky
-   action bar without scrolling: cap the grid width by the viewport height.
-   ~440px is the vertical chrome (top bar, header, progress, action bar) plus
-   the per-card name rows. */
+/* A batch is always 3×3, on every screen. The grid is as wide as it can be
+   while three rows still fit between the header and the sticky action bar:
+   ~360px is that vertical chrome plus the three name rows. */
 .sk-grid--batch {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  max-width: min(100%, max(220px, calc(0.75 * (100vh - 440px) + 16px)));
+  gap: 6px;
+  max-width: min(100%, 560px, max(260px, calc(100vh - 360px)));
   margin-inline: auto;
 }
 
@@ -326,7 +444,7 @@
 
 @supports (height: 100dvh) {
   .sk-grid--batch {
-    max-width: min(100%, max(220px, calc(0.75 * (100dvh - 440px) + 16px)));
+    max-width: min(100%, 560px, max(260px, calc(100dvh - 360px)));
   }
 
   .sk-grid--group {
@@ -402,8 +520,8 @@
   position: sticky;
   bottom: 0;
   z-index: 5;
-  margin: 0.75rem -16px 0;
-  padding: 0.5rem 16px calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  margin: 0.75rem -12px 0;
+  padding: 0.5rem 12px calc(0.5rem + env(safe-area-inset-bottom, 0px));
   border: none;
   border-top: 1px solid var(--border-subtle);
   border-radius: 0;
@@ -433,9 +551,7 @@
 
 @media (min-width: 640px) {
   .sk-grid--batch {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
-    max-width: none;
   }
 
   .sk-actionbar--sticky {
@@ -466,9 +582,5 @@
 @media (min-width: 960px) {
   .sk-page {
     max-width: 880px;
-  }
-
-  .sk-grid--batch {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }

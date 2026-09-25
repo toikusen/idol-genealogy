@@ -25,6 +25,7 @@ import {
   rankWithComparator,
   seededShuffle,
   splitIntoGroups,
+  stratifiedSample,
   startFinal,
   submitEliminationGroup,
   toggleFillPick,
@@ -122,17 +123,19 @@ describe('sukigao engine', () => {
   });
 
   describe('preliminary', () => {
-    it('shows fixed batches of 12', () => {
+    it('shows fixed 3×3 batches of 9', () => {
       const g = newGame(30);
-      expect(currentBatch(g).length).toBe(BATCH_SIZE);
-      expect(batchCount(g)).toBe(3);
+      expect(BATCH_SIZE).toBe(9);
+      expect(currentBatch(g).length).toBe(9);
+      expect(batchCount(g)).toBe(4);
     });
 
-    it(`caps picks at ${MAX_PICKS_PER_BATCH} per batch and toggles off`, () => {
+    it('lets every face in a batch be picked, and toggles off', () => {
       let g = newGame(30);
       const batch = currentBatch(g);
-      for (const id of batch.slice(0, 6)) g = togglePreliminaryPick(g, id);
-      expect(g.batchPicks[0].length).toBe(MAX_PICKS_PER_BATCH);
+      for (const id of batch) g = togglePreliminaryPick(g, id);
+      expect(MAX_PICKS_PER_BATCH).toBe(BATCH_SIZE);
+      expect(g.batchPicks[0].length).toBe(9);
       g = togglePreliminaryPick(g, batch[0]);
       expect(g.batchPicks[0]).not.toContain(batch[0]);
     });
@@ -155,20 +158,53 @@ describe('sukigao engine', () => {
 
   describe('fill', () => {
     it('asks for a top-up instead of inventing faces when fewer than 9 were picked', () => {
-      const g = playPreliminary(newGame(36), 2); // 3 batches × 2 = 6
+      const g = playPreliminary(newGame(27), 2); // 3 batches × 2 = 6
       expect(g.stage).toBe('fill');
       expect(fillShortfall(g)).toBe(3);
       expect(confirmFill(g)).toBe(g);
     });
 
     it('offers only unpicked faces and continues once 9 are in the pool', () => {
-      let g = playPreliminary(newGame(36), 2);
+      let g = playPreliminary(newGame(27), 2);
       const options = fillOptions(g);
-      expect(options.length).toBe(30);
+      expect(options.length).toBe(21);
       expect(options.some(id => poolIds(g).includes(id))).toBeFalse();
       for (const id of options.slice(0, 3)) g = toggleFillPick(g, id);
       g = confirmFill(g);
       expect(g.stage).toBe('final');
+    });
+  });
+
+  describe('stratifiedSample', () => {
+    const items = [
+      ...ids(60, 'big').map(id => ({ id, stratum: 'Big' })),
+      ...ids(5, 'mid').map(id => ({ id, stratum: 'Mid' })),
+      ...ids(2, 'tiny').map(id => ({ id, stratum: 'Tiny' })),
+      ...ids(3, 'solo').map(id => ({ id, stratum: 'solo' })),
+    ];
+
+    it('returns exactly the requested size with no duplicates', () => {
+      const sample = stratifiedSample(items, 27, 1);
+      expect(sample.length).toBe(27);
+      expect(new Set(sample).size).toBe(27);
+    });
+
+    it('spreads the sample so small groups are not crowded out', () => {
+      const sample = stratifiedSample(items, 12, 5);
+      for (const prefix of ['big', 'mid', 'tiny', 'solo']) {
+        expect(sample.some(id => id.startsWith(prefix))).withContext(prefix).toBeTrue();
+      }
+      // Round robin: tiny (2) and solo (3) give everyone before Big dominates.
+      expect(sample.filter(id => id.startsWith('tiny')).length).toBe(2);
+    });
+
+    it('is deterministic per seed and varies across seeds', () => {
+      expect(stratifiedSample(items, 20, 9)).toEqual(stratifiedSample(items, 20, 9));
+      expect(stratifiedSample(items, 20, 9)).not.toEqual(stratifiedSample(items, 20, 10));
+    });
+
+    it('returns everyone when the size covers the list', () => {
+      expect([...stratifiedSample(items, 999, 3)].sort()).toEqual(items.map(i => i.id).sort());
     });
   });
 
@@ -198,9 +234,9 @@ describe('sukigao engine', () => {
     });
 
     it('shrinks the pool round by round until it is 9–18', () => {
-      let g = playPreliminary(newGame(240), 4); // 20 batches × 4 = 80
+      let g = playPreliminary(newGame(180), 4); // 20 batches × 4 = 80
       expect(g.stage).toBe('elimination');
-      const compare = byOrder(ids(240));
+      const compare = byOrder(ids(180));
       const sizes: number[] = [];
       let guard = 0;
       while (g.stage === 'elimination') {
@@ -299,6 +335,19 @@ describe('sukigao engine', () => {
   });
 
   describe('full game', () => {
+    it('copes with a player who picks everyone', () => {
+      const truth = ids(54);
+      let g = playPreliminary(newGame(54), 9); // pool = all 54
+      expect(poolIds(g).length).toBe(54);
+      expect(g.stage).toBe('elimination');
+      g = playBracket(g, byOrder(truth));
+      // Elimination groups are lossy (two favourites can share a group), but
+      // the overall favourite always wins through and the result is a full 9.
+      expect(g.stage).toBe('result');
+      expect(g.result![0]).toBe(truth[0]);
+      expect(new Set(g.result!).size).toBe(9);
+    });
+
     it('ends with exactly 9 distinct faces from the pool', () => {
       const truth = seededShuffle(ids(400), 1);
       let g = playPreliminary(newGame(400), 3);
@@ -310,7 +359,7 @@ describe('sukigao engine', () => {
     });
 
     it('goes straight to the final with a 9–18 pool', () => {
-      const g = playPreliminary(newGame(48), 3); // 12
+      const g = playPreliminary(newGame(36), 3); // 4 batches × 3 = 12
       expect(g.stage).toBe('final');
     });
   });

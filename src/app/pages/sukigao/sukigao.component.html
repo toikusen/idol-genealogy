@@ -58,41 +58,85 @@
           這次只看照片。
         </p>
 
-        <p class="sk-intro__count">
-          @if (pool(); as p) {
-            {{ p.groupCount }} 團體・{{ p.candidates.length }} 位成員
-          } @else {
+        @if (pool()) {
+          <div class="sk-setup">
+            <div class="sk-setup__group">
+              <p class="sk-setup__label" id="sk-scope-label">範圍</p>
+              <div class="sk-seg" role="radiogroup" aria-labelledby="sk-scope-label">
+                <button type="button" role="radio" class="sk-seg__opt"
+                        [class.sk-seg__opt--on]="scope() === 'current'"
+                        [attr.aria-checked]="scope() === 'current'"
+                        (click)="selectScope('current')">
+                  現役成員<small>{{ scopeCounts().current }} 位</small>
+                </button>
+                <button type="button" role="radio" class="sk-seg__opt"
+                        [class.sk-seg__opt--on]="scope() === 'all'"
+                        [attr.aria-checked]="scope() === 'all'"
+                        (click)="selectScope('all')">
+                  包含畢業<small>{{ scopeCounts().all }} 位</small>
+                </button>
+              </div>
+            </div>
+
+            <div class="sk-setup__group">
+              <p class="sk-setup__label" id="sk-size-label">份量</p>
+              <div class="sk-sizes" role="radiogroup" aria-labelledby="sk-size-label">
+                @for (o of sizeOptions(); track o.size) {
+                  <button type="button" role="radio" class="sk-size"
+                          [class.sk-size--on]="selectedSize().size === o.size"
+                          [attr.aria-checked]="selectedSize().size === o.size"
+                          (click)="selectSize(o.size)">
+                    <span class="sk-size__icon" aria-hidden="true">{{ o.icon }}</span>
+                    <span class="sk-size__label">{{ o.label }}</span>
+                    <span class="sk-size__count">{{ o.count }} 位</span>
+                    <span class="sk-size__meta">{{ o.batches }} 組・約 {{ o.minutes }} 分鐘</span>
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <p class="sk-intro__count">
+            @if (selectedSize().size === 0) {
+              {{ scopeGroupCount() }} 團體・全部 {{ selectedSize().count }} 位成員
+            } @else {
+              從 {{ scopeGroupCount() }} 團體平均抽出 {{ selectedSize().count }} 位
+            }
+          </p>
+        } @else {
+          <p class="sk-intro__count">
             <span class="sk-intro__count-loading" role="status">正在準備今天的顏控名單…</span>
-          }
-        </p>
+          </p>
+        }
 
         <div class="sk-intro__cta">
           @if (savedSummary(); as progress) {
             <button type="button" class="sk-btn sk-btn--primary sk-btn--wide" (click)="resume()">
               繼續上次的進度（{{ progress }}）
             </button>
-            <button type="button" class="sk-btn sk-btn--ghost sk-btn--wide" [disabled]="!pool()" (click)="start()">
+            <button type="button" class="sk-btn sk-btn--ghost sk-btn--wide" [disabled]="!canStart()" (click)="start()">
               開始新的一局
             </button>
           } @else if (game()?.stage === 'result') {
             <button type="button" class="sk-btn sk-btn--primary sk-btn--wide" (click)="resume()">
               看我上次的顏控9選
             </button>
-            <button type="button" class="sk-btn sk-btn--ghost sk-btn--wide" [disabled]="!pool()" (click)="start()">
+            <button type="button" class="sk-btn sk-btn--ghost sk-btn--wide" [disabled]="!canStart()" (click)="start()">
               再玩一次
             </button>
           } @else {
-            <button type="button" class="sk-btn sk-btn--primary sk-btn--wide" [disabled]="!pool()" (click)="start()">
+            <button type="button" class="sk-btn sk-btn--primary sk-btn--wide" [disabled]="!canStart()" (click)="start()">
               開始選我的顏控9選
             </button>
           }
           <a routerLink="/sukigao/ranking" class="sk-link-btn">看看大家的顏控排行 →</a>
+          <p class="sk-intro__hint">每次開新局都會重新抽人，多玩幾次會遇到不同的臉</p>
         </div>
 
         <details class="sk-intro__how">
           <summary>怎麼玩？</summary>
           <ol>
-            <li><strong>海選</strong>：每組 {{ BATCH_SIZE }} 位，選出最多 {{ MAX_PICKS }} 位你的菜。</li>
+            <li><strong>海選</strong>：每組 {{ BATCH_SIZE }} 位，喜歡的都選起來，全選也可以。</li>
             <li><strong>候選淘汰</strong>：候選太多時，每 4 位選出最喜歡的 2 位。</li>
             <li><strong>FINAL</strong>：二選一，決定你的 TOP 9 順位。</li>
           </ol>
@@ -118,7 +162,7 @@
             <header class="sk-stage-head">
               <h1 class="sk-stage-head__title"><span class="sk-stage-head__chip">ROUND 1</span>海選</h1>
               <p class="sk-stage-head__q">這一組裡，哪些臉是你的菜？</p>
-              <p class="sk-stage-head__hint">最多選 {{ MAX_PICKS }} 位・不用想太久，第一眼的直覺最準。</p>
+              <p class="sk-stage-head__hint">喜歡幾位就選幾位・不用想太久，第一眼的直覺最準。</p>
             </header>
 
             <div class="sk-progress" role="group" aria-label="海選進度">
@@ -136,8 +180,7 @@
                 <app-sukigao-card
                   [candidate]="face"
                   [selected]="batchPicks().has(face.id)"
-                  [disabled]="!batchPicks().has(face.id) && batchPicks().size >= MAX_PICKS"
-                  [eager]="i < 6"
+                  [eager]="true"
                   (pick)="togglePick($event)"
                 />
               }
@@ -145,7 +188,7 @@
 
             <div class="sk-actionbar sk-actionbar--sticky">
               <button type="button" class="sk-link-btn" [disabled]="g.batchIndex === 0" (click)="prevBatch()">← 上一組</button>
-              <span class="sk-actionbar__count" aria-live="polite">已選 {{ batchPicks().size }} / {{ MAX_PICKS }}</span>
+              <span class="sk-actionbar__count" aria-live="polite">已選 {{ batchPicks().size }} 位</span>
               <button type="button" class="sk-btn sk-btn--primary" (click)="nextBatch()">
                 {{ isLastBatch() ? '完成海選 →' : '下一組 →' }}
               </button>
@@ -170,7 +213,7 @@
                 <app-sukigao-card
                   [candidate]="face"
                   [selected]="fillPicked().has(face.id)"
-                  [eager]="i < 6"
+                  [eager]="true"
                   (pick)="toggleFill($event)"
                 />
               }

@@ -14,6 +14,8 @@ function candidates(n: number): SukigaoCandidate[] {
     photoUrl: '',
     groupNames: [`團${i % 5}`],
     color: null,
+    // Every 4th member is retired, so the 現役 scope is a strict subset.
+    isCurrent: i % 4 !== 3,
   }));
 }
 
@@ -62,20 +64,55 @@ describe('SukigaoComponent', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => localStorage.clear());
 
-  it('shows the intro with DB-driven counts', async () => {
+  it('shows the intro with DB-driven counts per scope', async () => {
     await setup(48);
     expect(component.view()).toBe('intro');
     const text = fixture.nativeElement.textContent as string;
-    expect(text).toContain('5 團體・48 位成員');
+    expect(text).toContain('現役成員36 位');
+    expect(text).toContain('包含畢業48 位');
     expect(text).toContain('開始選我的顏控9選');
   });
 
-  it('renders at most one batch of 12 cards in the preliminary', async () => {
+  it('samples the chosen size from the chosen scope', async () => {
+    await setup(400);
+    expect(component.scope()).toBe('current');
+    expect(component.selectedSize().count).toBe(108);
+    component.start();
+    const g = component.game()!;
+    expect(g.candidateIds.length).toBe(108);
+    const retired = new Set(candidates(400).filter(c => !c.isCurrent).map(c => c.id));
+    expect(g.candidateIds.some(id => retired.has(id))).toBeFalse();
+    expect(g.candidateVersion).toBe('400:v|current|108');
+    expect(analytics.trackEvent).toHaveBeenCalledWith('sukigao_start', { candidate_count: 108, scope: 'current' });
+  });
+
+  it('includes retired members under 包含畢業 and remembers the choice', async () => {
+    await setup(400);
+    component.selectScope('all');
+    component.selectSize(0);
+    expect(component.selectedSize().count).toBe(400);
+    component.start();
+    expect(component.game()!.candidateIds.length).toBe(400);
+    expect(new SukigaoSessionService().loadPrefs()).toEqual({ scope: 'all', size: 0 });
+  });
+
+  it('only offers sizes smaller than the scope, plus 全部', async () => {
+    await setup(120); // 90 current
+    expect(component.sizeOptions().map(o => o.size)).toEqual([54, 0]);
+    component.selectSize(216);
+    expect(component.selectedSize().size).toBe(0);
+  });
+
+  it('renders one 3×3 batch of 9 cards with no pick cap', async () => {
     await setup(400);
     component.start();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('app-sukigao-card').length).toBe(12);
-    expect(analytics.trackEvent).toHaveBeenCalledWith('sukigao_start', jasmine.any(Object));
+    const cards = fixture.nativeElement.querySelectorAll('app-sukigao-card button');
+    expect(cards.length).toBe(9);
+    component.batch().forEach(face => component.togglePick(face.id));
+    fixture.detectChanges();
+    expect(component.batchPicks().size).toBe(9);
+    expect(fixture.nativeElement.querySelectorAll('app-sukigao-card button:disabled').length).toBe(0);
   });
 
   it('persists progress and resumes it after a reload', async () => {
@@ -173,7 +210,7 @@ describe('SukigaoComponent', () => {
     expect(sukigao.submit).not.toHaveBeenCalled();
     sukigao.submit.and.resolveTo({ submittedOn: '2026-09-25', replaced: false });
     await component.submit();
-    expect(sukigao.submit).toHaveBeenCalledOnceWith(jasmine.any(String), component.game()!.result!, '48:v');
+    expect(sukigao.submit).toHaveBeenCalledOnceWith(jasmine.any(String), component.game()!.result!, '48:v|current|36');
     expect(component.submitState()).toBe('done');
     expect(component.game()!.submittedOn).toBe('2026-09-25');
   });

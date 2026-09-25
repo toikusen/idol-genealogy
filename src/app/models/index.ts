@@ -339,6 +339,8 @@ export interface SukigaoCandidate {
   photoUrl: string;
   groupNames: string[];
   color: string | null;
+  /** Has a current group / solo relationship (the default "現役" scope). */
+  isCurrent: boolean;
 }
 
 export interface SukigaoResult {
