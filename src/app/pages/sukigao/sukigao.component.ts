@@ -51,6 +51,7 @@ import {
 } from '../../core/sukigao-engine';
 import { SukigaoCandidate } from '../../models';
 import { SukigaoCardComponent } from './sukigao-card.component';
+import { SukigaoEditCtaComponent } from './sukigao-edit-cta.component';
 import { SukigaoResultComponent, SukigaoShareMethod, SukigaoSubmitState } from './sukigao-result.component';
 
 type ViewState = 'loading' | 'error' | 'intro' | 'game' | 'too-few';
@@ -83,7 +84,7 @@ const GROUP_ADVANCE_DELAY_MS = 260;
 @Component({
   selector: 'app-sukigao',
   standalone: true,
-  imports: [RouterLink, SupabaseImgPipe, SukigaoCardComponent, SukigaoResultComponent],
+  imports: [RouterLink, SupabaseImgPipe, SukigaoCardComponent, SukigaoResultComponent, SukigaoEditCtaComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sukigao.component.html',
   styleUrls: ['./sukigao-buttons.css', './sukigao.component.css'],
