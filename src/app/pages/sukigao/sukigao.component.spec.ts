@@ -159,6 +159,16 @@ describe('SukigaoComponent', () => {
     expect(component.game()!.sessionId).toBe(first);
   });
 
+  it('shows a different random preview on each visit', async () => {
+    await setup(400);
+    const first = component.previewFaces().map(f => f.id);
+    expect(first.length).toBe(9);
+    fixture.destroy();
+    TestBed.resetTestingModule();
+    await setup(400);
+    expect(component.previewFaces().map(f => f.id)).not.toEqual(first);
+  });
+
   it('shows the load error with a retry', async () => {
     await setup(48);
     sukigao.getPool.and.rejectWith(new Error('offline'));
