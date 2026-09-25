@@ -45,7 +45,7 @@
         <div class="sk-intro__preview" aria-hidden="true">
           @for (face of previewFaces(); track face.id) {
             <span class="sk-intro__tile">
-              <img [src]="face.photoUrl | supabaseImg: 240 : 75" alt="" width="240" height="320" decoding="async" />
+              <img [src]="face.photoUrl | supabaseImg: 240 : 75" alt="" width="240" height="240" decoding="async" />
             </span>
           } @empty {
             @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9]; track i) { <span class="sk-intro__tile sk-skeleton"></span> }
@@ -67,9 +67,25 @@
         </p>
 
         <div class="sk-intro__cta">
-          <button type="button" class="sk-btn sk-btn--primary sk-btn--wide" [disabled]="!pool()" (click)="start()">
-            開始選我的顏控9選
-          </button>
+          @if (savedSummary(); as progress) {
+            <button type="button" class="sk-btn sk-btn--primary sk-btn--wide" (click)="resume()">
+              繼續上次的進度（{{ progress }}）
+            </button>
+            <button type="button" class="sk-btn sk-btn--ghost sk-btn--wide" [disabled]="!pool()" (click)="start()">
+              開始新的一局
+            </button>
+          } @else if (game()?.stage === 'result') {
+            <button type="button" class="sk-btn sk-btn--primary sk-btn--wide" (click)="resume()">
+              看我上次的顏控9選
+            </button>
+            <button type="button" class="sk-btn sk-btn--ghost sk-btn--wide" [disabled]="!pool()" (click)="start()">
+              再玩一次
+            </button>
+          } @else {
+            <button type="button" class="sk-btn sk-btn--primary sk-btn--wide" [disabled]="!pool()" (click)="start()">
+              開始選我的顏控9選
+            </button>
+          }
           <a routerLink="/sukigao/ranking" class="sk-link-btn">看看大家的顏控排行 →</a>
         </div>
 
@@ -90,7 +106,7 @@
       @if (game(); as g) {
         @if (g.stage !== 'result') {
           <div class="sk-topbar">
-            <a routerLink="/" class="sk-back">← Idol Maps</a>
+            <button type="button" class="sk-back" (click)="backToIntro()">← 顏控9選</button>
             <button type="button" class="sk-link-btn" (click)="restart()">重新開始</button>
           </div>
         }
@@ -100,10 +116,9 @@
           <!-- ROUND 1: 海選 -->
           @case ('preliminary') {
             <header class="sk-stage-head">
-              <p class="sk-stage-head__chip">ROUND 1</p>
-              <h1 class="sk-stage-head__title">海選</h1>
+              <h1 class="sk-stage-head__title"><span class="sk-stage-head__chip">ROUND 1</span>海選</h1>
               <p class="sk-stage-head__q">這一組裡，哪些臉是你的菜？</p>
-              <p class="sk-stage-head__hint">最多選 {{ MAX_PICKS }} 位。<br />不用想太久，第一眼的直覺最準。</p>
+              <p class="sk-stage-head__hint">最多選 {{ MAX_PICKS }} 位・不用想太久，第一眼的直覺最準。</p>
             </header>
 
             <div class="sk-progress" role="group" aria-label="海選進度">
@@ -128,7 +143,7 @@
               }
             </div>
 
-            <div class="sk-actionbar">
+            <div class="sk-actionbar sk-actionbar--sticky">
               <button type="button" class="sk-link-btn" [disabled]="g.batchIndex === 0" (click)="prevBatch()">← 上一組</button>
               <span class="sk-actionbar__count" aria-live="polite">已選 {{ batchPicks().size }} / {{ MAX_PICKS }}</span>
               <button type="button" class="sk-btn sk-btn--primary" (click)="nextBatch()">
@@ -140,8 +155,7 @@
           <!-- 補選 -->
           @case ('fill') {
             <header class="sk-stage-head">
-              <p class="sk-stage-head__chip">補選</p>
-              <h1 class="sk-stage-head__title">目前只選了 {{ preliminaryPickCount() }} 位</h1>
+              <h1 class="sk-stage-head__title"><span class="sk-stage-head__chip">補選</span>目前只選了 {{ preliminaryPickCount() }} 位</h1>
               <p class="sk-stage-head__q">
                 @if (shortfall() > 0) {
                   還差 {{ shortfall() }} 位才能組成顏控9選。
@@ -149,7 +163,6 @@
                   已經湊齊 {{ TOP_N }} 位了！也可以再多選幾位。
                 }
               </p>
-              <p class="sk-stage-head__hint">從剛才沒選的人裡，再挑幾張有感覺的臉。</p>
             </header>
 
             <div class="sk-grid sk-grid--batch">
@@ -171,7 +184,7 @@
               </nav>
             }
 
-            <div class="sk-actionbar">
+            <div class="sk-actionbar sk-actionbar--sticky">
               <button type="button" class="sk-link-btn" (click)="backToPreliminary()">← 回到海選</button>
               <span class="sk-actionbar__count" aria-live="polite">候選 {{ poolSize() }} / {{ TOP_N }}</span>
               <button type="button" class="sk-btn sk-btn--primary" [disabled]="shortfall() > 0" (click)="confirmFill()">繼續 →</button>
@@ -182,7 +195,7 @@
           @case ('elimination') {
             <header class="sk-stage-head">
               <p class="sk-stage-head__chip">ROUND 2・候選淘汰{{ eliminationRound() > 1 ? '（第 ' + eliminationRound() + ' 輪）' : '' }}</p>
-              <h1 class="sk-stage-head__title">
+              <h1 class="sk-stage-head__title sk-stage-head__title--sm">
                 這 {{ group().length }} 位裡選出最喜歡的 {{ groupNeed() }} 位
               </h1>
               <p class="sk-stage-head__q" aria-live="polite">
@@ -218,7 +231,7 @@
               }
             </div>
 
-            <div class="sk-actionbar">
+            <div class="sk-actionbar sk-actionbar--sticky">
               <button type="button" class="sk-link-btn" [disabled]="!canUndo() && groupPicks().length === 0" (click)="undo()">← 上一步</button>
               <span class="sk-actionbar__count">{{ groupPicks().length }} / {{ groupNeed() }}</span>
               <span class="sk-actionbar__spacer"></span>
@@ -276,7 +289,7 @@
           <!-- RESULT -->
           @case ('result') {
             <div class="sk-topbar">
-              <a routerLink="/" class="sk-back">← Idol Maps</a>
+              <button type="button" class="sk-back" (click)="backToIntro()">← 顏控9選</button>
               <a routerLink="/sukigao/ranking" class="sk-link-btn">大家的顏控排行 →</a>
             </div>
             <h1 class="sr-only">台灣地偶顏控9選 結果</h1>

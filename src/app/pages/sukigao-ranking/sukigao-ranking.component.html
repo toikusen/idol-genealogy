@@ -59,7 +59,7 @@
                   <span class="skrank-rank" [class.skrank-rank--top]="place(i) <= 3">{{ place(i) }}</span>
                   <span class="skrank-photo">
                     @if (entry.photo_url) {
-                      <img [src]="entry.photo_url | supabaseImg: 160 : 75" [alt]="entry.name" width="54" height="72" loading="lazy" decoding="async" />
+                      <img [src]="entry.photo_url | supabaseImg: 160 : 75" [alt]="entry.name" width="54" height="54" loading="lazy" decoding="async" />
                     }
                   </span>
                   <span class="skrank-info">

@@ -10,9 +10,11 @@
       <li class="skr-cell" [class]="'skr-pos-' + (i + 1)">
         <a [routerLink]="'/member/' + face.id" class="skr-cell__link" [attr.aria-label]="'第 ' + (i + 1) + ' 名：' + face.name">
           <span class="skr-cell__photo">
-            @if (face.photoUrl) {
-              <img [src]="face.photoUrl | supabaseImg: (i === 0 ? 480 : 320) : 80" [alt]="face.name" width="300" height="400" decoding="async" />
-            }
+            <span class="skr-cell__circle">
+              @if (face.photoUrl) {
+                <img [src]="face.photoUrl | supabaseImg: (i === 0 ? 480 : 320) : 80" [alt]="face.name" width="300" height="300" decoding="async" />
+              }
+            </span>
             <span class="skr-cell__rank" aria-hidden="true">
               @if (i === 0) { 👑 } {{ i + 1 }}
             </span>

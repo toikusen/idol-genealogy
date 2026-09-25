@@ -3,8 +3,11 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SukigaoCandidate } from '../../models';
 
 /**
- * One face as a portrait button. The whole card is the hit target; selection
- * is announced through aria-pressed and shown with a pink ring + check/badge.
+ * One face as a button: a circle photo in a square frame. Many member photos
+ * were uploaded through the circle cropper (square JPEG, dark corners), so a
+ * circle is the one shape that shows those and rectangular photos alike.
+ * The whole card is the hit target; selection is announced through
+ * aria-pressed and shown with a pink ring + check/badge.
  */
 @Component({
   selector: 'app-sukigao-card',
@@ -23,19 +26,21 @@ import { SukigaoCandidate } from '../../models';
       (click)="pick.emit(candidate.id)"
     >
       <span class="sk-card__photo">
-        @if (candidate.photoUrl) {
-          <img
-            [src]="candidate.photoUrl | supabaseImg: imageWidth : 80"
-            [alt]="candidate.name"
-            [attr.loading]="eager ? 'eager' : 'lazy'"
-            [attr.fetchpriority]="eager ? 'high' : null"
-            decoding="async"
-            width="300"
-            height="400"
-          />
-        } @else {
-          <span class="sk-card__placeholder" aria-hidden="true">{{ candidate.name.charAt(0) }}</span>
-        }
+        <span class="sk-card__circle">
+          @if (candidate.photoUrl) {
+            <img
+              [src]="candidate.photoUrl | supabaseImg: imageWidth : 80"
+              [alt]="candidate.name"
+              [attr.loading]="eager ? 'eager' : 'lazy'"
+              [attr.fetchpriority]="eager ? 'high' : null"
+              decoding="async"
+              width="300"
+              height="300"
+            />
+          } @else {
+            <span class="sk-card__placeholder" aria-hidden="true">{{ candidate.name.charAt(0) }}</span>
+          }
+        </span>
         @if (badge) {
           <span class="sk-card__badge" aria-hidden="true">{{ badge }}</span>
         } @else if (selected) {

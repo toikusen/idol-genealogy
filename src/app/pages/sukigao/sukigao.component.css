@@ -11,6 +11,11 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-sans);
+  cursor: pointer;
   color: var(--text-faint-60);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
@@ -58,8 +63,8 @@
 
 .sk-skeleton {
   display: block;
-  aspect-ratio: 3 / 4;
-  border-radius: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
   background: linear-gradient(90deg, var(--skel-from), var(--skel-to), var(--skel-from));
   background-size: 200% 100%;
   animation: sk-shimmer 1.4s ease-in-out infinite;
@@ -131,8 +136,8 @@
 
 .sk-intro__tile {
   display: block;
-  aspect-ratio: 3 / 4;
-  border-radius: 8px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
   overflow: hidden;
   background: linear-gradient(135deg, var(--skel-from), var(--skel-to));
 }
@@ -142,7 +147,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 25%;
+  transform: scale(1.05);
 }
 
 .sk-intro__note {
@@ -213,13 +218,14 @@
 
 /* ── Stage header ── */
 .sk-stage-head {
-  margin: 0.25rem 0 1rem;
+  margin: 0 0 0.6rem;
   text-align: center;
 }
 
 .sk-stage-head__chip {
   display: inline-block;
-  margin: 0 0 0.4rem;
+  margin: 0 0.5rem 0.3rem 0;
+  vertical-align: middle;
   padding: 3px 12px;
   border-radius: 999px;
   background: var(--bg-pink-tint-hover);
@@ -237,15 +243,19 @@
 
 .sk-stage-head__title {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--text-heading);
 }
 
+.sk-stage-head__title--sm {
+  font-size: 1.05rem;
+}
+
 .sk-stage-head__q {
-  margin: 0.35rem 0 0;
-  font-size: 0.95rem;
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
   color: var(--text-secondary);
 }
 
@@ -254,15 +264,15 @@
 }
 
 .sk-stage-head__hint {
-  margin: 0.4rem 0 0;
-  font-size: 0.78rem;
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
   line-height: 1.7;
   color: var(--text-faint-60);
 }
 
 /* ── Progress ── */
 .sk-progress {
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.6rem;
 }
 
 .sk-progress__label {
@@ -297,15 +307,31 @@
   gap: 8px;
 }
 
+/* On phones the 12 faces (3×4) should fit between the header and the sticky
+   action bar without scrolling: cap the grid width by the viewport height.
+   ~440px is the vertical chrome (top bar, header, progress, action bar) plus
+   the per-card name rows. */
 .sk-grid--batch {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: min(100%, max(220px, calc(0.75 * (100vh - 440px) + 16px)));
+  margin-inline: auto;
 }
 
 .sk-grid--group {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: 440px;
+  max-width: min(440px, max(240px, calc(100vh - 360px)));
   margin: 0 auto;
   gap: 12px;
+}
+
+@supports (height: 100dvh) {
+  .sk-grid--batch {
+    max-width: min(100%, max(220px, calc(0.75 * (100dvh - 440px) + 16px)));
+  }
+
+  .sk-grid--group {
+    max-width: min(440px, max(240px, calc(100dvh - 360px)));
+  }
 }
 
 .sk-versus {
@@ -356,9 +382,7 @@
   color: var(--text-faint-65);
 }
 
-/* ── Action bar ──
-   Inline rather than sticky: the app's floating login pill (bottom-left) and
-   theme toggle (bottom-right) would sit on top of a sticky bottom bar. */
+/* ── Action bar ── */
 .sk-actionbar {
   display: flex;
   align-items: center;
@@ -370,6 +394,23 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-xs);
+}
+
+/* Pinned to the bottom edge on phones so 下一組 is always under the thumb.
+   The app's floating pills are hidden meanwhile (body.sukigao-immersive). */
+.sk-actionbar--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 0.75rem -16px 0;
+  padding: 0.5rem 16px calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: var(--bg-surface);
+  box-shadow: 0 -4px 16px rgba(45, 27, 46, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .sk-actionbar--center {
@@ -394,6 +435,15 @@
   .sk-grid--batch {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
+    max-width: none;
+  }
+
+  .sk-actionbar--sticky {
+    bottom: 12px;
+    margin: 1rem 0 0;
+    padding: 0.5rem 0.5rem 0.5rem 0.9rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
   }
 
   .sk-intro__main {

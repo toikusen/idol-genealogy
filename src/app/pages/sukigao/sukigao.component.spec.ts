@@ -89,10 +89,37 @@ describe('SukigaoComponent', () => {
     fixture.destroy();
     TestBed.resetTestingModule();
     await setup(48);
+    // Every visit lands on the intro, offering to continue.
+    expect(component.view()).toBe('intro');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('繼續上次的進度（海選 2 / 4）');
+    component.resume();
     expect(component.view()).toBe('game');
     expect(component.game()!.candidateIds).toEqual(order);
     expect(component.game()!.batchIndex).toBe(1);
     expect(component.game()!.batchPicks[0]).toEqual([first]);
+  });
+
+  it('hides the floating app chrome only while a round is on screen', async () => {
+    await setup(48);
+    expect(document.body.classList.contains('sukigao-immersive')).toBeFalse();
+    component.start();
+    fixture.detectChanges();
+    expect(document.body.classList.contains('sukigao-immersive')).toBeTrue();
+    component.backToIntro();
+    fixture.detectChanges();
+    expect(document.body.classList.contains('sukigao-immersive')).toBeFalse();
+    expect(component.game()).not.toBeNull();
+  });
+
+  it('asks before a new game overwrites saved progress', async () => {
+    await setup(48);
+    component.start();
+    const first = component.game()!.sessionId;
+    component.backToIntro();
+    spyOn(window, 'confirm').and.returnValue(false);
+    component.start();
+    expect(component.game()!.sessionId).toBe(first);
   });
 
   it('shows the load error with a retry', async () => {

@@ -6,10 +6,11 @@ import {
   OnInit,
   PLATFORM_ID,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
@@ -55,6 +56,7 @@ import { SukigaoResultComponent, SukigaoShareMethod, SukigaoSubmitState } from '
 type ViewState = 'loading' | 'error' | 'intro' | 'game' | 'too-few';
 
 const FILL_PAGE_SIZE = 12;
+const IMMERSIVE_CLASS = 'sukigao-immersive';
 const PRELOAD_WIDTH_GRID = 360;
 const PRELOAD_WIDTH_LARGE = 480;
 /** Pause after the ② pick so the badge is visible before the next group. */
@@ -74,6 +76,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   private readonly session = inject(SukigaoSessionService);
   private readonly seo = inject(SeoService);
   private readonly analytics = inject(AnalyticsService);
+  private readonly doc = inject(DOCUMENT);
   private readonly imgPipe = new SupabaseImgPipe();
 
   readonly TOP_N = TOP_N;
@@ -139,6 +142,19 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   readonly resultFaces = computed(() => this.resolve(this.game()?.result ?? []));
 
+  /** Where the saved game stands, for the intro's resume button. */
+  readonly savedSummary = computed(() => {
+    const g = this.game();
+    if (!g) return null;
+    switch (g.stage) {
+      case 'preliminary': return `海選 ${g.batchIndex + 1} / ${batchCount(g)}`;
+      case 'fill': return '補選';
+      case 'elimination': return '候選淘汰';
+      case 'final': return 'FINAL';
+      case 'result': return null;
+    }
+  });
+
   readonly previewFaces = computed(() => {
     const p = this.pool();
     if (!p) return [];
@@ -146,6 +162,15 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     const seed = Number(taipeiDayKey(new Date().toISOString()).replace(/-/g, ''));
     return seededShuffle(p.candidates, seed).slice(0, 9);
   });
+
+  constructor() {
+    // While a round is on screen, the app's floating login pill / theme toggle
+    // would cover the bottom action bar; styles.css hides them under this class.
+    effect(() => {
+      const immersive = this.isBrowser && this.view() === 'game' && this.stage() !== 'result';
+      this.doc.body.classList.toggle(IMMERSIVE_CLASS, immersive);
+    });
+  }
 
   ngOnInit(): void {
     this.seo.setPage(
@@ -160,6 +185,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    if (this.isBrowser) this.doc.body.classList.remove(IMMERSIVE_CLASS);
     if (this.groupTimer) clearTimeout(this.groupTimer);
   }
 
@@ -177,11 +203,11 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       }
       this.faces.set(faces);
       this.pool.set(pool);
+      // Every visit lands on the intro; a saved game is offered via resume().
       if (saved) {
         this.game.set(saved);
         this.submitState.set(saved.submittedOn === this.today() ? 'done' : 'idle');
-        this.view.set('game');
-        this.preloadAhead();
+        this.view.set('intro');
       } else {
         this.view.set(pool.candidates.length >= TOP_N ? 'intro' : 'too-few');
       }
@@ -210,6 +236,11 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   start(): void {
     const pool = this.pool();
     if (!pool || pool.candidates.length < TOP_N) return;
+    const current = this.game();
+    if (current && current.stage !== 'result' && typeof window !== 'undefined'
+        && !window.confirm('開始新的一局會清除上次的進度，確定嗎？')) {
+      return;
+    }
     const game = createGame({
       sessionId: this.session.newSessionId(),
       seed: this.session.newSeed(),
@@ -238,6 +269,25 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     this.groupPicks.set([]);
     if (this.groupTimer) clearTimeout(this.groupTimer);
     this.view.set(this.pool() ? 'intro' : 'loading');
+    this.scrollTop();
+  }
+
+  /** Picks up the saved game from the intro. */
+  resume(): void {
+    if (!this.game()) return;
+    this.view.set('game');
+    this.preloadAhead();
+    this.scrollTop();
+  }
+
+  /** Back to the intro without losing progress. */
+  backToIntro(): void {
+    this.groupPicks.set([]);
+    if (this.groupTimer) {
+      clearTimeout(this.groupTimer);
+      this.groupTimer = null;
+    }
+    this.view.set('intro');
     this.scrollTop();
   }
 

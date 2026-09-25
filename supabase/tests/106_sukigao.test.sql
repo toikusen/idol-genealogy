@@ -70,11 +70,12 @@ select t.id, g, s, date '2023-01-01', l, e, c, a
     ('graduated_then_concurrent', '00000000-0000-0000-0000-0000000000a3'::uuid, 'concurrent', null,             null, null, true)
   ) as v(label, g, s, l, e, c, a) on v.label = t.label;
 
--- ── Candidates ─────────────────────────────────────────────────────────────
+-- ── Candidates (migration 107: everyone with a photo) ──────────────────────
 do $$
 declare
   got text[];
-  want text[] := array['disbanding_later', 'graduated_then_concurrent', 'solo', 'trainee']
+  want text[] := array['disbanded_group', 'disbanding_later', 'graduated', 'graduated_then_concurrent',
+                       'hiatus', 'overseas', 'solo', 'support_over', 'trainee', 'unapproved', 'withdrawn']
     || array(select format('m%s', lpad(i::text, 2, '0')) from generate_series(1, 12) i);
 begin
   select array_agg(name order by name) into got from get_sukigao_candidates();
@@ -84,12 +85,21 @@ begin
   end if;
 
   if (select group_names from get_sukigao_candidates() where name = 'solo') <> '{}'::text[] then
-    raise exception 'candidates: solo should have no group names';
+    raise exception 'candidates: current solo should have no group names';
   end if;
   if (select group_names from get_sukigao_candidates() where name = 'graduated_then_concurrent') <> array['將解散團'] then
-    raise exception 'candidates: only the current group should be listed';
+    raise exception 'candidates: a current group wins over a past one';
   end if;
-  raise notice 'ok: candidate eligibility';
+  if (select group_names from get_sukigao_candidates() where name = 'graduated') <> array['現役團'] then
+    raise exception 'candidates: graduated members show their last group';
+  end if;
+  if (select group_names from get_sukigao_candidates() where name = 'disbanded_group') <> array['解散團'] then
+    raise exception 'candidates: disbanded-group members show that group';
+  end if;
+  if (select group_names from get_sukigao_candidates() where name = 'overseas') <> array['AKB'] then
+    raise exception 'candidates: overseas-only members show the external group';
+  end if;
+  raise notice 'ok: candidate pool = every member with a photo';
 end $$;
 
 -- ── Submit validation ──────────────────────────────────────────────────────
