@@ -211,12 +211,10 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   selectScope(scope: SukigaoScope): void {
     this.scope.set(scope);
-    this.session.savePrefs({ scope, size: this.sizeChoice() });
   }
 
   selectSize(size: number): void {
     this.sizeChoice.set(size);
-    this.session.savePrefs({ scope: this.scope(), size });
   }
 
   /** Fresh per visit; the preview only renders in the browser, so no hydration concern. */
@@ -268,11 +266,6 @@ export class SukigaoComponent implements OnInit, OnDestroy {
         if (this.destroyed) return;
       }
       this.faces.set(faces);
-      const prefs = this.session.loadPrefs();
-      if (prefs) {
-        this.scope.set(prefs.scope);
-        this.sizeChoice.set(prefs.size);
-      }
       this.pool.set(pool);
       // Every visit lands on the intro; a saved game is offered via resume().
       if (saved) {

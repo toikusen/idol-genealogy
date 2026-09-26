@@ -57,14 +57,6 @@ describe('SukigaoSessionService', () => {
     expect(localStorage.getItem('idolmaps:sukigao:v1')).toBeNull();
   });
 
-  it('round-trips intro prefs and ignores junk', () => {
-    expect(service.loadPrefs()).toBeNull();
-    service.savePrefs({ scope: 'all', size: 216 });
-    expect(service.loadPrefs()).toEqual({ scope: 'all', size: 216 });
-    localStorage.setItem('idolmaps:sukigao:prefs', '{"scope":"nope","size":-1}');
-    expect(service.loadPrefs()).toBeNull();
-  });
-
   it('clear() removes the game but keeps the browser id', () => {
     const id = service.getBrowserId();
     service.save(game());

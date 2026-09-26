@@ -90,14 +90,22 @@ describe('SukigaoComponent', () => {
     expect(analytics.trackEvent).toHaveBeenCalledWith('sukigao_start', { candidate_count: 108, scope: 'current' });
   });
 
-  it('includes retired members under 包含畢業 and remembers the choice', async () => {
+  it('includes retired members under 包含畢業', async () => {
     await setup(400);
     component.selectScope('all');
     component.selectSize(0);
     expect(component.selectedSize().count).toBe(400);
     component.start();
     expect(component.game()!.candidateIds.length).toBe(400);
-    expect(new SukigaoSessionService().loadPrefs()).toEqual({ scope: 'all', size: 0 });
+  });
+
+  it('always opens at 現役・全部, ignoring picks saved by older versions', async () => {
+    localStorage.setItem('idolmaps:sukigao:prefs', JSON.stringify({ scope: 'all', size: 54 }));
+    await setup(400);
+    expect(component.scope()).toBe('current');
+    expect(component.selectedSize().size).toBe(0);
+    expect(component.selectedSize().count).toBe(300);
+    expect(localStorage.getItem('idolmaps:sukigao:prefs')).toBeNull();
   });
 
   it('only offers sizes smaller than the scope, plus 全部', async () => {
