@@ -242,6 +242,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       '台灣地偶顏控9選｜選出最中你臉的9位偶像 - Idol Maps',
       '從台灣地下偶像中憑直覺選出最喜歡的9張臉，產生你的台灣地偶顏控 TOP9。',
       siteUrl('/sukigao'),
+      '/og-sukigao.png',
     );
     // Storage and the candidate pool are browser-only; SSR renders the intro shell.
     if (!this.isBrowser) return;

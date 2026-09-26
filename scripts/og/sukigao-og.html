@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- Source for public/og-sukigao.png (1200×630). Regenerate with:
+     node scripts/og/render-og.mjs -->
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: 'JF Openhuninn'; src: url('../../public/fonts/jf-openhuninn-2.1.woff2') format('woff2'); }
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1200px; height: 630px; overflow: hidden; font-family: 'JF Openhuninn', sans-serif;
+    background: linear-gradient(135deg, #fff3f8 0%, #fde4ef 55%, #efe6ff 100%); position: relative; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(10px); }
+  .b1 { width: 520px; height: 520px; left: -160px; top: -200px; background: radial-gradient(circle, rgba(236,127,168,.28), transparent 70%); }
+  .b2 { width: 600px; height: 600px; right: -200px; bottom: -260px; background: radial-gradient(circle, rgba(176,100,216,.22), transparent 70%); }
+  .left { position: absolute; left: 80px; top: 92px; width: 560px; }
+  .kicker { font-size: 40px; letter-spacing: .4em; color: #e879a0; }
+  .title { font-size: 132px; line-height: 1.05; letter-spacing: .06em; margin-top: 6px;
+    background: linear-gradient(135deg, #e2548a, #9b4fd1); -webkit-background-clip: text; color: transparent;
+    -webkit-text-stroke: 1px rgba(155,79,209,.15); }
+  .lead { font-size: 34px; color: #7a5a7a; margin-top: 22px; line-height: 1.55; }
+  .pill { display: inline-block; margin-top: 34px; padding: 16px 34px; border-radius: 999px; color: #fff; font-size: 30px;
+    background: linear-gradient(135deg, #ec7fa8, #b064d8); box-shadow: 0 10px 30px rgba(236,127,168,.35); letter-spacing: .04em; }
+  .grid { position: absolute; right: 86px; top: 70px; width: 470px; height: 490px; padding: 26px; border-radius: 36px;
+    background: rgba(255,255,255,.75); box-shadow: 0 20px 60px rgba(45,27,46,.12); display: grid;
+    grid-template-columns: repeat(3, 1fr); gap: 16px; transform: rotate(3deg); }
+  .c { position: relative; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 46px; color: rgba(255,255,255,.95); aspect-ratio: 1; align-self: center; }
+  .c::after { content: ''; position: absolute; inset: 22% 28% auto; height: 34%; border-radius: 50%; background: rgba(255,255,255,.45); }
+  .c::before { content: ''; position: absolute; left: 20%; right: 20%; bottom: 8%; height: 34%; border-radius: 50% 50% 40% 40%; background: rgba(255,255,255,.4); }
+  .medal { box-shadow: 0 0 0 8px var(--m), 0 8px 20px rgba(45,27,46,.2); }
+  .gold { --m: #f0c243; box-shadow: 0 0 0 10px #f0c243, 0 0 34px rgba(236,127,168,.6); }
+  .silver { --m: #c3cbd6; }
+  .bronze { --m: #d59257; }
+  .crown { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); font-size: 46px; z-index: 2; }
+  .n { position: absolute; top: -6px; left: -6px; width: 34px; height: 34px; border-radius: 50%; font-size: 20px;
+    display: flex; align-items: center; justify-content: center; background: rgba(45,27,46,.72); color: #fff; z-index: 2; }
+</style>
+</head>
+<body>
+  <div class="blob b1"></div><div class="blob b2"></div>
+  <div class="left">
+    <div class="kicker">台灣地偶</div>
+    <div class="title">顏控9選</div>
+    <div class="lead">只看臉，憑直覺。<br />選出最中你臉的 9 位偶像</div>
+    <div class="pill">idolmaps.com/sukigao</div>
+  </div>
+  <div class="grid">
+    <div class="c" style="background:linear-gradient(135deg,#a5e6f2,#6f8fe6)"><span class="n">4</span></div>
+    <div class="c" style="background:linear-gradient(135deg,#f7c1d6,#e27aa4)"><span class="n">5</span></div>
+    <div class="c" style="background:linear-gradient(135deg,#d8c2f7,#a47be6)"><span class="n">6</span></div>
+    <div class="c medal silver" style="background:linear-gradient(135deg,#bfeed9,#63c7a3)"><span class="n" style="background:#c3cbd6;color:#3d4450">2</span></div>
+    <div class="c gold" style="background:linear-gradient(135deg,#ffd3e2,#ec7fa8)"><span class="crown">👑</span><span class="n" style="background:#f0c243;color:#4a2c0c">1</span></div>
+    <div class="c medal bronze" style="background:linear-gradient(135deg,#ffe0b8,#f0a060)"><span class="n" style="background:#d59257;color:#4a2c0c">3</span></div>
+    <div class="c" style="background:linear-gradient(135deg,#fde2a6,#eab553)"><span class="n">7</span></div>
+    <div class="c" style="background:linear-gradient(135deg,#c7d6ff,#7d93ea)"><span class="n">8</span></div>
+    <div class="c" style="background:linear-gradient(135deg,#f9c7c7,#e98585)"><span class="n">9</span></div>
+  </div>
+</body>
+</html>
