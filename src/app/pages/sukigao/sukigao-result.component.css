@@ -290,8 +290,17 @@
   color: var(--idol-pink);
 }
 
-.skr-taste--unique .skr-taste__label { color: #9b6bd6; }
-.skr-taste--balanced .skr-taste__label { color: #d0679a; }
+.skr-taste--unique .skr-taste__label,
+.skr-taste--treasure .skr-taste__label { color: #9b6bd6; }
+.skr-taste--balanced .skr-taste__label,
+.skr-taste--group-tour .skr-taste__label { color: #d0679a; }
+.skr-taste--ceiling .skr-taste__label,
+.skr-taste--same-first .skr-taste__label { color: #c98a12; }
+.skr-taste--nostalgic .skr-taste__label { color: #a8805e; }
+
+.skr-taste__emoji {
+  margin-right: 0.35em;
+}
 
 .skr-taste__desc {
   font-size: 0.8rem;

@@ -31,7 +31,7 @@
   @if (stats?.taste; as taste) {
     <div class="skr-taste" [class]="'skr-taste skr-taste--' + taste.key">
       <span class="skr-taste__eyebrow">你的顏控類型</span>
-      <strong class="skr-taste__label">{{ taste.label }}</strong>
+      <strong class="skr-taste__label"><span class="skr-taste__emoji" aria-hidden="true">{{ taste.emoji }}</span>{{ taste.label }}</strong>
       <span class="skr-taste__desc">{{ taste.desc }}</span>
     </div>
   }

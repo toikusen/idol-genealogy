@@ -3,13 +3,29 @@ import { SukigaoCandidate, SukigaoStats } from '../../models';
 /** Percentages show as soon as there is any counted result. */
 export const MIN_RESULTS_FOR_PERCENT = 1;
 
-export type SukigaoTasteKey = 'mainstream' | 'balanced' | 'unique';
+export type SukigaoTasteKey =
+  | 'one-group'
+  | 'nostalgic'
+  | 'ceiling'
+  | 'treasure'
+  | 'same-first'
+  | 'group-tour'
+  | 'mainstream'
+  | 'balanced'
+  | 'unique';
 
 export interface SukigaoTaste {
   key: SukigaoTasteKey;
+  emoji: string;
   label: string;
   desc: string;
 }
+
+/**
+ * Types that compare against everyone's picks (天花板, 挖寶, 冠軍同好) need
+ * enough results that the player's own game doesn't make up the "consensus".
+ */
+export const MIN_RESULTS_FOR_CROWD_TYPES = 30;
 
 export interface SukigaoFaceShare {
   face: SukigaoCandidate;
@@ -34,10 +50,63 @@ export interface SukigaoResultStats {
 }
 
 const TASTES: Record<SukigaoTasteKey, SukigaoTaste> = {
-  mainstream: { key: 'mainstream', label: '主流顏控', desc: '你喜歡的臉，也是大家的心頭好' },
-  balanced: { key: 'balanced', label: '平衡顏控', desc: '有大家公認的神顏，也有你的私心推' },
-  unique: { key: 'unique', label: '獨特顏控', desc: '你喜歡的臉很少人發現，眼光獨到' },
+  'one-group': { key: 'one-group', emoji: '💘', label: '一團專情', desc: '同一團就佔了你 TOP9 好幾席，這團根本是你的菜單' },
+  nostalgic: { key: 'nostalgic', emoji: '📼', label: '考古顏控', desc: '畢業的她們，依然是你心中的神顏' },
+  ceiling: { key: 'ceiling', emoji: '👑', label: '顏控天花板', desc: '你選的幾乎都是排行前段班，你的眼光就是標準答案' },
+  treasure: { key: 'treasure', emoji: '💎', label: '神秘挖寶人', desc: '好幾位是很少人選的臉，你總能發現還沒被看見的美' },
+  'same-first': { key: 'same-first', emoji: '🥇', label: '冠軍同好', desc: '你的第一名，也是最多人的第一名' },
+  'group-tour': { key: 'group-tour', emoji: '🗺️', label: '百團巡禮', desc: '9 位幾乎來自不同團，每一團都有你的菜' },
+  mainstream: { key: 'mainstream', emoji: '🌟', label: '主流顏控', desc: '你喜歡的臉，也是大家的心頭好' },
+  balanced: { key: 'balanced', emoji: '⚖️', label: '平衡顏控', desc: '有大家公認的神顏，也有你的私心推' },
+  unique: { key: 'unique', emoji: '🦄', label: '獨特顏控', desc: '你喜歡的臉很少人發現，眼光獨到' },
 };
+
+/** Every type, in the order they are checked (for tests and docs). */
+export const TASTE_KEYS = Object.keys(TASTES) as SukigaoTasteKey[];
+
+/**
+ * The first type that fits wins, most specific first: the TOP9 itself
+ * (one group / graduates), then how it lines up with everyone else, then
+ * group spread, and finally the mainstream → unique scale every result fits.
+ */
+export function pickTaste(
+  stats: SukigaoStats,
+  faces: readonly SukigaoCandidate[],
+  picks: readonly number[],
+  poolSize: number,
+): SukigaoTaste | null {
+  if (faces.length === 0 || poolSize <= 0) return null;
+
+  // Solo members count as a group of their own.
+  const groupOf = (f: SukigaoCandidate) => f.groupNames[0] ?? `solo:${f.id}`;
+  const perGroup = new Map<string, number>();
+  faces.forEach(f => perGroup.set(groupOf(f), (perGroup.get(groupOf(f)) ?? 0) + 1));
+  const biggestGroup = Math.max(...perGroup.values());
+
+  if (biggestGroup >= 4) return TASTES['one-group'];
+  if (faces.filter(f => !f.isCurrent).length >= 3) return TASTES.nostalgic;
+
+  // If everyone picked at random, each face would be in 9 / poolSize of results.
+  const baseline = (9 / poolSize) * 100;
+  if (stats.total >= MIN_RESULTS_FOR_CROWD_TYPES) {
+    const hot = new Set(
+      [...stats.counts.entries()]
+        .filter(([, c]) => c.top9 > 0)
+        .sort((a, b) => b[1].top9 - a[1].top9)
+        .slice(0, 10)
+        .map(([id]) => id),
+    );
+    if (faces.filter(f => hot.has(f.id)).length >= 6) return TASTES.ceiling;
+    if (picks.filter(p => p < baseline * 0.5).length >= 4) return TASTES.treasure;
+    if (stats.topFirstId && faces[0].id === stats.topFirstId) return TASTES['same-first'];
+  }
+
+  if (perGroup.size >= 8) return TASTES['group-tour'];
+
+  const avg = picks.reduce((a, b) => a + b, 0) / picks.length;
+  const ratio = avg / baseline;
+  return TASTES[ratio >= 2.5 ? 'mainstream' : ratio >= 1.3 ? 'balanced' : 'unique'];
+}
 
 /**
  * `poolSize` is how many faces the game can show. If everyone picked at
@@ -64,12 +133,7 @@ export function buildResultStats(
   const top = hasPercent ? share(stats.topTop9Id, 'top9') : null;
   const topFirst = hasPercent && stats.topFirstId !== stats.topTop9Id ? share(stats.topFirstId, 'first') : null;
 
-  let taste: SukigaoTaste | null = null;
-  if (hasPercent && picks.length > 0 && poolSize > 0) {
-    const avg = picks.reduce((a, b) => a + b, 0) / picks.length;
-    const ratio = avg / ((9 / poolSize) * 100);
-    taste = TASTES[ratio >= 2.5 ? 'mainstream' : ratio >= 1.3 ? 'balanced' : 'unique'];
-  }
+  const taste = hasPercent ? pickTaste(stats, resultFaces, picks, poolSize) : null;
 
   return { total, plays: stats.plays, players: stats.players, hasPercent, top, topFirst, picks, taste };
 }
