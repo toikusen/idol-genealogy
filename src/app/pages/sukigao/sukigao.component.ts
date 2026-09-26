@@ -60,19 +60,19 @@ const FILL_PAGE_SIZE = 9;
 
 /** Pool sizes on the intro: multiples of 9 so every batch is a full 3×3. 0 = everyone. */
 const SIZE_OPTIONS = [
-  { size: 54, icon: '⚡', label: '快速' },
-  { size: 108, icon: '★', label: '標準' },
-  { size: 216, icon: '🔥', label: '認真' },
-  { size: 0, icon: '💯', label: '全部' },
+  { size: 54, icon: 'zap' },
+  { size: 108, icon: 'clock' },
+  { size: 0, icon: 'users' },
 ] as const;
-const DEFAULT_SIZE = 108;
+/** Everyone in the scope (e.g. all ~270 current members). */
+const DEFAULT_SIZE = 0;
+
+export type SukigaoSizeIcon = (typeof SIZE_OPTIONS)[number]['icon'];
 
 export interface SukigaoSizeOption {
   size: number;
-  icon: string;
-  label: string;
+  icon: SukigaoSizeIcon;
   count: number;
-  batches: number;
   minutes: number;
 }
 const IMMERSIVE_CLASS = 'sukigao-immersive';
@@ -198,7 +198,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
         const count = o.size === 0 ? total : o.size;
         const batches = Math.ceil(count / BATCH_SIZE);
         // ~10s per 3×3 batch plus ~1.5 min of elimination / final.
-        return { ...o, count, batches, minutes: Math.max(1, Math.round((batches * 10 + 90) / 60)) };
+        return { ...o, count, minutes: Math.max(1, Math.round((batches * 10 + 90) / 60)) };
       });
   });
 

@@ -216,26 +216,23 @@
 
 .sk-sizes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
   gap: 8px;
 }
 
 .sk-size {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-areas:
-    "icon label"
-    "icon count"
-    "meta meta";
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  column-gap: 8px;
-  padding: 10px 12px;
+  gap: 4px;
+  padding: 12px 6px 10px;
   border: 2px solid var(--border-subtle);
   border-radius: 14px;
   background: var(--bg-card);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
@@ -245,29 +242,37 @@
   background: var(--bg-pink-tint-hover);
 }
 
+/* Same line-icon treatment as the favourites page. */
 .sk-size__icon {
-  grid-area: icon;
-  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
-.sk-size__label {
-  grid-area: label;
-  font-size: 0.9rem;
-  font-weight: 700;
+.sk-size--on .sk-size__icon {
+  color: var(--text-link);
+  opacity: 1;
 }
 
 .sk-size__count {
-  grid-area: count;
-  font-size: 0.8rem;
-  color: var(--text-link);
+  font-size: 0.95rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sk-size--on .sk-size__count {
+  color: var(--text-link);
 }
 
 .sk-size__meta {
-  grid-area: meta;
-  margin-top: 4px;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   color: var(--text-faint-60);
+  white-space: nowrap;
 }
 
 .sk-intro__hint {

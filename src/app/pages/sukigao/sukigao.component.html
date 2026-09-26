@@ -79,17 +79,27 @@
             </div>
 
             <div class="sk-setup__group">
-              <p class="sk-setup__label" id="sk-size-label">份量</p>
+              <p class="sk-setup__label" id="sk-size-label">人數</p>
               <div class="sk-sizes" role="radiogroup" aria-labelledby="sk-size-label">
                 @for (o of sizeOptions(); track o.size) {
                   <button type="button" role="radio" class="sk-size"
                           [class.sk-size--on]="selectedSize().size === o.size"
                           [attr.aria-checked]="selectedSize().size === o.size"
                           (click)="selectSize(o.size)">
-                    <span class="sk-size__icon" aria-hidden="true">{{ o.icon }}</span>
-                    <span class="sk-size__label">{{ o.label }}</span>
-                    <span class="sk-size__count">{{ o.count }} 位</span>
-                    <span class="sk-size__meta">{{ o.batches }} 組・約 {{ o.minutes }} 分鐘</span>
+                    <span class="sk-size__icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        @switch (o.icon) {
+                          @case ('zap') { <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/> }
+                          @case ('clock') { <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/> }
+                          @case ('users') {
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                          }
+                        }
+                      </svg>
+                    </span>
+                    <span class="sk-size__count">{{ o.size === 0 ? '全部 ' : '' }}{{ o.count }} 位</span>
+                    <span class="sk-size__meta">約 {{ o.minutes }} 分鐘</span>
                   </button>
                 }
               </div>

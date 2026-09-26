@@ -77,7 +77,10 @@ describe('SukigaoComponent', () => {
   it('samples the chosen size from the chosen scope', async () => {
     await setup(400);
     expect(component.scope()).toBe('current');
-    expect(component.selectedSize().count).toBe(108);
+    // Default: everyone in the scope.
+    expect(component.selectedSize().size).toBe(0);
+    expect(component.selectedSize().count).toBe(300);
+    component.selectSize(108);
     component.start();
     const g = component.game()!;
     expect(g.candidateIds.length).toBe(108);
@@ -100,8 +103,10 @@ describe('SukigaoComponent', () => {
   it('only offers sizes smaller than the scope, plus 全部', async () => {
     await setup(120); // 90 current
     expect(component.sizeOptions().map(o => o.size)).toEqual([54, 0]);
-    component.selectSize(216);
+    component.selectSize(108);
     expect(component.selectedSize().size).toBe(0);
+    component.selectScope('all'); // 120
+    expect(component.sizeOptions().map(o => o.size)).toEqual([54, 108, 0]);
   });
 
   it('renders one 3×3 batch of 9 cards with no pick cap', async () => {
