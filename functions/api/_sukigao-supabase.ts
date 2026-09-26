@@ -7,6 +7,7 @@
 export const DEFAULT_SUPABASE_URL = 'https://ziiagdrrytyrmzoeegjk.supabase.co';
 const DEFAULT_SUPABASE_KEY = 'sb_publishable_PtKb4LIJeJN3cECUJllW7w_UFRVTbTv';
 const UPSTREAM_TIMEOUT_MS = 8000;
+const STALE_SECONDS = 24 * 60 * 60;
 
 export interface SukigaoEnv {
   SUPABASE_URL?: string;
@@ -26,8 +27,13 @@ export async function cachedRpc(
 ): Promise<Response> {
   const cache = caches.default;
   const key = new Request(cacheKey, { method: 'GET' });
+  // Long-lived copy of the last good answer, served when Supabase is slow or
+  // down — otherwise every visitor would fall back to calling the database
+  // directly at exactly the moment it is struggling.
+  const staleKey = new Request(`${cacheKey}${cacheKey.includes('?') ? '&' : '?'}__stale=1`, { method: 'GET' });
   const hit = await cache.match(key);
   if (hit) return hit;
+  const serveStale = async (fallback: Response): Promise<Response> => (await cache.match(staleKey)) ?? fallback;
 
   const base = ctx.env.SUPABASE_URL ?? DEFAULT_SUPABASE_URL;
   const apiKey = ctx.env.SUPABASE_ANON_KEY ?? DEFAULT_SUPABASE_KEY;
@@ -44,18 +50,25 @@ export async function cachedRpc(
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
   } catch {
-    // The client falls back to calling Supabase directly on any non-200.
-    return new Response('Upstream unavailable', { status: 502 });
+    // No stale copy either: the client falls back to Supabase directly.
+    return serveStale(new Response('Upstream unavailable', { status: 502 }));
   }
-  if (!upstream.ok) return new Response('Upstream error', { status: 502 });
+  if (!upstream.ok) return serveStale(new Response('Upstream error', { status: 502 }));
 
-  const response = new Response(await upstream.text(), {
+  const body = await upstream.text();
+  const response = new Response(body, {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       // Browsers keep it briefly; the edge cache does the heavy lifting.
       'Cache-Control': `public, max-age=30, s-maxage=${ttlSeconds}`,
     },
   });
-  ctx.waitUntil(cache.put(key, response.clone()));
+  const stale = new Response(body, {
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': `public, max-age=30, s-maxage=${STALE_SECONDS}`,
+    },
+  });
+  ctx.waitUntil(Promise.all([cache.put(key, response.clone()), cache.put(staleKey, stale)]));
   return response;
 }
