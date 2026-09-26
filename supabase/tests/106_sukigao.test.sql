@@ -264,6 +264,68 @@ begin
   raise notice 'ok: per-IP daily cap (300) with hashed IPs';
 end $$;
 
+-- ── 111: replays are free, IPv6 per /64, no x-forwarded-for, photo required ──
+do $$
+declare
+  i int;
+  blocked boolean := false;
+  rows_before int;
+  bad uuid[];
+begin
+  -- One browser replaying all day never uses up its IP's cap.
+  perform set_config('request.headers', '{"cf-connecting-ip":"192.0.2.44"}', true);
+  for i in 1..310 loop
+    perform submit_sukigao_result('abababab-4444-4444-8444-444444444444', pg_temp.ids(9), null);
+  end loop;
+  if (select submissions from sukigao_ip_daily
+       where ip_hash = encode(sha256(convert_to('idolmaps:sukigao:ip:192.0.2.44', 'UTF8')), 'hex')) <> 1 then
+    raise exception 'same-day replays should not count against the IP cap';
+  end if;
+
+  -- Rotating addresses inside one IPv6 /64 shares a single cap.
+  for i in 1..300 loop
+    perform set_config('request.headers', format('{"cf-connecting-ip":"2001:db8:1:2::%s"}', to_hex(i)), true);
+    perform submit_sukigao_result(
+      format('%s-5555-4555-8555-555555555555', lpad(to_hex(i), 8, '0')), pg_temp.ids(9), null);
+  end loop;
+  perform set_config('request.headers', '{"cf-connecting-ip":"2001:db8:1:2:ffff:ffff:ffff:ffff"}', true);
+  begin
+    perform submit_sukigao_result('ffffffff-5555-4555-8555-555555555555', pg_temp.ids(9), null);
+  exception when others then
+    blocked := sqlerrm like '%too many submissions today%';
+  end;
+  if not blocked then raise exception 'an IPv6 /64 should share one cap'; end if;
+  -- …and the rejected submission was rolled back with it.
+  if exists (select 1 from sukigao_submissions
+              where browser_hash = encode(sha256(convert_to('idolmaps:sukigao:ffffffff-5555-4555-8555-555555555555', 'UTF8')), 'hex')) then
+    raise exception 'a capped submission must not be stored';
+  end if;
+
+  -- A malformed header is still counted, never fatal.
+  perform set_config('request.headers', '{"cf-connecting-ip":"not-an-ip"}', true);
+  perform submit_sukigao_result('cdcdcdcd-4444-4444-8444-444444444444', pg_temp.ids(9), null);
+
+  -- x-forwarded-for alone is ignored (its first entry is client-supplied).
+  select count(*) into rows_before from sukigao_ip_daily;
+  perform set_config('request.headers', '{"x-forwarded-for":"6.6.6.6, 1.1.1.1"}', true);
+  perform submit_sukigao_result('efefefef-4444-4444-8444-444444444444', pg_temp.ids(9), null);
+  if (select count(*) from sukigao_ip_daily) <> rows_before then
+    raise exception 'x-forwarded-for must not key the IP cap';
+  end if;
+  perform set_config('request.headers', '', true);
+
+  -- Members without a photo can't be voted in.
+  bad := pg_temp.ids(8) || (select id from t_ids where label = 'no_photo');
+  blocked := false;
+  begin
+    perform submit_sukigao_result('12121212-4444-4444-8444-444444444444', bad, null);
+  exception when others then
+    blocked := sqlerrm like '%unknown member id%';
+  end;
+  if not blocked then raise exception 'a member without a photo should be rejected'; end if;
+  raise notice 'ok: 111 submit hardening';
+end $$;
+
 -- ── Direct access is blocked for anon / authenticated ──────────────────────
 set local role anon;
 
