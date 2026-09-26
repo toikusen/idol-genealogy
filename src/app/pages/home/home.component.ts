@@ -21,8 +21,8 @@ import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 import type { HomePageData } from '../../core/page-data.resolvers';
 
-/** Below this the count reads as "nobody plays this" rather than social proof. */
-const SUKIGAO_MIN_PLAYS_SHOWN = 100;
+/** The play count shows once anyone has played. */
+const SUKIGAO_MIN_PLAYS_SHOWN = 1;
 import {
   isPublicCompanyRecord,
   isPublicGroupRecord,

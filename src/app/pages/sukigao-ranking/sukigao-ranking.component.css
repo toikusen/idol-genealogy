@@ -98,10 +98,10 @@
 
 .skrank-row {
   display: grid;
-  grid-template-columns: 2rem 54px minmax(0, 1fr) auto;
+  grid-template-columns: 1.8rem 44px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.75rem;
-  padding: 8px 12px 8px 8px;
+  gap: 0.65rem;
+  padding: 6px 12px 6px 6px;
   border-radius: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -130,7 +130,7 @@ a.skrank-row:hover {
 
 .skrank-photo {
   display: block;
-  width: 54px;
+  width: 44px;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   overflow: hidden;
@@ -165,13 +165,14 @@ a.skrank-row:hover {
 
 .skrank-group {
   font-size: 0.72rem;
+  font-weight: 400;
   color: var(--text-faint-60);
 }
 
 .skrank-count {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--idol-pink);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -248,4 +249,191 @@ a.skrank-row:hover {
   .skrank-title {
     font-size: 1.9rem;
   }
+}
+
+/* ── Play count ── */
+.skrank-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.skrank-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 0.6rem 0.4rem;
+  border-radius: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+}
+
+.skrank-stat strong {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--idol-pink);
+}
+
+.skrank-stat span {
+  font-size: 0.74rem;
+  color: var(--text-faint-70);
+}
+
+.skrank-caption {
+  margin: 0 0 0.6rem;
+  text-align: center;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  color: var(--text-faint-60);
+}
+
+/* ── Podium: 2 · 1 · 3 ── */
+.skrank-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  margin: 0 0 1rem;
+  padding: 16px 10px 12px;
+  list-style: none;
+  border-radius: 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+
+.skrank-pod--1 { order: 2; }
+.skrank-pod--2 { order: 1; }
+.skrank-pod--3 { order: 3; }
+
+.skrank-pod { --medal-from: #ffe07a; --medal-to: #e2a31c; --medal-ink: #4a2c0c; min-width: 0; }
+.skrank-pod--place2 { --medal-from: #f1f4f8; --medal-to: #9aa6b4; --medal-ink: #3d4450; }
+.skrank-pod--place3 { --medal-from: #f3c29a; --medal-to: #b8692f; --medal-ink: #4a2c0c; }
+
+.skrank-pod__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.skrank-pod__photo {
+  position: relative;
+  display: block;
+  width: 78%;
+  aspect-ratio: 1 / 1;
+}
+
+.skrank-pod--1 .skrank-pod__photo {
+  width: 100%;
+}
+
+.skrank-pod__photo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--medal-from), var(--medal-to));
+  box-shadow: 0 4px 14px rgba(45, 27, 46, 0.18);
+}
+
+.skrank-pod__circle {
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--skel-from), var(--skel-to));
+}
+
+.skrank-pod__circle img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.05);
+}
+
+.skrank-pod__crown {
+  position: absolute;
+  left: 50%;
+  top: -14%;
+  transform: translateX(-50%);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.skrank-pod__place {
+  position: absolute;
+  left: 50%;
+  bottom: -8%;
+  transform: translateX(-50%);
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--medal-from), var(--medal-to));
+  color: var(--medal-ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(45, 27, 46, 0.2);
+}
+
+.skrank-pod__name,
+.skrank-pod__group {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.skrank-pod__name {
+  margin-top: 12px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.skrank-pod__group {
+  font-size: 0.66rem;
+  color: var(--text-faint-60);
+}
+
+.skrank-pod__value {
+  margin-top: 2px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--idol-pink);
+}
+
+.skrank-pod--1 .skrank-pod__value {
+  font-size: 1.35rem;
+}
+
+/* ── Rows 4+ ── */
+.skrank-bar {
+  display: block;
+  height: 4px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: var(--mauve-05);
+  overflow: hidden;
+}
+
+.skrank-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f08fb4, #b07ae0);
+}
+
+.skrank-more {
+  display: flex;
+  width: 100%;
+  margin-top: 0.75rem;
 }

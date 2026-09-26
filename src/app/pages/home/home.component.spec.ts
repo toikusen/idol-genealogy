@@ -118,8 +118,8 @@ describe('HomeComponent', () => {
       expect(card.textContent).toContain('已玩 12,873 次');
     });
 
-    it('hides a small play count', async () => {
-      sukigaoPlays = 12;
+    it('hides the play count until someone has played', async () => {
+      sukigaoPlays = 0;
       await setup();
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();

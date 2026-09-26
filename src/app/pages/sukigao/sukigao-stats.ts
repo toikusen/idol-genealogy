@@ -1,10 +1,7 @@
 import { SukigaoCandidate, SukigaoStats } from '../../models';
 
-/**
- * Below this many counted results the percentages swing too much to mean
- * anything, so the result page only shows the play count.
- */
-export const MIN_RESULTS_FOR_PERCENT = 20;
+/** Percentages show as soon as there is any counted result. */
+export const MIN_RESULTS_FOR_PERCENT = 1;
 
 export type SukigaoTasteKey = 'mainstream' | 'balanced' | 'unique';
 

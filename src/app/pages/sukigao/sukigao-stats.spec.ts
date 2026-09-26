@@ -33,12 +33,12 @@ describe('buildResultStats', () => {
     expect(s.topFirst).toBeNull();
   });
 
-  it('only shows the count while there are too few results', () => {
-    const s = buildResultStats(stats(5, { star: [5, 5] }, 'star', 'star'), faces, lookup, 300);
+  it('shows no percentages before the first counted result', () => {
+    const s = buildResultStats(stats(0, {}, null, null), faces, lookup, 300);
     expect(s.hasPercent).toBeFalse();
     expect(s.top).toBeNull();
     expect(s.taste).toBeNull();
-    expect(s.total).toBe(5);
+    expect(s.total).toBe(0);
   });
 
   it('labels taste against the random-pick baseline (9 / pool)', () => {

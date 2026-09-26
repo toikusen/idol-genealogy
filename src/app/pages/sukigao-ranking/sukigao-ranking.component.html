@@ -10,6 +10,13 @@
     <p class="skrank-hint">點成員可前往個人頁面；照片或資料有誤，歡迎直接提案修正</p>
   </header>
 
+  @if (stats(); as st) {
+    <div class="skrank-stats">
+      <p class="skrank-stat"><strong>{{ st.total | number }}</strong><span>次顏控9選</span></p>
+      <p class="skrank-stat"><strong>{{ st.players | number }}</strong><span>位玩家參與</span></p>
+    </div>
+  }
+
   <div class="skrank-tabs" role="tablist" aria-label="排行類型">
     @for (tab of tabs; track tab.mode; let i = $index) {
       <button
@@ -53,28 +60,59 @@
             <a routerLink="/sukigao" class="sk-btn sk-btn--primary">成為第一個送出的人</a>
           </div>
         } @else {
-          <ol class="skrank-list">
-            @for (entry of entries(); track entry.member_id; let i = $index) {
-              <li>
-                <a [routerLink]="'/member/' + entry.member_id" class="skrank-row">
-                  <span class="skrank-rank" [class.skrank-rank--top]="place(i) <= 3">{{ place(i) }}</span>
-                  <span class="skrank-photo">
-                    @if (entry.photo_url) {
-                      <img [src]="entry.photo_url | supabaseImg: 160 : 75" [alt]="entry.name" width="54" height="54" loading="lazy" decoding="async" />
-                    }
+          <p class="skrank-caption">
+            {{ mode() === 'first' ? '選她為第 1 名的人' : '把她選進 TOP9 的人' }}{{ stats() ? '比例' : '次數' }}
+          </p>
+
+          <ol class="skrank-podium">
+            @for (entry of podium(); track entry.member_id; let i = $index) {
+              <li class="skrank-pod" [class]="'skrank-pod skrank-pod--' + (i + 1) + ' skrank-pod--place' + place(i)">
+                <a [routerLink]="'/member/' + entry.member_id" class="skrank-pod__link">
+                  <span class="skrank-pod__photo">
+                    <span class="skrank-pod__circle">
+                      @if (entry.photo_url) {
+                        <img [src]="entry.photo_url | supabaseImg: (i === 0 ? 320 : 240) : 75" [alt]="entry.name" width="120" height="120" decoding="async" />
+                      }
+                    </span>
+                    @if (place(i) === 1) { <span class="skrank-pod__crown" aria-hidden="true">👑</span> }
+                    <span class="skrank-pod__place">{{ place(i) }}</span>
                   </span>
-                  <span class="skrank-info">
-                    <span class="skrank-name">{{ entry.name }}</span>
-                    @if (entry.group_name) {
-                      <span class="skrank-group">{{ entry.group_name }}</span>
-                    }
-                  </span>
-                  <span class="skrank-count">{{ count(entry) | number }} <small>次</small></span>
+                  <span class="skrank-pod__name">{{ entry.name }}</span>
+                  @if (entry.group_name) {
+                    <span class="skrank-pod__group">{{ entry.group_name }}</span>
+                  }
+                  <span class="skrank-pod__value">{{ value(entry) }}</span>
                 </a>
               </li>
             }
           </ol>
-          @if (entries().length >= limit) {
+
+          @if (rest().length > 0) {
+            <ol class="skrank-list" start="4">
+              @for (entry of rest(); track entry.member_id; let i = $index) {
+                <li>
+                  <a [routerLink]="'/member/' + entry.member_id" class="skrank-row">
+                    <span class="skrank-rank">{{ place(i + 3) }}</span>
+                    <span class="skrank-photo">
+                      @if (entry.photo_url) {
+                        <img [src]="entry.photo_url | supabaseImg: 120 : 75" [alt]="entry.name" width="44" height="44" loading="lazy" decoding="async" />
+                      }
+                    </span>
+                    <span class="skrank-info">
+                      <span class="skrank-name">{{ entry.name }}@if (entry.group_name) {<span class="skrank-group"> · {{ entry.group_name }}</span>}</span>
+                      <span class="skrank-bar" aria-hidden="true"><span [style.width.%]="bar(entry)"></span></span>
+                    </span>
+                    <span class="skrank-count">{{ value(entry) }}</span>
+                  </a>
+                </li>
+              }
+            </ol>
+          }
+          @if (moreCount() > 0) {
+            <button type="button" class="sk-btn skrank-more" (click)="showMore()">
+              看更多（第 {{ shown() + 1 }}–{{ shown() + moreCount() }} 名）
+            </button>
+          } @else if (entries().length >= limit) {
             <p class="skrank-limit">僅顯示前 {{ limit }} 名</p>
           }
         }

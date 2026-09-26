@@ -1,14 +1,19 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { DecimalPipe, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../core/seo.service';
 import { siteUrl } from '../../core/public-url.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SUKIGAO_RANKING_LIMIT, SukigaoService } from '../../core/sukigao.service';
-import { SukigaoRankingEntry, SukigaoRankingMode } from '../../models';
+import { SukigaoRankingEntry, SukigaoRankingMode, SukigaoStats } from '../../models';
+import { formatPct } from '../sukigao/sukigao-stats';
 import { SukigaoEditCtaComponent } from '../sukigao/sukigao-edit-cta.component';
 
 type LoadState = 'loading' | 'ready' | 'error';
+
+/** Places 4+ start with this many rows; 看更多 reveals MORE_STEP at a time. */
+const FIRST_PAGE = 10;
+const MORE_STEP = 20;
 
 @Component({
   selector: 'app-sukigao-ranking',
@@ -32,6 +37,13 @@ export class SukigaoRankingComponent implements OnInit, OnDestroy {
   readonly mode = signal<SukigaoRankingMode>('top9');
   readonly state = signal<LoadState>('loading');
   readonly entries = signal<SukigaoRankingEntry[]>([]);
+  /** Play count / players, and the denominator for percentages. Null: show raw counts. */
+  readonly stats = signal<SukigaoStats | null>(null);
+  readonly shown = signal(FIRST_PAGE);
+
+  readonly podium = computed(() => this.entries().slice(0, 3));
+  readonly rest = computed(() => this.entries().slice(3, this.shown()));
+  readonly moreCount = computed(() => Math.min(MORE_STEP, this.entries().length - this.shown()));
 
   private destroyed = false;
   private requestId = 0;
@@ -44,7 +56,10 @@ export class SukigaoRankingComponent implements OnInit, OnDestroy {
       '/og-sukigao.png',
     );
     // Live aggregate — fetched in the browser only, never baked into prerender.
-    if (this.isBrowser) void this.load();
+    if (this.isBrowser) {
+      void this.load();
+      void this.loadStats();
+    }
   }
 
   ngOnDestroy(): void {
@@ -54,6 +69,7 @@ export class SukigaoRankingComponent implements OnInit, OnDestroy {
   selectTab(mode: SukigaoRankingMode): void {
     if (mode === this.mode()) return;
     this.mode.set(mode);
+    this.shown.set(FIRST_PAGE);
     void this.load();
   }
 
@@ -78,6 +94,33 @@ export class SukigaoRankingComponent implements OnInit, OnDestroy {
       if (this.destroyed || id !== this.requestId) return;
       this.state.set('error');
     }
+  }
+
+  private async loadStats(): Promise<void> {
+    try {
+      const stats = await this.sukigao.getStats();
+      if (!this.destroyed && stats.total > 0) this.stats.set(stats);
+    } catch {
+      // Percentages fall back to raw counts.
+    }
+  }
+
+  showMore(): void {
+    this.shown.update(n => n + MORE_STEP);
+  }
+
+  /** "32%" of all results, or "123 次" when the total isn't available. */
+  value(entry: SukigaoRankingEntry): string {
+    const total = this.stats()?.total ?? 0;
+    const n = this.count(entry);
+    return total > 0 ? formatPct((n / total) * 100) : `${n.toLocaleString('en-US')} 次`;
+  }
+
+  /** Bar length relative to #1, so the leader always fills the track. */
+  bar(entry: SukigaoRankingEntry): number {
+    const top = this.entries()[0];
+    const max = top ? this.count(top) : 0;
+    return max > 0 ? Math.max(4, Math.round((this.count(entry) / max) * 100)) : 0;
   }
 
   count(entry: SukigaoRankingEntry): number {

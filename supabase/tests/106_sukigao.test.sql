@@ -377,6 +377,16 @@ begin
   if jsonb_typeof(stats -> 'members') <> 'array' then
     raise exception 'members should be an array';
   end if;
+  -- Every counted result has exactly one #1 and nine TOP 9 picks.
+  if (select sum((e ->> 'first')::bigint) from jsonb_array_elements(stats -> 'members') e) <> after_total then
+    raise exception 'first-place counts should add up to the number of results';
+  end if;
+  if (select sum((e ->> 'top9')::bigint) from jsonb_array_elements(stats -> 'members') e) <> after_total * 9 then
+    raise exception 'TOP 9 counts should add up to 9 × results';
+  end if;
+  if (select sum(first_place_count) from get_sukigao_ranking('first', 100)) <> after_total then
+    raise exception 'the first-place ranking should add up to the number of results';
+  end if;
   raise notice 'ok: 113 counting cap + stats';
 end $$;
 
