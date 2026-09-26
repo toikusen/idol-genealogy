@@ -11,6 +11,7 @@ import { GoogleCalendarService, RelatedGroupRef, ScheduleEvent, ScheduleResult }
 import { addDays, taipeiDateParts, taipeiDayKey, taipeiTime } from '../../core/taipei-date.utils';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
+import { SukigaoService } from '../../core/sukigao.service';
 import { Member, Group, Company, MemberRecentHeatEntry, GroupRecentHeatEntry, Venue, VenueCalendarEvent, VenueRegionFilter } from '../../models';
 import { ProposalPanelComponent } from '../../shared/proposal-panel/proposal-panel.component';
 import { SafeUrlPipe } from '../../shared/safe-url.pipe';
@@ -19,6 +20,9 @@ import { VenueMapComponent } from '../../shared/venue-map/venue-map.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 import type { HomePageData } from '../../core/page-data.resolvers';
+
+/** Below this the count reads as "nobody plays this" rather than social proof. */
+const SUKIGAO_MIN_PLAYS_SHOWN = 100;
 import {
   isPublicCompanyRecord,
   isPublicGroupRecord,
@@ -73,12 +77,17 @@ export class HomeComponent implements OnInit, OnDestroy {
   allCompanies: Company[] = [];
   allSoloMembers: Member[] = [];
   topMembers: MemberRecentHeatEntry[] = [];
+  /** Faces on the 顏控9選 entry card: popular members first, then recent ones. */
+  sukigaoFaces: { id: string; name: string; photo_url: string }[] = [];
+  /** 顏控9選 play count; shown on the entry card once there is a meaningful number. */
+  sukigaoPlays: number | null = null;
   topGroups: GroupRecentHeatEntry[] = [];
   activeTab: HomeTab = 'members';
   private soloMembersLoaded = false;
   activeGroupTab: 'active' | 'disbanded' | 'trainee' = 'active';
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly venueService = inject(VenueService);
+  private readonly sukigao = inject(SukigaoService);
   private readonly destroyRef = inject(DestroyRef);
   private destroyed = false;
 
@@ -197,6 +206,16 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.topMembers = data.topMembers;
       this.topGroups = data.topGroups;
       this.upcomingBirthdays = data.upcomingBirthdays;
+    }
+    this.sukigaoFaces = [...this.topMembers, ...this.recentMembers]
+      .filter((m): m is typeof m & { photo_url: string } => !!m.photo_url)
+      .filter((m, i, all) => all.findIndex(o => o.id === m.id) === i)
+      .slice(0, 3)
+      .map(m => ({ id: m.id, name: m.name, photo_url: m.photo_url }));
+    if (this.isBrowser) {
+      void this.sukigao.getPlayCount().then(n => {
+        if (n !== null && n >= SUKIGAO_MIN_PLAYS_SHOWN) this.sukigaoPlays = n;
+      });
     }
 
     // Read ?q= query param (used by Google SearchAction sitelinks)

@@ -111,6 +111,16 @@ export class SukigaoService {
     });
   }
 
+  /**
+   * Just the play count, for the home page entry. Edge only — a busy home page
+   * must never fall back to querying the database directly — so null when the
+   * endpoint is unavailable.
+   */
+  async getPlayCount(): Promise<number | null> {
+    const raw = await fetchEdge<StatsPayload>('/api/sukigao-stats', isStatsPayload);
+    return raw ? Number(raw.total) || 0 : null;
+  }
+
   /** Play count and per-member pick counts for the result page. */
   getStats(): Promise<SukigaoStats> {
     return this.statsCache.get('stats', async () => {

@@ -8,8 +8,12 @@ import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
 import { SeoService } from '../../core/seo.service';
+import { SukigaoService } from '../../core/sukigao.service';
 import { Group, Member, Company, MemberRecentHeatEntry, GroupRecentHeatEntry } from '../../models';
 import { HomePageData } from '../../core/page-data.resolvers';
+
+/** What the stubbed SukigaoService reports as the 顏控9選 play count. */
+let sukigaoPlays: number | null = null;
 
 const makeGroup = (overrides: Partial<Group> = {}): Group =>
   ({ id: 'g1', name: 'TestGroup', founded_at: '2020-01-01', disbanded_at: null, color: null, notes: null, company: null, company_id: null, photo_url: null, name_jp: null, updated_at: '2024-01-01' } as unknown as Group, { ...overrides } as Group);
@@ -76,6 +80,7 @@ describe('HomeComponent', () => {
         { provide: GroupService, useValue: { ...emptyGroupService(), ...groupOverrides } },
         { provide: CompanyService, useValue: { ...emptyCompanyService(), ...companyOverrides } },
         { provide: VenueService, useValue: { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([])) } },
+        { provide: SukigaoService, useValue: { getPlayCount: () => Promise.resolve(sukigaoPlays) } },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -90,6 +95,39 @@ describe('HomeComponent', () => {
       ],
     }).compileComponents();
   }
+
+  describe('顏控9選 entry', () => {
+    afterEach(() => (sukigaoPlays = null));
+
+    it('links to /sukigao with popular faces and the play count', async () => {
+      sukigaoPlays = 12873;
+      const heat = (id: string, photo: string | null): MemberRecentHeatEntry =>
+        ({ id, name: id, name_roman: null, photo_url: photo, color: null, recent_visitors: 1 });
+      await setup({}, {}, {}, {
+        topMembers: [heat('a', 'https://x/a.jpg'), heat('b', null), heat('c', 'https://x/c.jpg')],
+        recentMembers: [member({ id: 'd', photo_url: 'https://x/d.jpg' }), member({ id: 'a', photo_url: 'https://x/a.jpg' })],
+      });
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.sukigaoFaces.map(f => f.id)).toEqual(['a', 'c', 'd']);
+      const card: HTMLAnchorElement = fixture.nativeElement.querySelector('a.home-sukigao');
+      expect(card.getAttribute('href')).toBe('/sukigao');
+      expect(card.textContent).toContain('台灣地偶顏控9選');
+      expect(card.textContent).toContain('已玩 12,873 次');
+    });
+
+    it('hides a small play count', async () => {
+      sukigaoPlays = 12;
+      await setup();
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('a.home-sukigao').textContent).not.toContain('已玩');
+    });
+  });
 
   // ── Issue 1: *ngIf → @if ─────────────────────────────────────────────────
 
@@ -351,6 +389,7 @@ describe('HomeComponent', () => {
           { provide: GroupService, useValue: { ...emptyGroupService(), ...groupOverrides } },
           { provide: CompanyService, useValue: emptyCompanyService() },
           { provide: VenueService, useValue: { getAll: jasmine.createSpy().and.returnValue(Promise.resolve([])) } },
+          { provide: SukigaoService, useValue: { getPlayCount: () => Promise.resolve(null) } },
           { provide: GoogleCalendarService, useValue: calendarStub },
           {
             provide: ActivatedRoute,
