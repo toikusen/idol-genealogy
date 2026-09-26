@@ -8,6 +8,7 @@ import { renderShareImage } from './sukigao-share-image';
 import { SukigaoResultStats, formatPct } from './sukigao-stats';
 
 export type SukigaoSubmitState = 'idle' | 'sending' | 'done' | 'error';
+export type SukigaoAccountSave = 'idle' | 'signed-out' | 'saving' | 'saved' | 'error';
 export type SukigaoShareMethod = 'web_share' | 'facebook' | 'threads' | 'image_share' | 'image_download';
 
 export const SUKIGAO_SHARE_URL = `${SITE_URL}/sukigao`;
@@ -51,6 +52,8 @@ export class SukigaoResultComponent implements OnDestroy {
   @Input() canUndo = false;
   /** Everyone's numbers; null hides the stats card (still loading, or unavailable). */
   @Input() stats: SukigaoResultStats | null = null;
+  @Input() accountSave: SukigaoAccountSave = 'idle';
+  @Output() saveAccount = new EventEmitter<void>();
   @Output() submitResult = new EventEmitter<void>();
   @Output() restart = new EventEmitter<void>();
   @Output() undo = new EventEmitter<void>();

@@ -20,6 +20,7 @@ import { taipeiDayKey } from '../../core/taipei-date.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SukigaoPool, SukigaoService, countGroups } from '../../core/sukigao.service';
 import { SukigaoScope, SukigaoSessionService } from '../../core/sukigao-session.service';
+import { SupabaseService } from '../../core/supabase.service';
 import {
   BATCH_SIZE,
   SukigaoGameState,
@@ -55,7 +56,7 @@ import { SukigaoCandidate, SukigaoStats } from '../../models';
 import { SukigaoResultStats, buildResultStats } from './sukigao-stats';
 import { SukigaoCardComponent } from './sukigao-card.component';
 import { SukigaoEditCtaComponent } from './sukigao-edit-cta.component';
-import { SukigaoResultComponent, SukigaoShareMethod, SukigaoSubmitState } from './sukigao-result.component';
+import { SukigaoAccountSave, SukigaoResultComponent, SukigaoShareMethod, SukigaoSubmitState } from './sukigao-result.component';
 
 type ViewState = 'loading' | 'error' | 'intro' | 'game' | 'too-few';
 
@@ -96,6 +97,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly sukigao = inject(SukigaoService);
   private readonly session = inject(SukigaoSessionService);
+  private readonly supabase = inject(SupabaseService);
   private readonly seo = inject(SeoService);
   private readonly analytics = inject(AnalyticsService);
   private readonly doc = inject(DOCUMENT);
@@ -118,6 +120,8 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   readonly fillPage = signal(0);
   readonly submitState = signal<SukigaoSubmitState>('idle');
   readonly submitReplaced = signal(false);
+  /** Saving the finished TOP 9 to a signed-in player's 我的最愛 history. */
+  readonly accountSave = signal<SukigaoAccountSave>('idle');
 
   private destroyed = false;
   private groupTimer: ReturnType<typeof setTimeout> | null = null;
@@ -300,6 +304,8 @@ export class SukigaoComponent implements OnInit, OnDestroy {
         // submittedOn is cleared whenever a result is undone, so it always refers to saved.result.
         this.submitState.set(saved.submittedOn ? 'done' : 'idle');
         this.view.set('intro');
+        // Played signed out, then signed in: the finished game lands in their history now.
+        if (saved.stage === 'result') void this.saveToAccount();
       } else {
         this.view.set(pool.candidates.length >= TOP_N ? 'intro' : 'too-few');
       }
@@ -379,7 +385,10 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (!g) return;
     this.view.set('game');
-    if (g.stage === 'result') void this.loadStats();
+    if (g.stage === 'result') {
+      void this.loadStats();
+      void this.saveToAccount();
+    }
     // A result saved before it reached the ranking (offline, closed tab) goes in now;
     // one already sent — today or on an earlier day — is only shown, never re-counted.
     if (g.stage === 'result' && !g.submittedOn && this.submitState() !== 'done') {
@@ -561,8 +570,45 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       // only a browser's last result per day, so replays and undos replace it.
       void this.submit();
       void this.loadStats();
+      void this.saveToAccount();
     }
     this.preloadAhead();
+  }
+
+  /** Signed in: adds the finished game to 我的最愛's history (once per result). */
+  async saveToAccount(): Promise<void> {
+    const g = this.game();
+    if (!this.isBrowser || !g?.result || g.result.length !== TOP_N) return;
+    const resultKey = `${g.sessionId}|${g.result.join(',')}`;
+    const stillShowing = () => {
+      const latest = this.game();
+      return !this.destroyed && !!latest?.result && `${latest.sessionId}|${latest.result.join(',')}` === resultKey;
+    };
+    let userId: string | null = null;
+    try {
+      userId = (await this.supabase.getSessionOnce())?.user.id ?? null;
+    } catch {
+      userId = null;
+    }
+    if (!stillShowing()) return;
+    if (!userId) {
+      this.accountSave.set('signed-out');
+      return;
+    }
+    const savedKey = `${userId}|${resultKey}`;
+    if (this.session.isSavedToAccount(savedKey)) {
+      this.accountSave.set('saved');
+      return;
+    }
+    this.accountSave.set('saving');
+    try {
+      await this.sukigao.saveMine(g.sessionId, g.result, g.candidateVersion);
+      this.session.markSavedToAccount(savedKey);
+      if (stillShowing()) this.accountSave.set('saved');
+      this.analytics.trackEvent('sukigao_save_account', {});
+    } catch {
+      if (stillShowing()) this.accountSave.set('error');
+    }
   }
 
   private async repairFaces(missing: string[], stage: string): Promise<void> {
@@ -603,7 +649,10 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     this.game.set(next);
     this.session.save(next);
     if (prev?.stage !== next.stage || prev?.batchIndex !== next.batchIndex) this.preloadAhead();
-    if (prev?.stage === 'result' && next.stage !== 'result') this.submitState.set('idle');
+    if (prev?.stage === 'result' && next.stage !== 'result') {
+      this.submitState.set('idle');
+      this.accountSave.set('idle');
+    }
     if (next.stage === 'fill' && prev?.stage !== 'fill') this.fillPage.set(0);
   }
 

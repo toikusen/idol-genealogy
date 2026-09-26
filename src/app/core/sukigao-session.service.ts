@@ -10,6 +10,8 @@ export const SUKIGAO_STATE_KEY = 'idolmaps:sukigao:v2';
  */
 const LEGACY_KEYS = ['idolmaps:sukigao:v1', 'idolmaps:sukigao:prefs'];
 export const SUKIGAO_BROWSER_ID_KEY = 'idolmaps:sukigao:browser-id';
+/** `user|session|result` of the last game saved to an account, so it isn't re-sent on every visit. */
+export const SUKIGAO_ACCOUNT_SAVED_KEY = 'idolmaps:sukigao:account-saved';
 
 /**
  * The only place 顏控9選 touches localStorage. Every access is guarded for SSR
@@ -66,6 +68,22 @@ export class SukigaoSessionService {
       this.storage?.removeItem(SUKIGAO_STATE_KEY);
     } catch {
       // ignore
+    }
+  }
+
+  isSavedToAccount(key: string): boolean {
+    try {
+      return this.storage?.getItem(SUKIGAO_ACCOUNT_SAVED_KEY) === key;
+    } catch {
+      return false;
+    }
+  }
+
+  markSavedToAccount(key: string): void {
+    try {
+      this.storage?.setItem(SUKIGAO_ACCOUNT_SAVED_KEY, key);
+    } catch {
+      // ignore: worst case the same game is saved (idempotently) again
     }
   }
 

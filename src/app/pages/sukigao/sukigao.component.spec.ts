@@ -4,6 +4,7 @@ import { SukigaoComponent } from './sukigao.component';
 import { SukigaoPool, SukigaoService } from '../../core/sukigao.service';
 import { SUKIGAO_STATE_KEY, SukigaoSessionService } from '../../core/sukigao-session.service';
 import { AnalyticsService } from '../../core/analytics.service';
+import { SupabaseService } from '../../core/supabase.service';
 import { SukigaoCandidate } from '../../models';
 import { buildFacebookShareUrl, buildShareText, buildThreadsShareUrl } from './sukigao-result.component';
 
@@ -24,11 +25,14 @@ describe('SukigaoComponent', () => {
   let component: SukigaoComponent;
   let sukigao: jasmine.SpyObj<SukigaoService>;
   let analytics: jasmine.SpyObj<AnalyticsService>;
+  /** Who getSessionOnce() reports; null = signed out. */
+  let signedInAs: string | null;
 
   const pool = (n: number): SukigaoPool => ({ candidates: candidates(n), version: `${n}:v`, groupCount: 5 });
 
   async function setup(n = 48) {
-    sukigao = jasmine.createSpyObj<SukigaoService>('SukigaoService', ['getPool', 'getMembersByIds', 'submit', 'getRanking', 'getStats']);
+    sukigao = jasmine.createSpyObj<SukigaoService>('SukigaoService', ['getPool', 'getMembersByIds', 'submit', 'getRanking', 'getStats', 'saveMine']);
+    sukigao.saveMine.and.resolveTo();
     sukigao.getPool.and.resolveTo(pool(n));
     sukigao.getMembersByIds.and.resolveTo([]);
     sukigao.submit.and.resolveTo({ submittedOn: '2026-09-25', replaced: false });
@@ -47,6 +51,7 @@ describe('SukigaoComponent', () => {
         SukigaoSessionService,
         { provide: SukigaoService, useValue: sukigao },
         { provide: AnalyticsService, useValue: analytics },
+        { provide: SupabaseService, useValue: { getSessionOnce: () => Promise.resolve(signedInAs ? { user: { id: signedInAs } } : null) } },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(SukigaoComponent);
@@ -75,7 +80,10 @@ describe('SukigaoComponent', () => {
     await new Promise(resolve => setTimeout(resolve));
   };
 
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    signedInAs = null;
+  });
   afterEach(() => localStorage.clear());
 
   it('shows the intro with DB-driven counts per scope', async () => {
@@ -308,6 +316,57 @@ describe('SukigaoComponent', () => {
     sukigao.getMembersByIds.calls.reset();
     await component.load();
     expect(sukigao.getMembersByIds).toHaveBeenCalledWith(['stranger']);
+  });
+
+  it('signed in: saves the finished TOP 9 to 我的最愛 once', async () => {
+    signedInAs = 'user-1';
+    await setup(48);
+    playToResult();
+    await settle();
+    const g = component.game()!;
+    expect(sukigao.saveMine).toHaveBeenCalledOnceWith(g.sessionId, g.result!, g.candidateVersion);
+    expect(component.accountSave()).toBe('saved');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('已存到我的最愛');
+    // Reloading the page doesn't send it again.
+    await component.load();
+    await settle();
+    expect(sukigao.saveMine).toHaveBeenCalledTimes(1);
+  });
+
+  it('signed out: invites the player to sign in to keep the result', async () => {
+    await setup(48);
+    playToResult();
+    await settle();
+    expect(sukigao.saveMine).not.toHaveBeenCalled();
+    expect(component.accountSave()).toBe('signed-out');
+    fixture.detectChanges();
+    const cta: HTMLAnchorElement = fixture.nativeElement.querySelector('.skr-account__cta');
+    expect(cta.textContent).toContain('登入保存紀錄');
+    expect(cta.getAttribute('href')).toBe('/login?returnUrl=%2Fsukigao');
+  });
+
+  it('saves a result finished signed out once the player comes back signed in', async () => {
+    await setup(48);
+    playToResult();
+    await settle();
+    expect(sukigao.saveMine).not.toHaveBeenCalled();
+    signedInAs = 'user-1';
+    await component.load();
+    await settle();
+    expect(sukigao.saveMine).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a retry when saving to 我的最愛 fails', async () => {
+    signedInAs = 'user-1';
+    await setup(48);
+    sukigao.saveMine.and.rejectWith(new Error('500'));
+    playToResult();
+    await settle();
+    expect(component.accountSave()).toBe('error');
+    sukigao.saveMine.and.resolveTo();
+    await component.saveToAccount();
+    expect(component.accountSave()).toBe('saved');
   });
 
   it('re-submits (replacing) after undoing and finishing again', async () => {

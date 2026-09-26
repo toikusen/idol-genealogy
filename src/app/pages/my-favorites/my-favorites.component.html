@@ -19,10 +19,10 @@
         >{{ tab.label }}</button>
       }
     </nav>
-    @if (activeTab() !== 'push') {
+    @if (feedFilter() !== null) {
       <app-favorites-avatar-row
         [layout]="'grid'"
-        [filter]="activeTab() === 'all' ? undefined : activeTab()"
+        [filter]="feedFilter() ?? undefined"
         [selectedId]="spotlightEntity()?.id"
         [activityCounts]="activityCounts()"
         (addClicked)="openAddSheet()"
@@ -64,9 +64,9 @@
 
   <!-- Mobile avatar row (display:none on desktop via CSS) -->
   <div class="mf-mobile-avatars">
-    @if (activeTab() !== 'push') {
+    @if (feedFilter() !== null) {
       <app-favorites-avatar-row
-        [filter]="activeTab() === 'all' ? undefined : activeTab()"
+        [filter]="feedFilter() ?? undefined"
         [selectedId]="spotlightEntity()?.id"
         [activityCounts]="activityCounts()"
         (addClicked)="openAddSheet()"
@@ -80,16 +80,18 @@
     <div class="mf-content-inner">
       <!-- Targeted nudge: these users already said what they care about, they just never
            got asked. Opens the same soft prompt as favouriting does. -->
-      @if (activeTab() !== 'push' && favoriteCount() > 0 && pushOptIn.shouldOffer()) {
+      @if (feedFilter() !== null && favoriteCount() > 0 && pushOptIn.shouldOffer()) {
         <button class="mf-push-nudge" (click)="pushOptIn.offer()">
           <span>你收藏了 {{ favoriteCount() }} 個團體與成員，還沒開啟新活動通知</span>
           <span class="mf-push-nudge-cta">開啟 →</span>
         </button>
       }
 
-      @if (activeTab() !== 'push') {
+      @if (activeTab() === 'sukigao') {
+        <app-favorites-sukigao />
+      } @else if (feedFilter() !== null) {
         <app-favorites-feed
-          [filter]="activeTab() === 'all' ? undefined : activeTab()"
+          [filter]="feedFilter() ?? undefined"
           [spotlightEntity]="spotlightEntity()"
           (activityCounts)="onActivityCounts($event)"
         />

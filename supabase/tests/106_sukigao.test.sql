@@ -8,7 +8,7 @@ begin;
 
 -- ── Fixtures ────────────────────────────────────────────────────────────────
 create temp table t_ids (label text primary key, id uuid not null) on commit drop;
-grant select on t_ids to anon;
+grant select on t_ids to anon, authenticated;
 
 insert into groups (id, name, disbanded_at) values
   ('00000000-0000-0000-0000-0000000000a1', '現役團', null),
@@ -436,6 +436,88 @@ begin
 end $$;
 reset role;
 revoke all on sukigao_submissions from anon;
+
+-- ── 114: personal history for signed-in players ─────────────────────────────
+insert into auth.users (id) values
+  ('00000000-0000-4000-8000-00000000aaaa'),
+  ('00000000-0000-4000-8000-00000000bbbb');
+
+-- Signed out: refused.
+set local role anon;
+select pg_temp.expect_error(
+  $q$select save_my_sukigao_result('11111111-1111-4111-8111-111111111111', pg_temp.ids(9))$q$,
+  'anon save_my_sukigao_result');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '', true);
+select pg_temp.expect_error(
+  $q$select save_my_sukigao_result('11111111-1111-4111-8111-111111111111', pg_temp.ids(9))$q$,
+  'save without a user');
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-00000000aaaa', true);
+select pg_temp.expect_error(
+  $q$select save_my_sukigao_result('not-a-uuid', pg_temp.ids(9))$q$, 'save with a bad session id');
+select pg_temp.expect_error(
+  $q$select save_my_sukigao_result('11111111-1111-4111-8111-111111111111', pg_temp.ids(8))$q$, 'save 8 members');
+select pg_temp.expect_error(
+  $q$select save_my_sukigao_result('11111111-1111-4111-8111-111111111111', pg_temp.ids(8) || (pg_temp.ids(1))[1])$q$, 'save a duplicate');
+select pg_temp.expect_error(
+  $q$select save_my_sukigao_result('11111111-1111-4111-8111-111111111111', pg_temp.ids(8) || gen_random_uuid())$q$, 'save an unknown member');
+select pg_temp.expect_error(
+  $q$insert into sukigao_user_results (user_id, session_id, member_ids) values ('00000000-0000-4000-8000-00000000aaaa', 'x', pg_temp.ids(9))$q$,
+  'direct insert');
+
+do $$
+declare
+  i int;
+  n int;
+begin
+  perform save_my_sukigao_result('11111111-1111-4111-8111-111111111111', pg_temp.ids(9), 'v1');
+  -- Same game again (undo + finish): replaced, not added.
+  perform save_my_sukigao_result('11111111-1111-4111-8111-111111111111', pg_temp.ids(9, 1), 'v1');
+  select count(*) into n from sukigao_user_results;
+  if n <> 1 then raise exception 'same session should replace, have %', n; end if;
+  if (select member_ids from sukigao_user_results) <> pg_temp.ids(9, 1) then
+    raise exception 'replaced row should hold the new TOP 9';
+  end if;
+
+  -- Only the latest 100 are kept.
+  for i in 1..105 loop
+    perform save_my_sukigao_result(format('%s-7777-4777-8777-777777777777', lpad(to_hex(i), 8, '0')), pg_temp.ids(9), null);
+  end loop;
+  select count(*) into n from sukigao_user_results;
+  if n <> 100 then raise exception 'should keep 100 games, have %', n; end if;
+  -- The oldest ones went: the first game and sessions 1–4.
+  if exists (select 1 from sukigao_user_results
+              where session_id in ('11111111-1111-4111-8111-111111111111', '00000004-7777-4777-8777-777777777777')) then
+    raise exception 'trim should drop the oldest games';
+  end if;
+  raise notice 'ok: 114 save, replace and trim';
+end $$;
+
+-- Another account can't see or delete them.
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-00000000bbbb', true);
+do $$
+begin
+  if (select count(*) from sukigao_user_results) <> 0 then
+    raise exception 'another user must not see these results';
+  end if;
+  delete from sukigao_user_results;
+end $$;
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-00000000aaaa', true);
+do $$
+begin
+  if (select count(*) from sukigao_user_results) <> 100 then
+    raise exception 'another user must not delete these results';
+  end if;
+  delete from sukigao_user_results where session_id = '00000069-7777-4777-8777-777777777777';
+  if (select count(*) from sukigao_user_results) <> 99 then
+    raise exception 'the owner should be able to delete a result';
+  end if;
+  raise notice 'ok: 114 results are private to their owner';
+end $$;
+reset role;
 
 do $$ begin raise notice 'ALL SUKIGAO SQL TESTS PASSED'; end $$;
 

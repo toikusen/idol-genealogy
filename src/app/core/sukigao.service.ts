@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { TtlCache } from './ttl-cache';
 import { isPublicMemberRecord } from './public-record.utils';
-import { SukigaoCandidate, SukigaoRankingEntry, SukigaoRankingMode, SukigaoStats } from '../models';
+import { SukigaoCandidate, SukigaoRankingEntry, SukigaoRankingMode, SukigaoStats, SukigaoUserResult } from '../models';
 
 export interface SukigaoPool {
   candidates: SukigaoCandidate[];
@@ -109,6 +109,34 @@ export class SukigaoService {
         first_place_count: Number(row.first_place_count),
       }));
     });
+  }
+
+  // ── Signed-in history (migration 114) ──
+
+  /** Saves a finished game to the signed-in player's history; the same game again replaces its row. */
+  async saveMine(sessionId: string, memberIds: string[], candidateVersion: string): Promise<void> {
+    const { error } = await this.supabase.client.rpc('save_my_sukigao_result', {
+      p_session_id: sessionId,
+      p_member_ids: memberIds,
+      p_candidate_version: candidateVersion,
+    });
+    if (error) throw error;
+  }
+
+  /** The signed-in player's games, newest first (RLS returns only their own). */
+  async getMine(): Promise<SukigaoUserResult[]> {
+    const { data, error } = await this.supabase.client
+      .from('sukigao_user_results')
+      .select('id,session_id,member_ids,played_at')
+      .order('played_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return (data ?? []) as SukigaoUserResult[];
+  }
+
+  async deleteMine(id: string): Promise<void> {
+    const { error } = await this.supabase.client.from('sukigao_user_results').delete().eq('id', id);
+    if (error) throw error;
   }
 
   /**

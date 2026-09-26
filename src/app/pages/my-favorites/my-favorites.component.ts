@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/favorites.service';
 import { PushOptInService } from '../../core/push-opt-in.service';
 import { SupabaseService } from '../../core/supabase.service';
@@ -9,8 +9,9 @@ import { FavoritesAvatarRowComponent } from './favorites-avatar-row.component';
 import { FavoritesFeedComponent } from './favorites-feed.component';
 import { FavoritesAddSheetComponent } from './favorites-add-sheet.component';
 import { PushSettingsComponent } from './push-settings.component';
+import { FavoritesSukigaoComponent } from './favorites-sukigao.component';
 
-export type FavoritesTab = 'all' | 'group' | 'member' | 'push';
+export type FavoritesTab = 'all' | 'group' | 'member' | 'sukigao' | 'push';
 
 interface FavoritesTabOption {
   id: FavoritesTab;
@@ -27,6 +28,7 @@ interface FavoritesTabOption {
     FavoritesFeedComponent,
     FavoritesAddSheetComponent,
     PushSettingsComponent,
+    FavoritesSukigaoComponent,
   ],
   templateUrl: './my-favorites.component.html',
   styleUrl: './my-favorites.component.css',
@@ -40,6 +42,7 @@ export class MyFavoritesComponent implements OnInit {
     return this.favService.favorites().length;
   }
   private supabase = inject(SupabaseService);
+  private route = inject(ActivatedRoute);
 
   readonly activeTab = signal<FavoritesTab>('all');
   readonly showAddSheet = signal(false);
@@ -50,11 +53,22 @@ export class MyFavoritesComponent implements OnInit {
     { id: 'all', label: '全部' },
     { id: 'group', label: '團體' },
     { id: 'member', label: '成員' },
+    { id: 'sukigao', label: '顏控9選' },
     { id: 'push', label: '通知設定' },
   ];
   displayName = '';
 
+  /** The avatar row / feed filter for feed tabs; null on 顏控9選 and 通知設定. */
+  feedFilter(): 'group' | 'member' | undefined | null {
+    const t = this.activeTab();
+    if (t === 'all') return undefined;
+    return t === 'group' || t === 'member' ? t : null;
+  }
+
   async ngOnInit(): Promise<void> {
+    // ?tab= deep link, e.g. from the 顏控9選 result page's 「查看我的顏控紀錄」.
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab && this.tabs.some(t => t.id === tab)) this.activeTab.set(tab as FavoritesTab);
     const session = await this.supabase.getSessionOnce();
     if (session) {
       this.displayName = session.user.user_metadata?.['display_name'] ?? '';

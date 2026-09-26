@@ -350,6 +350,15 @@ export interface SukigaoResult {
 
 export type SukigaoRankingMode = 'top9' | 'first';
 
+/** One finished game in a signed-in player's history (migration 114). */
+export interface SukigaoUserResult {
+  id: string;
+  session_id: string;
+  /** Best → worst, 9 member ids. */
+  member_ids: string[];
+  played_at: string;
+}
+
 /** Counted results only (see migration 113); percentages are per result. */
 export interface SukigaoStats {
   total: number;

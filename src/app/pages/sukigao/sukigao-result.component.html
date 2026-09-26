@@ -116,6 +116,31 @@
     </section>
   }
 
+  @switch (accountSave) {
+    @case ('saved') {
+      <div class="skr-account skr-account--saved" role="status">
+        <span>💗 已存到我的最愛</span>
+        <a routerLink="/my-favorites" [queryParams]="{ tab: 'sukigao' }" class="skr-account__link">查看我的顏控紀錄 →</a>
+      </div>
+    }
+    @case ('saving') {
+      <div class="skr-account" role="status"><span>正在存到我的最愛…</span></div>
+    }
+    @case ('error') {
+      <div class="skr-account" role="alert">
+        <span>沒能存到我的最愛</span>
+        <button type="button" class="sk-link-btn" (click)="saveAccount.emit()">再試一次</button>
+      </div>
+    }
+    @case ('signed-out') {
+      <div class="skr-account skr-account--login">
+        <strong class="skr-account__title">登入就能保存每次的顏控9選</strong>
+        <span class="skr-account__desc">在「我的最愛」看歷次紀錄、你最常選的臉，還能一鍵追蹤她們的活動</span>
+        <a routerLink="/login" [queryParams]="{ returnUrl: '/sukigao' }" class="sk-btn sk-btn--primary skr-account__cta">登入保存紀錄</a>
+      </div>
+    }
+  }
+
   <div class="skr-submit" aria-live="polite">
     @switch (submitState) {
       @case ('done') {
