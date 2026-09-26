@@ -6,6 +6,7 @@ const face = (id: string): SukigaoCandidate => ({ id, name: id, photoUrl: '', gr
 function stats(total: number, counts: Record<string, [number, number]>, topTop9Id: string | null, topFirstId: string | null): SukigaoStats {
   return {
     total,
+    plays: total * 2,
     players: Math.round(total * 0.8),
     counts: new Map(Object.entries(counts).map(([id, [top9, first]]) => [id, { top9, first }])),
     topTop9Id,

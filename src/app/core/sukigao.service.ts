@@ -146,7 +146,7 @@ export class SukigaoService {
    */
   async getPlayCount(): Promise<number | null> {
     const raw = await fetchEdge<StatsPayload>('/api/sukigao-stats', isStatsPayload);
-    return raw ? Number(raw.total) || 0 : null;
+    return raw ? Number(raw.plays) || Number(raw.total) || 0 : null;
   }
 
   /** Play count and per-member pick counts for the result page. */
@@ -166,6 +166,8 @@ export class SukigaoService {
 
 interface StatsPayload {
   total: number | string;
+  /** Added in migration 115; absent before it runs. */
+  plays?: number | string;
   players: number | string;
   members: { member_id: string; top9: number | string; first: number | string }[];
 }
@@ -187,7 +189,8 @@ export function buildStats(raw: StatsPayload): SukigaoStats {
     if (top9 > bestTop9) { bestTop9 = top9; topTop9Id = m.member_id; }
     if (first > bestFirst) { bestFirst = first; topFirstId = m.member_id; }
   }
-  return { total: Number(raw.total) || 0, players: Number(raw.players) || 0, counts, topTop9Id, topFirstId };
+  const total = Number(raw.total) || 0;
+  return { total, plays: Number(raw.plays) || total, players: Number(raw.players) || 0, counts, topTop9Id, topFirstId };
 }
 
 /**

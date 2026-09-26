@@ -447,6 +447,37 @@ end $$;
 reset role;
 revoke all on sukigao_submissions from anon;
 
+-- ── 115: games played (replays counted, capped at 10 per browser per day) ─────
+do $$
+declare
+  i int;
+  before_plays bigint := (get_sukigao_stats() ->> 'plays')::bigint;
+  before_total bigint := (get_sukigao_stats() ->> 'total')::bigint;
+  after_plays bigint;
+begin
+  perform set_config('request.headers', '{"cf-connecting-ip":"192.0.2.150"}', true);
+  -- One browser, 3 games today: 1 vote, 3 plays.
+  for i in 1..3 loop
+    perform submit_sukigao_result('15151515-1515-4515-8515-151515151515', pg_temp.ids(9), null);
+  end loop;
+  after_plays := (get_sukigao_stats() ->> 'plays')::bigint;
+  if after_plays - before_plays <> 3 then
+    raise exception 'three games should add 3 plays, added %', after_plays - before_plays;
+  end if;
+  if (get_sukigao_stats() ->> 'total')::bigint - before_total <> 1 then
+    raise exception 'replays should still be one result';
+  end if;
+  -- Capped at 10 per browser per day.
+  for i in 1..20 loop
+    perform submit_sukigao_result('15151515-1515-4515-8515-151515151515', pg_temp.ids(9), null);
+  end loop;
+  if (get_sukigao_stats() ->> 'plays')::bigint - before_plays <> 10 then
+    raise exception 'plays should cap at 10 per browser per day';
+  end if;
+  perform set_config('request.headers', '', true);
+  raise notice 'ok: 115 plays count replays, capped';
+end $$;
+
 -- ── 114: personal history for signed-in players ─────────────────────────────
 insert into auth.users (id) values
   ('00000000-0000-4000-8000-00000000aaaa'),

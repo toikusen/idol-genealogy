@@ -38,6 +38,7 @@ describe('SukigaoComponent', () => {
     sukigao.submit.and.resolveTo({ submittedOn: '2026-09-25', replaced: false });
     sukigao.getStats.and.resolveTo({
       total: 1234,
+      plays: 2345,
       players: 1000,
       counts: new Map([['m000', { top9: 400, first: 100 }], ['m001', { top9: 300, first: 200 }]]),
       topTop9Id: 'm000',
@@ -272,7 +273,7 @@ describe('SukigaoComponent', () => {
     fixture.detectChanges();
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('大家的顏控數據');
-    expect(text).toContain('1,234次顏控9選');
+    expect(text).toContain('2,345次顏控9選');
     expect(text).toContain('1,000位玩家參與');
     expect(text).toContain('大家最愛的臉');
     expect(text).toContain('32%的人選進 TOP9');

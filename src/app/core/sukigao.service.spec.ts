@@ -42,10 +42,15 @@ describe('SukigaoService', () => {
         ],
       });
       expect(s.total).toBe(120);
+      expect(s.plays).toBe(120); // no 'plays' before migration 115: falls back to total
       expect(s.players).toBe(90);
       expect(s.counts.get('b')).toEqual({ top9: 40, first: 20 });
       expect(s.topTop9Id).toBe('a');
       expect(s.topFirstId).toBe('b');
+    });
+
+    it('reads plays from migration 115', () => {
+      expect(buildStats({ total: 10, plays: '27', players: 8, members: [] }).plays).toBe(27);
     });
 
     it('handles no results yet', () => {

@@ -361,7 +361,10 @@ export interface SukigaoUserResult {
 
 /** Counted results only (see migration 113); percentages are per result. */
 export interface SukigaoStats {
+  /** Counted results (one per browser per day): the denominator for percentages. */
   total: number;
+  /** Games played, replays included (capped per browser per day); what 「幾次顏控9選」 shows. */
+  plays: number;
   players: number;
   /** member id → how many results have them in the TOP 9 / at #1. */
   counts: Map<string, { top9: number; first: number }>;

@@ -19,6 +19,8 @@ export interface SukigaoFaceShare {
 
 export interface SukigaoResultStats {
   total: number;
+  /** Games played, replays included — the headline count. */
+  plays: number;
   players: number;
   /** False while there are too few results for percentages (see MIN_RESULTS_FOR_PERCENT). */
   hasPercent: boolean;
@@ -69,7 +71,7 @@ export function buildResultStats(
     taste = TASTES[ratio >= 2.5 ? 'mainstream' : ratio >= 1.3 ? 'balanced' : 'unique'];
   }
 
-  return { total, players: stats.players, hasPercent, top, topFirst, picks, taste };
+  return { total, plays: stats.plays, players: stats.players, hasPercent, top, topFirst, picks, taste };
 }
 
 /** "32%", "<1%" for a sliver, "0%" for none. */

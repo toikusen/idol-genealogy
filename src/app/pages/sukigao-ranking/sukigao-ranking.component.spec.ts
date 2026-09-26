@@ -40,12 +40,13 @@ describe('SukigaoRankingComponent', () => {
     fixture.detectChanges();
   }
 
-  const stats: SukigaoStats = { total: 1000, players: 800, counts: new Map(), topTop9Id: null, topFirstId: null };
+  const stats: SukigaoStats = { total: 1000, plays: 1500, players: 800, counts: new Map(), topTop9Id: null, topFirstId: null };
 
   it('shows the play count, a podium of 3 and places 4–10 as percentages', async () => {
     await setup(stats);
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.textContent).toContain('1,000次顏控9選');
+    // Headline counts games (replays included); percentages use the 1,000 results.
+    expect(el.textContent).toContain('1,500次顏控9選');
     expect(el.textContent).toContain('800位玩家參與');
     expect(el.querySelectorAll('.skrank-pod').length).toBe(3);
     expect(el.querySelector('.skrank-pod--1 .skrank-pod__value')!.textContent).toBe('40%');
