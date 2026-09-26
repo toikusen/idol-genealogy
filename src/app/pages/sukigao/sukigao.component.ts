@@ -49,7 +49,8 @@ import {
   togglePreliminaryPick,
   undo,
 } from '../../core/sukigao-engine';
-import { SukigaoCandidate } from '../../models';
+import { SukigaoCandidate, SukigaoStats } from '../../models';
+import { SukigaoResultStats, buildResultStats } from './sukigao-stats';
 import { SukigaoCardComponent } from './sukigao-card.component';
 import { SukigaoEditCtaComponent } from './sukigao-edit-cta.component';
 import { SukigaoResultComponent, SukigaoShareMethod, SukigaoSubmitState } from './sukigao-result.component';
@@ -162,6 +163,15 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   readonly canUndo = computed(() => (this.game() ? canUndo(this.game()!) : false));
 
   readonly resultFaces = computed(() => this.resolve(this.game()?.result ?? []));
+
+  /** Everyone's numbers for the result page; null until loaded (or if they fail). */
+  readonly stats = signal<SukigaoStats | null>(null);
+  readonly resultStats = computed<SukigaoResultStats | null>(() => {
+    const stats = this.stats();
+    const faces = this.faces();
+    if (!stats) return null;
+    return buildResultStats(stats, this.resultFaces(), id => faces.get(id), this.pool()?.candidates.length ?? 0);
+  });
 
   /** Where the saved game stands, for the intro's resume button. */
   readonly savedSummary = computed(() => {
@@ -355,6 +365,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (!g) return;
     this.view.set('game');
+    if (g.stage === 'result') void this.loadStats();
     // A result saved before it reached the ranking (offline, closed tab) goes in now;
     // one already sent — today or on an earlier day — is only shown, never re-counted.
     if (g.stage === 'result' && !g.submittedOn && this.submitState() !== 'done') {
@@ -535,8 +546,18 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       // Every finished TOP 9 goes into the anonymous ranking; the server keeps
       // only a browser's last result per day, so replays and undos replace it.
       void this.submit();
+      void this.loadStats();
     }
     this.preloadAhead();
+  }
+
+  private async loadStats(): Promise<void> {
+    try {
+      const stats = await this.sukigao.getStats();
+      if (!this.destroyed) this.stats.set(stats);
+    } catch {
+      // The result page just leaves the stats card out.
+    }
   }
 
   private finalPoolSize(g: SukigaoGameState): number {

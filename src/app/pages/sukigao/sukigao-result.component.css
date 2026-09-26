@@ -196,20 +196,49 @@
 .skr-list {
   width: 100%;
   max-width: 520px;
-  margin: 0;
   padding: 0.9rem 1.1rem;
-  list-style: none;
   border-radius: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   font-size: 0.86rem;
   line-height: 1.9;
+  box-sizing: border-box;
+}
+
+.skr-list__head {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 0.2rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--text-faint-60);
+}
+
+.skr-list__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skr-list__items li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
 }
 
 .skr-list__rank {
+  flex: none;
   display: inline-block;
   width: 1.6rem;
   color: var(--text-faint-60);
+}
+
+.skr-list__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .skr-list__top {
@@ -219,7 +248,206 @@
 .skr-list__group {
   margin-left: 0.35rem;
   font-size: 0.72rem;
+  font-weight: 400;
   color: var(--text-faint-55);
+}
+
+.skr-list__pct {
+  flex: none;
+  min-width: 2.6rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--idol-pink);
+}
+
+/* ── 顏控類型 ── */
+.skr-taste {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  width: 100%;
+  max-width: 520px;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  box-sizing: border-box;
+  text-align: center;
+  background: linear-gradient(135deg, var(--bg-pink-tint-hover), var(--bg-surface));
+  border: 1px solid var(--border-default);
+}
+
+.skr-taste__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--text-faint-60);
+}
+
+.skr-taste__label {
+  font-size: 1.35rem;
+  letter-spacing: 0.12em;
+  color: var(--idol-pink);
+}
+
+.skr-taste--unique .skr-taste__label { color: #9b6bd6; }
+.skr-taste--balanced .skr-taste__label { color: #d0679a; }
+
+.skr-taste__desc {
+  font-size: 0.8rem;
+  color: var(--text-faint-70);
+}
+
+/* ── 大家的顏控數據 ── */
+.skr-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+  max-width: 420px;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  box-sizing: border-box;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+
+.skr-stats__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.1em;
+  color: var(--text-heading);
+}
+
+.skr-stats__nums {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.skr-stats__num {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 0.55rem 0.4rem;
+  border-radius: 12px;
+  background: var(--bg-surface-subtle);
+}
+
+.skr-stats__num strong {
+  font-size: 1.45rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--idol-pink);
+}
+
+.skr-stats__num span {
+  font-size: 0.74rem;
+  color: var(--text-faint-70);
+}
+
+.skr-stats__face {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 12px;
+  background: var(--bg-pink-tint);
+  color: inherit;
+  text-decoration: none;
+}
+
+.skr-stats__face--sub {
+  background: var(--bg-surface-subtle);
+}
+
+.skr-stats__avatar {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--skel-from), var(--skel-to));
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #e2a31c;
+}
+
+.skr-stats__face--sub .skr-stats__avatar {
+  width: 44px;
+  height: 44px;
+  box-shadow: none;
+}
+
+.skr-stats__avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.05);
+}
+
+.skr-stats__who {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.skr-stats__eyebrow {
+  font-size: 0.68rem;
+  color: var(--text-faint-60);
+}
+
+.skr-stats__name,
+.skr-stats__group {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.skr-stats__name {
+  font-size: 0.95rem;
+}
+
+.skr-stats__group {
+  font-size: 0.7rem;
+  color: var(--text-faint-60);
+}
+
+.skr-stats__pct {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.skr-stats__pct strong {
+  font-size: 1.35rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--idol-pink);
+}
+
+.skr-stats__pct span {
+  font-size: 0.64rem;
+  color: var(--text-faint-60);
+}
+
+.skr-stats__note {
+  margin: 0;
+  font-size: 0.78rem;
+  text-align: center;
+  color: var(--text-faint-70);
+}
+
+.skr-stats__more {
+  align-self: center;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
 }
 
 .skr-actions,

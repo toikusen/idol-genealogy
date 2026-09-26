@@ -28,10 +28,17 @@ describe('SukigaoComponent', () => {
   const pool = (n: number): SukigaoPool => ({ candidates: candidates(n), version: `${n}:v`, groupCount: 5 });
 
   async function setup(n = 48) {
-    sukigao = jasmine.createSpyObj<SukigaoService>('SukigaoService', ['getPool', 'getMembersByIds', 'submit', 'getRanking']);
+    sukigao = jasmine.createSpyObj<SukigaoService>('SukigaoService', ['getPool', 'getMembersByIds', 'submit', 'getRanking', 'getStats']);
     sukigao.getPool.and.resolveTo(pool(n));
     sukigao.getMembersByIds.and.resolveTo([]);
     sukigao.submit.and.resolveTo({ submittedOn: '2026-09-25', replaced: false });
+    sukigao.getStats.and.resolveTo({
+      total: 1234,
+      players: 1000,
+      counts: new Map([['m000', { top9: 400, first: 100 }], ['m001', { top9: 300, first: 200 }]]),
+      topTop9Id: 'm000',
+      topFirstId: 'm001',
+    });
     analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', ['trackEvent', 'trackPageView']);
     await TestBed.configureTestingModule({
       imports: [SukigaoComponent],
@@ -248,6 +255,31 @@ describe('SukigaoComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控排行');
     expect(fixture.nativeElement.textContent).not.toContain('將我的 TOP9 加入大家的顏控排行');
+  });
+
+  it('shows everyone\'s numbers on the result page', async () => {
+    await setup(48);
+    playToResult();
+    await settle();
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('大家的顏控數據');
+    expect(text).toContain('1,234次顏控9選');
+    expect(text).toContain('1,000位玩家參與');
+    expect(text).toContain('大家最愛的臉');
+    expect(text).toContain('32%的人選進 TOP9');
+    expect(text).toContain('最多人選為第 1 名');
+    expect(text).toContain('你的顏控類型');
+  });
+
+  it('leaves the stats card out when stats fail to load', async () => {
+    await setup(48);
+    sukigao.getStats.and.rejectWith(new Error('502'));
+    playToResult();
+    await settle();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('大家的顏控數據');
+    expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控排行');
   });
 
   it('re-submits (replacing) after undoing and finishing again', async () => {

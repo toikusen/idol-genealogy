@@ -326,6 +326,60 @@ begin
   raise notice 'ok: 111 submit hardening';
 end $$;
 
+-- ── 113: per-network counting cap + stats ───────────────────────────────────
+do $$
+declare
+  i int;
+  before_total bigint;
+  after_total bigint;
+  before_m01 bigint;
+  after_m01 bigint;
+  m01 uuid := (select id from t_ids where label = 'm01');
+  stats jsonb;
+begin
+  stats := get_sukigao_stats();
+  before_total := (stats ->> 'total')::bigint;
+  select (e ->> 'top9')::bigint into before_m01
+    from jsonb_array_elements(stats -> 'members') e where (e ->> 'member_id')::uuid = m01;
+
+  -- 35 new results from one network: all stored, only 30 counted.
+  perform set_config('request.headers', '{"cf-connecting-ip":"192.0.2.99"}', true);
+  for i in 1..35 loop
+    perform submit_sukigao_result(
+      format('%s-6666-4666-8666-666666666666', lpad(to_hex(i), 8, '0')), pg_temp.ids(9), null);
+  end loop;
+  -- A replay of an uncounted result stays uncounted.
+  perform submit_sukigao_result('00000023-6666-4666-8666-666666666666', pg_temp.ids(9), null);
+  perform set_config('request.headers', '', true);
+
+  if (select count(*) from sukigao_submissions where browser_hash in (
+        select encode(sha256(convert_to('idolmaps:sukigao:' || format('%s-6666-4666-8666-666666666666', lpad(to_hex(g.n), 8, '0')), 'UTF8')), 'hex')
+          from generate_series(1, 35) as g(n))) <> 35 then
+    raise exception 'all 35 results should be stored';
+  end if;
+
+  stats := get_sukigao_stats();
+  after_total := (stats ->> 'total')::bigint;
+  select (e ->> 'top9')::bigint into after_m01
+    from jsonb_array_elements(stats -> 'members') e where (e ->> 'member_id')::uuid = m01;
+  if after_total - before_total <> 30 then
+    raise exception 'stats total should grow by 30, grew by %', after_total - before_total;
+  end if;
+  if after_m01 - before_m01 <> 30 then
+    raise exception 'member count should grow by 30, grew by %', after_m01 - before_m01;
+  end if;
+  if (select top9_count from get_sukigao_ranking('top9', 100) where member_id = m01) <> after_m01 then
+    raise exception 'ranking and stats should agree on counted results';
+  end if;
+  if (stats ->> 'players')::bigint > after_total then
+    raise exception 'players cannot exceed results';
+  end if;
+  if jsonb_typeof(stats -> 'members') <> 'array' then
+    raise exception 'members should be an array';
+  end if;
+  raise notice 'ok: 113 counting cap + stats';
+end $$;
+
 -- ── Direct access is blocked for anon / authenticated ──────────────────────
 set local role anon;
 
@@ -351,6 +405,9 @@ begin
   end if;
   if (select count(*) from get_sukigao_candidates()) = 0 then
     raise exception 'anon should be able to read candidates';
+  end if;
+  if (get_sukigao_stats() ->> 'total')::bigint = 0 then
+    raise exception 'anon should be able to read the stats';
   end if;
   raise notice 'ok: anon can use the RPCs';
 end $$;

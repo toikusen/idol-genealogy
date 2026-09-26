@@ -350,6 +350,17 @@ export interface SukigaoResult {
 
 export type SukigaoRankingMode = 'top9' | 'first';
 
+/** Counted results only (see migration 113); percentages are per result. */
+export interface SukigaoStats {
+  total: number;
+  players: number;
+  /** member id → how many results have them in the TOP 9 / at #1. */
+  counts: Map<string, { top9: number; first: number }>;
+  /** Most picked into a TOP 9, and most picked as #1 (null when no results). */
+  topTop9Id: string | null;
+  topFirstId: string | null;
+}
+
 export interface SukigaoRankingEntry {
   member_id: string;
   name: string;

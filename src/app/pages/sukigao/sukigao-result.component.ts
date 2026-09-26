@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SukigaoCandidate } from '../../models';
 import { SITE_URL } from '../../core/public-url.utils';
 import { renderShareImage } from './sukigao-share-image';
+import { SukigaoResultStats, formatPct } from './sukigao-stats';
 
 export type SukigaoSubmitState = 'idle' | 'sending' | 'done' | 'error';
 export type SukigaoShareMethod = 'web_share' | 'facebook' | 'threads' | 'image_share' | 'image_download';
@@ -37,7 +39,7 @@ type ImageState = 'idle' | 'rendering' | 'ready' | 'error';
 @Component({
   selector: 'app-sukigao-result',
   standalone: true,
-  imports: [RouterLink, SupabaseImgPipe],
+  imports: [RouterLink, SupabaseImgPipe, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sukigao-result.component.html',
   styleUrls: ['./sukigao-buttons.css', './sukigao-result.component.css'],
@@ -47,6 +49,8 @@ export class SukigaoResultComponent implements OnDestroy {
   @Input() submitState: SukigaoSubmitState = 'idle';
   @Input() replaced = false;
   @Input() canUndo = false;
+  /** Everyone's numbers; null hides the stats card (still loading, or unavailable). */
+  @Input() stats: SukigaoResultStats | null = null;
   @Output() submitResult = new EventEmitter<void>();
   @Output() restart = new EventEmitter<void>();
   @Output() undo = new EventEmitter<void>();
@@ -55,6 +59,7 @@ export class SukigaoResultComponent implements OnDestroy {
   @ViewChild('imageTrigger') private imageTrigger?: ElementRef<HTMLButtonElement>;
 
   readonly medals = MEDALS;
+  readonly formatPct = formatPct;
   readonly facebookUrl = buildFacebookShareUrl();
 
   toast = '';

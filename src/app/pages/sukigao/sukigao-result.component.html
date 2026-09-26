@@ -28,14 +28,30 @@
     }
   </ol>
 
-  <ol class="skr-list">
-    @for (face of faces; track face.id; let i = $index) {
-      <li [class.skr-list__top]="i < 3">
-        <span class="skr-list__rank">{{ i < 3 ? medals[i] : (i + 1) + '.' }}</span>
-        {{ face.name }} <span class="skr-list__group">{{ groupLabel(face) }}</span>
-      </li>
+  @if (stats?.taste; as taste) {
+    <div class="skr-taste" [class]="'skr-taste skr-taste--' + taste.key">
+      <span class="skr-taste__eyebrow">你的顏控類型</span>
+      <strong class="skr-taste__label">{{ taste.label }}</strong>
+      <span class="skr-taste__desc">{{ taste.desc }}</span>
+    </div>
+  }
+
+  <div class="skr-list">
+    @if (stats?.hasPercent) {
+      <p class="skr-list__head" aria-hidden="true"><span>你的 TOP9</span><span>也選她的人</span></p>
     }
-  </ol>
+    <ol class="skr-list__items">
+      @for (face of faces; track face.id; let i = $index) {
+        <li [class.skr-list__top]="i < 3">
+          <span class="skr-list__rank">{{ i < 3 ? medals[i] : (i + 1) + '.' }}</span>
+          <span class="skr-list__name">{{ face.name }} <span class="skr-list__group">{{ groupLabel(face) }}</span></span>
+          @if (stats?.hasPercent) {
+            <span class="skr-list__pct" [attr.aria-label]="formatPct(stats!.picks[i]) + ' 的人也把她選進 TOP9'">{{ formatPct(stats!.picks[i]) }}</span>
+          }
+        </li>
+      }
+    </ol>
+  </div>
 
   <div class="skr-actions">
     <button #imageTrigger type="button" class="sk-btn sk-btn--primary" [disabled]="imageState === 'rendering'" (click)="openImage()">
@@ -57,11 +73,56 @@
     <p class="skr-copy-status" role="status" aria-live="polite">{{ toast }}</p>
   </div>
 
+  @if (stats; as st) {
+    <section class="skr-stats" aria-labelledby="skr-stats-title">
+      <h3 id="skr-stats-title" class="skr-stats__title">大家的顏控數據</h3>
+      <div class="skr-stats__nums">
+        <p class="skr-stats__num"><strong>{{ st.total | number }}</strong><span>次顏控9選</span></p>
+        <p class="skr-stats__num"><strong>{{ st.players | number }}</strong><span>位玩家參與</span></p>
+      </div>
+      @if (st.top; as top) {
+        <a class="skr-stats__face" [routerLink]="'/member/' + top.face.id">
+          <span class="skr-stats__avatar">
+            @if (top.face.photoUrl) {
+              <img [src]="top.face.photoUrl | supabaseImg: 160 : 80" [alt]="top.face.name" width="56" height="56" decoding="async" />
+            }
+          </span>
+          <span class="skr-stats__who">
+            <span class="skr-stats__eyebrow">👑 大家最愛的臉</span>
+            <strong class="skr-stats__name">{{ top.face.name }}</strong>
+            <span class="skr-stats__group">{{ groupLabel(top.face) }}</span>
+          </span>
+          <span class="skr-stats__pct"><strong>{{ formatPct(top.pct) }}</strong><span>的人選進 TOP9</span></span>
+        </a>
+      }
+      @if (st.topFirst; as tf) {
+        <a class="skr-stats__face skr-stats__face--sub" [routerLink]="'/member/' + tf.face.id">
+          <span class="skr-stats__avatar">
+            @if (tf.face.photoUrl) {
+              <img [src]="tf.face.photoUrl | supabaseImg: 160 : 80" [alt]="tf.face.name" width="44" height="44" decoding="async" />
+            }
+          </span>
+          <span class="skr-stats__who">
+            <span class="skr-stats__eyebrow">🥇 最多人選為第 1 名</span>
+            <strong class="skr-stats__name">{{ tf.face.name }}</strong>
+          </span>
+          <span class="skr-stats__pct"><strong>{{ formatPct(tf.pct) }}</strong><span>的人選為第 1 名</span></span>
+        </a>
+      }
+      @if (!st.hasPercent) {
+        <p class="skr-stats__note">數據累積中，玩的人越多越準 ✨</p>
+      }
+      <a routerLink="/sukigao/ranking" class="skr-stats__more">看完整的顏控排行 →</a>
+    </section>
+  }
+
   <div class="skr-submit" aria-live="polite">
     @switch (submitState) {
       @case ('done') {
         <p class="skr-submit__done" role="status">💗 已加入大家的顏控排行{{ replaced ? '（已更新為今天最新的結果）' : '' }}</p>
-        <a routerLink="/sukigao/ranking" class="skr-submit__link">看看大家的顏控排行 →</a>
+        @if (!stats) {
+          <a routerLink="/sukigao/ranking" class="skr-submit__link">看看大家的顏控排行 →</a>
+        }
       }
       @case ('error') {
         <p class="skr-submit__error" role="alert">

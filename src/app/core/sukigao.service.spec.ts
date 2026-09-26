@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { SukigaoService, buildPool } from './sukigao.service';
+import { SukigaoService, buildPool, buildStats } from './sukigao.service';
 import { SupabaseService } from './supabase.service';
 
 const row = (id: string, overrides: Record<string, unknown> = {}) => ({
@@ -29,6 +29,30 @@ describe('SukigaoService', () => {
   // Unless a test says otherwise, the edge endpoint is unavailable.
   beforeEach(() => {
     spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 404 }));
+  });
+
+  describe('buildStats', () => {
+    it('parses bigint strings and finds the leaders', () => {
+      const s = buildStats({
+        total: '120',
+        players: '90',
+        members: [
+          { member_id: 'a', top9: '50', first: '5' },
+          { member_id: 'b', top9: '40', first: '20' },
+        ],
+      });
+      expect(s.total).toBe(120);
+      expect(s.players).toBe(90);
+      expect(s.counts.get('b')).toEqual({ top9: 40, first: 20 });
+      expect(s.topTop9Id).toBe('a');
+      expect(s.topFirstId).toBe('b');
+    });
+
+    it('handles no results yet', () => {
+      const s = buildStats({ total: 0, players: 0, members: [] });
+      expect(s.topTop9Id).toBeNull();
+      expect(s.counts.size).toBe(0);
+    });
   });
 
   describe('buildPool', () => {
