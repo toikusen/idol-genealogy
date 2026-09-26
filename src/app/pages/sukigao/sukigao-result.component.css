@@ -298,8 +298,15 @@
 .skr-taste--same-first .skr-taste__label { color: #c98a12; }
 .skr-taste--nostalgic .skr-taste__label { color: #a8805e; }
 
-.skr-taste__emoji {
-  margin-right: 0.35em;
+.skr-taste__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.skr-taste__icon {
+  flex: none;
+  opacity: 0.85;
 }
 
 .skr-taste__desc {

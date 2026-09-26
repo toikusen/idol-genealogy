@@ -4,7 +4,7 @@ import { SukigaoCandidate, SukigaoStats } from '../../models';
 export const MIN_RESULTS_FOR_PERCENT = 1;
 
 export type SukigaoTasteKey =
-  | 'one-group'
+  | 'box'
   | 'nostalgic'
   | 'ceiling'
   | 'treasure'
@@ -16,7 +16,6 @@ export type SukigaoTasteKey =
 
 export interface SukigaoTaste {
   key: SukigaoTasteKey;
-  emoji: string;
   label: string;
   desc: string;
 }
@@ -50,15 +49,15 @@ export interface SukigaoResultStats {
 }
 
 const TASTES: Record<SukigaoTasteKey, SukigaoTaste> = {
-  'one-group': { key: 'one-group', emoji: '💘', label: '一團專情', desc: '同一團就佔了你 TOP9 好幾席，這團根本是你的菜單' },
-  nostalgic: { key: 'nostalgic', emoji: '📼', label: '考古顏控', desc: '畢業的她們，依然是你心中的神顏' },
-  ceiling: { key: 'ceiling', emoji: '👑', label: '顏控天花板', desc: '你選的幾乎都是排行前段班，你的眼光就是標準答案' },
-  treasure: { key: 'treasure', emoji: '💎', label: '神秘挖寶人', desc: '好幾位是很少人選的臉，你總能發現還沒被看見的美' },
-  'same-first': { key: 'same-first', emoji: '🥇', label: '冠軍同好', desc: '你的第一名，也是最多人的第一名' },
-  'group-tour': { key: 'group-tour', emoji: '🗺️', label: '百團巡禮', desc: '9 位幾乎來自不同團，每一團都有你的菜' },
-  mainstream: { key: 'mainstream', emoji: '🌟', label: '主流顏控', desc: '你喜歡的臉，也是大家的心頭好' },
-  balanced: { key: 'balanced', emoji: '⚖️', label: '平衡顏控', desc: '有大家公認的神顏，也有你的私心推' },
-  unique: { key: 'unique', emoji: '🦄', label: '獨特顏控', desc: '你喜歡的臉很少人發現，眼光獨到' },
+  box: { key: 'box', label: '箱推', desc: '同一團就佔了你 TOP9 好幾席，整團都是你的菜' },
+  nostalgic: { key: 'nostalgic', label: '考古顏控', desc: '畢業的她們，依然是你心中的神顏' },
+  ceiling: { key: 'ceiling', label: '顏控天花板', desc: '你選的幾乎都是排行前段班，你的眼光就是標準答案' },
+  treasure: { key: 'treasure', label: '神秘挖寶人', desc: '好幾位是很少人選的臉，你總能發現還沒被看見的美' },
+  'same-first': { key: 'same-first', label: '冠軍同好', desc: '你的第一名，也是最多人的第一名' },
+  'group-tour': { key: 'group-tour', label: '百團巡禮', desc: '9 位幾乎來自不同團，每一團都有你的菜' },
+  mainstream: { key: 'mainstream', label: '主流顏控', desc: '你喜歡的臉，也是大家的心頭好' },
+  balanced: { key: 'balanced', label: '平衡顏控', desc: '有大家公認的神顏，也有你的私心推' },
+  unique: { key: 'unique', label: '獨特顏控', desc: '你喜歡的臉很少人發現，眼光獨到' },
 };
 
 /** Every type, in the order they are checked (for tests and docs). */
@@ -66,7 +65,7 @@ export const TASTE_KEYS = Object.keys(TASTES) as SukigaoTasteKey[];
 
 /**
  * The first type that fits wins, most specific first: the TOP9 itself
- * (one group / graduates), then how it lines up with everyone else, then
+ * (箱推 / graduates), then how it lines up with everyone else, then
  * group spread, and finally the mainstream → unique scale every result fits.
  */
 export function pickTaste(
@@ -83,7 +82,7 @@ export function pickTaste(
   faces.forEach(f => perGroup.set(groupOf(f), (perGroup.get(groupOf(f)) ?? 0) + 1));
   const biggestGroup = Math.max(...perGroup.values());
 
-  if (biggestGroup >= 4) return TASTES['one-group'];
+  if (biggestGroup >= 4) return TASTES.box;
   if (faces.filter(f => !f.isCurrent).length >= 3) return TASTES.nostalgic;
 
   // If everyone picked at random, each face would be in 9 / poolSize of results.

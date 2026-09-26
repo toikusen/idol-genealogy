@@ -66,9 +66,9 @@ describe('pickTaste', () => {
     expect(TASTE_KEYS.length).toBe(9);
   });
 
-  it('一團專情: 4+ from one group', () => {
+  it('箱推: 4+ from one group', () => {
     const faces = [...Array.from({ length: 4 }, (_, i) => face(`a${i}`, 'Same')), ...spread().slice(0, 5)];
-    expect(taste(s(big, counts([])), faces)).toBe('one-group');
+    expect(taste(s(big, counts([])), faces)).toBe('box');
   });
 
   it('考古顏控: 3+ graduated members', () => {
