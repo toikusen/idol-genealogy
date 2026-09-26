@@ -331,6 +331,26 @@ export function currentBatchPicks(state: SukigaoGameState): string[] {
   return state.batchPicks[state.batchIndex] ?? [];
 }
 
+function progressIds(p: SukigaoProgress): string[] {
+  const f = p.final;
+  return [
+    ...(p.elimination?.groups.flat() ?? []),
+    ...(f ? [...f.ranked, ...f.pending, ...f.eliminated, ...(f.current ? [f.current] : [])] : []),
+    ...(p.result ?? []),
+  ];
+}
+
+/** Every face id the state refers to anywhere, undo history included. */
+export function referencedIds(state: SukigaoGameState): string[] {
+  return [...new Set([
+    ...state.candidateIds,
+    ...state.batchPicks.flat(),
+    ...state.fillPicks,
+    ...progressIds(state),
+    ...state.undo.flatMap(progressIds),
+  ])];
+}
+
 /** Every face picked so far in the preliminary + fill, in pick order. */
 export function poolIds(state: SukigaoGameState): string[] {
   return [...new Set([...state.batchPicks.flat(), ...state.fillPicks])];

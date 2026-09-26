@@ -282,6 +282,34 @@ describe('SukigaoComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控排行');
   });
 
+  it('fetches a card for any face the game refers to that the pool lacks', async () => {
+    await setup(48);
+    component.start();
+    const g = component.game()!;
+    // A face that is in the game but not in the loaded roster, however it got there.
+    const ghost = g.candidateIds[0];
+    sukigao.getMembersByIds.and.resolveTo([
+      { id: ghost, name: '回來了', photoUrl: '', groupNames: [], color: null, isCurrent: false },
+    ]);
+    (component as unknown as { faces: { update: (fn: (m: Map<string, unknown>) => Map<string, unknown>) => void } })
+      .faces.update(m => { const next = new Map(m); next.delete(ghost); return next; });
+    fixture.detectChanges();
+    await settle();
+    expect(sukigao.getMembersByIds).toHaveBeenCalledWith([ghost]);
+    expect(component.batch().find(f => f.id === ghost)!.name).toBe('回來了');
+    expect(analytics.trackEvent).toHaveBeenCalledWith('sukigao_missing_faces', { count: 1, stage: 'preliminary' });
+  });
+
+  it('on reload, fetches faces referenced outside candidateIds too', async () => {
+    await setup(48);
+    component.start();
+    const saved = { ...component.game()!, fillPicks: ['stranger'] };
+    localStorage.setItem(SUKIGAO_STATE_KEY, JSON.stringify(saved));
+    sukigao.getMembersByIds.calls.reset();
+    await component.load();
+    expect(sukigao.getMembersByIds).toHaveBeenCalledWith(['stranger']);
+  });
+
   it('re-submits (replacing) after undoing and finishing again', async () => {
     await setup(48);
     playToResult();

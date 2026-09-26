@@ -9,6 +9,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -40,6 +41,7 @@ import {
   finalPair,
   nextPreliminaryBatch,
   poolIds,
+  referencedIds,
   prevPreliminaryBatch,
   seededShuffle,
   stratifiedSample,
@@ -109,6 +111,8 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   readonly game = signal<SukigaoGameState | null>(null);
   /** Candidate metadata by id: the current pool plus any stale ids a saved session still uses. */
   private readonly faces = signal<Map<string, SukigaoCandidate>>(new Map());
+  /** Ids repairFaces() already went looking for, so a miss is fetched once. */
+  private readonly facesRequested = new Set<string>();
   /** Ordered ①② picks for the elimination group on screen (not persisted until complete). */
   readonly groupPicks = signal<string[]>([]);
   readonly fillPage = signal(0);
@@ -240,6 +244,16 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
+    // Safety net: any face the game refers to that has no card data (however
+    // it got there) is fetched instead of staying a blank "…" card.
+    effect(() => {
+      const g = this.game();
+      const faces = this.faces();
+      if (!g || !this.isBrowser) return;
+      const missing = referencedIds(g).filter(id => !faces.has(id) && !this.facesRequested.has(id));
+      if (missing.length > 0) untracked(() => void this.repairFaces(missing, g.stage));
+    });
+
     // While a round is on screen, the app's floating login pill / theme toggle
     // would cover the bottom action bar; styles.css hides them under this class.
     effect(() => {
@@ -275,7 +289,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       const faces = new Map(pool.candidates.map(c => [c.id, c]));
       const saved = this.session.load();
       if (saved) {
-        await this.fillMissingFaces(saved, faces);
+        await this.fillMissingFaces(referencedIds(saved), faces);
         if (this.destroyed) return;
       }
       this.faces.set(faces);
@@ -296,8 +310,8 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   }
 
   /** A saved session keeps its ids even if members left the pool since; fetch their cards. */
-  private async fillMissingFaces(state: SukigaoGameState, faces: Map<string, SukigaoCandidate>): Promise<void> {
-    const missing = state.candidateIds.filter(id => !faces.has(id));
+  private async fillMissingFaces(ids: readonly string[], faces: Map<string, SukigaoCandidate>): Promise<void> {
+    const missing = ids.filter(id => !faces.has(id));
     if (missing.length === 0) return;
     try {
       for (const m of await this.sukigao.getMembersByIds(missing)) faces.set(m.id, m);
@@ -551,6 +565,15 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     this.preloadAhead();
   }
 
+  private async repairFaces(missing: string[], stage: string): Promise<void> {
+    missing.forEach(id => this.facesRequested.add(id));
+    this.analytics.trackEvent('sukigao_missing_faces', { count: missing.length, stage });
+    const found = new Map<string, SukigaoCandidate>();
+    await this.fillMissingFaces(missing, found);
+    if (this.destroyed) return;
+    this.faces.update(current => new Map([...current, ...found]));
+  }
+
   private async loadStats(): Promise<void> {
     try {
       const stats = await this.sukigao.getStats();
@@ -586,7 +609,8 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   private resolve(ids: readonly string[]): SukigaoCandidate[] {
     const faces = this.faces();
-    return ids.map(id => faces.get(id) ?? { id, name: '…', photoUrl: '', groupNames: [], color: null, isCurrent: false });
+    // Only for the moment before repairFaces() fills a missing card in.
+    return ids.map(id => faces.get(id) ?? { id, name: '讀取中', photoUrl: '', groupNames: [], color: null, isCurrent: false });
   }
 
   /**
