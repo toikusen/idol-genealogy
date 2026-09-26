@@ -432,28 +432,28 @@
 
 /* A batch is always 3×3, on every screen. The grid is as wide as it can be
    while three rows still fit between the header and the sticky action bar:
-   ~360px is that vertical chrome plus the three name rows. */
+   ~380px is that vertical chrome plus the three name rows. */
 .sk-grid--batch {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
-  max-width: min(100%, 560px, max(260px, calc(100vh - 360px)));
+  max-width: min(100%, 560px, max(260px, calc(100vh - 380px)));
   margin-inline: auto;
 }
 
 .sk-grid--group {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: min(440px, max(240px, calc(100vh - 360px)));
+  max-width: min(440px, max(240px, calc(100vh - 380px)));
   margin: 0 auto;
   gap: 12px;
 }
 
 @supports (height: 100dvh) {
   .sk-grid--batch {
-    max-width: min(100%, 560px, max(260px, calc(100dvh - 360px)));
+    max-width: min(100%, 560px, max(260px, calc(100dvh - 380px)));
   }
 
   .sk-grid--group {
-    max-width: min(440px, max(240px, calc(100dvh - 360px)));
+    max-width: min(440px, max(240px, calc(100dvh - 380px)));
   }
 }
 

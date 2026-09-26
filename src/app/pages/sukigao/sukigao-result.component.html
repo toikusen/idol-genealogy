@@ -38,7 +38,7 @@
   </ol>
 
   <div class="skr-actions">
-    <button type="button" class="sk-btn sk-btn--primary" [disabled]="imageState === 'rendering'" (click)="openImage()">
+    <button #imageTrigger type="button" class="sk-btn sk-btn--primary" [disabled]="imageState === 'rendering'" (click)="openImage()">
       {{ imageState === 'rendering' ? '正在產生圖片…' : '📷 下載結果圖片' }}
     </button>
     <div class="skr-actions__row">
@@ -83,24 +83,23 @@
     }
   </div>
 
-  @if (imageState === 'ready' || imageState === 'error') {
-    <div class="skr-modal" role="dialog" aria-modal="true" aria-labelledby="skr-modal-title" (click)="closeImage()">
-      <div class="skr-modal__panel" (click)="$event.stopPropagation()">
-        <p id="skr-modal-title" class="skr-modal__title">你的顏控9選圖片</p>
-        @if (imageState === 'ready' && imageUrl) {
-          <img class="skr-modal__img" [src]="imageUrl" alt="我的台灣地偶顏控9選結果圖" width="1080" height="1350" />
-          <p class="skr-modal__hint">手機也可以長按圖片儲存</p>
-          <div class="skr-modal__actions">
-            @if (canShareImage) {
-              <button type="button" class="sk-btn sk-btn--primary" (click)="shareImage()">儲存 / 分享圖片</button>
-            }
-            <button type="button" class="sk-btn" [class.sk-btn--primary]="!canShareImage" (click)="downloadImage()">下載 PNG</button>
-          </div>
-        } @else {
-          <p class="skr-modal__hint" role="alert">圖片產生失敗，請稍後再試，或直接截圖分享。</p>
-        }
-        <button type="button" class="sk-link-btn" (click)="closeImage()">關閉</button>
-      </div>
+  <!-- Native modal dialog: top layer (above the floating buttons), focus trap and Esc for free. -->
+  <dialog #imageDialog class="skr-modal" aria-labelledby="skr-modal-title" (close)="onDialogClosed()" (click)="onDialogClick($event)">
+    <div class="skr-modal__panel">
+      <p id="skr-modal-title" class="skr-modal__title">你的顏控9選圖片</p>
+      @if (imageState === 'ready' && imageUrl) {
+        <img class="skr-modal__img" [src]="imageUrl" alt="我的台灣地偶顏控9選結果圖" width="1080" height="1350" />
+        <p class="skr-modal__hint">手機也可以長按圖片儲存</p>
+        <div class="skr-modal__actions">
+          @if (canShareImage) {
+            <button type="button" class="sk-btn sk-btn--primary" (click)="shareImage()">儲存 / 分享圖片</button>
+          }
+          <button type="button" class="sk-btn" [class.sk-btn--primary]="!canShareImage" (click)="downloadImage()">下載 PNG</button>
+        </div>
+      } @else if (imageState === 'error') {
+        <p class="skr-modal__hint" role="alert">圖片產生失敗，請稍後再試，或直接截圖分享。</p>
+      }
+      <button type="button" class="sk-link-btn" (click)="closeImage()">關閉</button>
     </div>
-  }
+  </dialog>
 </section>

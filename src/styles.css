@@ -297,3 +297,8 @@ body.sukigao-immersive .theme-toggle,
 body.sukigao-immersive .scroll-to-top {
   display: none !important;
 }
+
+/* 顏控9選 result-image dialog open: keep the page behind it still. */
+body.sukigao-modal-open {
+  overflow: hidden;
+}

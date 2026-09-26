@@ -116,6 +116,9 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   private destroyed = false;
   private groupTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Bumped per submit; a reply only counts if it is still the latest one. */
+  private submitSeq = 0;
+  private submitChain: Promise<unknown> = Promise.resolve();
   private readonly preloaded = new Set<string>();
 
   // ── Derived state (recomputed only when the game signal changes) ──
@@ -270,7 +273,8 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       // Every visit lands on the intro; a saved game is offered via resume().
       if (saved) {
         this.game.set(saved);
-        this.submitState.set(saved.submittedOn === this.today() ? 'done' : 'idle');
+        // submittedOn is cleared whenever a result is undone, so it always refers to saved.result.
+        this.submitState.set(saved.submittedOn ? 'done' : 'idle');
         this.view.set('intro');
       } else {
         this.view.set(pool.candidates.length >= TOP_N ? 'intro' : 'too-few');
@@ -321,6 +325,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       candidateIds: ids,
     });
     this.faces.set(new Map(pool.candidates.map(c => [c.id, c])));
+    this.clearGroupTimer();
     this.groupPicks.set([]);
     this.fillPage.set(0);
     this.submitState.set('idle');
@@ -340,7 +345,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     this.session.clear();
     this.game.set(null);
     this.groupPicks.set([]);
-    if (this.groupTimer) clearTimeout(this.groupTimer);
+    this.clearGroupTimer();
     this.view.set(this.pool() ? 'intro' : 'loading');
     this.scrollTop();
   }
@@ -350,8 +355,9 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     const g = this.game();
     if (!g) return;
     this.view.set('game');
-    // A result saved before it reached the ranking (offline, closed tab) goes in now.
-    if (g.stage === 'result' && g.submittedOn !== this.today() && this.submitState() !== 'done') {
+    // A result saved before it reached the ranking (offline, closed tab) goes in now;
+    // one already sent — today or on an earlier day — is only shown, never re-counted.
+    if (g.stage === 'result' && !g.submittedOn && this.submitState() !== 'done') {
       void this.submit();
     }
     this.preloadAhead();
@@ -361,10 +367,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   /** Back to the intro without losing progress. */
   backToIntro(): void {
     this.groupPicks.set([]);
-    if (this.groupTimer) {
-      clearTimeout(this.groupTimer);
-      this.groupTimer = null;
-    }
+    this.clearGroupTimer();
     this.view.set('intro');
     this.scrollTop();
   }
@@ -457,7 +460,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
-    if (this.stage() !== 'final' || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (this.view() !== 'game' || this.stage() !== 'final' || event.altKey || event.ctrlKey || event.metaKey) return;
     const target = event.target as HTMLElement | null;
     if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
     const pair = this.pair();
@@ -474,13 +477,11 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   // ── Shared ──
 
   undo(): void {
+    // A pending ①② advance is cancelled along with its picks.
+    this.clearGroupTimer();
     if (this.groupPicks().length > 0) {
       this.groupPicks.set([]);
       return;
-    }
-    if (this.groupTimer) {
-      clearTimeout(this.groupTimer);
-      this.groupTimer = null;
     }
     this.update(undo);
   }
@@ -488,20 +489,38 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   async submit(): Promise<void> {
     const g = this.game();
     if (!g?.result || g.result.length !== TOP_N || this.submitState() === 'sending') return;
+    const seq = ++this.submitSeq;
+    const resultKey = g.result.join(',');
     this.submitState.set('sending');
+    // Requests go out one at a time, so the server always ends on the newest result.
+    const previous = this.submitChain;
+    const request = previous
+      .catch(() => undefined)
+      .then(() => this.sukigao.submit(this.session.getBrowserId(), g.result!, g.candidateVersion));
+    this.submitChain = request.catch(() => undefined);
     try {
-      const res = await this.sukigao.submit(this.session.getBrowserId(), g.result, g.candidateVersion);
-      if (this.destroyed) return;
+      const res = await request;
+      // Ignore replies for a result that has since been undone or replaced by a new game.
+      if (this.destroyed || !this.isCurrentSubmit(seq, g.sessionId, resultKey)) return;
       this.submitReplaced.set(res.replaced);
       this.submitState.set('done');
-      const latest = this.game();
-      if (latest) this.commit({ ...latest, submittedOn: res.submittedOn || this.today() });
+      this.commit({ ...this.game()!, submittedOn: res.submittedOn || this.today() });
       this.analytics.trackEvent('sukigao_submit', { replaced: res.replaced, auto: true });
     } catch {
-      if (this.destroyed) return;
+      if (this.destroyed || !this.isCurrentSubmit(seq, g.sessionId, resultKey)) return;
       // The result stays in state + storage; only the network step failed.
       this.submitState.set('error');
     }
+  }
+
+  private isCurrentSubmit(seq: number, sessionId: string, resultKey: string): boolean {
+    const latest = this.game();
+    return seq === this.submitSeq && latest?.sessionId === sessionId && latest.result?.join(',') === resultKey;
+  }
+
+  private clearGroupTimer(): void {
+    if (this.groupTimer) clearTimeout(this.groupTimer);
+    this.groupTimer = null;
   }
 
   onShared(method: SukigaoShareMethod): void {
@@ -535,6 +554,8 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   private commit(next: SukigaoGameState): void {
     const prev = this.game();
+    // Leaving the result (undo) invalidates it: the next finish is a new submission.
+    if (prev?.stage === 'result' && next.stage !== 'result' && next.submittedOn) next = { ...next, submittedOn: null };
     this.game.set(next);
     this.session.save(next);
     if (prev?.stage !== next.stage || prev?.batchIndex !== next.batchIndex) this.preloadAhead();

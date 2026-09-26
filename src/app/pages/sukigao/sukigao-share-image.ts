@@ -146,7 +146,7 @@ function drawFace(
     ctx.font = `700 ${Math.round(d * 0.4)}px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(face.name.charAt(0), cx, cy);
+    ctx.fillText(Array.from(face.name)[0] ?? '', cx, cy);
   }
   ctx.restore();
 
@@ -186,11 +186,11 @@ function drawFace(
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#2d1b2e';
   ctx.font = `700 ${rank === 0 ? 36 : 30}px ${FONT}`;
-  ctx.fillText(fit(ctx, face.name, 310), cx, cy + r + (rank === 0 ? 58 : 48));
+  ctx.fillText(fit(ctx, face.name, 290), cx, cy + r + (rank === 0 ? 58 : 48));
   ctx.fillStyle = '#9a7a98';
   ctx.font = `24px ${FONT}`;
   const group = face.groupNames.length ? face.groupNames.join('・') : 'Solo';
-  ctx.fillText(fit(ctx, group, 310), cx, cy + r + (rank === 0 ? 92 : 80));
+  ctx.fillText(fit(ctx, group, 290), cx, cy + r + (rank === 0 ? 92 : 80));
 }
 
 function drawFooter(ctx: CanvasRenderingContext2D, siteLabel: string): void {
@@ -251,9 +251,10 @@ function spacedText(ctx: CanvasRenderingContext2D, text: string, cx: number, y: 
 /** Truncates with an ellipsis so long names stay inside their cell. */
 export function fit(ctx: Pick<CanvasRenderingContext2D, 'measureText'>, text: string, maxWidth: number): string {
   if (ctx.measureText(text).width <= maxWidth) return text;
-  let t = text;
-  while (t.length > 1 && ctx.measureText(`${t}…`).width > maxWidth) t = t.slice(0, -1);
-  return `${t}…`;
+  // Code points, not UTF-16 units, so an emoji is never split into a lone surrogate.
+  const chars = Array.from(text);
+  while (chars.length > 1 && ctx.measureText(`${chars.join('')}…`).width > maxWidth) chars.pop();
+  return `${chars.join('')}…`;
 }
 
 async function ensureFont(): Promise<void> {

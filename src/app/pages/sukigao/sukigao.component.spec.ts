@@ -62,6 +62,12 @@ describe('SukigaoComponent', () => {
     }
   }
 
+  /** Submits are queued one at a time, so let the promise chain run out. */
+  const settle = async () => {
+    await fixture.whenStable();
+    await new Promise(resolve => setTimeout(resolve));
+  };
+
   beforeEach(() => localStorage.clear());
   afterEach(() => localStorage.clear());
 
@@ -219,7 +225,7 @@ describe('SukigaoComponent', () => {
     await setup(48);
     sukigao.submit.and.rejectWith(new Error('500'));
     playToResult();
-    await fixture.whenStable();
+    await settle();
     const result = component.game()!.result;
     fixture.detectChanges();
     expect(component.submitState()).toBe('error');
@@ -235,7 +241,7 @@ describe('SukigaoComponent', () => {
   it('adds the result to the ranking automatically when the game ends', async () => {
     await setup(48);
     playToResult();
-    await fixture.whenStable();
+    await settle();
     expect(sukigao.submit).toHaveBeenCalledOnceWith(jasmine.any(String), component.game()!.result!, '48:v|current|36');
     expect(component.submitState()).toBe('done');
     expect(component.game()!.submittedOn).toBe('2026-09-25');
@@ -247,12 +253,77 @@ describe('SukigaoComponent', () => {
   it('re-submits (replacing) after undoing and finishing again', async () => {
     await setup(48);
     playToResult();
-    await fixture.whenStable();
+    await settle();
     component.undo();
     expect(component.stage()).toBe('final');
     component.chooseFinal(component.pair()[0].id);
-    await fixture.whenStable();
+    await settle();
     expect(sukigao.submit).toHaveBeenCalledTimes(2);
+  });
+
+  it('re-sends a result undone after it was submitted, and ignores the stale reply', async () => {
+    await setup(48);
+    let resolveFirst!: (v: { submittedOn: string; replaced: boolean }) => void;
+    sukigao.submit.and.returnValue(new Promise(r => (resolveFirst = r)));
+    playToResult();
+    component.undo();
+    expect(component.game()!.submittedOn).toBeNull();
+    sukigao.submit.and.resolveTo({ submittedOn: '2026-09-25', replaced: true });
+    let guard = 0;
+    while (component.stage() === 'final' && guard++ < 200) component.chooseFinal(component.pair()[1].id);
+    const second = component.game()!.result!;
+    resolveFirst({ submittedOn: '2026-09-25', replaced: false });
+    await settle();
+    expect(sukigao.submit).toHaveBeenCalledTimes(2);
+    expect(sukigao.submit.calls.mostRecent().args[1]).toEqual(second);
+    expect(component.submitState()).toBe('done');
+    expect(component.submitReplaced()).toBeTrue();
+  });
+
+  it('shows a result sent on an earlier day without counting it again', async () => {
+    await setup(48);
+    playToResult();
+    await settle();
+    const saved = { ...component.game()!, submittedOn: '2000-01-01' };
+    localStorage.setItem(SUKIGAO_STATE_KEY, JSON.stringify(saved));
+    sukigao.submit.calls.reset();
+    await component.load();
+    component.resume();
+    await settle();
+    expect(sukigao.submit).not.toHaveBeenCalled();
+    expect(component.submitState()).toBe('done');
+  });
+
+  it('arrow keys do nothing on the intro even with a saved final', async () => {
+    await setup(48);
+    component.start();
+    while (component.stage() === 'preliminary') {
+      component.batch().slice(0, 3).forEach(face => component.togglePick(face.id));
+      component.nextBatch();
+    }
+    expect(component.stage()).toBe('final');
+    component.backToIntro();
+    const before = component.comparisons();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+    expect(component.comparisons()).toBe(before);
+  });
+
+  it('undo during the ①② advance delay cancels the advance', async () => {
+    await setup(120);
+    component.start();
+    while (component.stage() === 'preliminary') {
+      component.batch().slice(0, 4).forEach(face => component.togglePick(face.id));
+      component.nextBatch();
+    }
+    const [a, b] = component.group();
+    component.pickInGroup(a.id);
+    component.pickInGroup(b.id);
+    component.undo();
+    await new Promise(resolve => setTimeout(resolve, 320));
+    expect(component.game()!.elimination!.groupIndex).toBe(0);
+    // And the next picks still work (no stuck timer).
+    component.pickInGroup(a.id);
+    expect(component.groupPicks()).toEqual([a.id]);
   });
 
   it('undo in the final restores the previous pair', async () => {

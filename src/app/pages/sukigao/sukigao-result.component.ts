@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SukigaoCandidate } from '../../models';
@@ -12,6 +12,8 @@ export const SUKIGAO_SHARE_URL = `${SITE_URL}/sukigao`;
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 const IMAGE_FILE_NAME = 'idolmaps-顏控9選.png';
+/** On <body> while the image dialog is open: stops the page behind it scrolling. */
+export const MODAL_OPEN_CLASS = 'sukigao-modal-open';
 
 /** Share text without the URL (Threads and Web Share take the URL separately). */
 export function buildShareText(names: readonly string[]): string {
@@ -49,6 +51,8 @@ export class SukigaoResultComponent implements OnDestroy {
   @Output() restart = new EventEmitter<void>();
   @Output() undo = new EventEmitter<void>();
   @Output() shared = new EventEmitter<SukigaoShareMethod>();
+  @ViewChild('imageDialog') private imageDialog?: ElementRef<HTMLDialogElement>;
+  @ViewChild('imageTrigger') private imageTrigger?: ElementRef<HTMLButtonElement>;
 
   readonly medals = MEDALS;
   readonly facebookUrl = buildFacebookShareUrl();
@@ -56,7 +60,9 @@ export class SukigaoResultComponent implements OnDestroy {
   toast = '';
   imageState: ImageState = 'idle';
   imageUrl: string | null = null;
+  canShareImage = false;
   private imageBlob: Blob | null = null;
+  private imageBlobFile: File | null = null;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private cdr: ChangeDetectorRef) {}
@@ -64,6 +70,7 @@ export class SukigaoResultComponent implements OnDestroy {
   ngOnDestroy(): void {
     if (this.imageUrl) URL.revokeObjectURL(this.imageUrl);
     if (this.toastTimer) clearTimeout(this.toastTimer);
+    if (typeof document !== 'undefined') document.body.classList.remove(MODAL_OPEN_CLASS);
   }
 
   get names(): string[] {
@@ -121,6 +128,8 @@ export class SukigaoResultComponent implements OnDestroy {
     try {
       const blob = await renderShareImage(this.faces, 'idolmaps.com/sukigao');
       this.imageBlob = blob;
+      this.imageBlobFile = null;
+      this.canShareImage = this.checkCanShareImage();
       if (this.imageUrl) URL.revokeObjectURL(this.imageUrl);
       this.imageUrl = URL.createObjectURL(blob);
       this.imageState = 'ready';
@@ -128,22 +137,52 @@ export class SukigaoResultComponent implements OnDestroy {
       this.imageState = 'error';
     }
     this.cdr.markForCheck();
+    this.cdr.detectChanges();
+    const dialog = this.imageDialog?.nativeElement;
+    if (dialog && !dialog.open && typeof dialog.showModal === 'function') {
+      document.body.classList.add(MODAL_OPEN_CLASS);
+      dialog.showModal();
+    }
   }
 
   closeImage(): void {
+    const dialog = this.imageDialog?.nativeElement;
+    if (dialog?.open) dialog.close(); // → (close) → onDialogClosed()
+    else this.onDialogClosed();
+  }
+
+  /** Runs for every way the dialog closes: 關閉, Esc, a tap on the backdrop. */
+  onDialogClosed(): void {
+    document.body.classList.remove(MODAL_OPEN_CLASS);
     this.imageState = 'idle';
     if (this.imageUrl) {
       URL.revokeObjectURL(this.imageUrl);
       this.imageUrl = null;
-      this.imageBlob = null;
     }
+    this.imageBlob = null;
+    this.imageBlobFile = null;
+    this.canShareImage = false;
     this.cdr.markForCheck();
+    this.cdr.detectChanges();
+    this.imageTrigger?.nativeElement.focus();
   }
 
-  get canShareImage(): boolean {
-    if (!this.imageBlob || typeof navigator === 'undefined' || typeof navigator.canShare !== 'function') return false;
+  /** A click whose target is the <dialog> itself landed on the backdrop, outside the panel. */
+  onDialogClick(event: MouseEvent): void {
+    if (event.target === this.imageDialog?.nativeElement) this.closeImage();
+  }
+
+  private get imageFile(): File | null {
+    if (!this.imageBlob) return null;
+    this.imageBlobFile ??= new File([this.imageBlob], IMAGE_FILE_NAME, { type: 'image/png' });
+    return this.imageBlobFile;
+  }
+
+  private checkCanShareImage(): boolean {
+    const file = this.imageFile;
+    if (!file || typeof navigator === 'undefined' || typeof navigator.canShare !== 'function') return false;
     try {
-      return navigator.canShare({ files: [new File([this.imageBlob], IMAGE_FILE_NAME, { type: 'image/png' })] });
+      return navigator.canShare({ files: [file] });
     } catch {
       return false;
     }
@@ -151,10 +190,11 @@ export class SukigaoResultComponent implements OnDestroy {
 
   /** Phones: share sheet with the PNG (「儲存影像」, Instagram, Threads…). */
   async shareImage(): Promise<void> {
-    if (!this.imageBlob) return;
+    const file = this.imageFile;
+    if (!file) return;
     try {
       await navigator.share({
-        files: [new File([this.imageBlob], IMAGE_FILE_NAME, { type: 'image/png' })],
+        files: [file],
         title: '我的台灣地偶顏控9選',
         text: `${buildShareText(this.names)}\n${SUKIGAO_SHARE_URL}`,
       });
