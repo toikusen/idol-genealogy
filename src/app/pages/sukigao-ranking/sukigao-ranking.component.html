@@ -112,8 +112,8 @@
             <button type="button" class="sk-btn skrank-more" (click)="showMore()">
               看更多（第 {{ shown() + 1 }}–{{ shown() + moreCount() }} 名）
             </button>
-          } @else if (entries().length >= limit) {
-            <p class="skrank-limit">僅顯示前 {{ limit }} 名</p>
+          } @else if (endNote()) {
+            <p class="skrank-limit">{{ endNote() }}</p>
           }
         }
       }

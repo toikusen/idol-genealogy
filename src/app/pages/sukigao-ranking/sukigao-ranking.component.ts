@@ -14,6 +14,10 @@ type LoadState = 'loading' | 'ready' | 'error';
 /** Places 4+ start with this many rows; 看更多 reveals MORE_STEP at a time. */
 const FIRST_PAGE = 10;
 const MORE_STEP = 20;
+/** Most places listed per tab. #1 picks spread thin, so that list is shorter. */
+const MAX_PLACES: Record<SukigaoRankingMode, number> = { top9: 50, first: 30 };
+/** Shares under this are a coin toss between near-ties; they aren't listed. */
+const MIN_PCT = 1;
 
 @Component({
   selector: 'app-sukigao-ranking',
@@ -41,9 +45,23 @@ export class SukigaoRankingComponent implements OnInit, OnDestroy {
   readonly stats = signal<SukigaoStats | null>(null);
   readonly shown = signal(FIRST_PAGE);
 
-  readonly podium = computed(() => this.entries().slice(0, 3));
-  readonly rest = computed(() => this.entries().slice(3, this.shown()));
-  readonly moreCount = computed(() => Math.min(MORE_STEP, this.entries().length - this.shown()));
+  /** What the tab lists: at least 1% of results (when known), capped per tab. */
+  readonly visible = computed(() => {
+    const total = this.stats()?.total ?? 0;
+    const rows = total > 0 ? this.entries().filter(e => (this.count(e) / total) * 100 >= MIN_PCT) : this.entries();
+    return rows.slice(0, MAX_PLACES[this.mode()]);
+  });
+  /** Why the list stops: members under 1% were left out, or the tab's cap was hit. */
+  readonly endNote = computed(() => {
+    const total = this.stats()?.total ?? 0;
+    const shown = this.visible().length;
+    if (total > 0 && this.entries().some(e => (this.count(e) / total) * 100 < MIN_PCT)) return '其餘不到 1% 的成員未列出';
+    if (shown >= MAX_PLACES[this.mode()] && this.entries().length > shown) return `僅列出前 ${shown} 名`;
+    return '';
+  });
+  readonly podium = computed(() => this.visible().slice(0, 3));
+  readonly rest = computed(() => this.visible().slice(3, this.shown()));
+  readonly moreCount = computed(() => Math.min(MORE_STEP, this.visible().length - this.shown()));
 
   private destroyed = false;
   private requestId = 0;

@@ -55,16 +55,37 @@ describe('SukigaoRankingComponent', () => {
     expect(el.textContent).toContain('看更多（第 11–30 名）');
   });
 
-  it('reveals 20 more per tap, up to the 100 loaded', async () => {
+  it('TOP9 tab lists at most 50, 20 more per tap', async () => {
     await setup(stats);
     const el: HTMLElement = fixture.nativeElement;
-    for (let i = 0; i < 5; i++) {
-      (el.querySelector('.skrank-more') as HTMLButtonElement).click();
+    for (let i = 0; i < 3; i++) {
+      (el.querySelector('.skrank-more') as HTMLButtonElement | null)?.click();
       fixture.detectChanges();
     }
-    expect(el.querySelectorAll('.skrank-list .skrank-row').length).toBe(97);
+    expect(el.querySelectorAll('.skrank-list .skrank-row').length).toBe(47);
     expect(el.querySelector('.skrank-more')).toBeNull();
-    expect(el.textContent).toContain('僅顯示前 100 名');
+    expect(el.textContent).toContain('僅列出前 50 名');
+  });
+
+  it('first-place tab lists at most 30 and leaves out members under 1%', async () => {
+    // 1000 results: first_place_count 120 - i → under 1% (10) from i = 111 on; the cap of 30 hits first.
+    await setup(stats);
+    fixture.componentInstance.selectTab('first');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    expect(c.visible().length).toBe(30);
+    // With few results each #1 pick is a big share; with many, the long tail drops out.
+    c.stats.set({ ...stats, total: 10000 });
+    fixture.detectChanges();
+    // 120 - i >= 100 (1% of 10,000) → i <= 20 → 21 members.
+    expect(c.visible().length).toBe(21);
+    // The note shows under the list once 看更多 has revealed everything.
+    expect(c.endNote()).toBe('其餘不到 1% 的成員未列出');
+    c.showMore();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.skrank-more')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('其餘不到 1% 的成員未列出');
   });
 
   it('first-place tab uses first-place counts and starts collapsed again', async () => {
