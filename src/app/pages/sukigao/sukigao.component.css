@@ -447,13 +447,16 @@
   gap: 12px;
 }
 
-@supports (height: 100dvh) {
+/* svh = the viewport with the browser bars showing. Unlike dvh it doesn't
+   change while scrolling hides / shows the mobile address bar, so the cards
+   keep their size instead of growing and shrinking mid-scroll. */
+@supports (height: 100svh) {
   .sk-grid--batch {
-    max-width: min(100%, 560px, max(260px, calc(100dvh - 380px)));
+    max-width: min(100%, 560px, max(260px, calc(100svh - 380px)));
   }
 
   .sk-grid--group {
-    max-width: min(440px, max(240px, calc(100dvh - 380px)));
+    max-width: min(440px, max(240px, calc(100svh - 380px)));
   }
 }
 
