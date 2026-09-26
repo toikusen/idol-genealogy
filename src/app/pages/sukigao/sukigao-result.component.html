@@ -57,33 +57,23 @@
     <p class="skr-copy-status" role="status" aria-live="polite">{{ toast }}</p>
   </div>
 
-  <div class="skr-submit">
+  <div class="skr-submit" aria-live="polite">
     @switch (submitState) {
       @case ('done') {
-        <p class="skr-submit__done" role="status">💗 已加入今天的顏控排行{{ replaced ? '（已取代今天稍早的結果）' : '' }}</p>
+        <p class="skr-submit__done" role="status">💗 已加入大家的顏控排行{{ replaced ? '（已更新為今天最新的結果）' : '' }}</p>
         <a routerLink="/sukigao/ranking" class="skr-submit__link">看看大家的顏控排行 →</a>
       }
-      @default {
-        <button
-          type="button"
-          class="sk-btn sk-btn--submit"
-          [disabled]="submitState === 'sending'"
-          (click)="submitResult.emit()"
-        >
-          {{ submitState === 'sending' ? '送出中…' : '💗 將我的 TOP9 加入大家的顏控排行' }}
-        </button>
-        <p class="skr-submit__note">
-          不需要登入。<br />
-          不會提交姓名、Email 或社群帳號。<br />
-          同一個瀏覽器一天只會統計最後一次結果。
+      @case ('error') {
+        <p class="skr-submit__error" role="alert">
+          結果已保留在這台裝置，但目前無法加入大家的顏控排行。
         </p>
-        @if (submitState === 'error') {
-          <p class="skr-submit__error" role="alert">
-            結果已保留在這台裝置，但目前無法送出統計。<br />請稍後再試。
-          </p>
-        }
+        <button type="button" class="sk-link-btn" (click)="submitResult.emit()">再試一次</button>
+      }
+      @default {
+        <p class="skr-submit__pending" role="status">正在加入大家的顏控排行…</p>
       }
     }
+    <p class="skr-submit__note">匿名統計，不會記錄姓名、Email 或社群帳號；同一個瀏覽器一天只算最後一次結果。</p>
   </div>
 
   <div class="skr-footer">

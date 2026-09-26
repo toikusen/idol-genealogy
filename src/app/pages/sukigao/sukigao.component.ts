@@ -354,8 +354,13 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   /** Picks up the saved game from the intro. */
   resume(): void {
-    if (!this.game()) return;
+    const g = this.game();
+    if (!g) return;
     this.view.set('game');
+    // A result saved before it reached the ranking (offline, closed tab) goes in now.
+    if (g.stage === 'result' && g.submittedOn !== this.today() && this.submitState() !== 'done') {
+      void this.submit();
+    }
     this.preloadAhead();
     this.scrollTop();
   }
@@ -498,7 +503,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       this.submitState.set('done');
       const latest = this.game();
       if (latest) this.commit({ ...latest, submittedOn: res.submittedOn || this.today() });
-      this.analytics.trackEvent('sukigao_submit', { replaced: res.replaced });
+      this.analytics.trackEvent('sukigao_submit', { replaced: res.replaced, auto: true });
     } catch {
       if (this.destroyed) return;
       // The result stays in state + storage; only the network step failed.
@@ -515,6 +520,9 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       this.analytics.trackEvent('sukigao_final_start', { pool_size: this.finalPoolSize(g) });
     } else if (g.stage === 'result') {
       this.analytics.trackEvent('sukigao_complete', { comparisons: g.final?.comparisons ?? 0 });
+      // Every finished TOP 9 goes into the anonymous ranking; the server keeps
+      // only a browser's last result per day, so replays and undos replace it.
+      void this.submit();
     }
     this.preloadAhead();
   }

@@ -248,10 +248,17 @@
 }
 
 .skr-submit {
-  padding: 1.1rem;
+  padding: 0.9rem 1.1rem;
   border-radius: 14px;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border-subtle);
   background: var(--bg-surface-subtle);
+}
+
+.skr-submit__pending {
+  margin: 0;
+  text-align: center;
+  font-size: 0.86rem;
+  color: var(--text-faint-70);
 }
 
 .skr-submit__note {

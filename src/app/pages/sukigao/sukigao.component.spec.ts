@@ -31,6 +31,7 @@ describe('SukigaoComponent', () => {
     sukigao = jasmine.createSpyObj<SukigaoService>('SukigaoService', ['getPool', 'getMembersByIds', 'submit', 'getRanking']);
     sukigao.getPool.and.resolveTo(pool(n));
     sukigao.getMembersByIds.and.resolveTo([]);
+    sukigao.submit.and.resolveTo({ submittedOn: '2026-09-25', replaced: false });
     analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', ['trackEvent', 'trackPageView']);
     await TestBed.configureTestingModule({
       imports: [SukigaoComponent],
@@ -203,26 +204,42 @@ describe('SukigaoComponent', () => {
 
   it('keeps the local result when submitting fails', async () => {
     await setup(48);
-    playToResult();
     sukigao.submit.and.rejectWith(new Error('500'));
+    playToResult();
+    await fixture.whenStable();
     const result = component.game()!.result;
-    await component.submit();
     fixture.detectChanges();
     expect(component.submitState()).toBe('error');
     expect(component.game()!.result).toEqual(result);
     expect(localStorage.getItem(SUKIGAO_STATE_KEY)).toContain(result![0]);
     expect(fixture.nativeElement.textContent).toContain('結果已保留在這台裝置');
-  });
-
-  it('submits only on explicit opt-in and marks the day', async () => {
-    await setup(48);
-    playToResult();
-    expect(sukigao.submit).not.toHaveBeenCalled();
+    // Retry works once the network is back.
     sukigao.submit.and.resolveTo({ submittedOn: '2026-09-25', replaced: false });
     await component.submit();
+    expect(component.submitState()).toBe('done');
+  });
+
+  it('adds the result to the ranking automatically when the game ends', async () => {
+    await setup(48);
+    playToResult();
+    await fixture.whenStable();
     expect(sukigao.submit).toHaveBeenCalledOnceWith(jasmine.any(String), component.game()!.result!, '48:v|current|36');
     expect(component.submitState()).toBe('done');
     expect(component.game()!.submittedOn).toBe('2026-09-25');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控排行');
+    expect(fixture.nativeElement.textContent).not.toContain('將我的 TOP9 加入大家的顏控排行');
+  });
+
+  it('re-submits (replacing) after undoing and finishing again', async () => {
+    await setup(48);
+    playToResult();
+    await fixture.whenStable();
+    component.undo();
+    expect(component.stage()).toBe('final');
+    component.chooseFinal(component.pair()[0].id);
+    await fixture.whenStable();
+    expect(sukigao.submit).toHaveBeenCalledTimes(2);
   });
 
   it('undo in the final restores the previous pair', async () => {
