@@ -31,8 +31,9 @@ describe('SukigaoComponent', () => {
   const pool = (n: number): SukigaoPool => ({ candidates: candidates(n), version: `${n}:v`, groupCount: 5 });
 
   async function setup(n = 48) {
-    sukigao = jasmine.createSpyObj<SukigaoService>('SukigaoService', ['getPool', 'getMembersByIds', 'submit', 'getRanking', 'getStats', 'saveMine']);
+    sukigao = jasmine.createSpyObj<SukigaoService>('SukigaoService', ['getPool', 'getMembersByIds', 'submit', 'getRanking', 'getStats', 'saveMine', 'getPlayCount']);
     sukigao.saveMine.and.resolveTo();
+    sukigao.getPlayCount.and.resolveTo(4321);
     sukigao.getPool.and.resolveTo(pool(n));
     sukigao.getMembersByIds.and.resolveTo([]);
     sukigao.submit.and.resolveTo({ submittedOn: '2026-09-25', replaced: false });
@@ -94,6 +95,15 @@ describe('SukigaoComponent', () => {
     expect(text).toContain('現役成員36 位');
     expect(text).toContain('包含畢業48 位');
     expect(text).toContain('開始選我的顏控9選');
+  });
+
+  it('intro links to the ranking with a prominent card and the play count', async () => {
+    await setup(48);
+    fixture.detectChanges();
+    const card: HTMLAnchorElement = fixture.nativeElement.querySelector('app-sukigao-ranking-link a.srl-card');
+    expect(card.getAttribute('href')).toBe('/sukigao/ranking');
+    expect(card.textContent).toContain('大家的顏控排行');
+    expect(card.textContent).toContain('4,321 次');
   });
 
   it('samples the chosen size from the chosen scope', async () => {

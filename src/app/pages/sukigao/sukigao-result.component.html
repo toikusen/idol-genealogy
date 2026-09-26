@@ -125,7 +125,7 @@
       @if (!st.hasPercent) {
         <p class="skr-stats__note">數據累積中，玩的人越多越準 ✨</p>
       }
-      <a routerLink="/sukigao/ranking" class="skr-stats__more">看完整的顏控排行 →</a>
+      <app-sukigao-ranking-link />
     </section>
   }
 
@@ -159,7 +159,7 @@
       @case ('done') {
         <p class="skr-submit__done" role="status">💗 已加入大家的顏控排行{{ replaced ? '（已更新為今天最新的結果）' : '' }}</p>
         @if (!stats) {
-          <a routerLink="/sukigao/ranking" class="skr-submit__link">看看大家的顏控排行 →</a>
+          <app-sukigao-ranking-link />
         }
       }
       @case ('error') {

@@ -275,6 +275,10 @@
   white-space: nowrap;
 }
 
+.sk-intro__ranking {
+  margin-top: 4px;
+}
+
 .sk-intro__hint {
   margin: 0;
   font-size: 0.72rem;

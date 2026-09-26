@@ -460,12 +460,6 @@
   color: var(--text-faint-70);
 }
 
-.skr-stats__more {
-  align-self: center;
-  font-size: 0.84rem;
-  color: var(--text-secondary);
-}
-
 .skr-actions,
 .skr-submit,
 .skr-footer {
@@ -518,12 +512,6 @@
   text-align: center;
   font-size: 0.9rem;
   color: var(--text-link);
-}
-
-.skr-submit__link {
-  text-align: center;
-  font-size: 0.84rem;
-  color: var(--text-secondary);
 }
 
 .skr-submit__error {

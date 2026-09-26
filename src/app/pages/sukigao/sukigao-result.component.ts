@@ -6,6 +6,7 @@ import { SukigaoCandidate } from '../../models';
 import { SITE_URL } from '../../core/public-url.utils';
 import { renderShareImage } from './sukigao-share-image';
 import { SukigaoResultStats, formatPct } from './sukigao-stats';
+import { SukigaoRankingLinkComponent } from './sukigao-ranking-link.component';
 
 export type SukigaoSubmitState = 'idle' | 'sending' | 'done' | 'error';
 export type SukigaoAccountSave = 'idle' | 'signed-out' | 'saving' | 'saved' | 'error';
@@ -40,7 +41,7 @@ type ImageState = 'idle' | 'rendering' | 'ready' | 'error';
 @Component({
   selector: 'app-sukigao-result',
   standalone: true,
-  imports: [RouterLink, SupabaseImgPipe, DecimalPipe],
+  imports: [RouterLink, SupabaseImgPipe, DecimalPipe, SukigaoRankingLinkComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sukigao-result.component.html',
   styleUrls: ['./sukigao-buttons.css', './sukigao-result.component.css'],

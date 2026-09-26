@@ -56,6 +56,7 @@ import { SukigaoCandidate, SukigaoStats } from '../../models';
 import { SukigaoResultStats, buildResultStats } from './sukigao-stats';
 import { SukigaoCardComponent } from './sukigao-card.component';
 import { SukigaoEditCtaComponent } from './sukigao-edit-cta.component';
+import { SukigaoRankingLinkComponent } from './sukigao-ranking-link.component';
 import { SukigaoAccountSave, SukigaoResultComponent, SukigaoShareMethod, SukigaoSubmitState } from './sukigao-result.component';
 
 type ViewState = 'loading' | 'error' | 'intro' | 'game' | 'too-few';
@@ -88,7 +89,7 @@ const GROUP_ADVANCE_DELAY_MS = 260;
 @Component({
   selector: 'app-sukigao',
   standalone: true,
-  imports: [RouterLink, SupabaseImgPipe, SukigaoCardComponent, SukigaoResultComponent, SukigaoEditCtaComponent],
+  imports: [RouterLink, SupabaseImgPipe, SukigaoCardComponent, SukigaoResultComponent, SukigaoEditCtaComponent, SukigaoRankingLinkComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sukigao.component.html',
   styleUrls: ['./sukigao-buttons.css', './sukigao.component.css'],
@@ -171,6 +172,9 @@ export class SukigaoComponent implements OnInit, OnDestroy {
   readonly canUndo = computed(() => (this.game() ? canUndo(this.game()!) : false));
 
   readonly resultFaces = computed(() => this.resolve(this.game()?.result ?? []));
+
+  /** Play count on the intro's ranking link (edge-cached; null hides it). */
+  readonly introPlays = signal<number | null>(null);
 
   /** Everyone's numbers for the result page; null until loaded (or if they fail). */
   readonly stats = signal<SukigaoStats | null>(null);
@@ -276,6 +280,9 @@ export class SukigaoComponent implements OnInit, OnDestroy {
     // Storage and the candidate pool are browser-only; SSR renders the intro shell.
     if (!this.isBrowser) return;
     void this.load(false);
+    void this.sukigao.getPlayCount().then(n => {
+      if (!this.destroyed && n) this.introPlays.set(n);
+    });
   }
 
   ngOnDestroy(): void {
