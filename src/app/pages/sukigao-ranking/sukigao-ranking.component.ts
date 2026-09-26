@@ -33,8 +33,8 @@ export class SukigaoRankingComponent implements OnInit, OnDestroy {
   private readonly seo = inject(SeoService);
 
   readonly tabs: { mode: SukigaoRankingMode; label: string }[] = [
-    { mode: 'top9', label: 'TOP9 入選次數' },
-    { mode: 'first', label: '第一名次數' },
+    { mode: 'top9', label: '最常被選進 TOP9' },
+    { mode: 'first', label: '大家心中的第一' },
   ];
   readonly limit = SUKIGAO_RANKING_LIMIT;
 
@@ -68,8 +68,8 @@ export class SukigaoRankingComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.seo.setPage(
-      '台灣地偶顏控排行｜大家的顏控9選 - Idol Maps',
-      '參與「台灣地偶顏控9選」使用者的匿名 TOP9 結果統計：最常入選與最常拿到第一名的成員。',
+      '大家的顏控9選｜台灣地偶顏控9選 - Idol Maps',
+      '參與「台灣地偶顏控9選」的匿名統計：大家最常選進 TOP9 的臉，和大家心中的第一。',
       siteUrl('/sukigao/ranking'),
       '/og-sukigao.png',
     );

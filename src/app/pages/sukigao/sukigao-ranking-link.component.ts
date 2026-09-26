@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 /**
- * The way into 大家的顏控排行. `card` is the prominent block used on the intro
+ * The way into 大家的顏控9選 (the ranking page). `card` is the prominent block used on the intro
  * and result pages; `pill` is the compact version for the result top bar.
  */
 @Component({
@@ -15,7 +15,7 @@ import { RouterLink } from '@angular/router';
     @if (variant === 'pill') {
       <a routerLink="/sukigao/ranking" class="srl-pill">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3.5 4"/><path d="M17 6h3a3 3 0 0 1-3.5 4"/></svg>
-        顏控排行
+        大家都在選誰
       </a>
     } @else {
       <a routerLink="/sukigao/ranking" class="srl-card">
@@ -23,9 +23,9 @@ import { RouterLink } from '@angular/router';
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3.5 4"/><path d="M17 6h3a3 3 0 0 1-3.5 4"/></svg>
         </span>
         <span class="srl-card__text">
-          <strong class="srl-card__title">大家的顏控排行</strong>
+          <strong class="srl-card__title">大家都在選誰</strong>
           <span class="srl-card__sub">
-            看看誰是最多人選的臉@if (plays) {<span class="srl-card__plays"> · {{ plays | number }} 次</span>}
+            大家的顏控9選，看看誰最多人心動@if (plays) {<span class="srl-card__plays"> · {{ plays | number }} 次</span>}
           </span>
         </span>
         <svg class="srl-card__arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>

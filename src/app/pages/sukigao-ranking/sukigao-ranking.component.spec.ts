@@ -97,7 +97,7 @@ describe('SukigaoRankingComponent', () => {
     fixture.detectChanges();
     expect(sukigao.getRanking).toHaveBeenCalledWith('first', 100);
     expect(el.querySelector('.skrank-pod--1 .skrank-pod__value')!.textContent).toBe('12%');
-    expect(el.textContent).toContain('選她為第 1 名的人比例');
+    expect(el.textContent).toContain('把她選為心中第一的人比例');
     expect(el.querySelectorAll('.skrank-list .skrank-row').length).toBe(7);
   });
 

@@ -4,7 +4,7 @@
   <header class="skrank-head">
     <h1 class="skrank-title">
       <span class="skrank-title__kicker">大家的</span>
-      <span>台灣地偶顏控排行</span>
+      <span>台灣地偶顏控9選</span>
     </h1>
     <p class="skrank-sub">參與顏控9選的匿名結果統計・約每分鐘更新</p>
     <p class="skrank-hint">點成員可前往個人頁面；照片或資料有誤，歡迎直接提案修正</p>
@@ -17,7 +17,7 @@
     </div>
   }
 
-  <div class="skrank-tabs" role="tablist" aria-label="排行類型">
+  <div class="skrank-tabs" role="tablist" aria-label="統計類型">
     @for (tab of tabs; track tab.mode; let i = $index) {
       <button
         type="button"
@@ -49,7 +49,7 @@
       }
       @case ('error') {
         <div class="skrank-empty" role="alert">
-          <p>排行載入失敗</p>
+          <p>資料載入失敗</p>
           <button type="button" class="sk-btn" (click)="load()">重新載入</button>
         </div>
       }
@@ -61,7 +61,7 @@
           </div>
         } @else {
           <p class="skrank-caption">
-            {{ mode() === 'first' ? '選她為第 1 名的人' : '把她選進 TOP9 的人' }}{{ stats() ? '比例' : '次數' }}
+            {{ mode() === 'first' ? '把她選為心中第一的人' : '把她選進 TOP9 的人' }}{{ stats() ? '比例' : '次數' }}
           </p>
 
           <ol class="skrank-podium">
@@ -124,11 +124,11 @@
     <a routerLink="/sukigao" class="sk-btn sk-btn--primary">開始選我的顏控9選</a>
   </div>
 
-  <aside class="skrank-disclaimer" aria-label="排行說明">
+  <aside class="skrank-disclaimer" aria-label="關於這份統計">
     <p>
-      此排行僅統計參與「台灣地偶顏控9選」使用者的匿名結果，<br />
-      代表的是照片上的個人審美偏好，不代表人氣、實力或官方排名。<br />
-      不同時期收錄的成員與照片可能有所不同，因此每位成員被看到的機會也可能不同。
+      這裡只是大家看一張照片、憑直覺選出的喜好，每個人心動的臉都不一樣。<br />
+      照片拍得如何、有沒有被抽到，都會影響結果，不代表人氣、實力或任何官方評價。<br />
+      每一張臉，都有人心動 💗
     </p>
   </aside>
 

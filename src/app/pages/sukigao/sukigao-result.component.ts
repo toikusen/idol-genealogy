@@ -5,7 +5,7 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SukigaoCandidate } from '../../models';
 import { SITE_URL } from '../../core/public-url.utils';
 import { renderShareImage } from './sukigao-share-image';
-import { SukigaoResultStats, formatPct } from './sukigao-stats';
+import { RARE_BELOW_PCT, SukigaoResultStats, formatPct } from './sukigao-stats';
 import { SukigaoRankingLinkComponent } from './sukigao-ranking-link.component';
 
 export type SukigaoSubmitState = 'idle' | 'sending' | 'done' | 'error';
@@ -64,6 +64,8 @@ export class SukigaoResultComponent implements OnDestroy {
 
   readonly medals = MEDALS;
   readonly formatPct = formatPct;
+  /** Under this share the player's pick shows as 慧眼 instead of a small number. */
+  readonly RARE_BELOW_PCT = RARE_BELOW_PCT;
   readonly facebookUrl = buildFacebookShareUrl();
 
   toast = '';

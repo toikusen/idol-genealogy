@@ -252,6 +252,15 @@
   color: var(--text-faint-55);
 }
 
+.skr-list__pct.skr-list__rare {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  font-size: 0.74rem;
+  color: #9b6bd6;
+}
+
 .skr-list__pct {
   flex: none;
   min-width: 2.6rem;

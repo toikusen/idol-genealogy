@@ -62,7 +62,11 @@
           <span class="skr-list__rank">{{ i < 3 ? medals[i] : (i + 1) + '.' }}</span>
           <span class="skr-list__name">{{ face.name }} <span class="skr-list__group">{{ groupLabel(face) }}</span></span>
           @if (stats?.hasPercent) {
-            <span class="skr-list__pct" [attr.aria-label]="formatPct(stats!.picks[i]) + ' 的人也把她選進 TOP9'">{{ formatPct(stats!.picks[i]) }}</span>
+            @if (stats!.picks[i] >= RARE_BELOW_PCT) {
+              <span class="skr-list__pct" [attr.aria-label]="formatPct(stats!.picks[i]) + ' 的人也把她選進 TOP9'">{{ formatPct(stats!.picks[i]) }}</span>
+            } @else {
+              <span class="skr-list__pct skr-list__rare" aria-label="慧眼：你比大家更早發現她"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/><path d="m12 21-4-12 4-6 4 6z"/></svg>慧眼</span>
+            }
           }
         </li>
       }
@@ -119,10 +123,10 @@
             }
           </span>
           <span class="skr-stats__who">
-            <span class="skr-stats__eyebrow">🥇 最多人選為第 1 名</span>
+            <span class="skr-stats__eyebrow">🥇 大家心中的第一</span>
             <strong class="skr-stats__name">{{ tf.face.name }}</strong>
           </span>
-          <span class="skr-stats__pct"><strong>{{ formatPct(tf.pct) }}</strong><span>的人選為第 1 名</span></span>
+          <span class="skr-stats__pct"><strong>{{ formatPct(tf.pct) }}</strong><span>的人選為心中第一</span></span>
         </a>
       }
       @if (!st.hasPercent) {
@@ -160,19 +164,19 @@
   <div class="skr-submit" aria-live="polite">
     @switch (submitState) {
       @case ('done') {
-        <p class="skr-submit__done" role="status">💗 已加入大家的顏控排行{{ replaced ? '（已更新為今天最新的結果）' : '' }}</p>
+        <p class="skr-submit__done" role="status">💗 已加入大家的顏控9選{{ replaced ? '（已更新為今天最新的結果）' : '' }}</p>
         @if (!stats) {
           <app-sukigao-ranking-link />
         }
       }
       @case ('error') {
         <p class="skr-submit__error" role="alert">
-          結果已保留在這台裝置，但目前無法加入大家的顏控排行。
+          結果已保留在這台裝置，但目前無法加入大家的顏控9選。
         </p>
         <button type="button" class="sk-link-btn" (click)="submitResult.emit()">再試一次</button>
       }
       @default {
-        <p class="skr-submit__pending" role="status">正在加入大家的顏控排行…</p>
+        <p class="skr-submit__pending" role="status">正在加入大家的顏控9選…</p>
       }
     }
     <p class="skr-submit__note">匿名統計，不會記錄姓名、Email 或社群帳號；同一個瀏覽器一天只算最後一次結果。</p>

@@ -3,6 +3,13 @@ import { SukigaoCandidate, SukigaoStats } from '../../models';
 /** Percentages show as soon as there is any counted result. */
 export const MIN_RESULTS_FOR_PERCENT = 1;
 
+/**
+ * A pick below this share of results is shown as 慧眼 (you spotted her
+ * early), never as a small number like 0% or <1% that the member herself
+ * might see in a shared result.
+ */
+export const RARE_BELOW_PCT = 3;
+
 export type SukigaoTasteKey =
   | 'box'
   | 'nostalgic'
@@ -51,13 +58,13 @@ export interface SukigaoResultStats {
 const TASTES: Record<SukigaoTasteKey, SukigaoTaste> = {
   box: { key: 'box', label: '箱推', desc: '同一團就佔了你 TOP9 好幾席，整團都是你的菜' },
   nostalgic: { key: 'nostalgic', label: '考古顏控', desc: '畢業的她們，依然是你心中的神顏' },
-  ceiling: { key: 'ceiling', label: '顏控天花板', desc: '你選的幾乎都是排行前段班，你的眼光就是標準答案' },
-  treasure: { key: 'treasure', label: '神秘挖寶人', desc: '好幾位是很少人選的臉，你總能發現還沒被看見的美' },
+  ceiling: { key: 'ceiling', label: '顏控天花板', desc: '你選的都是大家的心頭好，你的眼光跟大家一致' },
+  treasure: { key: 'treasure', label: '神秘挖寶人', desc: '好幾位是還沒被很多人發現的臉，你總能先看見她們的美' },
   'same-first': { key: 'same-first', label: '冠軍同好', desc: '你的第一名，也是最多人的第一名' },
   'group-tour': { key: 'group-tour', label: '百團巡禮', desc: '9 位幾乎來自不同團，每一團都有你的菜' },
   mainstream: { key: 'mainstream', label: '主流顏控', desc: '你喜歡的臉，也是大家的心頭好' },
   balanced: { key: 'balanced', label: '平衡顏控', desc: '有大家公認的神顏，也有你的私心推' },
-  unique: { key: 'unique', label: '獨特顏控', desc: '你喜歡的臉很少人發現，眼光獨到' },
+  unique: { key: 'unique', label: '獨特顏控', desc: '你喜歡的臉還沒被很多人發現，眼光獨到' },
 };
 
 /** Every type, in the order they are checked (for tests and docs). */

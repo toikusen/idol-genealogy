@@ -102,7 +102,7 @@ describe('SukigaoComponent', () => {
     fixture.detectChanges();
     const card: HTMLAnchorElement = fixture.nativeElement.querySelector('app-sukigao-ranking-link a.srl-card');
     expect(card.getAttribute('href')).toBe('/sukigao/ranking');
-    expect(card.textContent).toContain('大家的顏控排行');
+    expect(card.textContent).toContain('大家都在選誰');
     expect(card.textContent).toContain('4,321 次');
   });
 
@@ -272,8 +272,8 @@ describe('SukigaoComponent', () => {
     expect(component.submitState()).toBe('done');
     expect(component.game()!.submittedOn).toBe('2026-09-25');
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控排行');
-    expect(fixture.nativeElement.textContent).not.toContain('將我的 TOP9 加入大家的顏控排行');
+    expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控9選');
+    expect(fixture.nativeElement.textContent).not.toContain('將我的 TOP9 加入大家的顏控9選');
   });
 
   it('shows everyone\'s numbers on the result page', async () => {
@@ -287,7 +287,11 @@ describe('SukigaoComponent', () => {
     expect(text).toContain('1,000位玩家參與');
     expect(text).toContain('大家最愛的臉');
     expect(text).toContain('32%的人選進 TOP9');
-    expect(text).toContain('最多人選為第 1 名');
+    expect(text).toContain('大家心中的第一');
+    // Picks only a sliver of players chose read as 慧眼, never 0% / <1%.
+    const pcts = Array.from(fixture.nativeElement.querySelectorAll('.skr-list__pct') as NodeListOf<HTMLElement>).map(e => e.textContent!.trim());
+    expect(pcts.some(t => t === '0%' || t === '<1%')).toBeFalse();
+    expect(pcts).toContain('慧眼');
     expect(text).toContain('你的顏控類型');
   });
 
@@ -298,7 +302,7 @@ describe('SukigaoComponent', () => {
     await settle();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('大家的顏控數據');
-    expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控排行');
+    expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控9選');
   });
 
   it('fetches a card for any face the game refers to that the pool lacks', async () => {
