@@ -4,7 +4,7 @@
 // visitor.
 
 // Same public fallbacks as scripts/generate-routes.mjs / environment.ts.
-const DEFAULT_SUPABASE_URL = 'https://ziiagdrrytyrmzoeegjk.supabase.co';
+export const DEFAULT_SUPABASE_URL = 'https://ziiagdrrytyrmzoeegjk.supabase.co';
 const DEFAULT_SUPABASE_KEY = 'sb_publishable_PtKb4LIJeJN3cECUJllW7w_UFRVTbTv';
 const UPSTREAM_TIMEOUT_MS = 8000;
 

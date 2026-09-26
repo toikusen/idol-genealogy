@@ -5,7 +5,7 @@ import { SukigaoPool, SukigaoService } from '../../core/sukigao.service';
 import { SUKIGAO_STATE_KEY, SukigaoSessionService } from '../../core/sukigao-session.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { SukigaoCandidate } from '../../models';
-import { buildShareText, buildXShareUrl } from './sukigao-result.component';
+import { buildFacebookShareUrl, buildShareText, buildThreadsShareUrl } from './sukigao-result.component';
 
 function candidates(n: number): SukigaoCandidate[] {
   return Array.from({ length: n }, (_, i) => ({
@@ -266,11 +266,18 @@ describe('SukigaoComponent', () => {
       expect(text).toContain('#台灣地偶顏控9選');
     });
 
-    it('URL-encodes the X intent', () => {
-      const url = buildXShareUrl(['A&B', ...names.slice(1)]);
+    it('URL-encodes the Threads intent with the TOP 9 text', () => {
+      const url = buildThreadsShareUrl(['A&B', ...names.slice(1)]);
+      expect(url).toMatch(/^https:\/\/www\.threads\.net\/intent\/post\?text=/);
       expect(url).toContain('A%26B');
       expect(url).toContain(`url=${encodeURIComponent('https://idolmaps.com/sukigao')}`);
       expect(url).not.toContain('\n');
+    });
+
+    it('points the Facebook sharer at the game page', () => {
+      expect(buildFacebookShareUrl()).toBe(
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://idolmaps.com/sukigao')}`,
+      );
     });
   });
 });

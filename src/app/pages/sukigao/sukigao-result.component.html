@@ -7,7 +7,7 @@
 
   <ol class="skr-grid" aria-label="顏控9選結果">
     @for (face of faces; track face.id; let i = $index) {
-      <li class="skr-cell" [class]="'skr-pos-' + (i + 1)">
+      <li class="skr-cell" [class]="'skr-pos-' + (i + 1) + (i < 3 ? ' skr-medal skr-medal--' + (i + 1) : '')">
         <a [routerLink]="'/member/' + face.id" class="skr-cell__link" [attr.aria-label]="'第 ' + (i + 1) + ' 名：' + face.name">
           <span class="skr-cell__photo">
             <span class="skr-cell__circle">
@@ -15,9 +15,11 @@
                 <img [src]="face.photoUrl | supabaseImg: (i === 0 ? 480 : 320) : 80" [alt]="face.name" width="300" height="300" decoding="async" />
               }
             </span>
-            <span class="skr-cell__rank" aria-hidden="true">
-              @if (i === 0) { 👑 } {{ i + 1 }}
-            </span>
+            @if (i === 0) { <span class="skr-cell__crown" aria-hidden="true">👑</span> }
+            <span class="skr-cell__rank" aria-hidden="true">{{ i + 1 }}</span>
+            @if (i < 3) {
+              <span class="skr-cell__ribbon" aria-hidden="true">{{ ['1st', '2nd', '3rd'][i] }}</span>
+            }
           </span>
           <span class="skr-cell__name">{{ face.name }}</span>
           <span class="skr-cell__group">{{ groupLabel(face) }}</span>
@@ -28,20 +30,31 @@
 
   <ol class="skr-list">
     @for (face of faces; track face.id; let i = $index) {
-      <li><span class="skr-list__rank">{{ i + 1 }}.</span> {{ face.name }} <span class="skr-list__group">{{ groupLabel(face) }}</span></li>
+      <li [class.skr-list__top]="i < 3">
+        <span class="skr-list__rank">{{ i < 3 ? medals[i] : (i + 1) + '.' }}</span>
+        {{ face.name }} <span class="skr-list__group">{{ groupLabel(face) }}</span>
+      </li>
     }
   </ol>
 
   <div class="skr-actions">
-    <button type="button" class="sk-btn sk-btn--primary" (click)="share()">分享結果</button>
+    <button type="button" class="sk-btn sk-btn--primary" [disabled]="imageState === 'rendering'" (click)="openImage()">
+      {{ imageState === 'rendering' ? '正在產生圖片…' : '📷 下載結果圖片' }}
+    </button>
     <div class="skr-actions__row">
-      <a class="sk-btn sk-btn--ghost" [href]="xShareUrl" target="_blank" rel="noopener noreferrer" (click)="onShareX()">分享到 X</a>
-      <button type="button" class="sk-btn sk-btn--ghost" (click)="copy()">複製結果</button>
+      <a class="sk-btn sk-btn--ghost skr-share skr-share--fb" [href]="facebookUrl" target="_blank" rel="noopener noreferrer" (click)="onFacebook()">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.62 23.1 24 18.1 24 12.07"/></svg>
+        Facebook
+      </a>
+      <a class="sk-btn sk-btn--ghost skr-share" [href]="threadsUrl" target="_blank" rel="noopener noreferrer" (click)="onThreads()">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.7 11.1c-.1-.05-.2-.1-.31-.14-.18-3.35-2.01-5.27-5.08-5.29h-.04c-1.84 0-3.37.78-4.3 2.21l1.69 1.16c.7-1.06 1.8-1.29 2.61-1.29h.03c1.01.01 1.77.3 2.26.87.36.42.6 1 .72 1.73a12.9 12.9 0 0 0-2.9-.14c-2.92.17-4.8 1.87-4.67 4.25.06 1.2.66 2.24 1.69 2.92.87.58 1.99.86 3.15.8 1.53-.08 2.73-.67 3.57-1.73.63-.81 1.03-1.86 1.21-3.18.73.44 1.27 1.02 1.57 1.72.51 1.19.54 3.14-1.05 4.73-1.39 1.39-3.07 2-5.6 2.01-2.8-.02-4.93-.92-6.31-2.67C4.64 17.43 3.97 15 3.94 12c.03-3 .7-5.43 1.99-7.07 1.38-1.75 3.51-2.65 6.31-2.67 2.83.02 4.98.92 6.41 2.69.7.87 1.22 1.95 1.57 3.22l1.98-.53c-.42-1.56-1.09-2.9-2-4.02C18.33 1.37 15.67.23 12.24.2h-.01C8.8.23 6.17 1.38 4.4 3.62 2.83 5.62 2.02 8.39 2 11.99v.02c.03 3.6.83 6.37 2.4 8.37 1.77 2.24 4.4 3.39 7.83 3.42h.01c3.05-.02 5.2-.82 6.97-2.59 2.32-2.31 2.25-5.21 1.48-7-.55-1.28-1.6-2.32-3-3.01Zm-5.26 4.95c-1.27.07-2.6-.5-2.66-1.72-.05-.9.64-1.91 2.73-2.03.24-.01.47-.02.7-.02.76 0 1.47.07 2.11.21-.24 3-1.65 3.49-2.88 3.56Z"/></svg>
+        Threads
+      </a>
     </div>
-    <p class="skr-copy-status" role="status" aria-live="polite">
-      @if (copyStatus === 'copied') { 已複製到剪貼簿 }
-      @if (copyStatus === 'failed') { 無法自動複製，請手動截圖或選取文字 }
-    </p>
+    @if (canWebShare) {
+      <button type="button" class="sk-link-btn skr-more" (click)="shareMore()">更多分享方式（LINE、IG…）</button>
+    }
+    <p class="skr-copy-status" role="status" aria-live="polite">{{ toast }}</p>
   </div>
 
   <div class="skr-submit">
@@ -79,4 +92,25 @@
       <button type="button" class="sk-link-btn" (click)="undo.emit()">← 回到上一個比較</button>
     }
   </div>
+
+  @if (imageState === 'ready' || imageState === 'error') {
+    <div class="skr-modal" role="dialog" aria-modal="true" aria-labelledby="skr-modal-title" (click)="closeImage()">
+      <div class="skr-modal__panel" (click)="$event.stopPropagation()">
+        <p id="skr-modal-title" class="skr-modal__title">你的顏控9選圖片</p>
+        @if (imageState === 'ready' && imageUrl) {
+          <img class="skr-modal__img" [src]="imageUrl" alt="我的台灣地偶顏控9選結果圖" width="1080" height="1350" />
+          <p class="skr-modal__hint">手機也可以長按圖片儲存</p>
+          <div class="skr-modal__actions">
+            @if (canShareImage) {
+              <button type="button" class="sk-btn sk-btn--primary" (click)="shareImage()">儲存 / 分享圖片</button>
+            }
+            <button type="button" class="sk-btn" [class.sk-btn--primary]="!canShareImage" (click)="downloadImage()">下載 PNG</button>
+          </div>
+        } @else {
+          <p class="skr-modal__hint" role="alert">圖片產生失敗，請稍後再試，或直接截圖分享。</p>
+        }
+        <button type="button" class="sk-link-btn" (click)="closeImage()">關閉</button>
+      </div>
+    </div>
+  }
 </section>

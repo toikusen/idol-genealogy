@@ -1,26 +1,36 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SukigaoCandidate } from '../../models';
 import { SITE_URL } from '../../core/public-url.utils';
+import { renderShareImage } from './sukigao-share-image';
 
 export type SukigaoSubmitState = 'idle' | 'sending' | 'done' | 'error';
-export type SukigaoShareMethod = 'web_share' | 'x' | 'copy';
+export type SukigaoShareMethod = 'web_share' | 'facebook' | 'threads' | 'image_share' | 'image_download';
 
 export const SUKIGAO_SHARE_URL = `${SITE_URL}/sukigao`;
 
 const MEDALS = ['🥇', '🥈', '🥉'];
+const IMAGE_FILE_NAME = 'idolmaps-顏控9選.png';
 
-/** Share text without the URL (X and Web Share take the URL separately). */
+/** Share text without the URL (Threads and Web Share take the URL separately). */
 export function buildShareText(names: readonly string[]): string {
   const lines = names.map((name, i) => (i < 3 ? `${MEDALS[i]} ${name}` : `${i + 1}. ${name}`));
   return ['我的「台灣地偶顏控9選」💗', ...lines, '#IdolMaps', '#台灣地偶顏控9選'].join('\n');
 }
 
-export function buildXShareUrl(names: readonly string[]): string {
-  return `https://x.com/intent/post?text=${encodeURIComponent(buildShareText(names))}`
+/** Threads' web intent takes prefilled text; the URL goes in its own param. */
+export function buildThreadsShareUrl(names: readonly string[]): string {
+  return `https://www.threads.net/intent/post?text=${encodeURIComponent(buildShareText(names))}`
     + `&url=${encodeURIComponent(SUKIGAO_SHARE_URL)}`;
 }
+
+/** Facebook ignores prefilled text; the sharer only takes the link (its OG card). */
+export function buildFacebookShareUrl(): string {
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SUKIGAO_SHARE_URL)}`;
+}
+
+type ImageState = 'idle' | 'rendering' | 'ready' | 'error';
 
 @Component({
   selector: 'app-sukigao-result',
@@ -30,7 +40,7 @@ export function buildXShareUrl(names: readonly string[]): string {
   templateUrl: './sukigao-result.component.html',
   styleUrls: ['./sukigao-buttons.css', './sukigao-result.component.css'],
 })
-export class SukigaoResultComponent {
+export class SukigaoResultComponent implements OnDestroy {
   @Input({ required: true }) faces: SukigaoCandidate[] = [];
   @Input() submitState: SukigaoSubmitState = 'idle';
   @Input() replaced = false;
@@ -40,39 +50,135 @@ export class SukigaoResultComponent {
   @Output() undo = new EventEmitter<void>();
   @Output() shared = new EventEmitter<SukigaoShareMethod>();
 
-  copyStatus: 'idle' | 'copied' | 'failed' = 'idle';
-  private copyTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly medals = MEDALS;
+  readonly facebookUrl = buildFacebookShareUrl();
+
+  toast = '';
+  imageState: ImageState = 'idle';
+  imageUrl: string | null = null;
+  private imageBlob: Blob | null = null;
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private cdr: ChangeDetectorRef) {}
+
+  ngOnDestroy(): void {
+    if (this.imageUrl) URL.revokeObjectURL(this.imageUrl);
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+  }
 
   get names(): string[] {
     return this.faces.map(f => f.name);
   }
 
-  get xShareUrl(): string {
-    return buildXShareUrl(this.names);
+  get threadsUrl(): string {
+    return buildThreadsShareUrl(this.names);
+  }
+
+  get canWebShare(): boolean {
+    return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
   }
 
   groupLabel(face: SukigaoCandidate): string {
     return face.groupNames.length > 0 ? face.groupNames.join('・') : 'Solo';
   }
 
-  async share(): Promise<void> {
+  /** Native share sheet (LINE, Instagram…); falls back to copying the text. */
+  async shareMore(): Promise<void> {
     const text = buildShareText(this.names);
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    if (this.canWebShare) {
       try {
         await navigator.share({ title: '我的台灣地偶顏控9選', text, url: SUKIGAO_SHARE_URL });
         this.shared.emit('web_share');
         return;
       } catch (err) {
-        // User closed the share sheet: nothing to do.
         if (err instanceof DOMException && err.name === 'AbortError') return;
       }
     }
-    await this.copy();
+    await this.copyText();
   }
 
-  async copy(): Promise<void> {
+  /**
+   * Facebook drops prefilled text, so copy the TOP 9 first — the player just
+   * pastes it into the post the sharer opens. The link itself is the <a href>.
+   */
+  async onFacebook(): Promise<void> {
+    const ok = await this.copyText(false);
+    this.showToast(ok ? '已複製你的 TOP9，貼到 Facebook 貼文裡即可 ✨' : '分享視窗已開啟');
+    this.shared.emit('facebook');
+  }
+
+  onThreads(): void {
+    this.shared.emit('threads');
+  }
+
+  // ── result image ──
+
+  async openImage(): Promise<void> {
+    if (this.imageState === 'rendering') return;
+    if (this.imageState === 'ready') return;
+    this.imageState = 'rendering';
+    this.cdr.markForCheck();
+    try {
+      const blob = await renderShareImage(this.faces, 'idolmaps.com/sukigao');
+      this.imageBlob = blob;
+      if (this.imageUrl) URL.revokeObjectURL(this.imageUrl);
+      this.imageUrl = URL.createObjectURL(blob);
+      this.imageState = 'ready';
+    } catch {
+      this.imageState = 'error';
+    }
+    this.cdr.markForCheck();
+  }
+
+  closeImage(): void {
+    this.imageState = 'idle';
+    if (this.imageUrl) {
+      URL.revokeObjectURL(this.imageUrl);
+      this.imageUrl = null;
+      this.imageBlob = null;
+    }
+    this.cdr.markForCheck();
+  }
+
+  get canShareImage(): boolean {
+    if (!this.imageBlob || typeof navigator === 'undefined' || typeof navigator.canShare !== 'function') return false;
+    try {
+      return navigator.canShare({ files: [new File([this.imageBlob], IMAGE_FILE_NAME, { type: 'image/png' })] });
+    } catch {
+      return false;
+    }
+  }
+
+  /** Phones: share sheet with the PNG (「儲存影像」, Instagram, Threads…). */
+  async shareImage(): Promise<void> {
+    if (!this.imageBlob) return;
+    try {
+      await navigator.share({
+        files: [new File([this.imageBlob], IMAGE_FILE_NAME, { type: 'image/png' })],
+        title: '我的台灣地偶顏控9選',
+        text: `${buildShareText(this.names)}\n${SUKIGAO_SHARE_URL}`,
+      });
+      this.shared.emit('image_share');
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      this.downloadImage();
+    }
+  }
+
+  downloadImage(): void {
+    if (!this.imageUrl || typeof document === 'undefined') return;
+    const a = document.createElement('a');
+    a.href = this.imageUrl;
+    a.download = IMAGE_FILE_NAME;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    this.shared.emit('image_download');
+  }
+
+  // ── helpers ──
+
+  private async copyText(announce = true): Promise<boolean> {
     const text = `${buildShareText(this.names)}\n${SUKIGAO_SHARE_URL}`;
     let ok = false;
     try {
@@ -84,18 +190,18 @@ export class SukigaoResultComponent {
       ok = false;
     }
     if (!ok) ok = legacyCopy(text);
-    this.copyStatus = ok ? 'copied' : 'failed';
-    if (ok) this.shared.emit('copy');
-    this.cdr.markForCheck();
-    if (this.copyTimer) clearTimeout(this.copyTimer);
-    this.copyTimer = setTimeout(() => {
-      this.copyStatus = 'idle';
-      this.cdr.markForCheck();
-    }, 2500);
+    if (announce) this.showToast(ok ? '已複製結果文字' : '無法自動複製，請手動截圖');
+    return ok;
   }
 
-  onShareX(): void {
-    this.shared.emit('x');
+  private showToast(message: string): void {
+    this.toast = message;
+    this.cdr.markForCheck();
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      this.toast = '';
+      this.cdr.markForCheck();
+    }, 3500);
   }
 }
 

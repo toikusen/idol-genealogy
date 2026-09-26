@@ -41,6 +41,7 @@ export class SukigaoRankingComponent implements OnInit, OnDestroy {
       '台灣地偶顏控排行｜大家的顏控9選 - Idol Maps',
       '參與「台灣地偶顏控9選」使用者的匿名 TOP9 結果統計：最常入選與最常拿到第一名的成員。',
       siteUrl('/sukigao/ranking'),
+      '/og-sukigao.png',
     );
     // Live aggregate — fetched in the browser only, never baked into prerender.
     if (this.isBrowser) void this.load();
