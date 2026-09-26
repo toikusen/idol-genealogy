@@ -1,4 +1,5 @@
 <section class="skr" aria-labelledby="skr-title">
+  <div class="skr-hero">
   <header class="skr-head">
     <p class="skr-eyebrow">YOUR FACE 9</p>
     <h2 id="skr-title" class="skr-title">你的<br />台灣地偶顏控9選</h2>
@@ -27,7 +28,9 @@
       </li>
     }
   </ol>
+  </div>
 
+  <div class="skr-side">
   @if (stats?.taste; as taste) {
     <div class="skr-taste" [class]="'skr-taste skr-taste--' + taste.key">
       <span class="skr-taste__eyebrow">你的顏控類型</span>
@@ -180,6 +183,8 @@
     @if (canUndo) {
       <button type="button" class="sk-link-btn" (click)="undo.emit()">← 回到上一個比較</button>
     }
+  </div>
+
   </div>
 
   <!-- Native modal dialog: top layer (above the floating buttons), focus trap and Esc for free. -->

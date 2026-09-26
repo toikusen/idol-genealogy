@@ -596,3 +596,198 @@
     max-width: 880px;
   }
 }
+
+/* Phones / tablets: the desktop wrappers don't exist as boxes. */
+.sk-intro__hero,
+.sk-intro__panel,
+.sk-play {
+  display: contents;
+}
+
+/* ── Desktop: two columns so the faces can use the whole screen height ── */
+@media (min-width: 1024px) {
+  .sk-page {
+    max-width: 1180px;
+    padding-bottom: 2rem;
+  }
+
+  /* Intro: pitch + preview on the left, setup + start on the right. */
+  .sk-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+    column-gap: 64px;
+    align-items: center;
+    text-align: left;
+  }
+
+  .sk-intro > .sk-back,
+  .sk-intro > app-sukigao-edit-cta {
+    grid-column: 1 / -1;
+  }
+
+  .sk-intro > app-sukigao-edit-cta {
+    margin-top: 2rem;
+  }
+
+  .sk-intro__hero,
+  .sk-intro__panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .sk-intro__main {
+    font-size: 4rem;
+  }
+
+  .sk-intro__lead {
+    font-size: 1.05rem;
+  }
+
+  .sk-intro__preview {
+    max-width: 420px;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .sk-intro__panel .sk-setup,
+  .sk-intro__panel .sk-intro__cta,
+  .sk-intro__panel .sk-intro__how {
+    max-width: none;
+  }
+
+  /* Game: round info + actions on the left, the faces on the right. */
+  .sk-play {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    /* The faces span every row; the 1fr row absorbs their height so the
+       left column's items stay packed at the top. */
+    grid-template-rows: repeat(6, auto) 1fr;
+    column-gap: 48px;
+    align-items: start;
+  }
+
+  .sk-play > * {
+    grid-column: 1;
+  }
+
+  .sk-play > .sk-grid,
+  .sk-play > .sk-versus {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    width: 100%;
+  }
+
+  .sk-play .sk-stage-head {
+    margin-top: 0.5rem;
+    text-align: left;
+  }
+
+  .sk-play .sk-stage-head__title {
+    font-size: 1.8rem;
+    line-height: 1.35;
+  }
+
+  .sk-play .sk-stage-head__title--sm {
+    font-size: 1.35rem;
+  }
+
+  .sk-play .sk-stage-head__q {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .sk-play .sk-stage-head__hint {
+    font-size: 0.8rem;
+  }
+
+  .sk-play .sk-progress {
+    margin: 1rem 0 0;
+  }
+
+  /* The action bar sits under the round info instead of floating at the bottom. */
+  .sk-play .sk-actionbar,
+  .sk-play .sk-actionbar--sticky {
+    position: static;
+    flex-wrap: wrap;
+    margin: 1.25rem 0 0;
+    padding: 0.9rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-xs);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .sk-play .sk-actionbar__count {
+    order: -1;
+    flex-basis: 100%;
+    margin-bottom: 0.25rem;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .sk-play .sk-actionbar .sk-btn {
+    flex: 1;
+  }
+
+  .sk-play .sk-actionbar__spacer {
+    display: none;
+  }
+
+  .sk-play .sk-actionbar--center {
+    justify-content: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
+
+  .sk-play .sk-final-hint {
+    margin-top: 1rem;
+    text-align: left;
+  }
+
+  .sk-play .sk-pager {
+    justify-content: space-between;
+  }
+
+  .sk-play > app-sukigao-edit-cta {
+    margin-top: 1rem;
+  }
+
+  /* 3×3 as big as fits: ~290px is the top bar, page padding, the three name
+     rows and the gaps. */
+  .sk-play > .sk-grid--batch {
+    max-width: min(100%, 780px, calc(100vh - 290px));
+    gap: 14px;
+  }
+
+  .sk-play > .sk-grid--group {
+    max-width: min(100%, 720px, calc(100vh - 230px));
+    gap: 18px;
+  }
+
+  .sk-play > .sk-versus {
+    max-width: min(100%, 860px, calc((100vh - 220px) * 2));
+    gap: 32px;
+  }
+
+  @supports (height: 100svh) {
+    .sk-play > .sk-grid--batch {
+      max-width: min(100%, 780px, calc(100svh - 290px));
+    }
+
+    .sk-play > .sk-grid--group {
+      max-width: min(100%, 720px, calc(100svh - 230px));
+    }
+
+    .sk-play > .sk-versus {
+      max-width: min(100%, 860px, calc((100svh - 220px) * 2));
+    }
+  }
+}

@@ -32,6 +32,7 @@
     @case ('intro') {
       <section class="sk-intro" aria-labelledby="sk-intro-title">
         <a routerLink="/" class="sk-back">← Idol Maps</a>
+        <div class="sk-intro__hero">
         <h1 id="sk-intro-title" class="sk-intro__title">
           <span class="sk-intro__kicker">台灣地偶</span>
           <span class="sk-intro__main">顏控9選</span>
@@ -57,6 +58,9 @@
           先把歌、舞蹈、個性和回憶放一邊，<br />
           這次只看照片。
         </p>
+        </div>
+
+        <div class="sk-intro__panel">
 
         @if (pool()) {
           <div class="sk-setup">
@@ -152,6 +156,7 @@
           </ol>
           <p>進度會自動存在這台裝置，關掉頁面也能繼續。</p>
         </details>
+        </div>
 
         <app-sukigao-edit-cta variant="full" context="intro" />
       </section>
@@ -171,6 +176,7 @@
 
           <!-- ROUND 1: 海選 -->
           @case ('preliminary') {
+            <div class="sk-play sk-play--preliminary">
             <header class="sk-stage-head">
               <h1 class="sk-stage-head__title"><span class="sk-stage-head__chip">ROUND 1</span>海選</h1>
               <p class="sk-stage-head__q">這一組裡，哪些臉是你的菜？</p>
@@ -206,10 +212,12 @@
               </button>
             </div>
             <app-sukigao-edit-cta variant="compact" context="preliminary" [faces]="batch()" />
+            </div>
           }
 
           <!-- 補選 -->
           @case ('fill') {
+            <div class="sk-play sk-play--fill">
             <header class="sk-stage-head">
               <h1 class="sk-stage-head__title"><span class="sk-stage-head__chip">補選</span>目前只選了 {{ preliminaryPickCount() }} 位</h1>
               <p class="sk-stage-head__q">
@@ -246,10 +254,12 @@
               <button type="button" class="sk-btn sk-btn--primary" [disabled]="shortfall() > 0" (click)="confirmFill()">繼續 →</button>
             </div>
             <app-sukigao-edit-cta variant="compact" context="fill" [faces]="fillItems()" />
+            </div>
           }
 
           <!-- ROUND 2: 候選淘汰 -->
           @case ('elimination') {
+            <div class="sk-play sk-play--elimination">
             <header class="sk-stage-head">
               <p class="sk-stage-head__chip">ROUND 2・候選淘汰{{ eliminationRound() > 1 ? '（第 ' + eliminationRound() + ' 輪）' : '' }}</p>
               <h1 class="sk-stage-head__title sk-stage-head__title--sm">
@@ -294,10 +304,12 @@
               <span class="sk-actionbar__spacer"></span>
             </div>
             <app-sukigao-edit-cta variant="compact" context="elimination" [faces]="group()" />
+            </div>
           }
 
           <!-- ROUND 3: FINAL -->
           @case ('final') {
+            <div class="sk-play sk-play--final">
             <header class="sk-stage-head">
               <p class="sk-stage-head__chip sk-stage-head__chip--final">FINAL</p>
               <h1 class="sk-stage-head__title">哪張臉更中你？</h1>
@@ -343,6 +355,7 @@
               <button type="button" class="sk-link-btn" [disabled]="!canUndo()" (click)="undo()">← 上一步</button>
             </div>
             <app-sukigao-edit-cta variant="compact" context="final" [faces]="pair()" />
+            </div>
           }
 
           <!-- RESULT -->

@@ -664,3 +664,55 @@
   margin-top: 0.3rem;
   min-width: 12rem;
 }
+
+/* ── Desktop: the TOP 9 stays in view on the left, the rest scrolls on the right ── */
+.skr-hero,
+.skr-side {
+  display: contents;
+}
+
+@media (min-width: 1024px) {
+  .skr {
+    display: grid;
+    grid-template-columns: minmax(0, 600px) minmax(0, 440px);
+    justify-content: center;
+    align-items: start;
+    column-gap: 56px;
+  }
+
+  .skr-hero {
+    position: sticky;
+    top: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .skr-hero .skr-grid {
+    max-width: none;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .skr-hero .skr-cell__name { font-size: 0.95rem; }
+  .skr-hero .skr-cell__group { font-size: 0.74rem; }
+  .skr-hero .skr-cell__crown { font-size: 2rem; }
+  .skr-hero .skr-cell__rank { min-width: 26px; height: 26px; font-size: 0.82rem; }
+  .skr-hero .skr-cell__ribbon { font-size: 0.72rem; }
+
+  .skr-side {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+  }
+
+  .skr-side > * {
+    max-width: none;
+  }
+
+  .skr-side .skr-footer {
+    align-items: center;
+  }
+}
