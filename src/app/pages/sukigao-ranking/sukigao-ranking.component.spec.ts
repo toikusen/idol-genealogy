@@ -52,7 +52,7 @@ describe('SukigaoRankingComponent', () => {
     expect(el.querySelector('.skrank-pod--1 .skrank-pod__value')!.textContent).toBe('40%');
     expect(el.querySelectorAll('.skrank-list .skrank-row').length).toBe(7);
     expect(el.textContent).toContain('把她選進 TOP9 的人比例');
-    expect(el.textContent).toContain('看更多（第 11–30 名）');
+    expect(el.querySelector('.skrank-more')!.textContent!.trim()).toBe('看更多');
   });
 
   it('TOP9 tab lists at most 50, 20 more per tap', async () => {
@@ -64,7 +64,7 @@ describe('SukigaoRankingComponent', () => {
     }
     expect(el.querySelectorAll('.skrank-list .skrank-row').length).toBe(47);
     expect(el.querySelector('.skrank-more')).toBeNull();
-    expect(el.textContent).toContain('僅列出前 50 名');
+    expect(el.textContent).not.toContain('僅列出');
   });
 
   it('first-place tab lists at most 30 and leaves out members under 1%', async () => {
@@ -80,12 +80,10 @@ describe('SukigaoRankingComponent', () => {
     fixture.detectChanges();
     // 120 - i >= 100 (1% of 10,000) → i <= 20 → 21 members.
     expect(c.visible().length).toBe(21);
-    // The note shows under the list once 看更多 has revealed everything.
-    expect(c.endNote()).toBe('其餘不到 1% 的成員未列出');
     c.showMore();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.skrank-more')).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('其餘不到 1% 的成員未列出');
+    expect(fixture.nativeElement.textContent).not.toContain('未列出');
   });
 
   it('first-place tab uses first-place counts and starts collapsed again', async () => {

@@ -51,14 +51,6 @@ export class SukigaoRankingComponent implements OnInit, OnDestroy {
     const rows = total > 0 ? this.entries().filter(e => (this.count(e) / total) * 100 >= MIN_PCT) : this.entries();
     return rows.slice(0, MAX_PLACES[this.mode()]);
   });
-  /** Why the list stops: members under 1% were left out, or the tab's cap was hit. */
-  readonly endNote = computed(() => {
-    const total = this.stats()?.total ?? 0;
-    const shown = this.visible().length;
-    if (total > 0 && this.entries().some(e => (this.count(e) / total) * 100 < MIN_PCT)) return '其餘不到 1% 的成員未列出';
-    if (shown >= MAX_PLACES[this.mode()] && this.entries().length > shown) return `僅列出前 ${shown} 名`;
-    return '';
-  });
   readonly podium = computed(() => this.visible().slice(0, 3));
   readonly rest = computed(() => this.visible().slice(3, this.shown()));
   readonly moreCount = computed(() => Math.min(MORE_STEP, this.visible().length - this.shown()));

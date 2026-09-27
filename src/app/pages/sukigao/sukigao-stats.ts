@@ -5,10 +5,10 @@ export const MIN_RESULTS_FOR_PERCENT = 1;
 
 /**
  * A pick below this share of results is shown as 慧眼 (you spotted her
- * early), never as a small number like 0% or <1% that the member herself
- * might see in a shared result.
+ * early), never as 0% or <1% that the member herself might see in a shared
+ * result. From 1% up the share is shown as usual.
  */
-export const RARE_BELOW_PCT = 3;
+export const RARE_BELOW_PCT = 1;
 
 export type SukigaoTasteKey =
   | 'box'
