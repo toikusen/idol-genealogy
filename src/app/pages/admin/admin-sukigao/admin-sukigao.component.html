@@ -106,17 +106,25 @@
           </tbody>
         </table>
       </div>
+      @if (remaining() > 0) {
+        <div class="border-t border-gray-100 p-3 text-center">
+          <button type="button" (click)="showMore()"
+            class="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50">
+            查看更多（還有 {{ remaining() }} 位）
+          </button>
+        </div>
+      }
     </section>
 
     <!-- Members -->
-    <section class="rounded-lg border border-gray-100 bg-white shadow-sm" aria-labelledby="ask-members">
+    <section class="ask-members rounded-lg border border-gray-100 bg-white shadow-sm" aria-labelledby="ask-members">
       <div class="flex flex-col gap-3 border-b border-gray-100 p-4 md:flex-row md:items-center md:justify-between">
         <h2 id="ask-members" class="text-sm font-semibold text-gray-700">成員統計 <span class="font-normal text-gray-400">{{ visibleRows().length }} 位</span></h2>
         <div class="flex flex-wrap items-center gap-2">
           <input type="search" placeholder="搜尋成員或團體" [value]="query()" (input)="onQuery($event)"
             class="w-44 rounded-md border border-gray-200 px-3 py-1.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300" />
           @for (s of sorts; track s.key) {
-            <button type="button" (click)="sort.set(s.key)" [attr.aria-pressed]="sort() === s.key"
+            <button type="button" (click)="setSort(s.key)" [attr.aria-pressed]="sort() === s.key"
               class="rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
               [class]="sort() === s.key ? 'border-pink-200 bg-pink-50 text-pink-700' : 'border-gray-200 bg-white text-gray-500'">
               {{ s.label }}
@@ -124,7 +132,7 @@
           }
           <span class="mx-1 h-5 w-px bg-gray-200" aria-hidden="true"></span>
           @for (f of filters; track f.key) {
-            <button type="button" (click)="filter.set(f.key)" [attr.aria-pressed]="filter() === f.key"
+            <button type="button" (click)="setFilter(f.key)" [attr.aria-pressed]="filter() === f.key"
               class="rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
               [class]="filter() === f.key ? 'border-purple-200 bg-purple-50 text-purple-700' : 'border-gray-200 bg-white text-gray-500'">
               {{ f.label }}
@@ -143,7 +151,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (r of visibleRows(); track r.id; let i = $index) {
+            @for (r of pagedRows(); track r.id; let i = $index) {
               <tr class="border-t border-gray-50 hover:bg-gray-50">
                 <td class="px-4 py-2 tabular-nums text-gray-400">{{ i + 1 }}</td>
                 <td class="py-2">
@@ -175,6 +183,14 @@
           </tbody>
         </table>
       </div>
+      @if (remaining() > 0) {
+        <div class="border-t border-gray-100 p-3 text-center">
+          <button type="button" (click)="showMore()"
+            class="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50">
+            查看更多（還有 {{ remaining() }} 位）
+          </button>
+        </div>
+      }
     </section>
   }
 </div>

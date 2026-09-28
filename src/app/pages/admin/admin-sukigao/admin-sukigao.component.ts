@@ -27,6 +27,9 @@ export const ADMIN_SUKIGAO_BANDS = [
   { key: 'zero', label: '0（沒被選過）' },
 ] as const;
 
+/** Member rows shown at first, and added per 查看更多. */
+export const ADMIN_SUKIGAO_PAGE = 30;
+
 const SCOPE_LABELS: Record<string, string> = { current: '現役', all: '現役＋畢業' };
 
 /**
@@ -50,6 +53,7 @@ export class AdminSukigaoComponent implements OnInit {
   readonly sort = signal<AdminSukigaoSort>('top9');
   readonly filter = signal<AdminSukigaoFilter>('all');
   readonly query = signal('');
+  readonly shown = signal(ADMIN_SUKIGAO_PAGE);
 
   readonly sorts: { key: AdminSukigaoSort; label: string }[] = [
     { key: 'top9', label: '入選 TOP9' },
@@ -74,6 +78,9 @@ export class AdminSukigaoComponent implements OnInit {
       .filter(r => !q || r.name.toLowerCase().includes(q) || r.groups.toLowerCase().includes(q))
       .sort((a, b) => b[key] - a[key] || b[other] - a[other] || a.name.localeCompare(b.name));
   });
+
+  readonly pagedRows = computed(() => this.visibleRows().slice(0, this.shown()));
+  readonly remaining = computed(() => Math.max(0, this.visibleRows().length - this.shown()));
 
   /** How many members fall in each share band (TOP 9 picks), current vs graduated. */
   readonly bandCounts = computed(() => {
@@ -126,8 +133,23 @@ export class AdminSukigaoComponent implements OnInit {
     return Math.round((plays / this.dailyMax()) * 100);
   }
 
+  setSort(sort: AdminSukigaoSort): void {
+    this.sort.set(sort);
+    this.shown.set(ADMIN_SUKIGAO_PAGE);
+  }
+
+  setFilter(filter: AdminSukigaoFilter): void {
+    this.filter.set(filter);
+    this.shown.set(ADMIN_SUKIGAO_PAGE);
+  }
+
   onQuery(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);
+    this.shown.set(ADMIN_SUKIGAO_PAGE);
+  }
+
+  showMore(): void {
+    this.shown.update(n => n + ADMIN_SUKIGAO_PAGE);
   }
 }
 

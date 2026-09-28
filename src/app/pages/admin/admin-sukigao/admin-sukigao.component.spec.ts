@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SukigaoService } from '../../../core/sukigao.service';
 import { SukigaoAdminStats } from '../../../models';
-import { AdminSukigaoComponent, bandOf, buildAdminRows } from './admin-sukigao.component';
+import { ADMIN_SUKIGAO_PAGE, AdminSukigaoComponent, bandOf, buildAdminRows } from './admin-sukigao.component';
 
 const stats = (): SukigaoAdminStats => ({
   total: 100,
@@ -75,6 +75,27 @@ describe('AdminSukigaoComponent', () => {
       c.filter.set('current');
       c.query.set('g2');
       expect(c.visibleRows().map(r => r.id)).toEqual(['c']);
+    });
+
+    it('shows 30 members at a time with 查看更多, and starts over when the view changes', () => {
+      const c = fixture.componentInstance;
+      const many = Array.from({ length: 70 }, (_, i) => ({ id: `m${i}`, name: `M${i}`, groups: 'G', photoUrl: '', isCurrent: true, top9: 70 - i, first: 0 }));
+      c.rows.set(many);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelectorAll('.ask-members tbody tr').length).toBe(ADMIN_SUKIGAO_PAGE);
+      const more = () => Array.from(el.querySelectorAll('button')).find(b => b.textContent!.includes('查看更多'));
+      expect(more()!.textContent).toContain('還有 40 位');
+      more()!.click();
+      fixture.detectChanges();
+      expect(el.querySelectorAll('.ask-members tbody tr').length).toBe(60);
+      more()!.click();
+      fixture.detectChanges();
+      expect(el.querySelectorAll('.ask-members tbody tr').length).toBe(70);
+      expect(more()).toBeUndefined();
+      c.setSort('first');
+      fixture.detectChanges();
+      expect(el.querySelectorAll('.ask-members tbody tr').length).toBe(ADMIN_SUKIGAO_PAGE);
     });
 
     it('shows the refusal when the RPC rejects', async () => {
