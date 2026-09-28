@@ -348,8 +348,6 @@ export interface SukigaoResult {
   rank: number;
 }
 
-export type SukigaoRankingMode = 'top9' | 'first';
-
 /** One finished game in a signed-in player's history (migration 114). */
 export interface SukigaoUserResult {
   id: string;
@@ -359,26 +357,20 @@ export interface SukigaoUserResult {
   played_at: string;
 }
 
-/** Counted results only (see migration 113); percentages are per result. */
+/** The public play counts (migration 116): no per-member numbers. */
 export interface SukigaoStats {
-  /** Counted results (one per browser per day): the denominator for percentages. */
+  /** Counted results (one per browser per day). */
   total: number;
   /** Games played, replays included (capped per browser per day); what 「幾次顏控9選」 shows. */
   plays: number;
   players: number;
-  /** member id → how many results have them in the TOP 9 / at #1. */
-  counts: Map<string, { top9: number; first: number }>;
-  /** Most picked into a TOP 9, and most picked as #1 (null when no results). */
-  topTop9Id: string | null;
-  topFirstId: string | null;
 }
 
-export interface SukigaoRankingEntry {
-  member_id: string;
-  name: string;
-  photo_url: string | null;
-  color: string | null;
-  group_name: string | null;
-  top9_count: number;
-  first_place_count: number;
+/** 後台 only (get_sukigao_admin_stats, staff): per-member pick counts over counted results. */
+export interface SukigaoAdminStats extends SukigaoStats {
+  members: { member_id: string; name: string; top9: number; first: number }[];
+  /** Counted results per game setup (scope + size), from candidate_version. */
+  setups: { scope: string; size: number; results: number }[];
+  /** The last 14 Taipei days, oldest first. */
+  daily: { day: string; results: number; plays: number }[];
 }

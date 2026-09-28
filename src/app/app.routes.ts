@@ -105,11 +105,8 @@ export const routes: Routes = [
     path: 'sukigao',
     loadComponent: () => import('./pages/sukigao/sukigao.component').then(m => m.SukigaoComponent)
   },
-  {
-    path: 'sukigao/ranking',
-    loadComponent: () =>
-      import('./pages/sukigao-ranking/sukigao-ranking.component').then(m => m.SukigaoRankingComponent)
-  },
+  // The public ranking was retired (no cross-member numbers in public).
+  { path: 'sukigao/ranking', redirectTo: 'sukigao', pathMatch: 'full' },
   {
     path: 'login',
     loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent)
@@ -125,6 +122,7 @@ export const routes: Routes = [
       { path: 'history', loadComponent: () => import('./pages/admin/admin-history/admin-history.component').then(m => m.AdminHistoryComponent) },
       { path: 'songs', loadComponent: () => import('./pages/admin/admin-songs/admin-songs.component').then(m => m.AdminSongsComponent) },
       { path: 'venues', loadComponent: () => import('./pages/admin/admin-venues/admin-venues.component').then(m => m.AdminVenuesComponent) },
+      { path: 'sukigao', loadComponent: () => import('./pages/admin/admin-sukigao/admin-sukigao.component').then(m => m.AdminSukigaoComponent) },
       {
         path: 'audit-log',
         loadComponent: () => import('./pages/admin/admin-audit-log/admin-audit-log.component').then(m => m.AdminAuditLogComponent)

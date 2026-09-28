@@ -143,7 +143,9 @@
               開始選我的顏控9選
             </button>
           }
-          <app-sukigao-ranking-link class="sk-intro__ranking" [plays]="introPlays()" />
+          @if (introPlays(); as plays) {
+            <p class="sk-intro__plays">💗 已經玩了 <strong>{{ plays | number }}</strong> 次</p>
+          }
           <p class="sk-intro__hint">每次開新局都會重新抽人，多玩幾次會遇到不同的臉</p>
         </div>
 
@@ -362,7 +364,6 @@
           @case ('result') {
             <div class="sk-topbar">
               <button type="button" class="sk-back" (click)="backToIntro()">← 顏控9選</button>
-              <app-sukigao-ranking-link variant="pill" class="srl-inline" />
             </div>
             <h1 class="sr-only">台灣地偶顏控9選 結果</h1>
             <app-sukigao-result
@@ -371,6 +372,7 @@
               [replaced]="submitReplaced()"
               [canUndo]="canUndo()"
               [stats]="resultStats()"
+              [taste]="taste()"
               [accountSave]="accountSave()"
               (submitResult)="submit()"
               (saveAccount)="saveToAccount()"

@@ -1,0 +1,180 @@
+<div class="p-4 md:p-8">
+  <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-800">顏控9選統計</h1>
+      <p class="mt-1 text-xs text-gray-400">
+        僅後台可見。公開頁面只顯示遊玩次數與參與人數，不公開任何成員的名次或比例。
+      </p>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading()"
+      class="self-start rounded-md border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50 md:self-auto">
+      重新整理
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">
+      {{ error() }}（需要 migration 116 與後台權限）
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="py-16 text-center text-gray-400">載入中…</div>
+  } @else if (stats()) {
+    @let st = stats()!;
+    <!-- Summary -->
+    <div class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+        <p class="text-xs text-gray-400">遊玩次數</p>
+        <p class="mt-1 text-2xl font-semibold text-gray-800">{{ st.plays | number }}</p>
+        <p class="mt-1 text-[11px] text-gray-400">含重玩，每個瀏覽器每天最多 10 次</p>
+      </div>
+      <div class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+        <p class="text-xs text-gray-400">計入結果</p>
+        <p class="mt-1 text-2xl font-semibold text-gray-800">{{ st.total | number }}</p>
+        <p class="mt-1 text-[11px] text-gray-400">每個瀏覽器每天 1 筆；比例的分母</p>
+      </div>
+      <div class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+        <p class="text-xs text-gray-400">參與玩家</p>
+        <p class="mt-1 text-2xl font-semibold text-gray-800">{{ st.players | number }}</p>
+        <p class="mt-1 text-[11px] text-gray-400">不重複瀏覽器</p>
+      </div>
+      <div class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+        <p class="text-xs text-gray-400">今天</p>
+        <p class="mt-1 text-2xl font-semibold text-gray-800">{{ (today()?.plays ?? 0) | number }}</p>
+        <p class="mt-1 text-[11px] text-gray-400">次遊玩 · {{ (today()?.results ?? 0) | number }} 筆結果</p>
+      </div>
+    </div>
+
+    <div class="mb-6 grid gap-4 lg:grid-cols-3">
+      <!-- Daily -->
+      <section class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm lg:col-span-2" aria-labelledby="ask-daily">
+        <h2 id="ask-daily" class="mb-3 text-sm font-semibold text-gray-700">近 14 天遊玩次數</h2>
+        <div class="flex h-32 items-end gap-1">
+          @for (d of st.daily; track d.day) {
+            <div class="flex h-full flex-1 flex-col items-center justify-end gap-1" [title]="d.day + '：' + d.plays + ' 次遊玩 / ' + d.results + ' 筆結果'">
+              <span class="text-[10px] text-gray-400">{{ d.plays || '' }}</span>
+              <div class="w-full rounded-t bg-pink-300" [style.height.%]="barHeight(d.plays)" [style.min-height.px]="d.plays ? 2 : 0"></div>
+            </div>
+          }
+        </div>
+        <div class="mt-1 flex gap-1">
+          @for (d of st.daily; track d.day) {
+            <span class="flex-1 text-center text-[10px] text-gray-400">{{ d.day.slice(8) }}</span>
+          }
+        </div>
+      </section>
+
+      <!-- Setups -->
+      <section class="rounded-lg border border-gray-100 bg-white p-4 shadow-sm" aria-labelledby="ask-setups">
+        <h2 id="ask-setups" class="mb-3 text-sm font-semibold text-gray-700">玩法分布（計入結果）</h2>
+        @if (st.setups.length === 0) {
+          <p class="text-sm text-gray-400">尚無資料</p>
+        } @else {
+          <ul class="space-y-1 text-sm">
+            @for (s of st.setups; track s.scope + s.size) {
+              <li class="flex justify-between gap-2">
+                <span class="text-gray-600">{{ scopeLabel(s.scope) }}{{ s.size ? ' · ' + s.size + ' 人' : '' }}</span>
+                <span class="tabular-nums text-gray-800">{{ s.results | number }} <span class="text-xs text-gray-400">({{ pct(s.results) }})</span></span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <!-- Bands -->
+    <section class="mb-6 rounded-lg border border-gray-100 bg-white p-4 shadow-sm" aria-labelledby="ask-bands">
+      <h2 id="ask-bands" class="mb-3 text-sm font-semibold text-gray-700">入選 TOP9 比例分布（成員人數）</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[420px] text-sm">
+          <thead>
+            <tr class="text-left text-xs text-gray-400">
+              <th class="py-1 font-normal"></th>
+              @for (b of bands; track b.key) { <th class="py-1 text-right font-normal">{{ b.label }}</th> }
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-t border-gray-100">
+              <td class="py-1.5 text-gray-600">現役</td>
+              @for (n of bandCounts().current; track $index) { <td class="py-1.5 text-right tabular-nums">{{ n }}</td> }
+            </tr>
+            <tr class="border-t border-gray-100">
+              <td class="py-1.5 text-gray-600">畢業／其他</td>
+              @for (n of bandCounts().graduated; track $index) { <td class="py-1.5 text-right tabular-nums">{{ n }}</td> }
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Members -->
+    <section class="rounded-lg border border-gray-100 bg-white shadow-sm" aria-labelledby="ask-members">
+      <div class="flex flex-col gap-3 border-b border-gray-100 p-4 md:flex-row md:items-center md:justify-between">
+        <h2 id="ask-members" class="text-sm font-semibold text-gray-700">成員統計 <span class="font-normal text-gray-400">{{ visibleRows().length }} 位</span></h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <input type="search" placeholder="搜尋成員或團體" [value]="query()" (input)="onQuery($event)"
+            class="w-44 rounded-md border border-gray-200 px-3 py-1.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+          @for (s of sorts; track s.key) {
+            <button type="button" (click)="sort.set(s.key)" [attr.aria-pressed]="sort() === s.key"
+              class="rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
+              [class]="sort() === s.key ? 'border-pink-200 bg-pink-50 text-pink-700' : 'border-gray-200 bg-white text-gray-500'">
+              {{ s.label }}
+            </button>
+          }
+          <span class="mx-1 h-5 w-px bg-gray-200" aria-hidden="true"></span>
+          @for (f of filters; track f.key) {
+            <button type="button" (click)="filter.set(f.key)" [attr.aria-pressed]="filter() === f.key"
+              class="rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
+              [class]="filter() === f.key ? 'border-purple-200 bg-purple-50 text-purple-700' : 'border-gray-200 bg-white text-gray-500'">
+              {{ f.label }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[560px] text-sm">
+          <thead>
+            <tr class="text-left text-xs text-gray-400">
+              <th class="w-12 px-4 py-2 font-normal">#</th>
+              <th class="py-2 font-normal">成員</th>
+              <th class="px-4 py-2 text-right font-normal">入選 TOP9</th>
+              <th class="px-4 py-2 text-right font-normal">第一名</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of visibleRows(); track r.id; let i = $index) {
+              <tr class="border-t border-gray-50 hover:bg-gray-50">
+                <td class="px-4 py-2 tabular-nums text-gray-400">{{ i + 1 }}</td>
+                <td class="py-2">
+                  <a [routerLink]="'/member/' + r.id" target="_blank" rel="noopener" class="flex items-center gap-2 hover:text-pink-600">
+                    <span class="h-8 w-8 flex-none overflow-hidden rounded-full bg-gray-100">
+                      @if (r.photoUrl) {
+                        <img [src]="r.photoUrl | supabaseImg: 80 : 70" [alt]="r.name" width="32" height="32" loading="lazy" class="h-full w-full object-cover" />
+                      }
+                    </span>
+                    <span class="min-w-0">
+                      <span class="block truncate text-gray-800">{{ r.name }}
+                        @if (r.isCurrent === false) { <span class="ml-1 rounded bg-gray-100 px-1 text-[10px] text-gray-500">畢業</span> }
+                        @if (r.isCurrent === null) { <span class="ml-1 rounded bg-yellow-50 px-1 text-[10px] text-yellow-700">不在題庫</span> }
+                      </span>
+                      <span class="block truncate text-xs text-gray-400">{{ r.groups }}</span>
+                    </span>
+                  </a>
+                </td>
+                <td class="px-4 py-2 text-right tabular-nums">
+                  {{ r.top9 | number }} <span class="text-xs text-gray-400">{{ pct(r.top9) }}</span>
+                </td>
+                <td class="px-4 py-2 text-right tabular-nums">
+                  {{ r.first | number }} <span class="text-xs text-gray-400">{{ pct(r.first) }}</span>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="py-10 text-center text-gray-400">沒有符合的成員</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>

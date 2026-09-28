@@ -11,7 +11,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, DecimalPipe, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
@@ -53,10 +53,9 @@ import {
   undo,
 } from '../../core/sukigao-engine';
 import { SukigaoCandidate, SukigaoStats } from '../../models';
-import { SukigaoResultStats, buildResultStats } from './sukigao-stats';
+import { SukigaoResultStats, SukigaoTaste, buildResultStats, pickTaste } from './sukigao-stats';
 import { SukigaoCardComponent } from './sukigao-card.component';
 import { SukigaoEditCtaComponent } from './sukigao-edit-cta.component';
-import { SukigaoRankingLinkComponent } from './sukigao-ranking-link.component';
 import { SukigaoAccountSave, SukigaoResultComponent, SukigaoShareMethod, SukigaoSubmitState } from './sukigao-result.component';
 
 type ViewState = 'loading' | 'error' | 'intro' | 'game' | 'too-few';
@@ -89,7 +88,7 @@ const GROUP_ADVANCE_DELAY_MS = 260;
 @Component({
   selector: 'app-sukigao',
   standalone: true,
-  imports: [RouterLink, SupabaseImgPipe, SukigaoCardComponent, SukigaoResultComponent, SukigaoEditCtaComponent, SukigaoRankingLinkComponent],
+  imports: [RouterLink, SupabaseImgPipe, SukigaoCardComponent, SukigaoResultComponent, SukigaoEditCtaComponent, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sukigao.component.html',
   styleUrls: ['./sukigao-buttons.css', './sukigao.component.css'],
@@ -173,17 +172,16 @@ export class SukigaoComponent implements OnInit, OnDestroy {
 
   readonly resultFaces = computed(() => this.resolve(this.game()?.result ?? []));
 
-  /** Play count on the intro's ranking link (edge-cached; null hides it). */
+  /** Play count under the intro's start button (edge-cached; null hides it). */
   readonly introPlays = signal<number | null>(null);
 
-  /** Everyone's numbers for the result page; null until loaded (or if they fail). */
+  /** Play and player counts for the result page; null until loaded (or if they fail). */
   readonly stats = signal<SukigaoStats | null>(null);
   readonly resultStats = computed<SukigaoResultStats | null>(() => {
     const stats = this.stats();
-    const faces = this.faces();
-    if (!stats) return null;
-    return buildResultStats(stats, this.resultFaces(), id => faces.get(id), this.pool()?.candidates.length ?? 0);
+    return stats ? buildResultStats(stats) : null;
   });
+  readonly taste = computed<SukigaoTaste | null>(() => pickTaste(this.resultFaces()));
 
   /** Where the saved game stands, for the intro's resume button. */
   readonly savedSummary = computed(() => {
@@ -396,7 +394,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       void this.loadStats();
       void this.saveToAccount();
     }
-    // A result saved before it reached the ranking (offline, closed tab) goes in now;
+    // A result saved before it reached the server (offline, closed tab) goes in now;
     // one already sent — today or on an earlier day — is only shown, never re-counted.
     if (g.stage === 'result' && !g.submittedOn && this.submitState() !== 'done') {
       void this.submit();
@@ -573,7 +571,7 @@ export class SukigaoComponent implements OnInit, OnDestroy {
       this.analytics.trackEvent('sukigao_final_start', { pool_size: this.finalPoolSize(g) });
     } else if (g.stage === 'result') {
       this.analytics.trackEvent('sukigao_complete', { comparisons: g.final?.comparisons ?? 0 });
-      // Every finished TOP 9 goes into the anonymous ranking; the server keeps
+      // Every finished TOP 9 goes into the anonymous play stats; the server keeps
       // only a browser's last result per day, so replays and undos replace it.
       void this.submit();
       void this.loadStats();

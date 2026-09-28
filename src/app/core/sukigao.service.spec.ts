@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { SukigaoService, buildPool, buildStats } from './sukigao.service';
+import { SukigaoService, buildAdminStats, buildPool, buildStats } from './sukigao.service';
 import { SupabaseService } from './supabase.service';
 
 const row = (id: string, overrides: Record<string, unknown> = {}) => ({
@@ -32,31 +32,28 @@ describe('SukigaoService', () => {
   });
 
   describe('buildStats', () => {
-    it('parses bigint strings and finds the leaders', () => {
-      const s = buildStats({
-        total: '120',
-        players: '90',
-        members: [
-          { member_id: 'a', top9: '50', first: '5' },
-          { member_id: 'b', top9: '40', first: '20' },
-        ],
+    it('parses bigint strings; plays falls back to total before migration 115', () => {
+      expect(buildStats({ total: '120', players: '90' })).toEqual({ total: 120, plays: 120, players: 90 });
+      expect(buildStats({ total: 10, plays: '27', players: 8 }).plays).toBe(27);
+    });
+
+    it('keeps no per-member numbers even if a payload carries them', () => {
+      const s = buildStats({ total: 3, players: 2, members: [{ member_id: 'a', top9: 3, first: 1 }] } as never);
+      expect(Object.keys(s).sort()).toEqual(['players', 'plays', 'total']);
+    });
+  });
+
+  describe('buildAdminStats', () => {
+    it('normalises bigint strings and missing sections', () => {
+      const s = buildAdminStats({
+        total: '5', plays: '9', players: '4',
+        members: [{ member_id: 'a', name: 'A', top9: '5', first: '2' }],
+        setups: [{ scope: null, size: null, results: '5' }],
       });
-      expect(s.total).toBe(120);
-      expect(s.plays).toBe(120); // no 'plays' before migration 115: falls back to total
-      expect(s.players).toBe(90);
-      expect(s.counts.get('b')).toEqual({ top9: 40, first: 20 });
-      expect(s.topTop9Id).toBe('a');
-      expect(s.topFirstId).toBe('b');
-    });
-
-    it('reads plays from migration 115', () => {
-      expect(buildStats({ total: 10, plays: '27', players: 8, members: [] }).plays).toBe(27);
-    });
-
-    it('handles no results yet', () => {
-      const s = buildStats({ total: 0, players: 0, members: [] });
-      expect(s.topTop9Id).toBeNull();
-      expect(s.counts.size).toBe(0);
+      expect(s.members).toEqual([{ member_id: 'a', name: 'A', top9: 5, first: 2 }]);
+      expect(s.setups).toEqual([{ scope: '', size: 0, results: 5 }]);
+      expect(s.daily).toEqual([]);
+      expect(s.plays).toBe(9);
     });
   });
 
@@ -131,14 +128,23 @@ describe('SukigaoService', () => {
     expect(res).toEqual({ submittedOn: '2026-09-25', replaced: true });
   });
 
-  it('getRanking() passes mode + limit and normalises bigint counts', async () => {
-    rpc.and.resolveTo({
-      data: [{ member_id: 'a', name: 'A', photo_url: null, color: null, group_name: null, top9_count: '12', first_place_count: '3' }],
-      error: null,
-    });
-    const rows = await service.getRanking('first', 100);
-    expect(rpc).toHaveBeenCalledOnceWith('get_sukigao_ranking', { p_mode: 'first', p_limit: 100 });
-    expect(rows[0].top9_count).toBe(12);
-    expect(rows[0].first_place_count).toBe(3);
+  it('getStats() falls back to the public summary RPC', async () => {
+    rpc.and.resolveTo({ data: { total: 4, plays: 6, players: 3 }, error: null });
+    expect(await service.getStats()).toEqual({ total: 4, plays: 6, players: 3 });
+    expect(rpc).toHaveBeenCalledOnceWith('get_sukigao_summary');
+  });
+
+  it('getPlayCount() reads the edge endpoint only', async () => {
+    (window.fetch as jasmine.Spy).and.resolveTo(new Response(JSON.stringify({ total: 4, plays: 6, players: 3 }), {
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    expect(await service.getPlayCount()).toBe(6);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('getAdminStats() calls the staff-only RPC and surfaces its refusal', async () => {
+    rpc.and.resolveTo({ data: null, error: new Error('get_sukigao_admin_stats: staff only') });
+    await expectAsync(service.getAdminStats()).toBeRejectedWithError(/staff only/);
+    expect(rpc).toHaveBeenCalledOnceWith('get_sukigao_admin_stats');
   });
 });

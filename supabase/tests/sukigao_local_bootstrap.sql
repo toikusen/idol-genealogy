@@ -24,6 +24,29 @@ create or replace function auth.uid() returns uuid
 language sql stable
 as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 grant execute on function auth.uid() to anon, authenticated;
+create or replace function auth.email() returns text
+language sql stable
+as $$ select nullif(current_setting('request.jwt.claim.email', true), '') $$;
+grant execute on function auth.email() to anon, authenticated;
+
+-- Staff roles and is_staff() as in migration 045.
+create table if not exists public.user_roles (
+  id    uuid primary key default gen_random_uuid(),
+  email text not null,
+  role  text not null
+);
+create or replace function public.is_staff()
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select exists (
+    select 1 from public.user_roles
+     where email = auth.email()
+       and role in ('editor', 'admin', 'superadmin')
+  );
+$$;
 alter default privileges in schema public grant all on tables to anon, authenticated;
 alter default privileges in schema public grant all on functions to anon, authenticated;
 

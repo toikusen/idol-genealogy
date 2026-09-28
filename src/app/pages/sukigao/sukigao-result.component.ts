@@ -5,8 +5,7 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { SukigaoCandidate } from '../../models';
 import { SITE_URL } from '../../core/public-url.utils';
 import { renderShareImage } from './sukigao-share-image';
-import { RARE_BELOW_PCT, SukigaoResultStats, formatPct } from './sukigao-stats';
-import { SukigaoRankingLinkComponent } from './sukigao-ranking-link.component';
+import { SukigaoResultStats, SukigaoTaste } from './sukigao-stats';
 
 export type SukigaoSubmitState = 'idle' | 'sending' | 'done' | 'error';
 export type SukigaoAccountSave = 'idle' | 'signed-out' | 'saving' | 'saved' | 'error';
@@ -41,7 +40,7 @@ type ImageState = 'idle' | 'rendering' | 'ready' | 'error';
 @Component({
   selector: 'app-sukigao-result',
   standalone: true,
-  imports: [RouterLink, SupabaseImgPipe, DecimalPipe, SukigaoRankingLinkComponent],
+  imports: [RouterLink, SupabaseImgPipe, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sukigao-result.component.html',
   styleUrls: ['./sukigao-buttons.css', './sukigao-result.component.css'],
@@ -51,8 +50,10 @@ export class SukigaoResultComponent implements OnDestroy {
   @Input() submitState: SukigaoSubmitState = 'idle';
   @Input() replaced = false;
   @Input() canUndo = false;
-  /** Everyone's numbers; null hides the stats card (still loading, or unavailable). */
+  /** Play and player counts; null hides the card (still loading, or unavailable). */
   @Input() stats: SukigaoResultStats | null = null;
+  /** Read from the player's own TOP 9 only. */
+  @Input() taste: SukigaoTaste | null = null;
   @Input() accountSave: SukigaoAccountSave = 'idle';
   @Output() saveAccount = new EventEmitter<void>();
   @Output() submitResult = new EventEmitter<void>();
@@ -63,9 +64,6 @@ export class SukigaoResultComponent implements OnDestroy {
   @ViewChild('imageTrigger') private imageTrigger?: ElementRef<HTMLButtonElement>;
 
   readonly medals = MEDALS;
-  readonly formatPct = formatPct;
-  /** Under this share the player's pick shows as 慧眼 instead of a small number. */
-  readonly RARE_BELOW_PCT = RARE_BELOW_PCT;
   readonly facebookUrl = buildFacebookShareUrl();
 
   toast = '';

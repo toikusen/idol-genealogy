@@ -10,7 +10,7 @@ export type SukigaoEditCtaVariant = 'compact' | 'full';
  *
  * - compact (during a round): a collapsible list of the faces on screen, each
  *   linking to that member's edit panel in a new tab so the game isn't lost.
- * - full (intro / result / ranking): the same, plus pointers to /wanted and
+ * - full (intro / result): the same, plus pointers to /wanted and
  *   an "about Idol Maps" block that sends players on to the rest of the site.
  */
 @Component({

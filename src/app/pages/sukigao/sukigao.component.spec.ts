@@ -31,20 +31,13 @@ describe('SukigaoComponent', () => {
   const pool = (n: number): SukigaoPool => ({ candidates: candidates(n), version: `${n}:v`, groupCount: 5 });
 
   async function setup(n = 48) {
-    sukigao = jasmine.createSpyObj<SukigaoService>('SukigaoService', ['getPool', 'getMembersByIds', 'submit', 'getRanking', 'getStats', 'saveMine', 'getPlayCount']);
+    sukigao = jasmine.createSpyObj<SukigaoService>('SukigaoService', ['getPool', 'getMembersByIds', 'submit', 'getStats', 'saveMine', 'getPlayCount']);
     sukigao.saveMine.and.resolveTo();
     sukigao.getPlayCount.and.resolveTo(4321);
     sukigao.getPool.and.resolveTo(pool(n));
     sukigao.getMembersByIds.and.resolveTo([]);
     sukigao.submit.and.resolveTo({ submittedOn: '2026-09-25', replaced: false });
-    sukigao.getStats.and.resolveTo({
-      total: 1234,
-      plays: 2345,
-      players: 1000,
-      counts: new Map([['m000', { top9: 400, first: 100 }], ['m001', { top9: 300, first: 200 }]]),
-      topTop9Id: 'm000',
-      topFirstId: 'm001',
-    });
+    sukigao.getStats.and.resolveTo({ total: 1234, plays: 2345, players: 1000 });
     analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', ['trackEvent', 'trackPageView']);
     await TestBed.configureTestingModule({
       imports: [SukigaoComponent],
@@ -97,13 +90,12 @@ describe('SukigaoComponent', () => {
     expect(text).toContain('開始選我的顏控9選');
   });
 
-  it('intro links to the ranking with a prominent card and the play count', async () => {
+  it('intro shows the play count and no link to any ranking', async () => {
     await setup(48);
     fixture.detectChanges();
-    const card: HTMLAnchorElement = fixture.nativeElement.querySelector('app-sukigao-ranking-link a.srl-card');
-    expect(card.getAttribute('href')).toBe('/sukigao/ranking');
-    expect(card.textContent).toContain('大家都在選誰');
-    expect(card.textContent).toContain('4,321 次');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.sk-intro__plays')!.textContent).toContain('已經玩了 4,321 次');
+    expect(el.querySelector('a[href^="/sukigao/ranking"]')).toBeNull();
   });
 
   it('samples the chosen size from the chosen scope', async () => {
@@ -264,7 +256,7 @@ describe('SukigaoComponent', () => {
     expect(component.submitState()).toBe('done');
   });
 
-  it('adds the result to the ranking automatically when the game ends', async () => {
+  it('sends the result to the play stats automatically when the game ends', async () => {
     await setup(48);
     playToResult();
     await settle();
@@ -272,27 +264,25 @@ describe('SukigaoComponent', () => {
     expect(component.submitState()).toBe('done');
     expect(component.game()!.submittedOn).toBe('2026-09-25');
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控9選');
-    expect(fixture.nativeElement.textContent).not.toContain('將我的 TOP9 加入大家的顏控9選');
+    expect(fixture.nativeElement.textContent).toContain('已送出，謝謝你一起玩');
   });
 
-  it('shows everyone\'s numbers on the result page', async () => {
+  it('shows only play counts on the result page, never a member\'s share', async () => {
     await setup(48);
     playToResult();
     await settle();
     fixture.detectChanges();
-    const text = fixture.nativeElement.textContent as string;
-    expect(text).toContain('大家的顏控數據');
+    const el = fixture.nativeElement as HTMLElement;
+    const text = el.textContent as string;
+    expect(text).toContain('一起玩的顏控們');
     expect(text).toContain('2,345次顏控9選');
     expect(text).toContain('1,000位玩家參與');
-    expect(text).toContain('大家最愛的臉');
-    expect(text).toContain('32%的人選進 TOP9');
-    expect(text).toContain('大家心中的第一');
-    // Picks only a sliver of players chose read as 慧眼, never 0% / <1%.
-    const pcts = Array.from(fixture.nativeElement.querySelectorAll('.skr-list__pct') as NodeListOf<HTMLElement>).map(e => e.textContent!.trim());
-    expect(pcts.some(t => t === '0%' || t === '<1%')).toBeFalse();
-    expect(pcts).toContain('慧眼');
     expect(text).toContain('你的顏控類型');
+    expect(text).not.toMatch(/\d+%/);
+    for (const word of ['大家最愛', '大家心中的第一', '慧眼', '大家都在選誰', '排行', '排名']) {
+      expect(text).withContext(word).not.toContain(word);
+    }
+    expect(el.querySelector('a[href^="/sukigao/ranking"]')).toBeNull();
   });
 
   it('leaves the stats card out when stats fail to load', async () => {
@@ -301,8 +291,8 @@ describe('SukigaoComponent', () => {
     playToResult();
     await settle();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('大家的顏控數據');
-    expect(fixture.nativeElement.textContent).toContain('已加入大家的顏控9選');
+    expect(fixture.nativeElement.textContent).not.toContain('一起玩的顏控們');
+    expect(fixture.nativeElement.textContent).toContain('已送出，謝謝你一起玩');
   });
 
   it('fetches a card for any face the game refers to that the pool lacks', async () => {

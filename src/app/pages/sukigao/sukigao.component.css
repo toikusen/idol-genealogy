@@ -275,8 +275,15 @@
   white-space: nowrap;
 }
 
-.sk-intro__ranking {
-  margin-top: 4px;
+.sk-intro__plays {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-faint-70);
+}
+
+.sk-intro__plays strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--idol-pink);
 }
 
 .sk-intro__hint {

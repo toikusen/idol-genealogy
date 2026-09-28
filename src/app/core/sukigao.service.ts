@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { TtlCache } from './ttl-cache';
 import { isPublicMemberRecord } from './public-record.utils';
-import { SukigaoCandidate, SukigaoRankingEntry, SukigaoRankingMode, SukigaoStats, SukigaoUserResult } from '../models';
+import { SukigaoAdminStats, SukigaoCandidate, SukigaoStats, SukigaoUserResult } from '../models';
 
 export interface SukigaoPool {
   candidates: SukigaoCandidate[];
@@ -34,13 +34,10 @@ interface CandidateRow {
   is_current?: boolean | null;
 }
 
-export const SUKIGAO_RANKING_LIMIT = 100;
-
 /** Supabase access for 顏控9選. Storage lives in SukigaoSessionService. */
 @Injectable({ providedIn: 'root' })
 export class SukigaoService {
   private readonly poolCache = new TtlCache<SukigaoPool>(5 * 60_000);
-  private readonly rankingCache = new TtlCache<SukigaoRankingEntry[]>(60_000);
   private readonly statsCache = new TtlCache<SukigaoStats>(60_000);
 
   constructor(private supabase: SupabaseService) {}
@@ -84,31 +81,8 @@ export class SukigaoService {
       p_candidate_version: candidateVersion,
     });
     if (error) throw error;
-    this.rankingCache.invalidate();
     const result = (data ?? {}) as { submitted_on?: string; replaced?: boolean };
     return { submittedOn: result.submitted_on ?? '', replaced: !!result.replaced };
-  }
-
-  getRanking(mode: SukigaoRankingMode, limit = SUKIGAO_RANKING_LIMIT): Promise<SukigaoRankingEntry[]> {
-    return this.rankingCache.get(`${mode}:${limit}`, async () => {
-      // The edge endpoint always serves the top 100, the only size the UI asks for.
-      let rows = limit === SUKIGAO_RANKING_LIMIT
-        ? await fetchEdge<SukigaoRankingEntry[]>(`/api/sukigao-ranking?mode=${mode}`, Array.isArray)
-        : null;
-      if (!rows) {
-        const { data, error } = await this.supabase.client.rpc('get_sukigao_ranking', {
-          p_mode: mode,
-          p_limit: limit,
-        });
-        if (error) throw error;
-        rows = (data ?? []) as SukigaoRankingEntry[];
-      }
-      return rows.map(row => ({
-        ...row,
-        top9_count: Number(row.top9_count),
-        first_place_count: Number(row.first_place_count),
-      }));
-    });
   }
 
   // ── Signed-in history (migration 114) ──
@@ -146,51 +120,74 @@ export class SukigaoService {
    */
   async getPlayCount(): Promise<number | null> {
     const raw = await fetchEdge<StatsPayload>('/api/sukigao-stats', isStatsPayload);
-    return raw ? Number(raw.plays) || Number(raw.total) || 0 : null;
+    return raw ? buildStats(raw).plays : null;
   }
 
-  /** Play count and per-member pick counts for the result page. */
+  /** Play and player counts for the result page. No per-member numbers are public. */
   getStats(): Promise<SukigaoStats> {
     return this.statsCache.get('stats', async () => {
       let raw = await fetchEdge<StatsPayload>('/api/sukigao-stats', isStatsPayload);
       if (!raw) {
-        const { data, error } = await this.supabase.client.rpc('get_sukigao_stats');
+        const { data, error } = await this.supabase.client.rpc('get_sukigao_summary');
         if (error) throw error;
-        if (!isStatsPayload(data)) throw new Error('get_sukigao_stats: unexpected payload');
+        if (!isStatsPayload(data)) throw new Error('get_sukigao_summary: unexpected payload');
         raw = data;
       }
       return buildStats(raw);
     });
   }
+
+  /** 後台: per-member pick counts. The RPC refuses anyone without a staff role. */
+  async getAdminStats(): Promise<SukigaoAdminStats> {
+    const { data, error } = await this.supabase.client.rpc('get_sukigao_admin_stats');
+    if (error) throw error;
+    return buildAdminStats((data ?? {}) as AdminStatsPayload);
+  }
 }
 
+type Num = number | string;
+
 interface StatsPayload {
-  total: number | string;
-  /** Added in migration 115; absent before it runs. */
-  plays?: number | string;
-  players: number | string;
-  members: { member_id: string; top9: number | string; first: number | string }[];
+  total: Num;
+  plays?: Num;
+  players: Num;
 }
 
 function isStatsPayload(body: unknown): body is StatsPayload {
-  return !!body && typeof body === 'object' && Array.isArray((body as StatsPayload).members);
+  return !!body && typeof body === 'object' && 'total' in body;
 }
 
 export function buildStats(raw: StatsPayload): SukigaoStats {
-  const counts = new Map<string, { top9: number; first: number }>();
-  let topTop9Id: string | null = null;
-  let topFirstId: string | null = null;
-  let bestTop9 = 0;
-  let bestFirst = 0;
-  for (const m of raw.members) {
-    const top9 = Number(m.top9) || 0;
-    const first = Number(m.first) || 0;
-    counts.set(m.member_id, { top9, first });
-    if (top9 > bestTop9) { bestTop9 = top9; topTop9Id = m.member_id; }
-    if (first > bestFirst) { bestFirst = first; topFirstId = m.member_id; }
-  }
   const total = Number(raw.total) || 0;
-  return { total, plays: Number(raw.plays) || total, players: Number(raw.players) || 0, counts, topTop9Id, topFirstId };
+  return { total, plays: Number(raw.plays) || total, players: Number(raw.players) || 0 };
+}
+
+interface AdminStatsPayload extends StatsPayload {
+  members?: { member_id: string; name: string; top9: Num; first: Num }[];
+  setups?: { scope: string | null; size: Num | null; results: Num }[];
+  daily?: { day: string; results: Num; plays: Num }[];
+}
+
+export function buildAdminStats(raw: AdminStatsPayload): SukigaoAdminStats {
+  return {
+    ...buildStats(raw),
+    members: (raw.members ?? []).map(m => ({
+      member_id: m.member_id,
+      name: m.name,
+      top9: Number(m.top9) || 0,
+      first: Number(m.first) || 0,
+    })),
+    setups: (raw.setups ?? []).map(s => ({
+      scope: s.scope ?? '',
+      size: Number(s.size) || 0,
+      results: Number(s.results) || 0,
+    })),
+    daily: (raw.daily ?? []).map(d => ({
+      day: d.day,
+      results: Number(d.results) || 0,
+      plays: Number(d.plays) || 0,
+    })),
+  };
 }
 
 /**

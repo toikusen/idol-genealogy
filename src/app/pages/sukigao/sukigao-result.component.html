@@ -31,20 +31,17 @@
   </div>
 
   <div class="skr-side">
-  @if (stats?.taste; as taste) {
+  @if (taste) {
     <div class="skr-taste" [class]="'skr-taste skr-taste--' + taste.key">
       <span class="skr-taste__eyebrow">你的顏控類型</span>
       <strong class="skr-taste__label">
         @switch (taste.key) {
         @case ('box') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg> }
         @case ('nostalgic') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg> }
-        @case ('ceiling') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4.5L12 5l4.5 7.5L21 8l-2 11H5z"/></svg> }
-        @case ('treasure') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/><path d="m12 21-4-12 4-6 4 6z"/></svg> }
-        @case ('same-first') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3.5 4"/><path d="M17 6h3a3 3 0 0 1-3.5 4"/></svg> }
+        @case ('double') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg> }
         @case ('group-tour') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg> }
-        @case ('mainstream') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg> }
-        @case ('balanced') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="M7 21h10"/><path d="M5 7h14"/><path d="m5 7-3 7a3 3 0 0 0 6 0z"/><path d="m19 7-3 7a3 3 0 0 0 6 0z"/></svg> }
-        @case ('unique') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15v4"/><path d="M17 17h4"/></svg> }
+        @case ('live') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> }
+        @case ('wide') { <svg class="skr-taste__icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15v4"/><path d="M17 17h4"/></svg> }
         }
         {{ taste.label }}
       </strong>
@@ -53,21 +50,11 @@
   }
 
   <div class="skr-list">
-    @if (stats?.hasPercent) {
-      <p class="skr-list__head" aria-hidden="true"><span>你的 TOP9</span><span>也選她的人</span></p>
-    }
     <ol class="skr-list__items">
       @for (face of faces; track face.id; let i = $index) {
         <li [class.skr-list__top]="i < 3">
           <span class="skr-list__rank">{{ i < 3 ? medals[i] : (i + 1) + '.' }}</span>
           <span class="skr-list__name">{{ face.name }} <span class="skr-list__group">{{ groupLabel(face) }}</span></span>
-          @if (stats?.hasPercent) {
-            @if (stats!.picks[i] >= RARE_BELOW_PCT) {
-              <span class="skr-list__pct" [attr.aria-label]="formatPct(stats!.picks[i]) + ' 的人也把她選進 TOP9'">{{ formatPct(stats!.picks[i]) }}</span>
-            } @else {
-              <span class="skr-list__pct skr-list__rare" aria-label="慧眼：你比大家更早發現她"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/><path d="m12 21-4-12 4-6 4 6z"/></svg>慧眼</span>
-            }
-          }
         </li>
       }
     </ol>
@@ -95,44 +82,11 @@
 
   @if (stats; as st) {
     <section class="skr-stats" aria-labelledby="skr-stats-title">
-      <h3 id="skr-stats-title" class="skr-stats__title">大家的顏控數據</h3>
+      <h3 id="skr-stats-title" class="skr-stats__title">一起玩的顏控們</h3>
       <div class="skr-stats__nums">
         <p class="skr-stats__num"><strong>{{ st.plays | number }}</strong><span>次顏控9選</span></p>
         <p class="skr-stats__num"><strong>{{ st.players | number }}</strong><span>位玩家參與</span></p>
       </div>
-      @if (st.top; as top) {
-        <a class="skr-stats__face" [routerLink]="'/member/' + top.face.id">
-          <span class="skr-stats__avatar">
-            @if (top.face.photoUrl) {
-              <img [src]="top.face.photoUrl | supabaseImg: 160 : 80" [alt]="top.face.name" width="56" height="56" decoding="async" />
-            }
-          </span>
-          <span class="skr-stats__who">
-            <span class="skr-stats__eyebrow">👑 大家最愛的臉</span>
-            <strong class="skr-stats__name">{{ top.face.name }}</strong>
-            <span class="skr-stats__group">{{ groupLabel(top.face) }}</span>
-          </span>
-          <span class="skr-stats__pct"><strong>{{ formatPct(top.pct) }}</strong><span>的人選進 TOP9</span></span>
-        </a>
-      }
-      @if (st.topFirst; as tf) {
-        <a class="skr-stats__face skr-stats__face--sub" [routerLink]="'/member/' + tf.face.id">
-          <span class="skr-stats__avatar">
-            @if (tf.face.photoUrl) {
-              <img [src]="tf.face.photoUrl | supabaseImg: 160 : 80" [alt]="tf.face.name" width="44" height="44" decoding="async" />
-            }
-          </span>
-          <span class="skr-stats__who">
-            <span class="skr-stats__eyebrow">🥇 大家心中的第一</span>
-            <strong class="skr-stats__name">{{ tf.face.name }}</strong>
-          </span>
-          <span class="skr-stats__pct"><strong>{{ formatPct(tf.pct) }}</strong><span>的人選為心中第一</span></span>
-        </a>
-      }
-      @if (!st.hasPercent) {
-        <p class="skr-stats__note">數據累積中，玩的人越多越準 ✨</p>
-      }
-      <app-sukigao-ranking-link />
     </section>
   }
 
@@ -164,22 +118,19 @@
   <div class="skr-submit" aria-live="polite">
     @switch (submitState) {
       @case ('done') {
-        <p class="skr-submit__done" role="status">💗 已加入大家的顏控9選{{ replaced ? '（已更新為今天最新的結果）' : '' }}</p>
-        @if (!stats) {
-          <app-sukigao-ranking-link />
-        }
+        <p class="skr-submit__done" role="status">💗 已送出，謝謝你一起玩{{ replaced ? '（已更新為今天最新的結果）' : '' }}</p>
       }
       @case ('error') {
         <p class="skr-submit__error" role="alert">
-          結果已保留在這台裝置，但目前無法加入大家的顏控9選。
+          結果已保留在這台裝置，但目前無法送出。
         </p>
         <button type="button" class="sk-link-btn" (click)="submitResult.emit()">再試一次</button>
       }
       @default {
-        <p class="skr-submit__pending" role="status">正在加入大家的顏控9選…</p>
+        <p class="skr-submit__pending" role="status">正在送出結果…</p>
       }
     }
-    <p class="skr-submit__note">匿名統計，不會記錄姓名、Email 或社群帳號；同一個瀏覽器一天只算最後一次結果。</p>
+    <p class="skr-submit__note">只用來統計遊玩次數與參與人數，不會記錄姓名、Email 或社群帳號。</p>
   </div>
 
   <div class="skr-footer">

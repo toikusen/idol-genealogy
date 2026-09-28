@@ -127,6 +127,23 @@ exception
     raise notice 'ok: % rejected (%)', p_label, sqlerrm;
 end $$;
 
+-- 116: per-member numbers only through the staff-only admin stats.
+insert into user_roles (email, role) values ('staff@example.com', 'editor'), ('viewer@example.com', 'viewer');
+create or replace function pg_temp.admin_stats() returns jsonb language plpgsql as $$
+declare
+  v_prev text := current_setting('request.jwt.claim.email', true);
+  v_out  jsonb;
+begin
+  perform set_config('request.jwt.claim.email', 'staff@example.com', true);
+  v_out := get_sukigao_admin_stats();
+  perform set_config('request.jwt.claim.email', coalesce(v_prev, ''), true);
+  return v_out;
+end $$;
+create or replace function pg_temp.member_stat(p_stats jsonb, p_id uuid, p_key text) returns bigint language sql as $$
+  select coalesce((select (e ->> p_key)::bigint from jsonb_array_elements(p_stats -> 'members') e
+                    where (e ->> 'member_id')::uuid = p_id), 0)
+$$;
+
 select pg_temp.expect_error(
   format('select submit_sukigao_result(%L, %L::uuid[])', '11111111-1111-4111-8111-111111111111', pg_temp.ids(8)),
   '8 members');
@@ -200,40 +217,52 @@ begin
   raise notice 'ok: different browser / next day count separately; token hashed';
 end $$;
 
--- ── Ranking ────────────────────────────────────────────────────────────────
+-- ── Admin stats (116) ─────────────────────────────────────────────────────
 do $$
 declare
-  top record;
-  n int;
+  st jsonb := pg_temp.admin_stats();
+  m01 uuid := (select id from t_ids where label = 'm01');
+  m02 uuid := (select id from t_ids where label = 'm02');
 begin
   -- 3 submissions of pg_temp.ids(9): m01 is #1 in all three.
-  select * into top from get_sukigao_ranking('top9', 100) limit 1;
-  if top.top9_count <> 3 then raise exception 'ranking top9: want 3, got %', top.top9_count; end if;
-
-  select * into top from get_sukigao_ranking('first', 100) limit 1;
-  if top.name <> 'm01' or top.first_place_count <> 3 then
-    raise exception 'ranking first: want m01 ×3, got % ×%', top.name, top.first_place_count;
+  if pg_temp.member_stat(st, m01, 'top9') <> 3 or pg_temp.member_stat(st, m01, 'first') <> 3 then
+    raise exception 'admin stats m01: want 3 / 3, got %', st -> 'members';
   end if;
-  if top.rank_counts[1] <> 3 or cardinality(top.rank_counts) <> 9 then
-    raise exception 'ranking rank_counts wrong: %', top.rank_counts;
+  if pg_temp.member_stat(st, m02, 'first') <> 0 or pg_temp.member_stat(st, m02, 'top9') <> 3 then
+    raise exception 'admin stats m02: want 3 / 0';
   end if;
-  if top.group_name <> '現役團' then raise exception 'ranking group_name: got %', top.group_name; end if;
-
-  select count(*) into n from get_sukigao_ranking('first', 100);
-  if exists (select 1 from get_sukigao_ranking('first', 100) where first_place_count = 0) then
-    raise exception 'first-place tab should only list members with a first place';
+  if (st -> 'members' -> 0 ->> 'name') <> 'm01' then
+    raise exception 'admin stats should list the most picked first, got %', st -> 'members' -> 0;
   end if;
-
-  select count(*) into n from get_sukigao_ranking('top9', 3);
-  if n <> 3 then raise exception 'ranking limit: want 3, got %', n; end if;
-  select count(*) into n from get_sukigao_ranking('top9', 1000000);
-  if n > 100 then raise exception 'ranking limit should clamp to 100'; end if;
-  select count(*) into n from get_sukigao_ranking('top9', -5);
-  if n <> 1 then raise exception 'ranking limit should clamp up to 1'; end if;
-  raise notice 'ok: ranking aggregates and limit clamp';
+  if jsonb_array_length(st -> 'daily') <> 14 then
+    raise exception 'admin stats daily should cover 14 days';
+  end if;
+  if (st -> 'daily' -> 13 ->> 'results')::int <> 2 then
+    -- 2 of the 3 results are today (one was moved to yesterday above).
+    raise exception 'admin stats today: want 2, got %', st -> 'daily' -> 13;
+  end if;
+  raise notice 'ok: admin stats aggregate';
 end $$;
 
-select pg_temp.expect_error($q$select * from get_sukigao_ranking('drop table members', 10)$q$, 'invalid ranking mode');
+-- Public summary: counts only, nothing per member.
+do $$
+declare
+  sm jsonb := get_sukigao_summary();
+begin
+  if (sm ->> 'total')::int <> 3 then raise exception 'summary total: got %', sm; end if;
+  if sm ? 'members' then raise exception 'summary must not carry per-member numbers'; end if;
+  raise notice 'ok: public summary';
+end $$;
+
+-- Old public readers are gone.
+select pg_temp.expect_error($q$select * from get_sukigao_ranking('top9', 10)$q$, 'get_sukigao_ranking dropped');
+select pg_temp.expect_error($q$select get_sukigao_stats()$q$, 'get_sukigao_stats dropped');
+
+-- Not staff: refused.
+select set_config('request.jwt.claim.email', 'viewer@example.com', true);
+select pg_temp.expect_error($q$select get_sukigao_admin_stats()$q$, 'admin stats as a non-staff user');
+select set_config('request.jwt.claim.email', '', true);
+select pg_temp.expect_error($q$select get_sukigao_admin_stats()$q$, 'admin stats signed out');
 
 -- ── 109/110: per-IP daily cap ───────────────────────────────────────────────────
 do $$
@@ -337,10 +366,9 @@ declare
   m01 uuid := (select id from t_ids where label = 'm01');
   stats jsonb;
 begin
-  stats := get_sukigao_stats();
+  stats := pg_temp.admin_stats();
   before_total := (stats ->> 'total')::bigint;
-  select (e ->> 'top9')::bigint into before_m01
-    from jsonb_array_elements(stats -> 'members') e where (e ->> 'member_id')::uuid = m01;
+  before_m01 := pg_temp.member_stat(stats, m01, 'top9');
 
   -- 35 new results from one network: all stored, only 30 counted.
   perform set_config('request.headers', '{"cf-connecting-ip":"192.0.2.99"}', true);
@@ -358,18 +386,17 @@ begin
     raise exception 'all 35 results should be stored';
   end if;
 
-  stats := get_sukigao_stats();
+  stats := pg_temp.admin_stats();
   after_total := (stats ->> 'total')::bigint;
-  select (e ->> 'top9')::bigint into after_m01
-    from jsonb_array_elements(stats -> 'members') e where (e ->> 'member_id')::uuid = m01;
+  after_m01 := pg_temp.member_stat(stats, m01, 'top9');
   if after_total - before_total <> 30 then
     raise exception 'stats total should grow by 30, grew by %', after_total - before_total;
   end if;
   if after_m01 - before_m01 <> 30 then
     raise exception 'member count should grow by 30, grew by %', after_m01 - before_m01;
   end if;
-  if (select top9_count from get_sukigao_ranking('top9', 100) where member_id = m01) <> after_m01 then
-    raise exception 'ranking and stats should agree on counted results';
+  if (get_sukigao_summary() ->> 'total')::bigint <> after_total then
+    raise exception 'summary and admin stats should agree on counted results';
   end if;
   if (stats ->> 'players')::bigint > after_total then
     raise exception 'players cannot exceed results';
@@ -383,9 +410,6 @@ begin
   end if;
   if (select sum((e ->> 'top9')::bigint) from jsonb_array_elements(stats -> 'members') e) <> after_total * 9 then
     raise exception 'TOP 9 counts should add up to 9 × results';
-  end if;
-  if (select sum(first_place_count) from get_sukigao_ranking('first', 100)) <> after_total then
-    raise exception 'the first-place ranking should add up to the number of results';
   end if;
   raise notice 'ok: 113 counting cap + stats';
 end $$;
@@ -410,14 +434,11 @@ do $$
 begin
   perform submit_sukigao_result('22222222-2222-4222-8222-222222222222',
     (select array_agg(id order by label) from (select label, id from t_ids where label like 'm__' order by label limit 9) s));
-  if (select count(*) from get_sukigao_ranking('top9', 100)) = 0 then
-    raise exception 'anon should be able to read the ranking';
-  end if;
   if (select count(*) from get_sukigao_candidates()) = 0 then
     raise exception 'anon should be able to read candidates';
   end if;
-  if (get_sukigao_stats() ->> 'total')::bigint = 0 then
-    raise exception 'anon should be able to read the stats';
+  if (get_sukigao_summary() ->> 'total')::bigint = 0 then
+    raise exception 'anon should be able to read the summary';
   end if;
   raise notice 'ok: anon can use the RPCs';
 end $$;
@@ -427,6 +448,9 @@ select pg_temp.expect_error(
   $q$insert into sukigao_submissions (browser_hash, submitted_on) values ('x', current_date)$q$,
   'authenticated insert submissions');
 select pg_temp.expect_error($q$select * from sukigao_submission_items$q$, 'authenticated select items');
+select set_config('request.jwt.claim.email', 'viewer@example.com', true);
+select pg_temp.expect_error($q$select get_sukigao_admin_stats()$q$, 'authenticated non-staff admin stats');
+select set_config('request.jwt.claim.email', '', true);
 
 reset role;
 
@@ -451,8 +475,8 @@ revoke all on sukigao_submissions from anon;
 do $$
 declare
   i int;
-  before_plays bigint := (get_sukigao_stats() ->> 'plays')::bigint;
-  before_total bigint := (get_sukigao_stats() ->> 'total')::bigint;
+  before_plays bigint := (get_sukigao_summary() ->> 'plays')::bigint;
+  before_total bigint := (get_sukigao_summary() ->> 'total')::bigint;
   after_plays bigint;
 begin
   perform set_config('request.headers', '{"cf-connecting-ip":"192.0.2.150"}', true);
@@ -460,18 +484,18 @@ begin
   for i in 1..3 loop
     perform submit_sukigao_result('15151515-1515-4515-8515-151515151515', pg_temp.ids(9), null);
   end loop;
-  after_plays := (get_sukigao_stats() ->> 'plays')::bigint;
+  after_plays := (get_sukigao_summary() ->> 'plays')::bigint;
   if after_plays - before_plays <> 3 then
     raise exception 'three games should add 3 plays, added %', after_plays - before_plays;
   end if;
-  if (get_sukigao_stats() ->> 'total')::bigint - before_total <> 1 then
+  if (get_sukigao_summary() ->> 'total')::bigint - before_total <> 1 then
     raise exception 'replays should still be one result';
   end if;
   -- Capped at 10 per browser per day.
   for i in 1..20 loop
     perform submit_sukigao_result('15151515-1515-4515-8515-151515151515', pg_temp.ids(9), null);
   end loop;
-  if (get_sukigao_stats() ->> 'plays')::bigint - before_plays <> 10 then
+  if (get_sukigao_summary() ->> 'plays')::bigint - before_plays <> 10 then
     raise exception 'plays should cap at 10 per browser per day';
   end if;
   perform set_config('request.headers', '', true);
