@@ -91,6 +91,19 @@ describe('HomeComponent', () => {
     }).compileComponents();
   }
 
+  it('loads the group list when the new-member panel opens, for its attached history', async () => {
+    const getAll = jasmine.createSpy().and.returnValue(Promise.resolve([{ id: 'g1', name: 'G1' }]));
+    await setup({}, { getAll });
+    const component = TestBed.createComponent(HomeComponent).componentInstance;
+    getAll.calls.reset();
+
+    await component.openMemberInsertPanel();
+
+    expect(component.showMemberInsertPanel).toBeTrue();
+    expect(getAll).toHaveBeenCalled();
+    expect(component.allGroups.map(g => g.id)).toEqual(['g1']);
+  });
+
   // ── Issue 1: *ngIf → @if ─────────────────────────────────────────────────
 
   it('toggles venue proposal panels before deferred panel content loads', async () => {

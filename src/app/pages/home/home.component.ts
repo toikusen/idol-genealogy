@@ -448,6 +448,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.openVenueUpdatePanel(venue);
   }
 
+  /** The new-member form's attached-history picker needs the group list, which otherwise loads with the browse tabs. */
+  openMemberInsertPanel(): Promise<void> {
+    this.showMemberInsertPanel = true;
+    return this.ensureBrowseCatalog();
+  }
+
   openVenueInsertPanel(): void {
     this.showVenueInsertPanel = true;
   }
