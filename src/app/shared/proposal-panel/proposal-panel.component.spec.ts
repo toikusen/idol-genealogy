@@ -50,3 +50,45 @@ describe('ProposalPanelComponent history group requirement', () => {
     expect(p.fieldLabel('external_group_name').endsWith(' *')).toBe(true);
   });
 });
+
+describe('ProposalPanelComponent attached history', () => {
+  function memberInsert() {
+    const p = panel();
+    p.tableName = 'members';
+    p.operation = 'INSERT';
+    return p;
+  }
+
+  it('attaches nothing when the section is empty or only whitespace', () => {
+    const p = memberInsert();
+    p.attachHistory.external_group_name = '   ';
+    expect(p.attachedHistoryPayload()).toEqual({ history: null, missing: [] });
+  });
+
+  it('reports missing required fields once the section is started', () => {
+    const p = memberInsert();
+    p.attachHistory.group_id = 'g1';
+    expect(p.attachedHistoryPayload().missing).toEqual(['status', 'joined_at']);
+  });
+
+  it('builds a Taiwan-group entry and ignores the overseas fields', () => {
+    const p = memberInsert();
+    Object.assign(p.attachHistory, { group_id: 'g1', status: 'active', external_group_name: 'AKB48' });
+    p.joinedYear = 2024; p.joinedMonth = 3; p.joinedDay = 5;
+    expect(p.attachedHistoryPayload()).toEqual({
+      history: { group_id: 'g1', status: 'active', joined_at: '2024-03-05' },
+      missing: [],
+    });
+  });
+
+  it('requires external_group_name instead of group_id for overseas/solo', () => {
+    const p = memberInsert();
+    p.isExternalRecord = true;
+    Object.assign(p.attachHistory, { group_id: 'g1', status: 'active' });
+    p.joinedYear = 2024; p.joinedMonth = 3; p.joinedDay = 5;
+    expect(p.attachedHistoryPayload()).toEqual({
+      history: { status: 'active', joined_at: '2024-03-05' },
+      missing: ['external_group_name'],
+    });
+  });
+});

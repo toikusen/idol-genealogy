@@ -644,6 +644,112 @@ import { PhotoUploadComponent } from '../photo-upload/photo-upload.component';
             </div>
           }
 
+          @if (tableName === 'members' && operation === 'INSERT') {
+            <div data-field="attachHistory" class="border-t border-gray-100 pt-4">
+              <button type="button" (click)="showAttachHistory = !showAttachHistory"
+                class="w-full flex items-center justify-between text-xs font-medium text-gray-600">
+                <span>目前所屬團體（選填）</span>
+                <span>{{ showAttachHistory ? '−' : '＋' }}</span>
+              </button>
+              <p class="text-xs text-gray-400 mt-1">知道這位成員在哪個團體的話一起填，審核通過後會同時建立經歷</p>
+              @if (showAttachHistory) {
+                <div class="space-y-3 mt-3">
+                  <div class="flex rounded-lg overflow-hidden border border-gray-600 text-xs">
+                    <button type="button" (click)="isExternalRecord = false" class="flex-1 py-1.5 transition-colors"
+                      [class.bg-pink-500]="!isExternalRecord" [class.text-white]="!isExternalRecord"
+                      [class.bg-transparent]="isExternalRecord" [class.text-gray-400]="isExternalRecord">台灣團體</button>
+                    <button type="button" (click)="isExternalRecord = true" class="flex-1 py-1.5 transition-colors"
+                      [class.bg-pink-500]="isExternalRecord" [class.text-white]="isExternalRecord"
+                      [class.bg-transparent]="!isExternalRecord" [class.text-gray-400]="!isExternalRecord">海外團體/solo</button>
+                  </div>
+                  @if (isExternalRecord) {
+                    <div>
+                      <label class="block text-xs font-medium text-gray-600 mb-1">海外團體/solo名稱 *</label>
+                      <input type="text" [(ngModel)]="attachHistory.external_group_name" name="attachExternalGroupName"
+                        placeholder="例：花丸、AKB48；solo 活動請填藝名"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                      @if (fieldErrors['attach.external_group_name']) {
+                        <p class="text-xs text-red-500 mt-1">{{ fieldErrors['attach.external_group_name'] }}</p>
+                      }
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-600 mb-1">國家／地區（非必填）</label>
+                      <input type="text" [(ngModel)]="attachHistory.external_country" name="attachExternalCountry"
+                        placeholder="例：日本、香港（solo 個人活動請留空）"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300"/>
+                    </div>
+                  } @else {
+                    <div>
+                      <label class="block text-xs font-medium text-gray-600 mb-1">團體 *</label>
+                      <input type="text" [(ngModel)]="groupSearch" name="attachGroupSearch" placeholder="輸入團體名搜尋…"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 mb-1"/>
+                      <select [(ngModel)]="attachHistory.group_id" name="attachGroupId"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                        <option [value]="''">— 請選擇團體 —</option>
+                        @for (g of filteredGroups; track g.id) {
+                          <option [value]="g.id">{{ g.name }}</option>
+                        }
+                      </select>
+                      @if (fieldErrors['attach.group_id']) {
+                        <p class="text-xs text-red-500 mt-1">{{ fieldErrors['attach.group_id'] }}</p>
+                      }
+                    </div>
+                  }
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">狀態 *</label>
+                    <select [(ngModel)]="attachHistory.status" name="attachStatus"
+                      class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300">
+                      <option [value]="''">— 請選擇狀態 —</option>
+                      @for (s of historyStatusOptions; track s.value) {
+                        <option [value]="s.value">{{ s.label }}</option>
+                      }
+                    </select>
+                    @if (fieldErrors['attach.status']) {
+                      <p class="text-xs text-red-500 mt-1">{{ fieldErrors['attach.status'] }}</p>
+                    }
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">加入日期 *</label>
+                    <div class="flex items-center gap-2">
+                      <select [(ngModel)]="joinedYear" name="attachJoinedYear" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                        <option [value]="0">— 年 —</option>
+                        @for (y of years; track y) { <option [value]="y">{{ y }}</option> }
+                      </select>
+                      <select [(ngModel)]="joinedMonth" name="attachJoinedMonth" [disabled]="!joinedYear" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                        <option [value]="0">— 月 —</option>
+                        @for (m of months; track m) { <option [value]="m">{{ m }} 月</option> }
+                      </select>
+                      <select [(ngModel)]="joinedDay" name="attachJoinedDay" [disabled]="!joinedMonth" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                        <option [value]="0">— 日 —</option>
+                        @for (d of daysForMonth(joinedMonth); track d) { <option [value]="d">{{ d }} 日</option> }
+                      </select>
+                    </div>
+                    @if (fieldErrors['attach.joined_at']) {
+                      <p class="text-xs text-red-500 mt-1">{{ fieldErrors['attach.joined_at'] }}</p>
+                    }
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">離開日期（選填）</label>
+                    <div class="flex items-center gap-2">
+                      <select [(ngModel)]="leftYear" name="attachLeftYear" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                        <option [value]="0">— 年 —</option>
+                        @for (y of years; track y) { <option [value]="y">{{ y }}</option> }
+                      </select>
+                      <select [(ngModel)]="leftMonth" name="attachLeftMonth" [disabled]="!leftYear" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                        <option [value]="0">— 月 —</option>
+                        @for (m of months; track m) { <option [value]="m">{{ m }} 月</option> }
+                      </select>
+                      <select [(ngModel)]="leftDay" name="attachLeftDay" [disabled]="!leftMonth" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50">
+                        <option [value]="0">— 日 —</option>
+                        @for (d of daysForMonth(leftMonth); track d) { <option [value]="d">{{ d }} 日</option> }
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
           <!-- Submitter note -->
           <div class="border-t border-gray-100 pt-4">
             <label class="block text-xs font-medium text-gray-600 mb-1">備註（選填）</label>
@@ -797,6 +903,31 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
   leftYear = 0;
   leftMonth = 0;
   leftDay = 0;
+
+  // Optional first history entry on a new-member proposal (stored as proposed_data._history)
+  showAttachHistory = false;
+  attachHistory = { group_id: '', external_group_name: '', external_country: '', status: '' };
+
+  /** The attached history for a new member, or null when the section is untouched. */
+  attachedHistoryPayload(): { history: Record<string, any> | null; missing: string[] } {
+    const groupFields: Record<string, string> = this.isExternalRecord
+      ? { external_group_name: this.attachHistory.external_group_name, external_country: this.attachHistory.external_country }
+      : { group_id: this.attachHistory.group_id };
+    const candidate: Record<string, string> = {
+      ...groupFields,
+      status: this.attachHistory.status,
+      joined_at: this.buildYMD(this.joinedYear, this.joinedMonth, this.joinedDay),
+      left_at: this.buildYMD(this.leftYear, this.leftMonth, this.leftDay),
+    };
+    const history = Object.fromEntries(
+      Object.entries(candidate).map(([k, v]) => [k, String(v ?? '').trim()]).filter(([, v]) => v)
+    );
+    if (Object.keys(history).length === 0) return { history: null, missing: [] };
+    const required = this.isExternalRecord
+      ? ['external_group_name', 'status', 'joined_at']
+      : ['group_id', 'status', 'joined_at'];
+    return { history, missing: required.filter(f => !history[f]) };
+  }
 
   readonly months = Array.from({ length: 12 }, (_, i) => i + 1);
   readonly years = Array.from(
@@ -1139,6 +1270,17 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
       }
       this.scrollToField(missingRequired[0]);
       return;
+    }
+
+    if (this.tableName === 'members' && this.operation === 'INSERT') {
+      const { history, missing } = this.attachedHistoryPayload();
+      if (missing.length > 0) {
+        for (const f of missing) this.fieldErrors['attach.' + f] = '此欄位為必填';
+        this.showAttachHistory = true;
+        this.scrollToField('attachHistory');
+        return;
+      }
+      if (history) proposed['_history'] = history;
     }
 
     // Check submitter name after field validation
