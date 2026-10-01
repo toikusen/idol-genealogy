@@ -77,11 +77,13 @@ pending 提案**，管理員通過前該 entity 不存在、沒有 id
 3. 成員成功、歷程失敗：**不回滾成員**。提案照常標記 approved，並把錯誤拋給
    審核頁顯示「成員已建立，但附帶經歷建立失敗：<原因>，請到成員頁手動補上」。
    理由：成員資料本身有效，回滾會讓管理員重審整筆。
-4. 兩張表的快取都要 invalidate（`invalidateTableCache('members')`、`'history'`）。
+4. 沿用既有的 `invalidateTableCache('members')`（history 沒有前端快取）。
 
 ### 審核頁（`admin-proposal-review`）
 
-- 欄位迴圈跳過 `_history`，避免物件被渲染成 `[object Object]` 的輸入框。
+- 欄位迴圈只渲染 `PROPOSAL_ALLOWED_FIELDS`，`_history` 本來就不會被畫成輸入框，
+  且會跟著 `editedData` 原樣送進 `approve()`；`editedData` 需改為深拷貝，
+  否則編輯 `_history` 內欄位時偵測不到變更。
 - 另外顯示「附帶經歷」區塊：團體名稱（用 group_id 查名稱或 external_group_name）、
   狀態、加入／離開日期，可編輯；編輯結果寫回 `editedData._history`。
 - 管理員可以「移除附帶經歷」（刪除 `editedData._history`），只建立成員。
