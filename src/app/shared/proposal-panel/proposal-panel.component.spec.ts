@@ -32,3 +32,21 @@ describe('ProposalPanelComponent locked fields', () => {
     expect(p.allowedFields).toContain('disbanded_at');
   });
 });
+
+describe('ProposalPanelComponent history group requirement', () => {
+  it('requires group_id for a Taiwan-group history', () => {
+    const p = panel();
+    p.tableName = 'history';
+    p.requiredFields = ['group_id', 'status', 'joined_at'];
+    expect(p.effectiveRequiredFields).toEqual(['group_id', 'status', 'joined_at']);
+  });
+
+  it('swaps group_id for external_group_name on an overseas/solo history', () => {
+    const p = panel();
+    p.tableName = 'history';
+    p.requiredFields = ['group_id', 'status', 'joined_at'];
+    p.isExternalRecord = true;
+    expect(p.effectiveRequiredFields).toEqual(['external_group_name', 'status', 'joined_at']);
+    expect(p.fieldLabel('external_group_name').endsWith(' *')).toBe(true);
+  });
+});

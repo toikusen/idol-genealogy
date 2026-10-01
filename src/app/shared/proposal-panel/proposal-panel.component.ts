@@ -850,9 +850,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
 
   fieldLabel(field: string): string {
     const label = FIELD_LABELS[this.tableName]?.[field] ?? field;
-    const isRequired = this.requiredFields.includes(field)
-      && !(this.isExternalRecord && field === 'group_id');
-    return isRequired ? label + ' *' : label;
+    return this.effectiveRequiredFields.includes(field) ? label + ' *' : label;
   }
 
   private readonly URL_FIELDS = new Set(['instagram', 'facebook', 'x', 'maid_url', 'youtube', 'website', 'photo_url', 'google_maps_url', 'timetree_url']);
@@ -892,7 +890,13 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
   }
 
   isRequired(field: string): boolean {
-    return this.requiredFields.includes(field);
+    return this.effectiveRequiredFields.includes(field);
+  }
+
+  /** External (海外/solo) history records name their group in external_group_name instead of group_id. */
+  get effectiveRequiredFields(): string[] {
+    if (!this.isExternalRecord) return this.requiredFields;
+    return this.requiredFields.map(f => f === 'group_id' ? 'external_group_name' : f);
   }
 
   private scrollToField(field: string) {
@@ -1128,11 +1132,7 @@ export class ProposalPanelComponent implements OnInit, AfterViewInit {
       }
     }
 
-    // When in external mode (海外/solo), group_id is not applicable — skip its required check
-    const effectiveRequired = this.isExternalRecord
-      ? this.requiredFields.filter(f => f !== 'group_id')
-      : this.requiredFields;
-    const missingRequired = effectiveRequired.filter(f => !proposed[f]);
+    const missingRequired = this.effectiveRequiredFields.filter(f => !String(proposed[f] ?? '').trim());
     if (missingRequired.length > 0) {
       for (const f of missingRequired) {
         this.fieldErrors[f] = '此欄位為必填';
