@@ -754,6 +754,16 @@
             </div>
           </div>
         </section>
+      } @else {
+        <div class="py-12 text-center" style="margin-bottom: 48px;">
+          <p class="text-4xl mb-3" style="font-family:'JF Openhuninn',sans-serif; color: var(--text-faint-55);">空</p>
+          <p class="text-sm" style="color: var(--text-faint-55);">還沒有這個團體的成員經歷</p>
+          <p class="text-xs mt-1" style="color: var(--text-faint-55);">知道的話幫忙補上</p>
+          <button type="button" (click)="showNewHistoryPanel = true"
+            class="mt-4 inline-flex items-center gap-1 px-4 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors">
+            ＋ 新增經歷
+          </button>
+        </div>
       }
 
       <!-- ══ Tabs: members / connections ══ -->
