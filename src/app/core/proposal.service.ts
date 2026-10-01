@@ -14,6 +14,14 @@ export interface ContributorEntry {
   by_table: Record<string, number>;
 }
 
+/** The member was created and its proposal approved; only its attached first history entry failed. */
+export class AttachedHistoryError extends Error {
+  constructor(reason: string) {
+    super(`成員已建立，但附帶經歷建立失敗：${reason}，請到成員頁手動補上`);
+    this.name = 'AttachedHistoryError';
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProposalService {
   private get db() { return this.supabase.client; }
@@ -151,7 +159,7 @@ export class ProposalService {
       .eq('id', proposal.id);
     if (error) throw error;
     if (historyError) {
-      throw new Error(`成員已建立，但附帶經歷建立失敗：${historyError.message ?? historyError}，請到成員頁手動補上`);
+      throw new AttachedHistoryError(historyError.message ?? String(historyError));
     }
   }
 

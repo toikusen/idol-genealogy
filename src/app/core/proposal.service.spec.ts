@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ProposalService } from './proposal.service';
+import { AttachedHistoryError, ProposalService } from './proposal.service';
 import { SupabaseService } from './supabase.service';
 import { MemberService } from './member.service';
 
@@ -188,7 +188,7 @@ describe('ProposalService', () => {
       await expectAsync(service.approve({
         id: 'p1', table_name: 'members', record_id: null, operation: 'INSERT',
         proposed_data: { name: '和希', _history: { group_id: 'g1', status: 'x', joined_at: '2024-01-01' } },
-      } as any)).toBeRejectedWithError('成員已建立，但附帶經歷建立失敗：invalid status，請到成員頁手動補上');
+      } as any)).toBeRejectedWithError(AttachedHistoryError, '成員已建立，但附帶經歷建立失敗：invalid status，請到成員頁手動補上');
       expect(inserts['members']).toEqual([{ name: '和希' }]);
       expect(proposalUpdateSpy).toHaveBeenCalledWith(
         jasmine.objectContaining({ status: 'approved', record_id: 'new-member-id' })

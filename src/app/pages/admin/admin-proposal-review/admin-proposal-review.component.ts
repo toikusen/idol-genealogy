@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ProposalService } from '../../../core/proposal.service';
+import { AttachedHistoryError, ProposalService } from '../../../core/proposal.service';
 import { MemberService } from '../../../core/member.service';
 import { GroupService } from '../../../core/group.service';
 import { PROPOSAL_ALLOWED_FIELDS, FIELD_LABELS } from '../../../core/proposal-fields.config';
@@ -99,10 +99,11 @@ export class AdminProposalReviewComponent implements OnInit {
 
   /** Rows of a new-member proposal's attached first history entry, in display order. */
   get attachedHistoryEntries(): { key: string; label: string }[] {
-    const h = this.editedData['_history'];
-    if (!h) return [];
+    // Rows come from the submitted entry so clearing a field while editing keeps its input on screen.
+    const submitted = this.proposal?.proposed_data?.['_history'];
+    if (!this.editedData['_history'] || !submitted) return [];
     return PROPOSAL_ALLOWED_FIELDS['history']
-      .filter(k => h[k] != null && h[k] !== '')
+      .filter(k => submitted[k] != null && submitted[k] !== '')
       .map(k => ({ key: k, label: FIELD_LABELS['history']?.[k] ?? k }));
   }
 
@@ -170,17 +171,30 @@ export class AdminProposalReviewComponent implements OnInit {
       // DELETE proposals: never pass editedData (proposed_data is just { reason } metadata)
       let reviewedData: Record<string, any> | undefined;
       if (this.proposal.operation !== 'DELETE') {
-        const normalizedData = this.normalizedHistoryData(this.editedData);
+        const normalizedData = this.withoutBlankAttachedFields(this.normalizedHistoryData(this.editedData));
         const hasEdits = JSON.stringify(normalizedData) !== JSON.stringify(this.proposal.proposed_data);
         reviewedData = hasEdits ? normalizedData : undefined;
       }
       await this.proposalService.approve(this.proposal, reviewedData);
       this.router.navigate(['/admin/proposals']);
     } catch (e: any) {
+      // The proposal is already approved server-side; hide the approve button so the member is not inserted twice.
+      if (e instanceof AttachedHistoryError) this.proposal.status = 'approved';
       this.error = e.message ?? '操作失敗';
     } finally {
       this.saving = false;
     }
+  }
+
+  private withoutBlankAttachedFields(data: Record<string, any>): Record<string, any> {
+    const h = data['_history'];
+    if (!h) return data;
+    const cleaned = Object.fromEntries(
+      Object.entries(h)
+        .map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
+        .filter(([, v]) => v != null && v !== '')
+    );
+    return { ...data, _history: cleaned };
   }
 
   private normalizedHistoryData(data: Record<string, any>): Record<string, any> {
