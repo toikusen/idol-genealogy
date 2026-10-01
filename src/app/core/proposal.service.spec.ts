@@ -142,6 +142,69 @@ describe('ProposalService', () => {
   });
 
   describe('approve', () => {
+    function spyTables(historyError: any = null) {
+      const inserts: Record<string, any[]> = {};
+      mockDb.from = jasmine.createSpy('from').and.callFake((table: string) => {
+        if (table === 'proposals') {
+          return { update: proposalUpdateSpy };
+        }
+        return {
+          insert: jasmine.createSpy('insert').and.callFake((payload: any) => {
+            (inserts[table] ??= []).push(payload);
+            if (table === 'history') return Promise.resolve({ error: historyError });
+            return {
+              select: () => ({ single: () => Promise.resolve({ data: { id: 'new-member-id' }, error: null }) }),
+            };
+          }),
+        };
+      });
+      return inserts;
+    }
+
+    it('inserts the attached history with the new member id', async () => {
+      const inserts = spyTables();
+      await service.approve({
+        id: 'p1', table_name: 'members', record_id: null, operation: 'INSERT',
+        proposed_data: { name: '和希', _history: { group_id: 'g1', status: 'active', joined_at: '2024-01-01' } },
+      } as any);
+      expect(inserts['members']).toEqual([{ name: '和希' }]);
+      expect(inserts['history']).toEqual([
+        { group_id: 'g1', status: 'active', joined_at: '2024-01-01', member_id: 'new-member-id' },
+      ]);
+    });
+
+    it('creates only the member when nothing is attached', async () => {
+      const inserts = spyTables();
+      await service.approve({
+        id: 'p1', table_name: 'members', record_id: null, operation: 'INSERT',
+        proposed_data: { name: '和希' },
+      } as any);
+      expect(inserts['members']).toEqual([{ name: '和希' }]);
+      expect(inserts['history']).toBeUndefined();
+    });
+
+    it('keeps the member and still approves when the history insert fails', async () => {
+      const inserts = spyTables({ message: 'invalid status' });
+      await expectAsync(service.approve({
+        id: 'p1', table_name: 'members', record_id: null, operation: 'INSERT',
+        proposed_data: { name: '和希', _history: { group_id: 'g1', status: 'x', joined_at: '2024-01-01' } },
+      } as any)).toBeRejectedWithError('成員已建立，但附帶經歷建立失敗：invalid status，請到成員頁手動補上');
+      expect(inserts['members']).toEqual([{ name: '和希' }]);
+      expect(proposalUpdateSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ status: 'approved', record_id: 'new-member-id' })
+      );
+    });
+
+    it('leaves _history alone on a non-members INSERT', async () => {
+      const inserts = spyTables();
+      await service.approve({
+        id: 'p1', table_name: 'companies', record_id: null, operation: 'INSERT',
+        proposed_data: { name: '新公司', _history: { group_id: 'g1' } },
+      } as any);
+      expect(inserts['companies']).toEqual([{ name: '新公司', _history: { group_id: 'g1' } }]);
+      expect(inserts['history']).toBeUndefined();
+    });
+
     it('invalidates the member cache after applying a members proposal', async () => {
       const memberService = TestBed.inject(MemberService);
       const spy = spyOn(memberService, 'invalidateCache');

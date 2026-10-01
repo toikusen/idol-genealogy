@@ -99,14 +99,25 @@ export class ProposalService {
     // new row's id so the record's edit-history panel can find this proposal.
     let insertedId: string | null = null;
 
+    let historyError: any = null;
+
     if (proposal.operation === 'INSERT') {
+      // A new-member proposal may carry its first history entry; it is not a members column.
+      const isMember = proposal.table_name === 'members';
+      const { _history, ...memberRow } = dataToApply;
+      const row = isMember ? memberRow : dataToApply;
+      const attached = isMember ? _history : undefined;
       const { data, error } = await this.db
         .from(proposal.table_name)
-        .insert(dataToApply)
+        .insert(row)
         .select('id')
         .single();
       applyError = error;
       insertedId = (data as { id?: string } | null)?.id ?? null;
+      if (!error && attached && insertedId) {
+        const { error: hErr } = await this.db.from('history').insert({ ...attached, member_id: insertedId });
+        historyError = hErr;
+      }
     } else if (proposal.operation === 'DELETE') {
       const { error } = await this.db
         .from(proposal.table_name)
@@ -139,6 +150,9 @@ export class ProposalService {
       })
       .eq('id', proposal.id);
     if (error) throw error;
+    if (historyError) {
+      throw new Error(`成員已建立，但附帶經歷建立失敗：${historyError.message ?? historyError}，請到成員頁手動補上`);
+    }
   }
 
   private invalidateTableCache(tableName: string): void {
