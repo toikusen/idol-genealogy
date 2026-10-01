@@ -476,7 +476,7 @@
 
         <!-- Content -->
         @if (historyView === 'timeline') {
-          <app-member-timeline [histories]="histories" (reportHistory)="historyToDelete = $event"></app-member-timeline>
+          <app-member-timeline [histories]="histories" (reportHistory)="historyToDelete = $event" (addHistory)="showOverseasPanel = true"></app-member-timeline>
         } @else {
           <app-member-career-graph [histories]="histories" [fallbackName]="member.name_roman || member.name" [currentMemberId]="member.id" />
         }

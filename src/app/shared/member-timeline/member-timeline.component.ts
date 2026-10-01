@@ -165,8 +165,12 @@ interface TimelineSegment {
       @if (segments.length === 0) {
         <div class="py-12 text-center">
           <p class="text-4xl text-gray-200 mb-3" style="font-family:'JF Openhuninn',sans-serif;">空</p>
-          <p class="text-sm text-gray-400">此成員尚無歷史記錄</p>
-          <p class="text-xs text-gray-300 mt-1">歡迎登入後補充資料</p>
+          <p class="text-sm text-gray-400">還沒有這位成員的團體經歷</p>
+          <p class="text-xs text-gray-300 mt-1">知道的話幫忙補上</p>
+          <button type="button" data-testid="add-history" (click)="addHistory.emit()"
+            class="mt-4 inline-flex items-center gap-1 px-4 py-1.5 text-xs text-pink-600 border border-pink-200 rounded-full hover:bg-pink-50 transition-colors">
+            ＋ 新增經歷
+          </button>
         </div>
       }
     </div>
@@ -175,6 +179,7 @@ interface TimelineSegment {
 export class MemberTimelineComponent implements OnChanges {
   @Input() histories: History[] = [];
   @Output() reportHistory = new EventEmitter<History>();
+  @Output() addHistory = new EventEmitter<void>();
   segments: TimelineSegment[] = [];
 
   safeColor(hex: string, fallback = '#7a5a7a'): string {
