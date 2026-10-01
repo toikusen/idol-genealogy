@@ -90,6 +90,28 @@
       </div>
     </section>
 
+    <!-- ══ 顏控9選 entry ══ -->
+    @if (!hasResults) {
+      <a routerLink="/sukigao" class="home-sukigao" aria-label="玩台灣地偶顏控9選：憑直覺選出最中你臉的 9 位偶像">
+        <span class="home-sukigao__faces" aria-hidden="true">
+          @for (f of sukigaoFaces; track f.id) {
+            <span class="home-sukigao__face"><img [src]="f.photo_url | supabaseImg: 96 : 75" alt="" width="44" height="44" loading="lazy" decoding="async" /></span>
+          } @empty {
+            <span class="home-sukigao__face home-sukigao__face--blank">💗</span>
+          }
+          <span class="home-sukigao__face home-sukigao__face--nine">9</span>
+        </span>
+        <span class="home-sukigao__text">
+          <span class="home-sukigao__badge">NEW 小遊戲</span>
+          <strong class="home-sukigao__title">台灣地偶顏控9選</strong>
+          <span class="home-sukigao__sub">
+            憑直覺選出最中你臉的 9 位偶像@if (sukigaoPlays) {<span class="home-sukigao__plays"> · 已玩 {{ sukigaoPlays | number }} 次</span>}
+          </span>
+        </span>
+        <span class="home-sukigao__cta" aria-hidden="true">開始玩<span class="home-sukigao__arrow">→</span></span>
+      </a>
+    }
+
     <!-- ══ CATEGORY TABS ══ -->
     @if (!hasResults) {
       <nav aria-label="內容分類" style="margin-bottom: 48px;">

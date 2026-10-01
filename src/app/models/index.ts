@@ -331,3 +331,46 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   notify_birthday: true,
   notify_disbanded: true,
 };
+
+/** A face in the 顏控9選 pool, from get_sukigao_candidates (see migration 106). */
+export interface SukigaoCandidate {
+  id: string;
+  name: string;
+  photoUrl: string;
+  groupNames: string[];
+  color: string | null;
+  /** Has a current group / solo relationship (the default "現役" scope). */
+  isCurrent: boolean;
+}
+
+export interface SukigaoResult {
+  memberId: string;
+  rank: number;
+}
+
+/** One finished game in a signed-in player's history (migration 114). */
+export interface SukigaoUserResult {
+  id: string;
+  session_id: string;
+  /** Best → worst, 9 member ids. */
+  member_ids: string[];
+  played_at: string;
+}
+
+/** The public play counts (migration 116): no per-member numbers. */
+export interface SukigaoStats {
+  /** Counted results (one per browser per day). */
+  total: number;
+  /** Games played, replays included (capped per browser per day); what 「幾次顏控9選」 shows. */
+  plays: number;
+  players: number;
+}
+
+/** 後台 only (get_sukigao_admin_stats, staff): per-member pick counts over counted results. */
+export interface SukigaoAdminStats extends SukigaoStats {
+  members: { member_id: string; name: string; top9: number; first: number }[];
+  /** Counted results per game setup (scope + size), from candidate_version. */
+  setups: { scope: string; size: number; results: number }[];
+  /** The last 14 Taipei days, oldest first. */
+  daily: { day: string; results: number; plays: number }[];
+}

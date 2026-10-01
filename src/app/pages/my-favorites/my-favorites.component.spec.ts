@@ -43,9 +43,9 @@ describe('MyFavoritesComponent desktop structure', () => {
     expect(mobileHeader).toBeTruthy();
   });
 
-  it('sidebar filter nav has all four tabs', () => {
+  it('sidebar filter nav has all five tabs', () => {
     const buttons = fixture.nativeElement.querySelectorAll('.mf-filter-nav .mf-filter-btn');
-    expect(buttons.length).toBe(4);
+    expect(buttons.length).toBe(5);
   });
 });
 
@@ -74,7 +74,7 @@ describe('MyFavoritesComponent — ARIA tab semantics', () => {
 
   it('mobile tabs have role="tab" and first tab has aria-selected="true"', () => {
     const tabs = fixture2.nativeElement.querySelectorAll('[role="tab"]');
-    expect(tabs.length).toBe(4);
+    expect(tabs.length).toBe(5);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(tabs[1].getAttribute('aria-selected')).toBe('false');
   });

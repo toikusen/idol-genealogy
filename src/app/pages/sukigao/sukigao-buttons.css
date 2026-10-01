@@ -1,0 +1,80 @@
+/* Buttons shared by the 顏控9選 game, result and ranking views. */
+
+.sk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.sk-btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--bg-pink-tint-hover);
+}
+
+.sk-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.sk-btn--primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, #ec7fa8, #d95a8c);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 16px var(--pink-glow-35);
+}
+
+.sk-btn--primary:hover:not(:disabled) {
+  border-color: transparent;
+  background: linear-gradient(135deg, #e8729f, #cc4d80);
+}
+
+.sk-btn--ghost {
+  background: transparent;
+}
+
+.sk-btn--submit {
+  width: 100%;
+  border-color: var(--border-strong);
+  background: var(--bg-pink-tint);
+  color: var(--text-link);
+  font-weight: 600;
+}
+
+.sk-link-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  color: var(--text-faint-70);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sk-link-btn:hover:not(:disabled) {
+  color: var(--text-secondary);
+}
+
+.sk-link-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

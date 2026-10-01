@@ -1526,3 +1526,159 @@ input::placeholder {
   opacity: 0.5;
   cursor: default;
 }
+
+/* ── 顏控9選 entry card ── */
+.home-sukigao {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 32px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  text-decoration: none;
+  color: var(--text-primary);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(232, 121, 160, 0.18), transparent 60%),
+    radial-gradient(120% 140% at 100% 100%, rgba(155, 107, 214, 0.14), transparent 60%),
+    var(--bg-surface);
+  border: 1px solid rgba(232, 121, 160, 0.28);
+  box-shadow: 0 6px 24px rgba(232, 121, 160, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.home-sukigao:hover,
+.home-sukigao:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(232, 121, 160, 0.5);
+  box-shadow: 0 10px 30px rgba(232, 121, 160, 0.2);
+}
+
+.home-sukigao__faces {
+  display: flex;
+  flex: none;
+  padding-left: 10px;
+}
+
+.home-sukigao__face {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -10px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--skel-from), var(--skel-to));
+  box-shadow: 0 0 0 2px var(--bg-page), 0 2px 8px rgba(45, 27, 46, 0.15);
+}
+
+.home-sukigao__face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.05);
+}
+
+.home-sukigao__face--blank {
+  font-size: 1.2rem;
+}
+
+.home-sukigao__face--nine {
+  background: linear-gradient(135deg, #f08fb4, #b07ae0);
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.home-sukigao__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.home-sukigao__badge {
+  align-self: flex-start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f08fb4, #b07ae0);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.home-sukigao__title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 1.08rem;
+  letter-spacing: 0.08em;
+  color: var(--text-heading);
+}
+
+.home-sukigao__sub {
+  font-size: 0.78rem;
+  color: var(--text-faint-70);
+}
+
+.home-sukigao__plays {
+  white-space: nowrap;
+}
+
+.home-sukigao__cta {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f08fb4, #e0679b);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  box-shadow: 0 4px 14px rgba(224, 103, 155, 0.35);
+}
+
+.home-sukigao__arrow {
+  transition: transform 0.2s ease;
+}
+
+.home-sukigao:hover .home-sukigao__arrow {
+  transform: translateX(3px);
+}
+
+@media (max-width: 560px) {
+  .home-sukigao {
+    gap: 12px;
+    padding: 12px 14px;
+  }
+  .home-sukigao__face {
+    width: 38px;
+    height: 38px;
+  }
+  /* Two photos + the 9 leave the title room for one line. */
+  .home-sukigao__face:nth-child(3):not(.home-sukigao__face--nine) {
+    display: none;
+  }
+  .home-sukigao__title {
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+  }
+  .home-sukigao__cta {
+    padding: 8px 12px;
+    font-size: 0;
+    gap: 0;
+  }
+  .home-sukigao__arrow {
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-sukigao,
+  .home-sukigao__arrow {
+    transition: none;
+  }
+}

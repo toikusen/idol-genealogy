@@ -48,6 +48,47 @@ describe('AdminRoleService', () => {
     expect(val).toBeTrue();
   });
 
+  it('an ordinary signed-in user never becomes staff, even when auth fires again', async () => {
+    const supabase = TestBed.inject(SupabaseService) as any;
+    const limitSpy = jasmine.createSpy('limit').and.returnValue(Promise.resolve({ data: [], error: null }));
+    const inSpy = jasmine.createSpy('in').and.returnValue({ limit: limitSpy });
+    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ in: inSpy });
+    dbSpy.from.and.returnValue({ select: jasmine.createSpy().and.returnValue({ eq: eqEmailSpy }) });
+    supabase.getSessionOnce.and.returnValue(Promise.resolve({ user: { id: 'u1', email: 'fan@test.com' } }));
+    const seen: boolean[] = [];
+    service.isStaff$.subscribe(v => seen.push(v));
+    authState$.next({ user: { id: 'u1', email: 'fan@test.com' } });
+    await new Promise(r => setTimeout(r, 10));
+    // Token refresh / tab refocus: same user again, served from the cache.
+    authState$.next({ user: { id: 'u1', email: 'fan@test.com' } });
+    authState$.next({ user: { id: 'u1', email: 'fan@test.com' } });
+    await new Promise(r => setTimeout(r, 10));
+    expect(seen.every(v => v === false)).toBeTrue();
+  });
+
+  it('an editor stays staff (but not admin) when auth fires again', async () => {
+    const supabase = TestBed.inject(SupabaseService) as any;
+    // isAdmin: no rows; isStaff: one row.
+    const limitSpy = jasmine.createSpy('limit').and.returnValues(
+      Promise.resolve({ data: [], error: null }),
+      Promise.resolve({ data: [{ id: 'r' }], error: null }),
+    );
+    const inSpy = jasmine.createSpy('in').and.returnValue({ limit: limitSpy });
+    const eqEmailSpy = jasmine.createSpy('eqEmail').and.returnValue({ in: inSpy });
+    dbSpy.from.and.returnValue({ select: jasmine.createSpy().and.returnValue({ eq: eqEmailSpy }) });
+    supabase.getSessionOnce.and.returnValue(Promise.resolve({ user: { id: 'e1', email: 'editor@test.com' } }));
+    authState$.next({ user: { id: 'e1', email: 'editor@test.com' } });
+    await new Promise(r => setTimeout(r, 10));
+    authState$.next({ user: { id: 'e1', email: 'editor@test.com' } });
+    await new Promise(r => setTimeout(r, 10));
+    let staff: boolean | undefined;
+    let admin: boolean | undefined;
+    service.isStaff$.subscribe(v => staff = v).unsubscribe();
+    service.isAdmin$.subscribe(v => admin = v).unsubscribe();
+    expect(staff).toBeTrue();
+    expect(admin).toBeFalse();
+  });
+
   it('isAdmin$ resets to false when authState$ emits null (logout)', async () => {
     authState$.next(null);
     let val: boolean | undefined;

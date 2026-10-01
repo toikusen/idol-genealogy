@@ -1,0 +1,175 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.skedit {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+.skedit p {
+  margin: 0;
+}
+
+/* ── compact (in-game) ── */
+.skedit--compact {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 12px;
+  border: 1px dashed var(--border-default);
+  background: var(--bg-surface-subtle);
+}
+
+.skedit--compact summary,
+.skedit__faces summary {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-faint-75);
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+.skedit--compact summary::-webkit-details-marker,
+.skedit__faces summary::-webkit-details-marker {
+  display: none;
+}
+
+.skedit--compact summary::after,
+.skedit__faces summary::after {
+  content: '▾';
+  margin-left: auto;
+  padding-left: 0.5rem;
+  color: var(--text-faint-45);
+}
+
+.skedit--compact[open] summary::after,
+.skedit__faces[open] summary::after {
+  content: '▴';
+}
+
+.skedit__list {
+  display: grid;
+  gap: 2px;
+  margin: 0.35rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skedit__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 36px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.skedit__list li:last-child {
+  border-bottom: none;
+}
+
+.skedit__name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+}
+
+.skedit__fix {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-medium);
+  color: var(--text-link);
+  font-size: 0.74rem;
+  text-decoration: none;
+}
+
+.skedit__fix:hover {
+  background: var(--bg-pink-tint-hover);
+}
+
+.skedit__note {
+  font-size: 0.7rem;
+  color: var(--text-faint-55);
+}
+
+/* ── full (intro / result / ranking) ── */
+.skedit--full {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 2rem;
+  padding: 1.1rem 1.1rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-xs);
+  text-align: left;
+}
+
+.skedit__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.skedit__text strong {
+  color: var(--text-link);
+}
+
+.skedit__faces {
+  padding: 0.25rem 0.75rem;
+  border-radius: 10px;
+  background: var(--bg-pink-tint);
+}
+
+.skedit__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.skedit__btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-pink-tint);
+  color: var(--text-link);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skedit__btn:hover {
+  background: var(--bg-pink-tint-hover);
+}
+
+.skedit__link {
+  color: var(--text-faint-70);
+  font-size: 0.8rem;
+}
+
+.skedit__about {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.skedit__about-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--text-faint-60);
+}

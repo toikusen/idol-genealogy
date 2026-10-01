@@ -12,33 +12,42 @@ export class AdminRoleService implements OnDestroy {
   private _sub: Subscription;
   private _cachedUserId: string | null = null;
   private _cachedIsAdmin: boolean | null = null;
+  /** Cached with the admin flag: editors are staff without being admins. */
+  private _cachedIsStaff: boolean | null = null;
   private _inflightIsAdmin: Promise<boolean> | null = null;
 
   constructor(private supabase: SupabaseService) {
+    // authState$ fires again for the same user (token refresh, tab refocus),
+    // so both flags come from what was actually looked up for that user —
+    // never assumed. Assuming staff here once showed 後台 to ordinary users.
     this._sub = this.supabase.authState$.subscribe(session => {
       if (session) {
         const userId = session.user.id;
-        if (this._cachedUserId === userId && this._cachedIsAdmin !== null) {
+        if (this._cachedUserId === userId && this._cachedIsAdmin !== null && this._cachedIsStaff !== null) {
           this._isAdmin.next(this._cachedIsAdmin);
-          this._isStaff.next(true);
+          this._isStaff.next(this._cachedIsStaff);
           return;
         }
-        this.isAdmin().then(val => {
-          this._isAdmin.next(val);
-          if (val) {
-            this._isStaff.next(true);
-          } else {
-            this.isStaff().then(s => this._isStaff.next(s));
-          }
+        if (this._cachedUserId !== null && this._cachedUserId !== userId) this.clearCache();
+        this.isAdmin().then(async isAdmin => {
+          const isStaff = isAdmin || (await this.isStaff());
+          if (this._cachedUserId === userId) this._cachedIsStaff = isStaff;
+          this._isAdmin.next(isAdmin);
+          this._isStaff.next(isStaff);
         });
       } else {
-        this._cachedUserId = null;
-        this._cachedIsAdmin = null;
-        this._inflightIsAdmin = null;
+        this.clearCache();
         this._isAdmin.next(false);
         this._isStaff.next(false);
       }
     });
+  }
+
+  private clearCache(): void {
+    this._cachedUserId = null;
+    this._cachedIsAdmin = null;
+    this._cachedIsStaff = null;
+    this._inflightIsAdmin = null;
   }
 
   ngOnDestroy(): void {

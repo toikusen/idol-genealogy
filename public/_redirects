@@ -16,4 +16,7 @@
 /contributors /contributors/ 200
 /leaderboard /leaderboard/ 200
 /wanted      /wanted/      200
+/sukigao     /sukigao/     200
+/sukigao/ranking  /sukigao  301
+/sukigao/ranking/ /sukigao  301
 # SPA routes handled by _middleware.ts via env.ASSETS

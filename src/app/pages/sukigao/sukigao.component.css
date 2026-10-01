@@ -1,0 +1,800 @@
+.sk-page {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1rem 12px 7rem;
+  color: var(--text-primary);
+}
+
+.sk-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  color: var(--text-faint-60);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+
+.sk-back:hover {
+  color: var(--text-secondary);
+}
+
+.sk-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Loading / error ── */
+.sk-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 0;
+  text-align: center;
+  color: var(--text-faint-70);
+  font-size: 0.9rem;
+}
+
+.sk-state p {
+  margin: 0;
+}
+
+.sk-state__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
+.sk-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 80px);
+  gap: 8px;
+}
+
+.sk-skeleton {
+  display: block;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--skel-from), var(--skel-to), var(--skel-from));
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes sk-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── Intro ── */
+.sk-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.sk-intro > .sk-back {
+  align-self: flex-start;
+}
+
+.sk-intro__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0.75rem 0 1rem;
+  line-height: 1.1;
+}
+
+.sk-intro__kicker {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.4em;
+  color: var(--text-pink);
+}
+
+.sk-intro__main {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  background: linear-gradient(135deg, #e879a0, #b064d8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.sk-intro__lead {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.9;
+  color: var(--text-secondary);
+}
+
+.sk-intro__preview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 1.5rem;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-md);
+  transform: rotate(-2deg);
+}
+
+.sk-intro__tile {
+  display: block;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--skel-from), var(--skel-to));
+}
+
+.sk-intro__tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.05);
+}
+
+.sk-intro__note {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  line-height: 1.9;
+  color: var(--text-faint-70);
+}
+
+/* ── Intro setup: scope + size ── */
+.sk-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.sk-setup__label {
+  margin: 0 0 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--text-faint-65);
+}
+
+.sk-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--mauve-05);
+  border: 1px solid var(--border-subtle);
+}
+
+.sk-seg__opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-faint-70);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sk-seg__opt small {
+  font-size: 0.68rem;
+  color: var(--text-faint-55);
+}
+
+.sk-seg__opt--on {
+  background: var(--bg-surface);
+  color: var(--text-link);
+  font-weight: 600;
+  box-shadow: var(--shadow-xs);
+}
+
+.sk-sizes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
+  gap: 8px;
+}
+
+.sk-size {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px 10px;
+  border: 2px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.sk-size--on {
+  border-color: var(--idol-pink);
+  background: var(--bg-pink-tint-hover);
+}
+
+/* Same line-icon treatment as the favourites page. */
+.sk-size__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.sk-size--on .sk-size__icon {
+  color: var(--text-link);
+  opacity: 1;
+}
+
+.sk-size__count {
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sk-size--on .sk-size__count {
+  color: var(--text-link);
+}
+
+.sk-size__meta {
+  font-size: 0.7rem;
+  color: var(--text-faint-60);
+  white-space: nowrap;
+}
+
+.sk-intro__plays {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-faint-70);
+}
+
+.sk-intro__plays strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--idol-pink);
+}
+
+.sk-intro__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-faint-55);
+}
+
+.sk-intro__count {
+  min-height: 1.6em;
+  margin: 0 0 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-link);
+}
+
+.sk-intro__count-loading {
+  font-weight: 400;
+  color: var(--text-faint-60);
+}
+
+.sk-intro__cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 360px;
+}
+
+.sk-btn--wide {
+  width: 100%;
+  min-height: 54px;
+  font-size: 1rem;
+}
+
+.sk-intro__how {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 1.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  text-align: left;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.sk-intro__how summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 32px;
+}
+
+.sk-intro__how ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.sk-intro__how p {
+  margin: 0;
+  color: var(--text-faint-65);
+}
+
+/* ── Stage header ── */
+.sk-stage-head {
+  margin: 0 0 0.6rem;
+  text-align: center;
+}
+
+.sk-stage-head__chip {
+  display: inline-block;
+  margin: 0 0.5rem 0.3rem 0;
+  vertical-align: middle;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--bg-pink-tint-hover);
+  color: var(--text-link);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.sk-stage-head__chip--final {
+  background: linear-gradient(135deg, #ec7fa8, #b064d8);
+  color: #fff;
+  letter-spacing: 0.4em;
+}
+
+.sk-stage-head__title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-heading);
+}
+
+.sk-stage-head__title--sm {
+  font-size: 1.05rem;
+}
+
+.sk-stage-head__q {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.sk-stage-head__q strong {
+  color: var(--text-link);
+}
+
+.sk-stage-head__hint {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: var(--text-faint-60);
+}
+
+/* ── Progress ── */
+.sk-progress {
+  margin-bottom: 0.6rem;
+}
+
+.sk-progress__label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  color: var(--text-faint-65);
+  font-variant-numeric: tabular-nums;
+}
+
+.sk-progress__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--mauve-07);
+  overflow: hidden;
+}
+
+.sk-progress__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ec7fa8, #b064d8);
+  transition: width 0.3s ease;
+}
+
+/* ── Grids ── */
+.sk-grid {
+  display: grid;
+  gap: 8px;
+}
+
+/* A batch is always 3×3, on every screen. The grid is as wide as it can be
+   while three rows still fit between the header and the sticky action bar:
+   ~380px is that vertical chrome plus the three name rows. */
+.sk-grid--batch {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  max-width: min(100%, 560px, max(260px, calc(100vh - 380px)));
+  margin-inline: auto;
+}
+
+.sk-grid--group {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: min(440px, max(240px, calc(100vh - 380px)));
+  margin: 0 auto;
+  gap: 12px;
+}
+
+/* svh = the viewport with the browser bars showing. Unlike dvh it doesn't
+   change while scrolling hides / shows the mobile address bar, so the cards
+   keep their size instead of growing and shrinking mid-scroll. */
+@supports (height: 100svh) {
+  .sk-grid--batch {
+    max-width: min(100%, 560px, max(260px, calc(100svh - 380px)));
+  }
+
+  .sk-grid--group {
+    max-width: min(440px, max(240px, calc(100svh - 380px)));
+  }
+}
+
+.sk-versus {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.sk-versus__vs {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-link);
+  pointer-events: none;
+}
+
+.sk-final-hint {
+  margin: 0.9rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-faint-60);
+}
+
+.sk-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-faint-65);
+}
+
+/* ── Action bar ── */
+.sk-actionbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Pinned to the bottom edge on phones so 下一組 is always under the thumb.
+   The app's floating pills are hidden meanwhile (body.sukigao-immersive). */
+.sk-actionbar--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 0.75rem -12px 0;
+  padding: 0.5rem 12px calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: var(--bg-surface);
+  box-shadow: 0 -4px 16px rgba(45, 27, 46, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.sk-actionbar--center {
+  justify-content: center;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.sk-actionbar__count {
+  font-size: 0.78rem;
+  color: var(--text-faint-70);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sk-actionbar__spacer {
+  min-width: 72px;
+}
+
+@media (min-width: 640px) {
+  .sk-grid--batch {
+    gap: 12px;
+  }
+
+  .sk-actionbar--sticky {
+    bottom: 12px;
+    margin: 1rem 0 0;
+    padding: 0.5rem 0.5rem 0.5rem 0.9rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+  }
+
+  .sk-intro__main {
+    font-size: 3.4rem;
+  }
+
+  .sk-intro__preview {
+    max-width: 360px;
+  }
+
+  .sk-stage-head__title {
+    font-size: 1.6rem;
+  }
+
+  .sk-versus {
+    gap: 24px;
+  }
+}
+
+@media (min-width: 960px) {
+  .sk-page {
+    max-width: 880px;
+  }
+}
+
+/* Phones / tablets: the desktop wrappers don't exist as boxes. */
+.sk-intro__hero,
+.sk-intro__panel,
+.sk-play {
+  display: contents;
+}
+
+/* ── Desktop: two columns so the faces can use the whole screen height ── */
+@media (min-width: 1024px) {
+  .sk-page {
+    max-width: 1180px;
+    padding-bottom: 2rem;
+  }
+
+  /* Intro: pitch + preview on the left, setup + start on the right. */
+  .sk-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+    column-gap: 64px;
+    align-items: center;
+    text-align: left;
+  }
+
+  .sk-intro > .sk-back,
+  .sk-intro > app-sukigao-edit-cta {
+    grid-column: 1 / -1;
+  }
+
+  .sk-intro > app-sukigao-edit-cta {
+    margin-top: 2rem;
+  }
+
+  .sk-intro__hero,
+  .sk-intro__panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .sk-intro__main {
+    font-size: 4rem;
+  }
+
+  .sk-intro__lead {
+    font-size: 1.05rem;
+  }
+
+  .sk-intro__preview {
+    max-width: 420px;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .sk-intro__panel .sk-setup,
+  .sk-intro__panel .sk-intro__cta,
+  .sk-intro__panel .sk-intro__how {
+    max-width: none;
+  }
+
+  /* Game: round info + actions on the left, the faces on the right. */
+  .sk-play {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    /* The faces span every row; the 1fr row absorbs their height so the
+       left column's items stay packed at the top. */
+    grid-template-rows: repeat(6, auto) 1fr;
+    column-gap: 48px;
+    align-items: start;
+  }
+
+  .sk-play > * {
+    grid-column: 1;
+  }
+
+  .sk-play > .sk-grid,
+  .sk-play > .sk-versus {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    width: 100%;
+  }
+
+  .sk-play .sk-stage-head {
+    margin-top: 0.5rem;
+    text-align: left;
+  }
+
+  .sk-play .sk-stage-head__title {
+    font-size: 1.8rem;
+    line-height: 1.35;
+  }
+
+  .sk-play .sk-stage-head__title--sm {
+    font-size: 1.35rem;
+  }
+
+  .sk-play .sk-stage-head__q {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .sk-play .sk-stage-head__hint {
+    font-size: 0.8rem;
+  }
+
+  .sk-play .sk-progress {
+    margin: 1rem 0 0;
+  }
+
+  /* The action bar sits under the round info instead of floating at the bottom. */
+  .sk-play .sk-actionbar,
+  .sk-play .sk-actionbar--sticky {
+    position: static;
+    flex-wrap: wrap;
+    margin: 1.25rem 0 0;
+    padding: 0.9rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-xs);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .sk-play .sk-actionbar__count {
+    order: -1;
+    flex-basis: 100%;
+    margin-bottom: 0.25rem;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .sk-play .sk-actionbar .sk-btn {
+    flex: 1;
+  }
+
+  .sk-play .sk-actionbar__spacer {
+    display: none;
+  }
+
+  .sk-play .sk-actionbar--center {
+    justify-content: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
+
+  .sk-play .sk-final-hint {
+    margin-top: 1rem;
+    text-align: left;
+  }
+
+  .sk-play .sk-pager {
+    justify-content: space-between;
+  }
+
+  .sk-play > app-sukigao-edit-cta {
+    margin-top: 1rem;
+  }
+
+  /* 3×3 as big as fits: ~290px is the top bar, page padding, the three name
+     rows and the gaps. */
+  .sk-play > .sk-grid--batch {
+    max-width: min(100%, 780px, calc(100vh - 290px));
+    gap: 14px;
+  }
+
+  .sk-play > .sk-grid--group {
+    max-width: min(100%, 720px, calc(100vh - 230px));
+    gap: 18px;
+  }
+
+  .sk-play > .sk-versus {
+    max-width: min(100%, 860px, calc((100vh - 220px) * 2));
+    gap: 32px;
+  }
+
+  @supports (height: 100svh) {
+    .sk-play > .sk-grid--batch {
+      max-width: min(100%, 780px, calc(100svh - 290px));
+    }
+
+    .sk-play > .sk-grid--group {
+      max-width: min(100%, 720px, calc(100svh - 230px));
+    }
+
+    .sk-play > .sk-versus {
+      max-width: min(100%, 860px, calc((100svh - 220px) * 2));
+    }
+  }
+}
