@@ -57,6 +57,14 @@ describe('AdminProposalReviewComponent approving an attached history', () => {
     expect(approve.calls.mostRecent().args[1]._history).toEqual({ group_id: 'g1', joined_at: '2024-01-01' });
   });
 
+  it('treats an attached history with every field cleared as removed', async () => {
+    const approve = jasmine.createSpy().and.returnValue(Promise.resolve());
+    const c = withApprove(approve);
+    c.editedData['_history'] = { group_id: '', status: ' ', joined_at: '' };
+    await c.approve();
+    expect(approve.calls.mostRecent().args[1]).toEqual({ name: '和希' });
+  });
+
   it('marks the proposal approved when only the attached history failed, so it cannot be approved twice', async () => {
     const approve = jasmine.createSpy().and.returnValue(Promise.reject(new AttachedHistoryError('boom')));
     const c = withApprove(approve);

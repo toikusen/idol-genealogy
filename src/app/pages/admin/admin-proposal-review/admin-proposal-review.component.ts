@@ -194,7 +194,9 @@ export class AdminProposalReviewComponent implements OnInit {
         .map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
         .filter(([, v]) => v != null && v !== '')
     );
-    return { ...data, _history: cleaned };
+    if (Object.keys(cleaned).length > 0) return { ...data, _history: cleaned };
+    const { _history, ...rest } = data;
+    return rest;
   }
 
   private normalizedHistoryData(data: Record<string, any>): Record<string, any> {
