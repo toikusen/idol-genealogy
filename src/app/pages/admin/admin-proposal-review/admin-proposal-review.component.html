@@ -250,6 +250,28 @@
     </div>
     } <!-- end @if operation !== 'DELETE' -->
 
+    @if (attachedHistoryEntries.length > 0) {
+      <div class="bg-white rounded-xl border border-pink-100 mb-6 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-2 bg-pink-50 border-b border-pink-100">
+          <span class="text-xs font-medium text-pink-700">附帶經歷（通過後一併建立）</span>
+          @if (proposal.status === 'pending') {
+            <button type="button" (click)="removeAttachedHistory()" class="text-xs text-gray-500 hover:text-red-500">移除附帶經歷</button>
+          }
+        </div>
+        @for (row of attachedHistoryEntries; track row.key) {
+          <div class="grid grid-cols-3 px-4 py-2 border-b border-gray-50 last:border-0 text-sm items-center">
+            <span class="text-gray-500 text-xs font-medium">{{ row.label }}</span>
+            @if (row.key === 'group_id' || proposal.status !== 'pending') {
+              <span class="col-span-2 text-xs text-gray-700">{{ resolveId(row.key, editedData['_history'][row.key]) }}</span>
+            } @else {
+              <input type="text" [(ngModel)]="editedData['_history'][row.key]" [name]="'attach_' + row.key"
+                class="col-span-2 w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-pink-300"/>
+            }
+          </div>
+        }
+      </div>
+    }
+
     <!-- Reviewer note (if rejected) -->
     @if (proposal.reviewer_note) {
       <div class="bg-red-50 rounded-xl border border-red-100 p-4 mb-6 text-sm text-red-700">

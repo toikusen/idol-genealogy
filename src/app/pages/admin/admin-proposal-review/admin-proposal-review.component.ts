@@ -46,8 +46,9 @@ export class AdminProposalReviewComponent implements OnInit {
     try {
       this.proposal = await this.proposalService.getById(id);
       if (this.proposal) {
-        this.editedData = { ...this.proposal.proposed_data };
-        if (this.proposal.table_name === 'history') {
+        // Deep copy: edits inside _history must not mutate proposed_data, or the hasEdits compare misses them.
+        this.editedData = structuredClone(this.proposal.proposed_data);
+        if (this.proposal.table_name === 'history' || this.proposal.proposed_data?.['_history']) {
           const [members, groups] = await Promise.all([
             this.memberService.getAll(),
             this.groupService.getAll(),
@@ -94,6 +95,20 @@ export class AdminProposalReviewComponent implements OnInit {
     const member = src['member_id'] ? (this.memberMap.get(src['member_id']) ?? src['member_id']) : null;
     if (group && member) return `${group} · ${member}`;
     return group ?? member ?? '—';
+  }
+
+  /** Rows of a new-member proposal's attached first history entry, in display order. */
+  get attachedHistoryEntries(): { key: string; label: string }[] {
+    const h = this.editedData['_history'];
+    if (!h) return [];
+    return PROPOSAL_ALLOWED_FIELDS['history']
+      .filter(k => h[k] != null && h[k] !== '')
+      .map(k => ({ key: k, label: FIELD_LABELS['history']?.[k] ?? k }));
+  }
+
+  removeAttachedHistory(): void {
+    const { _history, ...rest } = this.editedData;
+    this.editedData = rest;
   }
 
   get fields(): string[] {
