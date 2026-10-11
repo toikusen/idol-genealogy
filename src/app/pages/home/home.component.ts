@@ -142,7 +142,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         url: siteUrl('/'),
         logo: {
           '@type': 'ImageObject',
-          url: `${SITE_URL}/favicon-192.png`,
+          url: `${SITE_URL}/favicon-192.png?v=4`,
         },
         description: '台灣地下偶像成員與團體的完整公開資料庫，整理成員活動歷程、所屬團體、公司關係、演出場地與近期活動行程。',
         foundingDate: '2024',

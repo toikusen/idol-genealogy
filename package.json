@@ -8,6 +8,7 @@
     "build": "node scripts/generate-routes.mjs && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:functions": "node --experimental-strip-types --no-warnings --test scripts/middleware.test.ts",
     "serve:ssr:idol-genealogy": "node dist/idol-genealogy/server/server.mjs",
     "seo:audit": "node scripts/seo-audit.mjs",
     "sync:wiki": "node scripts/sync-from-wikiversity.mjs",

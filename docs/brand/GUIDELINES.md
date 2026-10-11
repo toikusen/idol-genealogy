@@ -46,7 +46,7 @@ CMYK and Pantone values haven't been specified yet. Before printing, have a prin
 ## 5. Typography
 - Wordmark: Cormorant Garamond, weight 650. It's already outlined to paths, so no font needs to be installed.
 - Licence: SIL Open Font License (Google Fonts), which allows use in a logo.
-- Recommended site typefaces: Cormorant Garamond for headings and Noto Sans TC for body text.
+- Site typefaces (`tailwind.config.js`): Cormorant Garamond for display headings; Shippori Mincho / Noto Sans JP for body text.
 
 ## 6. Don'ts
 Don't:

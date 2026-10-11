@@ -71,10 +71,17 @@ function withQueryNoIndexHeader(response: Response, cacheControl: string | null)
   });
 }
 
-function shouldNoIndexQueryUrl(url: URL): boolean {
+// Static files (icons, images, manifest…) are cache-busted with ?v=N; only HTML
+// pages need the duplicate-URL noindex, so skip any path with a non-HTML extension.
+function isStaticAssetPath(pathname: string): boolean {
+  const ext = /\.([a-z0-9]+)$/i.exec(pathname)?.[1]?.toLowerCase();
+  return !!ext && ext !== 'html';
+}
+
+export function shouldNoIndexQueryUrl(url: URL): boolean {
   if (!url.search) return false;
+  if (isStaticAssetPath(url.pathname)) return false;
   if (url.pathname.startsWith('/api/')) return false;
-  if (url.pathname === '/sitemap.xml' || url.pathname === '/robots.txt' || url.pathname === '/feed.xml') return false;
   return true;
 }
 
