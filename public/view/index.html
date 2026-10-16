@@ -1023,6 +1023,12 @@ details.fold[open] > summary { margin-bottom: 8px; }
         <div class="tk-warn" id="tkWarn" hidden=""></div>
       </div>
 
+      <div class="field total-field">
+        <div class="hrow"><label for="n1">今天入場人數（預估）</label><output id="n1Out" for="n1">200人</output></div>
+        <input id="n1" type="range" min="30" max="500" step="10" value="200">
+        <p class="note">人越多，後面越擠、越容易被擋。</p>
+      </div>
+
       <div class="field hfield">
         <div class="hrow">
           <label for="height">你的身高</label>
@@ -1084,10 +1090,6 @@ details.fold[open] > summary { margin-bottom: 8px; }
       <details class="more">
         <summary>入場與觀眾</summary>
         <div class="more-body">
-          <div class="field">
-            <label for="n1">入場總人數（想定）</label>
-            <div class="num-row"><input id="n1" type="range" min="30" max="500" step="10" value="200"><output id="n1Out" for="n1">200人</output></div>
-          </div>
           <div class="field">
             <label for="vip">VIP／優先入場人數</label>
             <div class="num-row"><input id="vip" type="range" min="0" max="80" step="1" value="0"><output id="vipOut" for="vip">0人</output></div>
@@ -2226,11 +2228,10 @@ details.fold[open] > summary { margin-bottom: 8px; }
     return out;
   }
 
-  /* ---------- 推的回應 (res): odds the oshi singles you out with a look, a point or a wave ----------
-     Each res goes to one face the oshi can see, picked in proportion to a weight:
-     seen (1, 0.5 if the fan has to lean, 0) × distance × facing × fan bonus.
-     ponytail: weights are judgement calls, not measured; tune RES if they feel off */
-  const RES = { near: 3.0, fall: 1.5, floor: 0.02, angleFloor: 0.25, fan: 5, perSong: 8, songs: 6, lean: 0.12 };
+  /* ---------- 推看得到你: can the oshi's eyes reach your face from the stage ----------
+     Pure geometry (no guess about whom the oshi looks at): the oshi stands in every song scene, in up to
+     RES_SLOTS positions each, and we test the sightline from their eyes to your face (leaning counts half). */
+  const SEEN_LEAN = Math.max(...LEAN_OFFSETS);   // same lean as the viewer's sightline test
   // floor bucketed into 0.6 m cells so a sightline only tests the people it actually passes
   const RES_CELL = 0.6, RES_SLOTS = 4;
   let resStamp = 0;   // global, so two grids over the same people never share a stamp value
@@ -2275,50 +2276,31 @@ details.fold[open] > summary { margin-bottom: 8px; }
       return true;
     };
     if (clear(0)) return 1;
-    return clear(-RES.lean) || clear(RES.lean) ? 0.5 : 0;
+    return clear(-SEEN_LEAN) || clear(SEEN_LEAN) ? 0.5 : 0;
   }
-  // share of one res that lands on the user while the oshi stands at (x, z)
-  function resShareAt(sim, x, z, h, oshiId, ctx) {
-    const { V, people, user } = sim;
-    const E = [x, V.stageH + 0.933 * h, z + 0.09];
-    const boxes = V.boxes.filter(b => b.cz + Math.abs(b.uz) * b.hu + Math.abs(b.vz) * b.hv > z);
-    let fx = -0.6 * x, fz = 4.0 - z; const fl = Math.hypot(fx, fz); fx /= fl; fz /= fl;   // body turned a little toward the floor centre
-    const crowd = ctx ? ctx.crowd : people.concat([user]), near = ctx ? ctx.near : crowdGrid(crowd);
-    let total = 0, mine = 0, youSeen = 0;
-    for (const q of crowd) {
-      const ey = eyeY(q), d = Math.hypot(q.x - E[0], ey - E[1], q.z - E[2]);
-      const Dw = Math.min(1, RES.floor + (1 - RES.floor) * Math.exp(-(d - RES.near) / RES.fall));
-      let tx = q.x - x, tz = q.z - z; const tl = Math.hypot(tx, tz) || 1;
-      const c = Math.max(0, (fx * tx + fz * tz) / tl);
-      const w0 = Dw * (RES.angleFloor + (1 - RES.angleFloor) * c * c) * (q === user || q.fan === oshiId ? RES.fan : 1);
-      if (w0 < 1e-3) continue;
-      const v = faceSeenFrom(E, q, near, boxes), w = w0 * v;
-      total += w;
-      if (q === user) { mine = w; youSeen = v; }
-    }
-    return { share: total > 0 ? mine / total : 0, youSeen };
+  // 1 = the oshi sees your face, 0.5 = only if you lean, 0 = blocked
+  function seenFromStage(sim, x, z, h, near) {
+    const E = [x, sim.V.stageH + 0.933 * h, z + 0.09];
+    const boxes = sim.V.boxes.filter(b => b.cz + Math.abs(b.uz) * b.hu + Math.abs(b.vz) * b.hv > z);
+    return faceSeenFrom(E, sim.user, near, boxes);
   }
-  // per song: perSong res; per show: songs songs, each a random song scene with the oshi in a random slot
-  function resEstimate(sim, p) {
+  // now: from where the oshi stands in the scene on screen; show: averaged over every song position
+  function seenEstimate(sim, p) {
     if (!sim.user) return null;
-    const K = RES.perSong, songs = RES.songs;
-    const atLeastOnce = (share, k) => 1 - Math.pow(1 - share, k);
-    const om = sim.members.find(m => m.id === p.oshi) || sim.members[0];
-    const crowd = sim.people.concat([sim.user]), ctx = { crowd, near: crowdGrid(crowd) };
-    const now = resShareAt(sim, om.x, om.z, om.h, p.oshi, ctx);
-    const n = sim.members.length;
+    const near = crowdGrid(sim.people.concat([sim.user]));
+    const om = sim.members.find(m => m.id === p.oshi) || sim.members[0], n = sim.members.length;
+    const now = seenFromStage(sim, om.x, om.z, om.h, near);
     let acc = 0, cnt = 0;
     for (const sc of SCENES) {
       if (!sc.song) continue;
-      // ponytail: at most RES_SLOTS evenly spaced oshi slots per scene; use every slot if 10-member venues ever need finer odds
+      // ponytail: at most RES_SLOTS evenly spaced oshi slots per scene; use every slot if 10-member venues need finer odds
       const pos = formationPos(sc.key, n, sim.V), m = Math.min(n, RES_SLOTS);
       for (let k = 0; k < m; k++) {
         const [x, z] = pos[m > 1 ? Math.round(k * (n - 1) / (m - 1)) : Math.floor((n - 1) / 2)];
-        acc += atLeastOnce(resShareAt(sim, x, z, om.h, p.oshi, ctx).share, K); cnt++;
+        acc += seenFromStage(sim, x, z, om.h, near); cnt++;
       }
     }
-    const avgSong = cnt ? acc / cnt : 0;
-    return { K, songs, nowSong: atLeastOnce(now.share, K), avgSong, show: atLeastOnce(avgSong, songs), youSeen: now.youSeen };
+    return { now, show: cnt ? acc / cnt : 0 };
   }
 
   /* ---------- Monte Carlo summaries ---------- */
@@ -2485,7 +2467,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
     FRONT_ROWS, FRONT_DENSITY, MID_MAX, LEAN_OFFSETS, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, hangingArm,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
-    buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, RES, resShareAt, resEstimate, runBatch, summarize, representativeSeed, luckSeeds, pickSeed, totalMax,
+    buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, seenEstimate, runBatch, summarize, representativeSeed, luckSeeds, pickSeed, totalMax,
     bucketRanges, bucketStats, spotScores, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -3687,6 +3669,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const look = { yaw: 0, pitch: 0 };
     const FB = S.bounds([FLOOR]);
     const orbit = { theta: 0.45, phi: 0.85, r: Math.max(12, FB.z1 - FB.z0), target: new THREE.Vector3((FB.x0 + FB.x1) / 2, 0.8, (FB.z0 + FB.z1) * 0.35) };
+    const ORBIT_R0 = orbit.r;   // 全體; ×2 … ×4 pull the camera in toward the same target
     let planZoom = 1;
     const planPan = { x: 0, z: 0 };
     let aspect = 1.6, vpW = 1, vpH = 1;
@@ -3847,7 +3830,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       if (hit) freePick(hit.x, hit.z);
     });
     function zoomBy(f, absolute) {
-      if (state.view === 'orbit') { orbit.r = Math.max(4, Math.min(30, (absolute ? r0 : orbit.r) / f)); }
+      if (state.view === 'orbit') { orbit.r = Math.max(4, Math.min(30, (absolute ? r0 : orbit.r) / f)); syncZoom(); }
       else if (state.view === 'plan') { planZoom = Math.max(1, Math.min(5, (absolute ? zoom0 : planZoom) * f)); syncZoom(); }
       else { state.zoom = Math.max(1, Math.min(8, (absolute ? zoom0 : state.zoom) * f)); syncZoom(); }
       render();
@@ -3860,6 +3843,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
       showHeat(on) { heatOn = on; if (heatMesh) heatMesh.visible = on; iDisc.material.opacity = on ? 0.5 : 1; render(); },
       resetLook() { look.yaw = 0; look.pitch = 0; },
       planZoom: () => planZoom,
+      orbitZoom: () => ORBIT_R0 / orbit.r,
+      setOrbitZoom(z) { orbit.r = Math.max(4, ORBIT_R0 / z); render(); },
       setPlanZoom(z) {
         planZoom = z;
         const u = state.sim && state.sim.user;
@@ -3875,10 +3860,10 @@ details.fold[open] > summary { margin-bottom: 8px; }
 
   // zoom buttons: telephoto in eye views, map zoom in plan view
   const ZOOM_SETS = { eye: [[1, '肉眼'], [2, '×2'], [4, '×4'], [8, '×8']], plan: [[1, '全體'], [2, '×2'], [3, '×3'], [4, '×4']] };
+  ZOOM_SETS.orbit = ZOOM_SETS.plan;
   function syncZoom() {
-    const plan = state.view === 'plan';
-    const z = plan ? (gl ? gl.planZoom() : 1) : state.zoom;
-    const set = plan ? ZOOM_SETS.plan : ZOOM_SETS.eye;
+    const v = state.view, set = ZOOM_SETS[v] || ZOOM_SETS.eye;
+    const z = v === 'plan' ? (gl ? gl.planZoom() : 1) : v === 'orbit' ? (gl ? gl.orbitZoom() : 1) : state.zoom;
     $('#zoomBox').querySelectorAll('button').forEach((b, i) => {
       b.dataset.z = String(set[i][0]); b.textContent = set[i][1];
       b.setAttribute('aria-pressed', String(Math.abs(set[i][0] - z) < 0.01));
@@ -3887,6 +3872,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   $('#zoomBox').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     if (state.view === 'plan') { if (gl) gl.setPlanZoom(Number(b.dataset.z)); syncZoom(); planHint(); return; }
+    if (state.view === 'orbit') { if (gl) gl.setOrbitZoom(Number(b.dataset.z)); syncZoom(); return; }
     state.zoom = Number(b.dataset.z); syncZoom(); if (gl) gl.render();
   });
   function planHint() {
@@ -3901,7 +3887,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     state.view = b.dataset.v; setPressed($('#viewTabs'), state.view);
     if (gl) gl.resetLook();
     renderResBox();
-    $('#zoomBox').hidden = !(state.view === 'eye' || state.view === 'oshi' || state.view === 'plan');
+    $('#zoomBox').hidden = false;
     $('#leanBox').hidden = state.view !== 'eye';
     syncZoom();
     $('#sightLegend').hidden = !(state.view === 'orbit' || state.view === 'plan');
@@ -4034,7 +4020,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     function view(p, seed) {
       const q = quick(p, seed);
       q.slots = S.oshiAcrossSlots(q._sim, p).map(r => ({ member: r.member, face: r.face, faceLean: r.faceLean, upper: r.upper, body: r.body }));
-      q.res = S.resEstimate(q._sim, p);
+      q.res = S.seenEstimate(q._sim, p);
       delete q._sim; return q;
     }
     return {
@@ -4142,18 +4128,16 @@ details.fold[open] > summary { margin-bottom: 8px; }
 
   /* ============ display ============ */
   const pct = v => Math.round(v * 100) + '%';
-  const pctFine = v => (v > 0 && v < 0.01 ? '不到 1%' : Math.round(v * 100) + '%');
-  // 推的回應 overlay, shown in the 從推的角度 view
+  // 推看得到你 overlay, shown in the 從推的角度 view
+  const seenWord = v => v >= 1 ? '看得到你' : v > 0 ? '你要偏頭才看得到' : '看不到你';
   function renderResBox() {
     const box = $('#resBox'), r = state.res;
     box.hidden = state.view !== 'oshi' || !r;
     if (box.hidden) return;
     box.textContent = '';
-    box.append(el('div', 'k', '推（' + MEMBERS[state.oshi].name + '）給你回應的機率'));
-    const v = el('div', 'v'); v.append(el('b', null, pctFine(r.show)), el('span', null, '一場 ' + r.songs + ' 首歌')); box.append(v);
-    const s1 = el('div', 's'); s1.append(document.createTextNode('現在這個場面「' + S.SCENES[state.sceneIdx].label + '」一首歌 '), el('b', null, pctFine(r.nowSong))); box.append(s1);
-    if (!r.youSeen) box.append(el('div', 's', '推從這個站位看不到你的臉'));
-    else if (r.youSeen < 1) box.append(el('div', 's', '你要偏頭，推才看得到你的臉'));
+    box.append(el('div', 'k', '推（' + MEMBERS[state.oshi].name + '）從台上看得到你嗎'));
+    const v = el('div', 'v'); v.append(el('b', null, pct(r.show)), el('span', null, '唱歌時各站位平均')); box.append(v);
+    box.append(el('div', 's', '現在這個場面「' + S.SCENES[state.sceneIdx].label + '」：' + seenWord(r.now)));
   }
   const fmt1 = v => (Math.round(v * 10) / 10).toFixed(1);
   // visibility level of a face: [class, short label, tooltip]
@@ -4229,7 +4213,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const addFact = (k, val, unit) => { const f = el('div', 'fact'); f.append(el('span', 'k', k)); const vEl = el('span', 'v', val); if (unit) vEl.append(el('span', 'u', ' ' + unit)); f.append(vEl); facts.append(f); };
     addFact('離舞台邊', fmt1(u.z), 'm');
     if (free) addFact('左右位置', lateralText(u.x)); else addFact('前後位置', rowText(u));
-    if (state.res) addFact('推給你回應', pctFine(state.res.show), '一場 ' + state.res.songs + ' 首歌');
+    if (state.res) addFact('推看得到你', pct(state.res.show), '唱歌時平均');
     v.append(big, facts);
     const more = el('details', 'fold vmore'); more.open = wasOpen; more.append(el('summary', null, '看計算細節'));
     const p = el('p', 'verdict-text' + ($('#busy').hidden ? '' : ' stale'));
@@ -4823,7 +4807,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       '站位密度：最前排每人 ' + S.FRONT_PITCH + 'm 寬（最前管理時 ' + S.GUARD_PITCH + 'm，雙手張開趴在欄杆上）。第 2–3 排每平方公尺 3.0 人，接近滿場時最多 3.5 人。第 4 排以後依人數自動決定（人少就站得鬆）。',
       '能見度：每位成員身上放 33 個點，從你的眼睛（身高 × 0.933）看過去，判斷有沒有被前面觀眾的身體、舞台邊、柱子、欄杆擋住。「偏頭」是頭往左右各移動 12cm 內看得到的點。',
       '場面：觀眾照 MC 時的站位進場排好，之後每首歌換隊形（' + S.SCENES.filter(sc => sc.song).map(sc => sc.label).join('、') + '），成員站位每次開頁隨機，3D 和判定看目前選的場面。',
-      '推給你的回應：推每次對特定一個人回應（目線、指人、揮手），會從推看得到臉的觀眾裡依權重挑一個人。權重 = 看得到（1，要偏頭 0.5，看不到 0）× 距離（3m 內 1，之後每 1.5m 約剩 0.37 倍）× 角度（推的正面 1、正側面 0.25）× 推的粉絲 5 倍（你和約 1/成員數 的觀眾）。每首歌回應 ' + S.RES.perSong + ' 次，一場 ' + S.RES.songs + ' 首歌（約聯合公演 30 分鐘），每首隨機換場面和推的站位後平均。這些權重是推定值，沒有算進認知度、應援、推色等個人差異。',
+      '推看得到你：推站在台上時，從推的眼睛到你的臉這條視線有沒有被前面的人或設備擋住（要偏頭才看得到算一半）。唱歌時推會換位置，所以把每個歌曲場面裡推可能站的位置都試一次後平均。這是場地和站位決定的幾何結果，不代表推會不會對你回應。',
       '結果是 20 次入場模擬的統計。3D 預設顯示最接近中位數的那一次（一般），3D 左下「運氣好／運氣差」是 20 次裡你站得最前面、最後面的那一次。',
       '入口：「觀眾塞在入口附近」開啟時，第 ' + S.BACK_PREF_FROM + ' 位以後進場的人約 ' + Math.round(S.ENTRANCE_SHARE * 100) + '% 會停在入口附近，不往裡面走，所以願意往內走的人比較容易找到好位置。只套用在平面圖有標入口的場館。',
       '場次：生誕祭時人數預設多 30%，大部分粉絲搶壽星（你推的成員）正前方；熱門團體時段人數預設多 20%，他團粉絲大多留在觀眾區一起搶位。比例是推定值。',
