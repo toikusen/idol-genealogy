@@ -803,6 +803,20 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   .viewport:not(.expanded) #patternBox { display: flex; }
   .viewport:not(.expanded) #patternBox #seedPrev, .viewport:not(.expanded) #patternBox #seedNext, .viewport:not(.expanded) #patternBox #seedLabel { display: none; }
 }
+
+/* 推的回應 overlay (從推的角度) and scene stepper */
+.vp-res { position: absolute; top: 96px; right: 12px; max-width: 260px; padding: 10px 14px; border-radius: 14px; background: rgba(14, 13, 10, 0.78); border: 1px solid rgba(255, 255, 255, 0.08); color: #f3f1ea; display: grid; gap: 3px; pointer-events: none; }
+.vp-res .k { font-size: 12px; color: #f9a8c8; }
+.vp-res .v { display: flex; align-items: baseline; gap: 8px; }
+.vp-res .v b { font-size: 30px; font-weight: normal; }
+.vp-res .v span, .vp-res .s { font-size: 12px; color: #c8c3b6; }
+.vp-res .s b { color: #fff; font-weight: normal; }
+.sc-label { min-width: 6.5em; text-align: center; color: var(--ink) !important; }
+@media (max-width: 640px) {
+  .viewport:not(.expanded) #sceneBox { display: none; }   /* the settings panel has the scene picker */
+  .vp-res { top: 60px; right: 8px; max-width: 200px; padding: 8px 10px; }
+  .vp-res .v b { font-size: 24px; }
+}
 </style>
 </head>
 <body>
@@ -825,7 +839,14 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         <div class="vp-hud" id="hud"></div>
         <div class="vp-hint" id="hint">左右滑動環顧四周</div>
         <div class="vp-busy" id="busy" hidden="">計算中</div>
+        <div class="vp-res" id="resBox" hidden aria-live="polite"></div>
         <div class="vp-bottom">
+          <div class="vp-box" id="sceneBox" role="group" aria-label="場面">
+            <span class="lbl">場面</span>
+            <button type="button" id="scPrev" aria-label="上一個場面">◀</button>
+            <span class="lbl sc-label" id="scLabel">MC</span>
+            <button type="button" id="scNext" aria-label="下一個場面">▶</button>
+          </div>
           <div class="vp-box" id="patternBox">
             <span class="lbl" title="每次進場的順序、同行朋友、身高都不同，模擬了 20 次">這次入場</span>
             <span class="luck" id="luckSeg" role="group" aria-label="看哪一次入場">
@@ -993,6 +1014,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
             <div class="num-row"><input id="vip" type="range" min="0" max="80" step="1" value="0"><output id="vipOut" for="vip">0人</output></div>
           </div>
           <p class="note">VIP 先全部進場，你的順位是一般隊伍裡的順位。</p>
+          <p class="note" id="densNote"></p>
           <fieldset class="field">
             <legend>開門後的混亂程度</legend>
             <div class="seg" id="chaosSeg">
@@ -1064,21 +1086,26 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
             </div>
           </fieldset>
           <div class="mini">
-            <label for="formation">隊形</label>
-            <select id="formation">
-              <option value="line">橫一列</option>
-              <option value="twoRow">前後兩排</option>
-              <option value="vShape">V 字</option>
-              <option value="front">靠前（煽動段，離舞台邊 0.7m）</option>
-            </select>
+            <label for="sceneSel">場面（隊形）</label>
+            <select id="sceneSel"></select>
           </div>
+          <p class="note">觀眾照 MC 時的站位進場排好；之後每首歌換隊形，成員的站位也會換（每次開頁隨機）。3D 和判定看的是這裡選的場面。</p>
           <div>
             <p class="flabel">成員身高（cm）</p>
             <div class="mh-grid" id="mhGrid"></div>
           </div>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-            <button type="button" class="btn-ghost" id="rotateBtn">站位輪換一格</button>
+            <button type="button" class="btn-ghost" id="shuffleBtn">打亂歌曲站位</button>
+            <button type="button" class="btn-ghost" id="rotateBtn">這個場面輪換一格</button>
             <p class="note" id="mhAvg">平均 160.0cm</p>
+          </div>
+          <div>
+            <p class="flabel">推給你的回應（res）</p>
+            <div class="pair">
+              <div class="mini"><label for="resSongs">一場幾首歌</label><input id="resSongs" type="number" inputmode="numeric" min="1" max="30" value="6"></div>
+              <div class="mini"><label for="resPerSong">每首歌推個別回應幾次</label><input id="resPerSong" type="number" inputmode="numeric" min="1" max="40" value="8"></div>
+            </div>
+            <p class="note">聯合公演 30 分鐘約 6 首，專場約 15–20 首。回應是推對特定一個人的目線、指人、揮手。</p>
           </div>
         </div>
       </details>
@@ -1602,6 +1629,19 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     vShape: { label: 'V 字' },
     front: { label: '靠前（煽動段）' }
   };
+  // a show is a series of scenes: the crowd lines up on the MC positions when it walks in,
+  // then every song changes the formation and who stands where
+  const SCENES = [
+    { key: 'mc', label: 'MC（橫一列）', song: false },
+    { key: 'songLine', label: '橫一列', song: true },
+    { key: 'twoRow', label: '前後兩排', song: true },
+    { key: 'twoRowB', label: '前後兩排（前後交換）', song: true },
+    { key: 'vShape', label: 'V 字（中間在前）', song: true },
+    { key: 'invV', label: '倒 V 字（兩端在前）', song: true },
+    { key: 'center', label: '往中間集中', song: true },
+    { key: 'front', label: '煽動段（全員往前）', song: true }
+  ];
+  const sceneOf = key => SCENES.find(sc => sc.key === key) || SCENES[0];
   // positions for n members, 下手 → 上手, kept inside the stage polygon
   function formationPos(name, n, V) {
     const depth = V.stageDepth, use = V.venue.stageUse;
@@ -1615,7 +1655,23 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         pos = xs.map((_, i) => [(i - (n - 1) / 2) * sp2, i % 2 === 0 ? -1.3 : -Math.min(2.6, depth * 0.62)]);
         break;
       }
+      case 'twoRowB': {
+        const sp2 = n > 1 ? Math.min(0.8, 1.9 * use / (n - 1)) : 0;
+        pos = xs.map((_, i) => [(i - (n - 1) / 2) * sp2, i % 2 === 1 ? -1.3 : -Math.min(2.6, depth * 0.62)]);
+        break;
+      }
       case 'vShape': pos = xs.map(x => [x, -Math.min(1.2 + Math.abs(x) * 0.42, depth * 0.8)]); break;
+      case 'invV': {
+        const xm = Math.max(0.01, ...xs.map(Math.abs));
+        pos = xs.map(x => [x, -Math.min(1.2 + (xm - Math.abs(x)) * 0.42, depth * 0.8)]);
+        break;
+      }
+      case 'center': {
+        const sp3 = n > 1 ? Math.min(0.6, 2 * use / (n - 1)) : 0;
+        pos = xs.map((_, i) => [(i - (n - 1) / 2) * sp3, i % 2 === 0 ? -1.3 : -Math.min(1.9, depth * 0.5)]);
+        break;
+      }
+      case 'songLine': pos = xs.map(x => [x, -Math.min(1.3, depth * 0.36)]); break;
       case 'front': pos = xs.map(x => [x, -0.7]); break;
       default: pos = xs.map(x => [x, zLine]);
     }
@@ -1630,6 +1686,14 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   function buildMembers(p, V) {
     const pos = formationPos(p.formation, p.positionOrder.length, V);
     return p.positionOrder.map((mi, slot) => ({
+      id: mi, slot, x: pos[slot][0], z: pos[slot][1], h: p.memberHeights[mi] / 100, baseY: V.stageH
+    }));
+  }
+  // members as they stand in the scene being viewed (p.scene + p.sceneOrder); entry positions when unset
+  function sceneMembers(p, V) {
+    if (!p.scene || !p.sceneOrder) return buildMembers(p, V);
+    const pos = formationPos(p.scene, p.sceneOrder.length, V);
+    return p.sceneOrder.map((mi, slot) => ({
       id: mi, slot, x: pos[slot][0], z: pos[slot][1], h: p.memberHeights[mi] / 100, baseY: V.stageH
     }));
   }
@@ -1754,7 +1818,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       }
       if (P.other && rng() < EV.otherOut) continue;   // off the floor during your group's set
       const body = sampleHeight(rng, p);
-      let idx = -1;
+      // whose fan: a stable pick by queue number, overridden below for fans heading to a member
+      let idx = -1, fanOf = P.other ? -1 : members[(no * 2654435761 >>> 0) % members.length].id;
       const leader = P.companion ? placed.get(no - 1) : undefined;
       if (P.other && p.event !== 'hot') {
         // other-group fans step back and to the sides to make room
@@ -1776,7 +1841,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
           costFn = s => 0.7 * Math.hypot(s.x - door.x, s.z - door.z) + FILL.vis * s.staticBlock + s.avoid + noise(rng) * 0.3;
         } else if (r < EV.toMember) {
           bdayFan = p.event === 'birthday';
-          const tx = bdayFan ? bdayX : memberXs[Math.floor(rng() * memberXs.length)];
+          const mi = bdayFan ? members.findIndex(m => m.id === p.oshi) : Math.floor(rng() * memberXs.length);
+          fanOf = members[Math.max(0, mi)].id;
+          const tx = bdayFan ? bdayX : memberXs[mi];
           costFn = s => s.cost + 0.25 * Math.abs(s.x - tx) + noise(rng) * 0.3;
         } else {
           costFn = s => s.cost + noise(rng) * 0.3;
@@ -1792,7 +1859,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       if (idx < 0) continue;
       freeF[idx] = false; placed.set(no, idx);
       const sp = floorSpots[idx];
-      people.push({ no: qno, idx: no, vip: isVip, other: P.other, x: sp.x, z: sp.z, floorY: 0, h: body.h, male: body.male, level: 1, seated: false, row: sp.row, front: sp.front });
+      people.push({ no: qno, idx: no, vip: isVip, other: P.other, fan: fanOf, x: sp.x, z: sp.z, floorY: 0, h: body.h, male: body.male, level: 1, seated: false, row: sp.row, front: sp.front });
     }
 
     for (const q of people) {
@@ -1805,7 +1872,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     }
     if (user) { user.arm = 0; user.shoulderW = 0.19; }
     const frontCap = floorSpots.filter(sp => sp.front).length;
-    return { V, members, people, user, floorSpots, balSpots: [], userNo: user ? user.no : 0, frontCap, rhoBack: dens.back, rhoMid: dens.mid, vip };
+    // the crowd placed itself on the entry (MC) positions; sightlines are judged in the scene being viewed
+    return { V, members: sceneMembers(p, V), entryMembers: members, people, user, floorSpots, balSpots: [], userNo: user ? user.no : 0, frontCap, rhoBack: dens.back, rhoMid: dens.mid, vip };
   }
 
   function userTargetX(p, members) {
@@ -2061,6 +2129,68 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     return out;
   }
 
+  /* ---------- 推的回應 (res): odds the oshi singles you out with a look, a point or a wave ----------
+     Each res goes to one face the oshi can see, picked in proportion to a weight:
+     seen (1, 0.5 if the fan has to lean, 0) × distance × facing × fan bonus.
+     ponytail: weights are judgement calls, not measured; tune RES if they feel off */
+  const RES = { near: 3.0, fall: 1.5, floor: 0.02, angleFloor: 0.25, fan: 5, perSong: 8, songs: 6, lean: 0.12 };
+  function faceSeenFrom(E, q, crowd, boxes) {
+    const T = [q.x, eyeY(q), q.z];
+    const fx = T[0] - E[0], fz = T[2] - E[2], L2 = fx * fx + fz * fz || 1;
+    // only people standing in the corridor between the eye and this face can block it
+    const cand = crowd.filter(o => {
+      if (o === q) return false;
+      const t = ((o.x - E[0]) * fx + (o.z - E[2]) * fz) / L2;
+      if (t <= 0 || t >= 1) return false;
+      const px = E[0] + fx * t - o.x, pz = E[2] + fz * t - o.z;
+      return px * px + pz * pz < 0.36;
+    });
+    const L = Math.sqrt(L2), lx = -fz / L, lz = fx / L;
+    const clear = off => {
+      const D = [T[0] + lx * off - E[0], T[1] - E[1], T[2] + lz * off - E[2]];
+      return !boxes.some(bx => hitOBB(E, D, bx)) && !cand.some(o => personBlocks(E, D, o));
+    };
+    if (clear(0)) return 1;
+    return clear(-RES.lean) || clear(RES.lean) ? 0.5 : 0;
+  }
+  // share of one res that lands on the user while the oshi stands at (x, z)
+  function resShareAt(sim, x, z, h, oshiId) {
+    const { V, people, user } = sim;
+    const E = [x, V.stageH + 0.933 * h, z + 0.09];
+    const boxes = V.boxes.filter(b => b.cz + Math.abs(b.uz) * b.hu + Math.abs(b.vz) * b.hv > z);
+    let fx = -0.6 * x, fz = 4.0 - z; const fl = Math.hypot(fx, fz); fx /= fl; fz /= fl;   // body turned a little toward the floor centre
+    const crowd = people.concat([user]);
+    let total = 0, mine = 0, youSeen = 0;
+    for (const q of crowd) {
+      const ey = eyeY(q), d = Math.hypot(q.x - E[0], ey - E[1], q.z - E[2]);
+      const Dw = Math.min(1, RES.floor + (1 - RES.floor) * Math.exp(-(d - RES.near) / RES.fall));
+      let tx = q.x - x, tz = q.z - z; const tl = Math.hypot(tx, tz) || 1;
+      const c = Math.max(0, (fx * tx + fz * tz) / tl);
+      const w0 = Dw * (RES.angleFloor + (1 - RES.angleFloor) * c * c) * (q === user || q.fan === oshiId ? RES.fan : 1);
+      if (w0 < 1e-3) continue;
+      const v = faceSeenFrom(E, q, crowd, boxes), w = w0 * v;
+      total += w;
+      if (q === user) { mine = w; youSeen = v; }
+    }
+    return { share: total > 0 ? mine / total : 0, youSeen };
+  }
+  // per song: perSong res; per show: songs songs, each a random song scene with the oshi in a random slot
+  function resEstimate(sim, p) {
+    if (!sim.user) return null;
+    const K = Math.max(1, Math.round(p.resPerSong || RES.perSong)), songs = Math.max(1, Math.round(p.resSongs || RES.songs));
+    const atLeastOnce = (share, k) => 1 - Math.pow(1 - share, k);
+    const om = sim.members.find(m => m.id === p.oshi) || sim.members[0];
+    const now = resShareAt(sim, om.x, om.z, om.h, p.oshi);
+    const n = sim.members.length;
+    let acc = 0, cnt = 0;
+    for (const sc of SCENES) {
+      if (!sc.song) continue;
+      for (const [x, z] of formationPos(sc.key, n, sim.V)) { acc += atLeastOnce(resShareAt(sim, x, z, om.h, p.oshi).share, K); cnt++; }
+    }
+    const avgSong = cnt ? acc / cnt : 0;
+    return { K, songs, nowSong: atLeastOnce(now.share, K), avgSong, show: atLeastOnce(avgSong, songs), youSeen: now.youSeen };
+  }
+
   /* ---------- Monte Carlo summaries ---------- */
   function quantile(arr, q) {
     const a = arr.slice().sort((x, y) => x - y);
@@ -2097,20 +2227,20 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     return s;
   }
 
+  // the typical run: where you stand is closest to the median (view only breaks ties). Standing depends on
+  // the entry alone, so the same run stays typical whichever scene is on stage
   function representativeSeed(rows, summary) {
     let best = rows[0], bd = Infinity;
     for (const r of rows) {
-      const d = Math.abs(r.faceCountLean - summary.faceCountLean.p50) * 1.0 +
-        Math.abs(r.avgBodyLean - summary.avgBodyLean.p50) * 4 +
-        Math.abs(r.dist - summary.dist.p50) * 0.3;
+      const d = Math.abs(r.dist - summary.dist.p50) + Math.abs(r.faceCountLean - summary.faceCountLean.p50) * 1e-3;
       if (d < bd) { bd = d; best = r; }
     }
     return best ? best.seed : 1;
   }
 
-  // best / worst run for the user: faces seen, body seen, closeness to the stage (same weights as above)
+  // best / worst run: closest to / furthest from the stage (faces seen only break ties), scene-independent
   function luckSeeds(rows) {
-    const score = r => r.faceCountLean + r.avgBodyLean * 4 - r.dist * 0.3;
+    const score = r => -r.dist + r.faceCountLean * 1e-3;
     let good = rows[0], bad = rows[0];
     for (const r of rows) { if (score(r) > score(good)) good = r; if (score(r) < score(bad)) bad = r; }
     return { good: good ? good.seed : 1, bad: bad ? bad.seed : 1 };
@@ -2196,7 +2326,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FORMATIONS, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
     FRONT_ROWS, FRONT_DENSITY, MID_MAX, BODY, bodyDims, raisedArm, hangingArm,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
-    buildVenue, simulate, evaluateView, oshiAcrossSlots, runBatch, summarize, representativeSeed, luckSeeds,
+    buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, RES, resShareAt, resEstimate, runBatch, summarize, representativeSeed, luckSeeds,
     bucketRanges, bucketStats, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -2348,8 +2478,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     total: VN.defaults.total, vip: 0, chaos: 'mid', groupRate: 0.25, otherFanRate: 0,
     maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true, frontGuard: false,
     barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false,
-    formation: 'line',
     memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4],
+    sceneIdx: 0, sceneOrders: null, resSongs: 6, resPerSong: 8, res: null,
     view: 'eye', zoom: 1, seed: 1, manualSeed: false, metric: 'upper',
     rows: null, summary: null, sim: null, ev: null, slots: null, rep: 0, expanded: false,
     buckets: null, bucketSel: null
@@ -2362,7 +2492,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       aim: state.aim, oshi: state.oshi, chaos: state.chaos, groupRate: state.groupRate, otherFanRate: state.otherFanRate,
       maleRatio: state.maleRatio, maleMean: state.maleMean, femaleMean: state.femaleMean,
       barrier: state.barrier, stageH: state.stageH, stageDepth: state.stageDepth, mixOnFloor: state.mixOnFloor,
-      formation: state.formation,
+      formation: 'line', scene: S.SCENES[state.sceneIdx].key, sceneOrder: sceneOrder(), resSongs: state.resSongs, resPerSong: state.resPerSong,
       memberHeights: state.memberHeights.slice(), armsUp: state.armsUp, positionOrder: state.positionOrder.slice(),
       event: state.event, entranceCrowd: state.entranceCrowd
     };
@@ -2579,6 +2709,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const b = e.target.closest('button'); if (!b) return;
     state.memberCount = Number(b.dataset.v); setPressed($('#countSeg'), b.dataset.v);
     state.positionOrder = Array.from({ length: state.memberCount }, (_, i) => i);
+    state.sceneOrders = null;
     syncOshi(); rebuildMembers(); schedule();
   });
   function updateFrontNote() {
@@ -2591,11 +2722,37 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     state.frontGuard = !state.frontGuard; e.currentTarget.setAttribute('aria-pressed', String(state.frontGuard));
     updateFrontNote(); if (gl) { gl.updateCrowd(state.sim); gl.render(); }
   });
-  $('#formation').addEventListener('change', e => { state.formation = e.target.value; rebuildMembers(); schedule(); });
+  /* scenes: the crowd lines up on the MC (entry) order; every song scene has its own random order */
+  function shuffled(n) {
+    const a = Array.from({ length: n }, (_, i) => i);
+    for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function sceneOrder() {
+    if (state.sceneIdx === 0) return state.positionOrder.slice();
+    if (!state.sceneOrders || state.sceneOrders.length !== S.SCENES.length || state.sceneOrders[1].length !== nMembers())
+      state.sceneOrders = S.SCENES.map(() => shuffled(nMembers()));
+    return state.sceneOrders[state.sceneIdx].slice();
+  }
+  const sceneSel = $('#sceneSel');
+  S.SCENES.forEach((sc, i) => { const o = document.createElement('option'); o.value = String(i); o.textContent = (sc.song ? '歌曲中：' : '') + sc.label; sceneSel.appendChild(o); });
+  function syncScene() {
+    sceneSel.value = String(state.sceneIdx);
+    $('#scLabel').textContent = S.SCENES[state.sceneIdx].label;
+  }
+  function setScene(i) { state.sceneIdx = (i + S.SCENES.length) % S.SCENES.length; syncScene(); rebuildMembers(); schedule(); }
+  sceneSel.addEventListener('change', () => setScene(Number(sceneSel.value)));
+  $('#scPrev').addEventListener('click', () => setScene(state.sceneIdx - 1));
+  $('#scNext').addEventListener('click', () => setScene(state.sceneIdx + 1));
+  $('#shuffleBtn').addEventListener('click', () => { state.sceneOrders = null; rebuildMembers(); schedule(); });
   $('#rotateBtn').addEventListener('click', () => {
-    state.positionOrder = state.positionOrder.slice(1).concat(state.positionOrder[0]);
+    if (state.sceneIdx === 0) state.positionOrder = state.positionOrder.slice(1).concat(state.positionOrder[0]);
+    else { sceneOrder(); const o = state.sceneOrders[state.sceneIdx]; state.sceneOrders[state.sceneIdx] = o.slice(1).concat(o[0]); }
     rebuildMembers(); schedule();
   });
+  for (const [id, key, lo, hi] of [['resSongs', 'resSongs', 1, 30], ['resPerSong', 'resPerSong', 1, 40]]) {
+    $('#' + id).addEventListener('change', e => { state[key] = Math.max(lo, Math.min(hi, Math.round(Number(e.target.value)) || lo)); e.target.value = String(state[key]); schedule(); });
+  }
 
   /* ============ 3D ============ */
   let gl = null;
@@ -2874,8 +3031,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       ring.rotation.x = -Math.PI / 2; ring.position.set(om.x, om.baseY + 0.012, om.z); memberGroup.add(ring);
     }
     function buildMembersForView(p) {
-      const V = S.buildVenue(p), pos = S.formationPos(p.formation, p.positionOrder.length, V);
-      return p.positionOrder.map((mi, slot) => ({ id: mi, slot, x: pos[slot][0], z: pos[slot][1], h: p.memberHeights[mi] / 100, baseY: V.stageH }));
+      return S.sceneMembers(p, S.buildVenue(p));
     }
 
     /* ---- audience (instanced per body part) ---- */
@@ -3447,6 +3603,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const b = e.target.closest('button'); if (!b) return;
     state.view = b.dataset.v; setPressed($('#viewTabs'), state.view);
     if (gl) gl.resetLook();
+    renderResBox();
     $('#zoomBox').hidden = !(state.view === 'eye' || state.view === 'oshi' || state.view === 'plan');
     syncZoom();
     $('#sightLegend').hidden = !(state.view === 'orbit' || state.view === 'plan');
@@ -3524,7 +3681,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   // instant view of the current pattern on the main thread; 20-pattern stats, buckets and curve in workers
   function makeTasks(S) {
     function slimSim(sim) {
-      return { people: sim.people, user: sim.user, members: sim.members, frontCap: sim.frontCap, vip: sim.vip };
+      return { people: sim.people, user: sim.user, members: sim.members, frontCap: sim.frontCap, vip: sim.vip, rhoMid: sim.rhoMid, rhoBack: sim.rhoBack };
     }
     function slimEv(ev) {
       if (!ev) return null;
@@ -3538,6 +3695,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     function view(p, seed) {
       const q = quick(p, seed);
       q.slots = S.oshiAcrossSlots(q._sim, p).map(r => ({ member: r.member, face: r.face, faceLean: r.faceLean, upper: r.upper, body: r.body }));
+      q.res = S.resEstimate(q._sim, p);
       delete q._sim; return q;
     }
     return {
@@ -3626,11 +3784,15 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   function applyView(v) {
     state.seed = v.seed; state.sim = v.sim; state.ev = v.ev;
     if (v.slots) state.slots = v.slots;
+    if (v.res) state.res = v.res;
+    // live crowd density for the current turnout (the model packs the floor to fit everyone present)
+    $('#densNote').textContent = '目前人數下：第一排每人約 58cm 寬，第 2–' + S.FRONT_ROWS + ' 排每平方公尺 ' + fmt1(state.sim.rhoMid) + ' 人，後面每平方公尺 ' + fmt1(state.sim.rhoBack) + ' 人' +
+      (state.sim.rhoBack >= 3.5 ? '（很擠）。' : state.sim.rhoBack < 1.5 ? '（還很鬆）。' : '。');
     $('#seedLabel').textContent = '第 ' + (SEEDS.indexOf(state.seed) + 1) + '/' + SEEDS.length + ' 次';
     const luck = state.seed === state.rep ? 'rep' : state.luck && state.seed === state.luck.good ? 'good' : state.luck && state.seed === state.luck.bad ? 'bad' : '';
     $('#luckSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.luck === luck)));
     if (gl) { gl.updateCrowd(state.sim); gl.updateSight(state.ev); gl.render(); }
-    renderVerdict(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawBucketMap(); paintRanges();
+    renderVerdict(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawBucketMap(); paintRanges(); renderResBox();
   }
   function showSeed(seed) { applyView(TASKS.view(params(), seed)); }
   // WebKit has no ::range-progress: expose the fill position as --pct for the track gradient
@@ -3640,6 +3802,19 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
 
   /* ============ display ============ */
   const pct = v => Math.round(v * 100) + '%';
+  const pctFine = v => (v > 0 && v < 0.01 ? '不到 1%' : Math.round(v * 100) + '%');
+  // 推的回應 overlay, shown in the 從推的角度 view
+  function renderResBox() {
+    const box = $('#resBox'), r = state.res;
+    box.hidden = state.view !== 'oshi' || !r;
+    if (box.hidden) return;
+    box.textContent = '';
+    box.append(el('div', 'k', '推（' + MEMBERS[state.oshi].name + '）給你回應的機率'));
+    const v = el('div', 'v'); v.append(el('b', null, pctFine(r.show)), el('span', null, '一場 ' + r.songs + ' 首歌')); box.append(v);
+    const s1 = el('div', 's'); s1.append(document.createTextNode('現在這個場面「' + S.SCENES[state.sceneIdx].label + '」一首歌 '), el('b', null, pctFine(r.nowSong))); box.append(s1);
+    if (!r.youSeen) box.append(el('div', 's', '推從這個站位看不到你的臉'));
+    else if (r.youSeen < 1) box.append(el('div', 's', '你要偏頭，推才看得到你的臉'));
+  }
   const fmt1 = v => (Math.round(v * 10) / 10).toFixed(1);
   function sym(v) {
     if (v >= 0.83) return ['◎', 'g', '幾乎全部看得到'];
@@ -3678,6 +3853,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const om = ev.members.find(r => r.member.id === state.oshi) || ev.members[0];
     addFact('推（' + MEMBERS[om.member.id].name + '）的臉', sym(om.face)[0] + ' → ' + sym(om.faceLean)[0], '偏頭時');
     addFact('推的臉看起來', fmt1(0.6 * 0.22 / om.dist * 100), 'cm（手臂伸直時指尖上的大小）');
+    if (state.res) addFact('推給你回應', pctFine(state.res.show), '一場 ' + state.res.songs + ' 首歌至少一次');
     v.append(big, facts);
     const p = el('p', 'verdict-text' + ($('#busy').hidden ? '' : ' stale'));
     if (!s) { p.textContent = '正在模擬 ' + SEEDS.length + ' 次入場…'; v.append(p); return; }
@@ -3734,7 +3910,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     });
   }
   function slotName(m) {
-    const pos = S.formationPos(state.formation, nMembers(), S.buildVenue(params()));
+    const pos = S.formationPos(S.SCENES[state.sceneIdx].key, nMembers(), S.buildVenue(params()));
     if (Math.abs(m.x) < 0.01) return '中間';
     const side = m.x < 0 ? '下手' : '上手';
     const same = pos.map(p => p[0]).filter(x => (x < 0) === (m.x < 0) && Math.abs(x) > 0.01).map(Math.abs).sort((a, b) => a - b);
@@ -4231,7 +4407,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       '聯合公演：輪到你推的團時，他團粉絲有一半離開觀眾區（物販、特典會、休息），另一半往後或往旁邊讓出前方。',
       '站位密度：最前排每人 0.58m 寬。第 2–3 排每平方公尺 3.0 人，接近滿場時最多 3.5 人。第 4 排以後依人數自動決定（人少就站得鬆）。',
       '能見度：每位成員身上放 33 個點，從你的眼睛（身高 × 0.933）看過去，判斷有沒有被前面觀眾的身體、舞台邊、柱子、欄杆擋住。「偏頭」是頭往左右各移動 12cm 內看得到的點。',
-      '結果是 20 次入場模擬的統計。3D 預設顯示最接近中位數的那一次（一般），「運氣好／運氣差」是 20 次裡結果最好、最差的一次，◀▶ 可以逐次看。',
+      '場面：觀眾照 MC 時的站位進場排好，之後每首歌換隊形（' + S.SCENES.filter(sc => sc.song).map(sc => sc.label).join('、') + '），成員站位每次開頁隨機，3D 和判定看目前選的場面。',
+      '推給你的回應：推每次對特定一個人回應（目線、指人、揮手），會從推看得到臉的觀眾裡依權重挑一個人。權重 = 看得到（1，要偏頭 0.5，看不到 0）× 距離（3m 內 1，之後每 1.5m 約剩 0.37 倍）× 角度（推的正面 1、正側面 0.25）× 推的粉絲 5 倍（你和約 1/成員數 的觀眾）。每首歌回應 ' + state.resPerSong + ' 次，一場 ' + state.resSongs + ' 首歌，每首隨機換場面和推的站位後平均。這些權重是推定值，沒有算進認知度、應援、推色等個人差異。',
+      '結果是 20 次入場模擬的統計。3D 預設顯示最接近中位數的那一次（一般），「運氣好／運氣差」是 20 次裡你站得最前面、最後面的一次，◀▶ 可以逐次看。',
       '入口：「觀眾塞在入口附近」開啟時，第 ' + S.BACK_PREF_FROM + ' 位以後進場的人約 ' + Math.round(S.ENTRANCE_SHARE * 100) + '% 會停在入口附近，不往裡面走，所以願意往內走的人比較容易找到好位置。只套用在平面圖有標入口的場館。',
       '場次：生誕祭時人數預設多 30%，大部分粉絲搶壽星（你推的成員）正前方；熱門團體時段人數預設多 20%，他團粉絲大多留在觀眾區一起搶位。比例是推定值。',
       '沒有模擬的：跳躍、往前擠、帽子和髮型、演出中途換位置、特典會排隊動線。'
@@ -4259,7 +4437,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   })();
 
   /* ============ boot ============ */
-  syncOshi(); syncTicket(); syncZoom(); syncShow();
+  syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene();
   $('#sightLegend').hidden = true;
   if (MOBILE()) $('#method').open = false;
   $('#curveSub').textContent = '維持你的身高、站位目標和推的成員，只改排隊順位，每個點各模擬 ' + CURVE_SEEDS.length + ' 次。色帶是 10–90% 的範圍。';
