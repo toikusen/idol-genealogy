@@ -872,6 +872,11 @@ details.fold[open] > summary { margin-bottom: 8px; }
 .v2-a .plan[hidden], .curve[hidden] { display: none; }
 @media (max-width: 560px) { .vp-move { right: 8px; bottom: 56px; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); } .vp-move button { width: 40px; height: 40px; } }
 .big .s.cmp { color: #d8f5a8; } .big .s.cmp .btn-ghost { color: #f9a8c8; border-color: rgba(255, 255, 255, 0.3); padding: 1px 10px; font-size: 12px; }
+
+/* 偏頭 control, eye view only */
+.vp-lean { position: absolute; right: 14px; top: 112px; z-index: 3; }
+.vp-lean .lbl { display: inline !important; }
+.viewport.expanded .vp-lean { top: calc(112px + env(safe-area-inset-top, 0px)); }
 </style>
 </head>
 <body>
@@ -896,6 +901,12 @@ details.fold[open] > summary { margin-bottom: 8px; }
         <div class="vp-busy" id="busy" hidden="">計算中</div>
         <div class="vp-res" id="resBox" hidden aria-live="polite"></div>
         <div class="vp-freehint" id="freeHint" hidden></div>
+        <div class="vp-box vp-lean" id="leanBox" role="group" aria-label="偏頭">
+          <span class="lbl">偏頭</span>
+          <button type="button" data-l="-1" aria-pressed="false" aria-label="頭往左偏">◀</button>
+          <button type="button" data-l="0" aria-pressed="true" aria-label="頭擺正">正</button>
+          <button type="button" data-l="1" aria-pressed="false" aria-label="頭往右偏">▶</button>
+        </div>
         <div class="vp-move" id="movePad" hidden role="group" aria-label="移動你的位置">
           <button type="button" data-d="f" aria-label="往前（靠近舞台）">▲</button>
           <button type="button" data-d="l" aria-label="往左">◀</button>
@@ -986,7 +997,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   </section><div class="panel members">
         <div class="tbl-head">
           <h2>每位成員看不看得到</h2>
-          <p>從左邊排起（觀眾看過去）。圓圈越滿，臉看到越多；標「要偏頭」表示不動時看得比較少。</p>
+          <p>從左邊排起（觀眾看過去）。圓圈越滿，臉看到越多；「偏頭→」是頭往左右偏一點能看到多少，可以在 3D「你的視線」按偏頭試試。</p>
         </div>
         <div class="tbl-wrap"><table id="memberTable"></table></div>
         <details class="fold"><summary>推換到其他站位時看得到嗎</summary>
@@ -2063,7 +2074,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
   const BODY = {
     m: { ref: 1.70, tw: 0.165, td: 0.12, ax: 0.205, ar: 0.045, legX: 0.088 },
     f: { ref: 1.58, tw: 0.15, td: 0.115, ax: 0.185, ar: 0.04, legX: 0.08 },
-    head: [0.078, 0.115, 0.098]
+    // head incl. hair (the 3D hair caps reach ~0.1 m to each side and well behind the skull), half widths x / y / z
+    head: [0.096, 0.125, 0.112]
   };
   function bodyDims(q) {
     const b = q.male ? BODY.m : BODY.f, s = q.h / b.ref;
@@ -2471,7 +2483,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
 
   const api = {
     VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
-    FRONT_ROWS, FRONT_DENSITY, MID_MAX, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, hangingArm,
+    FRONT_ROWS, FRONT_DENSITY, MID_MAX, LEAN_OFFSETS, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, hangingArm,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
     buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, RES, resShareAt, resEstimate, runBatch, summarize, representativeSeed, luckSeeds, pickSeed, totalMax,
     bucketRanges, bucketStats, spotScores, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
@@ -2653,7 +2665,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true, frontGuard: false,
     barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false,
     memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4],
-    sceneIdx: 0, sceneOrders: null, res: null, free: null, qsum: null,
+    sceneIdx: 0, sceneOrders: null, res: null, free: null, qsum: null, lean: 0,
     view: 'eye', zoom: 1, seed: 1, luckKey: 'rep', metric: 'upper',
     rows: null, summary: null, sim: null, ev: null, slots: null, rep: 0, expanded: false,
     buckets: null, bucketSel: null
@@ -2926,7 +2938,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   function fail3D(err) {
     console.error('3D init failed:', err && err.message, err && err.stack);
     $('#fallback').hidden = false;
-    $('#viewTabs').hidden = true; $('#patternBox').hidden = true; $('#zoomBox').hidden = true;
+    $('#viewTabs').hidden = true; $('#patternBox').hidden = true; $('#zoomBox').hidden = true; $('#leanBox').hidden = true;
   }
   // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
   // bump the version whenever blender/build_figures.py is re-run so browsers drop the old file
@@ -3727,8 +3739,11 @@ details.fold[open] > summary { margin-bottom: 8px; }
       if (state.view === 'eye') {
         pos = new THREE.Vector3(u.x, S.eyeY(u), u.z);
         const t = lookTarget();
-        const dir = t.clone().sub(pos).normalize();
-        const yaw0 = Math.atan2(dir.x, -dir.z), pitch0 = Math.asin(dir.y);
+        let dir = t.clone().sub(pos).normalize();
+        const yaw0 = Math.atan2(dir.x, -dir.z);
+        // 偏頭: the eye slides sideways by the same amount the sightline test leans
+        if (state.lean) { const off = state.lean * Math.max(...S.LEAN_OFFSETS); pos.x += Math.cos(yaw0) * off; pos.z += Math.sin(yaw0) * off; dir = t.clone().sub(pos).normalize(); }
+        const pitch0 = Math.asin(dir.y);
         const yaw = yaw0 + look.yaw, pitch = Math.max(-1.2, Math.min(1.0, pitch0 + look.pitch));
         target = pos.clone().add(new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch)));
         const tanH = Math.tan(hfovBase * Math.PI / 360) / state.zoom;
@@ -3887,11 +3902,18 @@ details.fold[open] > summary { margin-bottom: 8px; }
     if (gl) gl.resetLook();
     renderResBox();
     $('#zoomBox').hidden = !(state.view === 'eye' || state.view === 'oshi' || state.view === 'plan');
+    $('#leanBox').hidden = state.view !== 'eye';
     syncZoom();
     $('#sightLegend').hidden = !(state.view === 'orbit' || state.view === 'plan');
     $('#sightLegend').classList.toggle('plan', state.view === 'plan' || state.view === 'orbit');
     updateHud(); syncFree(); if (gl) gl.render();
     planHint();
+  });
+
+  // 偏頭 in the eye view: see what the "偏頭" numbers mean
+  $('#leanBox').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.lean = Number(b.dataset.l); setPressed($('#leanBox'), b.dataset.l, 'l'); if (gl) gl.render();
   });
 
   /* ============ free mode: stand anywhere ============ */
@@ -4148,11 +4170,11 @@ details.fold[open] > summary { margin-bottom: 8px; }
     b.append(ring, document.createTextNode(s[1])); b.title = (tipPrefix || '') + s[2] + '（' + Math.round(v * 100) + '%）';
     return b;
   }
-  // the best you can get (leaning), tagged when standing still is worse
+  // what you see standing still, plus what leaning gets you when that is better
   function faceCell(still, lean) {
     const w = el('span', 'vis-pair'), same = sym(still)[0] === sym(lean)[0];
-    w.append(visBadge(lean, same ? '' : '偏頭：'));
-    if (!same) { const t = el('span', 'lean-tag', '要偏頭'); t.title = '不動時：' + sym(still)[2] + '（' + Math.round(still * 100) + '%）'; w.append(t); }
+    w.append(visBadge(still, '不動：'));
+    if (!same) { const t = el('span', 'lean-tag', '偏頭→' + sym(lean)[1]); t.title = '頭往左右偏約 12cm：' + sym(lean)[2] + '（' + Math.round(lean * 100) + '%）'; w.append(t); }
     return w;
   }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -4227,7 +4249,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const t = $('#memberTable'); t.textContent = '';
     const ev = state.ev; if (!ev) return;
     const thead = el('thead'); const hr = el('tr');
-    ['站位', '成員', '看得到臉嗎', '上半身（不動）', '全身（不動）', '全身（偏頭）', '距離'].forEach(h => hr.append(el('th', null, h)));
+    ['站位', '成員', '看得到臉嗎（不動）', '上半身（不動）', '全身（不動）', '全身（偏頭）', '距離'].forEach(h => hr.append(el('th', null, h)));
     thead.append(hr); t.append(thead);
     const tb = el('tbody');
     ev.members.slice().sort((a, b) => a.member.x - b.member.x).forEach(r => {
