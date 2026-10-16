@@ -24,7 +24,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@900&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
 <style>
 /* layout: left = queue + conditions panel, right = 3D view + verdict; below = queue buckets, curve, sources. Single dark theme (live house blackout) */
 :root {
@@ -646,13 +646,126 @@ td { border-bottom: 1px solid var(--line-soft); }
   #ticket { font-size: 64px; }
   .big .v { font-size: 52px; }
 }
+/* ---------- idolmaps skin: brand tokens from idol-genealogy src/styles.css, layered over v2 ----------
+   Layout stays v2. Stage windows (3D, bucket map) stay dark. Pink #e879a0 is a fill colour only;
+   pink text uses #c04070 (idolmaps --text-link) for contrast. */
+@font-face {
+  font-family: 'JF Openhuninn';
+  src: url('/fonts/jf-openhuninn-2.1.woff2') format('woff2');   /* served by idolmaps; Google "Huninn" is the fallback */
+  font-weight: normal; font-style: normal; font-display: swap;
+}
+:root {
+  color-scheme: light;
+  --bg: #fdf6fb; --surface: #ffffff; --surface-2: #fdf4f9;
+  --line: rgba(232, 121, 160, 0.25); --line-soft: rgba(232, 121, 160, 0.12);
+  --ink: #2d1b2e; --ink-2: #7a5a7a; --ink-3: rgba(122, 90, 122, 0.92);
+  --accent: #e879a0; --accent-ink: #ffffff; --accent-wash: rgba(232, 121, 160, 0.09);
+  --accent-text: #c04070; --purple: #7c6cf2; --purple-text: #5a44b0;
+  --you: #5a44b0; --good: #15803d; --warn: #a16207; --bad: #c9352a;
+  --f-display: 'JF Openhuninn', 'Huninn', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --f-body: var(--f-display); --f-big: var(--f-display); --f-num: var(--f-display);
+  --shadow-sm: 0 2px 12px rgba(45, 27, 46, 0.07); --shadow-md: 0 4px 24px rgba(45, 27, 46, 0.10);
+  --r: 16px;
+}
+/* gradient on html so it covers the canvas edge to edge (body keeps the UA 8px margin otherwise) */
+html { background: radial-gradient(1100px 520px at 0% 0%, #fce4ef 0%, transparent 70%), radial-gradient(900px 480px at 100% 0%, #f0f4ff 0%, transparent 70%), var(--bg); }
+body { margin: 0; background: transparent; }
+h1, h2, .tbl-head h2, .curve-head h2, .method h2, .buckets h2, .refs h2, .settings-h, .plan h2 { font-weight: normal; letter-spacing: 0.02em; color: var(--ink); }
+h1 { font-size: clamp(24px, 3vw, 36px); }
+a { text-decoration-color: var(--accent); }
+a:hover { color: var(--accent-text); }
+
+/* header */
+.v2-top { border-bottom: 1px solid var(--line); }
+.eyebrow { color: var(--ink-2); letter-spacing: 0.28em; }
+.eyebrow::before { border-radius: 50%; width: 8px; height: 8px; }
+
+/* surfaces */
+.panel { border: 1px solid var(--line-soft); border-radius: var(--r); box-shadow: var(--shadow-sm); }
+.buckets h2::before, .members .tbl-head:first-child h2::before, .curve h2::before, .method h2::before, .refs > h2::before { color: var(--accent-text); letter-spacing: 0.1em; }
+
+/* ticket: white card, soft shadow instead of the hard offset */
+.ticket { border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow-md); }
+.tk-top { border-bottom-color: var(--line); }
+.tk-label { color: var(--accent-text); }
+.tk-num span, .tk-sub b { color: var(--accent-text); font-weight: normal; }
+#ticket { font-weight: normal; color: var(--ink); width: 3.4ch; flex: none; field-sizing: content; min-width: 1ch; }   /* hug the digits so 第／位 sit next to them (3.4ch where field-sizing is unsupported) */
+.tk-num { gap: 8px; }
+
+/* range: pink fill (--fill set from JS-free :is() fallback = full pink track tint) */
+input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; height: 22px; }
+input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--accent) var(--pct, 50%), rgba(232, 121, 160, 0.18) var(--pct, 50%)); }
+input[type="range"]::-moz-range-track { height: 6px; border-radius: 999px; background: rgba(232, 121, 160, 0.18); }
+input[type="range"]::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--accent); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -7px; border-radius: 50%; background: #fff; border: 2px solid var(--accent); box-shadow: var(--shadow-sm); }
+input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid var(--accent); }
+
+/* docs: method has its own two columns, so give it the full width instead of sharing a row with refs */
+.v2-docs { grid-template-columns: minmax(0, 1fr); }
+.h1-part { display: inline-block; }
+.tk-step, .mini-step, .mb-step { border: 1px solid var(--line); border-radius: 999px; color: var(--accent-text); background: var(--surface); }
+.tk-step:hover, .mini-step:hover, .mb-step:hover { background: var(--accent-wash); color: var(--accent-text); border-color: var(--accent); }
+.qstrip i { background: rgba(232, 121, 160, 0.16); }
+.qstrip i.ahead { background: rgba(122, 90, 122, 0.45); }
+.qstrip i.vip { background: var(--purple); }
+.qstrip i.me { background: var(--accent); }
+.hstep output { font-weight: normal; }
+
+/* controls: pill buttons, pink selection */
+.seg button, .chip { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); }
+.chip { border-radius: 12px; }
+.seg button:hover, .chip:hover { border-color: var(--accent); color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: normal; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-wash); box-shadow: inset 0 0 0 1px var(--accent); }
+.mini input[type="number"], select, .goal-row input { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.btn-ghost { border: 1px solid var(--line); border-radius: 999px; color: var(--accent-text); }
+.btn-ghost:hover { border-color: var(--accent); background: var(--accent-wash); }
+details.more { border-top-color: var(--line-soft); }
+
+/* stage window + verdict caption: dark plum instead of black */
+.viewport { border-radius: var(--r); }
+.v2-a > .viewport { border-radius: var(--r) var(--r) 0 0; }
+.vp-tabs, .vp-box, .vp-expand { border-radius: 999px; }
+.vp-tabs button, .vp-box button { border-radius: 999px; }
+.vp-tabs button[aria-pressed="true"], .vp-box button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.verdict { background: #2d1b2e; border-radius: 0 0 var(--r) var(--r); box-shadow: var(--shadow-sm); }
+.viewport + .verdict { border-top: 3px solid var(--accent); }
+.big .k { color: #f9a8c8; }
+.big .v { font-weight: normal; }
+.fact { background: rgba(255, 255, 255, 0.07); border-radius: 10px; }
+
+/* tables & data */
+th { border-bottom: 1px solid var(--line); }
+tr.is-oshi td { background: var(--accent-wash); }
+.bar .track { border-radius: 999px; }
+.bar .fill { border-radius: 999px; }
+.slot { border-radius: 10px; }
+.slot.here { outline-color: var(--accent); }
+.plan-ans b { color: var(--accent-text); font-weight: normal; }
+.plan .best { border-radius: 999px; }
+.bk-legend button { border-radius: 999px; }
+.bk-legend button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+#bucketTable tr.mine td { background: rgba(124, 108, 242, 0.07); }
+.chart-tip { border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-md); }
+.tag { border-radius: 999px; }
+.ref-fig { border-radius: 12px; }
+
+/* mobile bar */
+.mb-num b { font-weight: normal; }
+.mb-open { border-radius: 999px; background: linear-gradient(135deg, #e879a0, #d0609a); }
+@media (max-width: 920px) {
+  .minibar { background: rgba(255, 255, 255, 0.94); border-top: 1px solid var(--line); box-shadow: 0 -4px 20px rgba(45, 27, 46, 0.06); }
+  .viewport:not(.expanded), .verdict { border-radius: 0; }
+}
+@supports (field-sizing: content) { #ticket { width: auto; } }
+.quick { box-shadow: none; border: 0; }
 </style>
 </head>
 <body>
 <div class="app"><header class="v2-top"><div class="v2-brand"><span class="v2-logo">別擋我推</span><p class="eyebrow">TW LIVE HOUSE · NUZONE 2F</p></div><div class="v2-venue"><div class="field">
         <span class="flabel">場館</span>
         <div class="seg" id="venueSeg"></div>
-      </div></div></header><div class="masthead"><h1>排隊順位看舞台：你會站在哪、看得到誰</h1><p class="mast-note">台灣地下偶像場多半照排隊順序入場，不看序號。這裡依場館的官方平面圖把場地做成 3D，模擬大家照排隊順序進場、各自找位置，再從你的眼睛高度計算每位成員被擋住多少。數字是可調整的預設值，輸入你的排隊順位和身高就會重算。</p><p class="mast-short">輸入排隊順位和身高，看你大概站哪、看得到幾個人。</p></div><main class="v2-main"><div class="v2-a"><div class="viewport" id="viewport">
+      </div></div></header><div class="masthead"><h1><span class="h1-part">排隊順位看舞台：</span><span class="h1-part">你會站在哪、看得到誰</span></h1><p class="mast-note">台灣地下偶像場多半照排隊順序入場，不看序號。這裡依場館的官方平面圖把場地做成 3D，模擬大家照排隊順序進場、各自找位置，再從你的眼睛高度計算每位成員被擋住多少。數字是可調整的預設值，輸入你的排隊順位和身高就會重算。</p><p class="mast-short">輸入排隊順位和身高，看你大概站哪、看得到幾個人。</p></div><main class="v2-main"><div class="v2-a"><div class="viewport" id="viewport">
         <canvas id="c3d" aria-label="場地 3D 視圖"></canvas>
         <div class="vp-tabs" id="viewTabs" role="group" aria-label="視角">
           <button type="button" data-v="eye" aria-pressed="true">你的視線</button>
@@ -3364,9 +3477,13 @@ td { border-bottom: 1px solid var(--line-soft); }
     if (v.slots) state.slots = v.slots;
     $('#seedLabel').textContent = (SEEDS.indexOf(state.seed) + 1) + '/' + SEEDS.length + (state.seed === state.rep ? ' 代表' : '');
     if (gl) { gl.updateCrowd(state.sim); gl.updateSight(state.ev); gl.render(); }
-    renderVerdict(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawBucketMap();
+    renderVerdict(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawBucketMap(); paintRanges();
   }
   function showSeed(seed) { applyView(TASKS.view(params(), seed)); }
+  // WebKit has no ::range-progress: expose the fill position as --pct for the track gradient
+  const paintRange = r => r.style.setProperty('--pct', ((r.value - r.min) / ((r.max - r.min) || 1) * 100) + '%');
+  const paintRanges = () => document.querySelectorAll('input[type="range"]').forEach(paintRange);
+  document.addEventListener('input', e => { if (e.target.type === 'range') paintRange(e.target); });
 
   /* ============ display ============ */
   const pct = v => Math.round(v * 100) + '%';
