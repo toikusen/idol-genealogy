@@ -2553,10 +2553,15 @@ details.fold[open] > summary { margin-bottom: 8px; }
     // ponytail: the room's ambient + hemisphere light already lifts the cel steps far past 1, so cel materials start at
     // 35% of their colour to keep skin and white costumes from clipping; retune with the lights if they change
     const TOON_DIM = 0.35;
+    // idols: four gentle steps, so faces and skin read as soft figure paint rather than hard bands
+    const idolGradient = (() => {
+      const t = new THREE.DataTexture(new Uint8Array([165, 205, 235, 255]), 4, 1, THREE.LuminanceFormat);
+      t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; return t;
+    })();
     const toon = (color, extra) => new THREE.MeshToonMaterial(Object.assign({ color: new THREE.Color(color).multiplyScalar(TOON_DIM), gradientMap: toonGradient }, extra || {}));
     // inverted hull: back faces pushed out along the normal, drawn in a dark ink colour
     const outlineMat = new THREE.ShaderMaterial({
-      uniforms: { ink: { value: col('#2a1a2e') }, thick: { value: 0.0055 } },
+      uniforms: { ink: { value: col('#3a2433') }, thick: { value: 0.0038 } },
       vertexShader: 'uniform float thick; void main() { vec3 p = position + normal * thick; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }',
       fragmentShader: 'uniform vec3 ink; void main() { gl_FragColor = vec4(ink, 1.0); }',
       side: THREE.BackSide
@@ -2573,7 +2578,76 @@ details.fold[open] > summary { margin-bottom: 8px; }
       { hair: 'bob', hairColor: '#402418', pose: 'down' },
       { hair: 'twinLong', hairColor: '#141018', pose: 'both' }
     ];
-    const MODEL_H = 1.6;
+    const MODEL_H = 1.6, IDOL_SKIN = '#f2c2a8';
+
+    /* ---- painted anime face ----
+       The head is a sphere carrying a hand-drawn face (equirectangular canvas: u = 0.25 faces the audience,
+       canvas top = top of the head). Painting the eyes keeps them flush with the face, which 3D stickers never are. */
+    const HEAD = { y: 1.44, r: [0.125, 0.13, 0.119] };   // from blender/build_figures.py HC / HR
+    const FACE_W = 1024, FACE_H = 512, FX = FACE_W * 0.25, FY = FACE_H / 2;
+    function faceTexture(skinHex, irisHex, browHex) {
+      const c = document.createElement('canvas'); c.width = FACE_W; c.height = FACE_H;
+      const x = c.getContext('2d');
+      x.fillStyle = skinHex; x.fillRect(0, 0, FACE_W, FACE_H);
+      const iris = new THREE.Color(irisHex), hex = (k, mix) => '#' + iris.clone().lerp(new THREE.Color(mix || '#000000'), k).getHexString();
+      const ell = (cx, cy, rx, ry, fill) => { x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); x.fillStyle = fill; x.fill(); };
+      // blush: soft ovals with three little hatch strokes
+      for (const sd of [-1, 1]) {
+        const bx = FX + sd * 90, by = FY + 58, g = x.createRadialGradient(bx, by, 2, bx, by, 34);
+        g.addColorStop(0, 'rgba(255,120,150,0.55)'); g.addColorStop(1, 'rgba(255,120,150,0)');
+        x.save(); x.translate(bx, by); x.scale(1, 0.48); x.translate(-bx, -by); ell(bx, by, 34, 34, g); x.restore();
+        x.strokeStyle = 'rgba(255,255,255,0.55)'; x.lineWidth = 2.2; x.lineCap = 'round';
+        for (let k = -1; k <= 1; k++) { x.beginPath(); x.moveTo(bx + k * 9 - 3, by + 5); x.lineTo(bx + k * 9 + 3, by - 5); x.stroke(); }
+      }
+      for (const sd of [-1, 1]) {
+        const ex = FX + sd * 64, ey = FY + 16, w = 36, h = 45;
+        // white of the eye, then a tall glossy iris that darkens toward the lid
+        x.save(); x.beginPath(); x.ellipse(ex, ey, w, h, 0, 0, Math.PI * 2); x.clip();
+        x.fillStyle = '#fbf7fb'; x.fillRect(ex - w, ey - h, w * 2, h * 2);
+        const ig = x.createLinearGradient(0, ey - h, 0, ey + h);
+        ig.addColorStop(0, hex(0.72)); ig.addColorStop(0.45, hex(0.25)); ig.addColorStop(0.85, hex(0.35, '#ffffff')); ig.addColorStop(1, hex(0.55, '#ffffff'));
+        ell(ex, ey + 4, w * 0.82, h * 0.9, ig);
+        x.lineWidth = 3; x.strokeStyle = hex(0.6); x.beginPath(); x.ellipse(ex, ey + 4, w * 0.82, h * 0.9, 0, 0, Math.PI * 2); x.stroke();
+        ell(ex, ey + 8, w * 0.36, h * 0.42, hex(0.82));                       // pupil
+        ell(ex, ey + h * 0.62, w * 0.5, h * 0.18, hex(0.15, '#ffffff') + 'aa');   // glow at the bottom of the iris
+        // the lid shades the top of the eye
+        const lid = x.createLinearGradient(0, ey - h, 0, ey - h * 0.35); lid.addColorStop(0, 'rgba(40,20,40,0.55)'); lid.addColorStop(1, 'rgba(40,20,40,0)');
+        x.fillStyle = lid; x.fillRect(ex - w, ey - h, w * 2, h);
+        x.restore();
+        // highlights: a big one up toward the light, a small one low on the other side, a sparkle
+        ell(ex - 11, ey - 14, 11, 13, '#ffffff'); ell(ex + 13, ey + 19, 5.5, 5.5, '#ffffff'); ell(ex + 5, ey - 24, 3, 3, 'rgba(255,255,255,0.9)');
+        // upper lash: a thick arc that flicks out at the outer corner
+        x.fillStyle = '#2a1824'; x.beginPath();
+        x.moveTo(ex - sd * (w + 2), ey - 6);
+        x.quadraticCurveTo(ex - sd * w * 0.4, ey - h - 8, ex + sd * w * 0.55, ey - h - 3);
+        x.quadraticCurveTo(ex + sd * (w + 6), ey - h + 4, ex + sd * (w + 12), ey - h - 6);
+        x.quadraticCurveTo(ex + sd * (w + 6), ey - h + 13, ex + sd * w * 0.6, ey - h + 6);
+        x.quadraticCurveTo(ex - sd * w * 0.35, ey - h + 1, ex - sd * (w - 2), ey - 2);
+        x.closePath(); x.fill();
+        // double-lid crease and a light lower lash
+        x.strokeStyle = 'rgba(70,35,50,0.45)'; x.lineWidth = 2.2; x.lineCap = 'round';
+        x.beginPath(); x.moveTo(ex - sd * w * 0.55, ey - h - 12); x.quadraticCurveTo(ex + sd * w * 0.2, ey - h - 20, ex + sd * w * 0.85, ey - h - 10); x.stroke();
+        x.strokeStyle = 'rgba(60,30,45,0.55)'; x.lineWidth = 2;
+        x.beginPath(); x.moveTo(ex + sd * w * 0.1, ey + h + 3); x.quadraticCurveTo(ex + sd * w * 0.6, ey + h, ex + sd * (w + 2), ey + h * 0.55); x.stroke();
+        // soft brow (mostly under the bangs)
+        x.strokeStyle = browHex; x.globalAlpha = 0.75; x.lineWidth = 4;
+        x.beginPath(); x.moveTo(ex - sd * 18, ey - h - 30); x.quadraticCurveTo(ex + sd * 2, ey - h - 38, ex + sd * 22, ey - h - 31); x.stroke();
+        x.globalAlpha = 1;
+      }
+      // tiny nose, small open smile
+      x.fillStyle = 'rgba(190,110,100,0.5)'; x.beginPath(); x.ellipse(FX, FY + 60, 2.6, 1.8, 0, 0, Math.PI * 2); x.fill();
+      const my = FY + 80;
+      x.beginPath(); x.moveTo(FX - 15, my); x.quadraticCurveTo(FX, my + 4, FX + 15, my); x.quadraticCurveTo(FX + 11, my + 17, FX, my + 17); x.quadraticCurveTo(FX - 11, my + 17, FX - 15, my); x.closePath();
+      x.fillStyle = '#9a3446'; x.fill();
+      x.save(); x.clip(); ell(FX, my + 16, 10, 7, '#ff8e9e'); x.restore();
+      x.strokeStyle = '#6e2233'; x.lineWidth = 1.6; x.stroke();
+      const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
+      return t;
+    }
+    const headGeo = new THREE.SphereGeometry(1, 64, 40);
+    const inkBasic = new THREE.MeshBasicMaterial({ color: col('#3a2433'), side: THREE.BackSide });
+    // stickers baked in the GLB that the painted face replaces
+    const PAINTED = /^Idol_Body_(Head|Eye|Iris|Pupil|Lash|Brow|Blush|Nose|Mouth)/;
 
     function buildIdol(id, h, costumeHex) {
       const st = IDOL[id % IDOL.length];
@@ -2583,29 +2657,45 @@ details.fold[open] > summary { margin-bottom: 8px; }
         Costume: col(costumeHex),
         Accent: col('#' + costume.clone().lerp(new THREE.Color('#ffffff'), 0.5).getHexString()),
         Hair: col(st.hairColor),
-        Iris: col('#' + costume.clone().multiplyScalar(0.7).getHexString())
+        Iris: col('#' + costume.clone().multiplyScalar(0.7).getHexString()),
+        Skin: col(IDOL_SKIN)   // warmer than the GLB skin so it stays apart from the white socks under the spots
       };
-      const mats = new Map();
+      const mats = new Map(), owned = [];
       const matFor = m => {
         // the stage spots are brighter than the floor lights: idols sit a further step down so skin keeps its tone
-        if (!mats.has(m.name)) mats.set(m.name, toon((tint[m.name] || m.color).clone().multiplyScalar(0.72), m.name === 'EyeHi' ? { emissive: col('#ffffff') } : null));
+        if (!mats.has(m.name)) mats.set(m.name, toon((tint[m.name] || m.color).clone().multiplyScalar(0.72), { gradientMap: idolGradient }));
         return mats.get(m.name);
       };
       ['Idol_Body_', 'Idol_Arms_' + st.pose + '_', 'Idol_Hair_' + st.hair + '_'].forEach(prefix => {
         byPrefix(prefix).forEach(o => {
+          if (PAINTED.test(nameOf(o))) return;
           const m = new THREE.Mesh(o.geometry, matFor(o.material));
           o.matrixWorld.decompose(m.position, m.quaternion, m.scale);
+          m.userData.headPart = /^Idol_(Hair_|Body_Ear)/.test(nameOf(o));
           grp.add(m);
-          // ponytail: tiny face parts skip the outline (it would swallow them); size threshold, not a tag list
+          // ponytail: tiny parts skip the outline (it would swallow them); hair skips it too (its inner hull drew a line
+          // across the forehead under the bangs)
           o.geometry.computeBoundingSphere();
-          if (o.geometry.boundingSphere.radius * m.scale.x > 0.03) {
-            const ol = new THREE.Mesh(o.geometry, outlineMat); ol.position.copy(m.position); ol.quaternion.copy(m.quaternion); ol.scale.copy(m.scale); grp.add(ol);
+          if (!/^Idol_Hair_/.test(nameOf(o)) && o.geometry.boundingSphere.radius * m.scale.x > 0.03) {
+            const ol = new THREE.Mesh(o.geometry, outlineMat); ol.position.copy(m.position); ol.quaternion.copy(m.quaternion); ol.scale.copy(m.scale);
+            ol.userData.headPart = m.userData.headPart; grp.add(ol);
           }
         });
       });
+      const tex = faceTexture(IDOL_SKIN, costumeHex, '#' + new THREE.Color(st.hairColor).multiplyScalar(0.8).getHexString());
+      const headMat = toon(new THREE.Color(0.72, 0.72, 0.72), { map: tex, gradientMap: idolGradient });
+      const head = new THREE.Mesh(headGeo, headMat); head.position.set(0, HEAD.y, 0); head.scale.set(...HEAD.r); grp.add(head);
+      const ink = new THREE.Mesh(headGeo, inkBasic); ink.position.copy(head.position); ink.scale.set(...HEAD.r.map(v => v + 0.0035)); grp.add(ink);
+      owned.push(tex, headMat);
+      // chibi proportions: head, hair and ears grow 12% around the chin and sit 2 cm lower, hiding most of the neck
+      const CHIN = new THREE.Vector3(0, HEAD.y - HEAD.r[1], 0), K = 1.12, DROP = -0.02;
+      grp.children.forEach(m => {
+        if (m !== head && m !== ink && !m.userData.headPart) return;
+        m.position.sub(CHIN).multiplyScalar(K).add(CHIN); m.position.y += DROP; m.scale.multiplyScalar(K);
+      });
       grp.scale.setScalar(h / MODEL_H);
-      // geometry is shared with the GLB; only the toon materials belong to this idol
-      grp.userData.dispose = () => mats.forEach(m => m.dispose());
+      // geometry is shared with the GLB; the toon materials and the face belong to this idol
+      grp.userData.dispose = () => { mats.forEach(m => m.dispose()); owned.forEach(o => o.dispose()); };
       return grp;
     }
 
@@ -2924,7 +3014,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   }
   // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
   // bump the version whenever blender/build_figures.py is re-run so browsers drop the old file
-  const FIGURES_VERSION = 3;
+  const FIGURES_VERSION = 7;
   function loadFigures() {
     return new Promise((resolve, reject) => {
       if (typeof THREE === 'undefined' || !THREE.GLTFLoader) return reject(new Error('three.js / GLTFLoader not loaded'));
@@ -3515,7 +3605,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
         const towel = r() < 0.22 ? col(COSTUME[Math.floor(r() * COSTUME.length)]) : null;
         const skirt = !q.male && r() < 0.35;
         const hairIdx = Math.floor(r() * c.hair.length);
-        const glasses = r() < 0.22, bag = r() < 0.16 ? col(pick(r, BAG)) : null;
+        // no backpack over long hair or a ponytail (styles 1 and 2 hang down the back)
+        const glasses = r() < 0.22, bag = r() < 0.16 && hairIdx !== 1 && hairIdx !== 2 ? col(pick(r, BAG)) : null;
         push(c.shoes, M4, col(pick(r, SHOES)));
         if (skirt) { push(c.pants, M4, col('#1c1b20')); push(c.skirt, M4, col(pick(r, SKIRT))); }
         else push(c.pants, M4, col(pick(r, PANTS)));
