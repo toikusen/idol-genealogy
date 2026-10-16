@@ -811,6 +811,52 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   .vp-res { top: 60px; right: 8px; max-width: 200px; padding: 8px 10px; }
   .vp-res .v b { font-size: 24px; }
 }
+
+/* face visibility pills (member table, slot cards): a ring that fills with how much of the face shows */
+.vis { --c: var(--ink-3); display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 6px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 700; white-space: nowrap; color: var(--c); background: color-mix(in srgb, var(--c) 11%, transparent); }
+.vis i { width: 14px; height: 14px; border-radius: 50%; flex: none;
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), color-mix(in srgb, var(--c) 22%, transparent) 0);
+  -webkit-mask: radial-gradient(circle, transparent 3.5px, #000 4px); mask: radial-gradient(circle, transparent 3.5px, #000 4px); }
+.vis.g { --c: var(--good); }
+.vis.g2 { --c: color-mix(in srgb, var(--good) 70%, var(--warn)); }
+.vis.w { --c: var(--warn); }
+.vis.b { --c: var(--bad); }
+.vis-pair { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lean-tag { font-size: 11px; font-weight: 700; color: var(--ink-3); border: 1px dashed currentColor; border-radius: 999px; padding: 1px 7px; white-space: nowrap; }
+.slot .vis { height: 24px; padding: 0 8px 0 5px; font-size: 11.5px; }
+@media (max-width: 560px) { .vis { font-size: 11.5px; padding: 0 8px 0 5px; } .slot .vis { padding: 0 6px 0 4px; gap: 4px; font-size: 10.5px; } }
+
+/* ---- simple-first layout: answers up front, detail folded ---- */
+details.fold { margin-top: 2px; }
+details.fold > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--accent-text); padding: 4px 0; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::after { content: "＋"; font-size: 12px; }
+details.fold[open] > summary::after { content: "－"; }
+details.fold[open] > summary { margin-bottom: 8px; }
+.fold-panel { padding: 16px 18px; }
+.fold-panel > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.fold-panel > summary::-webkit-details-marker { display: none; }
+.fold-panel > summary::after { content: "＋"; color: var(--ink-3); }
+.fold-panel[open] > summary::after { content: "－"; }
+.fold-panel > summary h2 { margin: 0; font-size: 16px; }
+.fold-panel:not([open]) { gap: 0; }
+.plan-ans .btn-ghost { padding: 2px 12px; font-size: 12.5px; }
+/* verdict headline: a few words, coloured by how well the oshi shows */
+.big .v.vt { font-size: 40px; line-height: 1.15; }
+.big .v.vt.g { color: #8ee6b0; } .big .v.vt.g2 { color: #c8e68e; } .big .v.vt.w { color: #ffd27a; } .big .v.vt.b { color: #ff9a8f; }
+.big .s { font-size: 13.5px; line-height: 1.6; color: rgba(255, 255, 255, 0.78); }
+.big .s b { color: #fff; }
+.verdict .vmore { grid-column: 1 / -1; }
+.verdict .vmore > summary { color: #f9a8c8; }
+.verdict .vmore .verdict-text { color: rgba(255, 255, 255, 0.72); }
+.verdict .vmore .verdict-text b { color: #fff; }
+.oshi-field { margin-top: 4px; }
+@media (max-width: 560px) {
+  .big .v.vt { font-size: 32px; }
+  #memberTable th:nth-child(n+4), #memberTable td:nth-child(n+4) { display: none; }
+}
+.members > details.fold { padding: 0 14px 12px; }
 </style>
 </head>
 <body>
@@ -878,6 +924,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       <section class="panel plan" id="plan" aria-label="排隊與站位建議">
         <div class="plan-col">
           <h2>要排第幾位才夠？</h2>
+          <p class="plan-ans" id="goalAns" aria-live="polite">計算中…</p>
+          <details class="fold"><summary>換一個目標</summary>
           <div class="goal-row">
             <select id="goal" aria-label="目標">
               <option value="oshi">偏頭看得到推的臉的機率</option>
@@ -888,13 +936,16 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
             <input id="goalVal" type="number" inputmode="numeric" min="0" max="100" value="80" aria-label="目標值">
             <span id="goalUnit">%</span>
           </div>
-          <p class="plan-ans" id="goalAns" aria-live="polite">計算中…</p>
           <p class="note" id="goalNote"></p>
+          </details>
         </div>
         <div class="plan-col">
           <h2>你這個順位，往哪站最划算</h2>
+          <p class="plan-ans" id="aimAns" aria-live="polite">計算中…</p>
+          <details class="fold"><summary>看各種站法的比較</summary>
           <div class="tbl-wrap"><table id="aimTable"></table></div>
           <p class="note" id="aimNote"></p>
+          </details>
         </div>
       </section>
 <section class="panel buckets" aria-label="排隊順位分布">
@@ -907,18 +958,20 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     </div>
     <div class="bk-legend" id="bucketLegend"></div>
     <svg class="bk-map" id="bucketMap" role="img" aria-label="各排隊順位區間的站位分布圖"></svg>
-    <div class="tbl-wrap"><table id="bucketTable"></table></div>
+    <details class="fold"><summary>看數字表</summary><div class="tbl-wrap"><table id="bucketTable"></table></div></details>
   </section><div class="panel members">
         <div class="tbl-head">
           <h2>每位成員看不看得到</h2>
-          <p>從下手（觀眾看過去的左邊）排起。◎幾乎全部 ○一半以上 △一部分 ×看不到</p>
+          <p>從左邊排起（觀眾看過去）。圓圈越滿，臉看到越多；標「要偏頭」表示不動時看得比較少。</p>
         </div>
         <div class="tbl-wrap"><table id="memberTable"></table></div>
-        <div class="tbl-head" style="padding-top:14px">
+        <details class="fold"><summary>推換到其他站位時看得到嗎</summary>
+        <div class="tbl-head" style="padding-top:10px">
           <h2 id="slotTitle">推的成員換到各個站位時</h2>
-          <p>假設歌曲中會換位置。臉（偏頭時）與上半身看得到的比例</p>
+          <p>唱歌時成員會換位置。臉（偏頭時）與上半身看得到的比例</p>
         </div>
         <div class="slots" id="slots"></div>
+        </details>
       </div></div><aside class="v2-b"><section class="panel quick" id="quick" aria-label="排隊順位與身高">
       
       <div class="ticket">
@@ -946,6 +999,11 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         </div>
         <input id="height" type="range" min="140" max="195" step="1" value="170" aria-label="身高滑桿">
       </div>
+
+      <fieldset class="field oshi-field">
+        <legend>推的成員</legend>
+        <div class="chips" id="oshiChips"></div>
+      </fieldset>
     </section><section class="panel controls settings" id="settings" aria-label="條件">
       <h2 class="settings-h">調整條件</h2>
 
@@ -970,17 +1028,12 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       </fieldset>
 
       <fieldset class="field">
-        <legend>推的成員</legend>
-        <div class="chips" id="oshiChips"></div>
-      </fieldset>
-
-      <fieldset class="field">
         <legend>想站哪裡</legend>
         <div class="seg" id="aimSeg">
           <button type="button" data-v="center" aria-pressed="true">中間</button>
           <button type="button" data-v="oshi" aria-pressed="false">推的正前方</button>
-          <button type="button" data-v="shimo" aria-pressed="false">偏左（下手）</button>
-          <button type="button" data-v="kami" aria-pressed="false">偏右（上手）</button>
+          <button type="button" data-v="shimo" aria-pressed="false">偏左</button>
+          <button type="button" data-v="kami" aria-pressed="false">偏右</button>
           <button type="button" data-v="free" aria-pressed="false">哪裡空往哪站</button>
         </div>
       </fieldset>
@@ -1034,7 +1087,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
             <div class="mini"><label for="femaleMean">女性平均身高（推定）</label><input id="femaleMean" type="number" min="140" max="180" value="160"></div>
           </div>
           <fieldset class="field">
-            <legend>護城河（攝影線／柵欄）</legend>
+            <legend>舞台前的柵欄（護城河）</legend>
             <div class="seg" id="barrierSeg"></div>
             <p class="note" id="barrierFixed"></p>
           </fieldset>
@@ -1087,23 +1140,14 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
           </div>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
             <button type="button" class="btn-ghost" id="shuffleBtn">打亂歌曲站位</button>
-            <button type="button" class="btn-ghost" id="rotateBtn">這個場面輪換一格</button>
             <p class="note" id="mhAvg">平均 160.0cm</p>
-          </div>
-          <div>
-            <p class="flabel">推給你的回應（res）</p>
-            <div class="pair">
-              <div class="mini"><label for="resSongs">一場幾首歌</label><input id="resSongs" type="number" inputmode="numeric" min="1" max="30" value="6"></div>
-              <div class="mini"><label for="resPerSong">每首歌推個別回應幾次</label><input id="resPerSong" type="number" inputmode="numeric" min="1" max="40" value="8"></div>
-            </div>
-            <p class="note">聯合公演 30 分鐘約 6 首，專場約 15–20 首。回應是推對特定一個人的目線、指人、揮手。</p>
           </div>
         </div>
       </details>
-    </section></aside></main><section class="panel curve" aria-label="排隊順位與能見度">
+    </section></aside></main><details class="panel curve fold-panel" id="curvePanel">
+    <summary><h2>進階分析：排隊順位往後，能見度怎麼變</h2></summary>
     <div class="curve-head">
       <div>
-        <h2>排隊順位往後，能見度怎麼變</h2>
         <p id="curveSub">維持你的身高、站位目標和推的成員，只改順位，每個點各模擬 8 次。色帶是 10–90% 的範圍。</p>
       </div>
       <select id="metric" aria-label="指標">
@@ -1117,7 +1161,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     <div class="chart-box" id="chartBox"><svg id="chart" role="img" aria-label="排隊順位與能見度的圖表"></svg><div class="chart-tip" id="chartTip" hidden=""></div></div>
     <div class="curve-foot"><span id="curveStatus"></span><span>直線是你目前的順位</span></div>
     <details><summary>看數值表</summary><div class="tbl-wrap"><table id="curveTable"></table></div></details>
-  </section><div class="v2-docs"><details class="panel method" id="method" open="">
+  </details><div class="v2-docs"><details class="panel method" id="method">
     <summary><h2>尺寸來源與計算前提</h2></summary>
     <div class="method-grid">
       <div>
@@ -1129,15 +1173,15 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         <ul id="assumptions"></ul>
       </div>
     </div>
-  </details><section class="panel refs" id="refs" aria-label="原場地參考資料">
-    <h2 id="refTitle">原場地參考資料</h2>
+  </details><details class="panel refs fold-panel" id="refs">
+    <summary><h2 id="refTitle">原場地參考資料</h2></summary>
     <p class="sub" id="refMethod"></p>
     <p class="sub" id="refSite"></p>
     <div class="ref-images" id="refImages"></div>
     <h3>資料來源</h3>
     <ol class="ref-links" id="refLinks"></ol>
     <p class="note">平面圖版權屬各場館所有，此處僅作為模擬的參考依據。實際配置依每場活動而定，請以主辦公告為準。</p>
-  </section></div></div>
+  </details></div></div>
 <div class="minibar" id="minibar" aria-label="排隊順位快捷列">
   <button type="button" class="mb-step" id="mbMinus" aria-label="往前一位">−</button>
   <button type="button" class="mb-num" id="mbNum" aria-label="回到排隊順位輸入">第<b id="mbNumV">50</b></button>
@@ -1624,13 +1668,13 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     { key: 'line', label: 'MC（橫一列）', song: false },
     { key: 'wave', label: '三層交錯', song: true },
     { key: 'arc', label: '半圓（兩端在前）', song: true },
-    { key: 'diagonal', label: '斜一排（下手在前）', song: true },
-    { key: 'diagonalB', label: '斜一排（上手在前）', song: true },
+    { key: 'diagonal', label: '斜一排（左邊在前）', song: true },
+    { key: 'diagonalB', label: '斜一排（右邊在前）', song: true },
     { key: 'pyramid', label: '金字塔（前少後多）', song: true },
     { key: 'solo', label: 'C 位獨唱（一人到最前）', song: true },
     { key: 'pairs', label: '兩人一組', song: true },
-    { key: 'sideL', label: '全員往下手靠', song: true },
-    { key: 'sideR', label: '全員往上手靠', song: true },
+    { key: 'sideL', label: '全員往左邊靠', song: true },
+    { key: 'sideR', label: '全員往右邊靠', song: true },
     { key: 'split', label: '左右分兩隊', song: true },
     { key: 'front', label: '煽動段（全員衝到台邊）', song: true }
   ];
@@ -2207,7 +2251,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   // per song: perSong res; per show: songs songs, each a random song scene with the oshi in a random slot
   function resEstimate(sim, p) {
     if (!sim.user) return null;
-    const K = Math.max(1, Math.round(p.resPerSong || RES.perSong)), songs = Math.max(1, Math.round(p.resSongs || RES.songs));
+    const K = RES.perSong, songs = RES.songs;
     const atLeastOnce = (share, k) => 1 - Math.pow(1 - share, k);
     const om = sim.members.find(m => m.id === p.oshi) || sim.members[0];
     const crowd = sim.people.concat([sim.user]), ctx = { crowd, near: crowdGrid(crowd) };
@@ -2550,7 +2594,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true, frontGuard: false,
     barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false,
     memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4],
-    sceneIdx: 0, sceneOrders: null, resSongs: 6, resPerSong: 8, res: null,
+    sceneIdx: 0, sceneOrders: null, res: null,
     view: 'eye', zoom: 1, seed: 1, luckKey: 'rep', metric: 'upper',
     rows: null, summary: null, sim: null, ev: null, slots: null, rep: 0, expanded: false,
     buckets: null, bucketSel: null
@@ -2563,7 +2607,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       aim: state.aim, oshi: state.oshi, chaos: state.chaos, groupRate: state.groupRate, otherFanRate: state.otherFanRate,
       maleRatio: state.maleRatio, maleMean: state.maleMean, femaleMean: state.femaleMean,
       barrier: state.barrier, stageH: state.stageH, stageDepth: state.stageDepth, mixOnFloor: state.mixOnFloor,
-      formation: 'line', scene: S.SCENES[state.sceneIdx].key, sceneOrder: sceneOrder(), resSongs: state.resSongs, resPerSong: state.resPerSong,
+      formation: 'line', scene: S.SCENES[state.sceneIdx].key, sceneOrder: sceneOrder(),
       memberHeights: state.memberHeights.slice(), armsUp: state.armsUp, positionOrder: state.positionOrder.slice(),
       event: state.event, entranceCrowd: state.entranceCrowd, frontGuard: state.frontGuard
     };
@@ -2581,7 +2625,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     segButtons($('#barrierSeg'), VN.barrier.options.map(v => [v, v === 'none' ? '沒有' : '離舞台 ' + v + 'm']));
     $('#barrierSeg').hidden = VN.barrier.options.length < 2;
     $('#barrierFixed').textContent = VN.barrier.options.length >= 2 ? ''
-      : VN.barrier.def === 'none' ? '這個場地沒有護城河。' : '官方圖面：護城河固定在離舞台 ' + VN.barrier.def + 'm。';
+      : VN.barrier.def === 'none' ? '這個場地沒有舞台前的柵欄。' : '官方圖面：柵欄固定在離舞台 ' + VN.barrier.def + 'm。';
     segButtons($('#stageHSeg'), VN.stageH.options.map(v => [String(v), Math.round(v * 100) + 'cm']));
     $('#stageHSeg').hidden = VN.stageH.official;
     $('#stageHLegend').textContent = VN.stageH.official ? '舞台高度：' + Math.round(VN.stageH.def * 100) + 'cm（官方圖面）' : '舞台高度（官方未公布，推定）';
@@ -2817,14 +2861,6 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   $('#scPrev').addEventListener('click', () => setScene(state.sceneIdx - 1));
   $('#scNext').addEventListener('click', () => setScene(state.sceneIdx + 1));
   $('#shuffleBtn').addEventListener('click', () => { state.sceneOrders = null; rebuildMembers(); schedule(); });
-  $('#rotateBtn').addEventListener('click', () => {
-    if (state.sceneIdx === 0) state.positionOrder = state.positionOrder.slice(1).concat(state.positionOrder[0]);
-    else { sceneOrder(); const o = state.sceneOrders[state.sceneIdx]; state.sceneOrders[state.sceneIdx] = o.slice(1).concat(o[0]); }
-    rebuildMembers(); schedule();
-  });
-  for (const [id, key, lo, hi] of [['resSongs', 'resSongs', 1, 30], ['resPerSong', 'resPerSong', 1, 40]]) {
-    $('#' + id).addEventListener('change', e => { state[key] = Math.max(lo, Math.min(hi, Math.round(Number(e.target.value)) || lo)); e.target.value = String(state[key]); schedule(); });
-  }
 
   /* ============ 3D ============ */
   let gl = null;
@@ -3964,16 +4000,31 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     else if (r.youSeen < 1) box.append(el('div', 's', '你要偏頭，推才看得到你的臉'));
   }
   const fmt1 = v => (Math.round(v * 10) / 10).toFixed(1);
+  // visibility level of a face: [class, short label, tooltip]
   function sym(v) {
-    if (v >= 0.83) return ['◎', 'g', '幾乎全部看得到'];
-    if (v >= 0.5) return ['○', 'g', '一半以上看得到'];
-    if (v > 0) return ['△', 'w', '只看得到一部分'];
-    return ['×', 'b', '看不到'];
+    if (v >= 0.83) return ['g', '全看到', '幾乎全部看得到'];
+    if (v >= 0.5) return ['g2', '大半', '一半以上看得到'];
+    if (v > 0) return ['w', '一部分', '只看得到一部分'];
+    return ['b', '看不到', '看不到'];
+  }
+  // pill with a ring that fills with how much of the face shows
+  function visBadge(v, tipPrefix) {
+    const s = sym(v), b = el('span', 'vis ' + s[0]), ring = el('i');
+    ring.style.setProperty('--p', Math.round(v * 100));
+    b.append(ring, document.createTextNode(s[1])); b.title = (tipPrefix || '') + s[2] + '（' + Math.round(v * 100) + '%）';
+    return b;
+  }
+  // the best you can get (leaning), tagged when standing still is worse
+  function faceCell(still, lean) {
+    const w = el('span', 'vis-pair'), same = sym(still)[0] === sym(lean)[0];
+    w.append(visBadge(lean, same ? '' : '偏頭：'));
+    if (!same) { const t = el('span', 'lean-tag', '要偏頭'); t.title = '不動時：' + sym(still)[2] + '（' + Math.round(still * 100) + '%）'; w.append(t); }
+    return w;
   }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function lateralText(x) {
     if (Math.abs(x) < 0.3) return '幾乎正中間';
-    return (x < 0 ? '偏左（下手）' : '偏右（上手）') + ' ' + fmt1(Math.abs(x)) + 'm';
+    return (x < 0 ? '偏左' : '偏右') + ' ' + fmt1(Math.abs(x)) + 'm';
   }
   const rowText = u => u.front ? '最前排' : '第 ' + (u.row + 1) + ' 排';
   // each button says where you would stand, so the choice explains itself
@@ -3997,43 +4048,43 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const tip = { eye: '拖曳環顧', orbit: '頭上數字是排隊順位 · 拖曳旋轉／滾輪縮放', plan: '從上往下看 · 圓點數字是排隊順位 · 放大後可拖曳移動', oshi: '從推的成員眼睛看你' }[state.view];
     hud.append(document.createTextNode(' — ' + tip));
   }
+  // one plain answer (can you see your oshi's face), three numbers, the statistics folded away
   function renderVerdict() {
-    const v = $('#verdict'); v.textContent = '';
+    const v = $('#verdict'), wasOpen = !!(v.querySelector('details') || {}).open; v.textContent = '';
     const ev = state.ev, s = state.summary, u = state.sim.user; if (!ev || !u) return;
-    const n = ev.members.length;
+    const n = ev.members.length, om = ev.members.find(r => r.member.id === state.oshi) || ev.members[0];
+    const head = om.face >= 0.5 ? ['g', '看得到'] : om.faceLean >= 0.5 ? ['g2', '偏頭就看得到'] : om.faceLean > 0 ? ['w', '只看得到一部分'] : ['b', '被擋住了'];
     const big = el('div', 'big');
-    big.append(el('span', 'k', '看得到臉的成員'));
-    const vv = el('span', 'v', String(ev.faceCount)); vv.append(el('small', null, '/ ' + n + '人')); big.append(vv);
-    const ss = el('span', 's'); ss.append(document.createTextNode('稍微偏頭可看到 '), el('b', null, ev.faceCountLean + ' 人'));
+    big.append(el('span', 'k', '推（' + MEMBERS[om.member.id].name + '）的臉'), el('span', 'v vt ' + head[0], head[1]));
+    const ss = el('span', 's');
+    ss.append(document.createTextNode('排第 ' + Math.min(state.ticket, general()) + ' 位，大概站' + rowText(u) + '。' + n + ' 位成員裡看得到 '), el('b', null, ev.faceCount + ' 位'),
+      document.createTextNode(ev.faceCountLean > ev.faceCount ? '的臉（偏頭 ' + ev.faceCountLean + ' 位）。' : '的臉。'));
     big.append(ss);
     const facts = el('div', 'facts');
     const addFact = (k, val, unit) => { const f = el('div', 'fact'); f.append(el('span', 'k', k)); const vEl = el('span', 'v', val); if (unit) vEl.append(el('span', 'u', ' ' + unit)); f.append(vEl); facts.append(f); };
     addFact('離舞台邊', fmt1(u.z), 'm');
     addFact('前後位置', rowText(u));
-    addFact('左右位置', lateralText(u.x));
-    const om = ev.members.find(r => r.member.id === state.oshi) || ev.members[0];
-    addFact('推（' + MEMBERS[om.member.id].name + '）的臉', sym(om.face)[0] + ' → ' + sym(om.faceLean)[0], '偏頭時');
-    addFact('推的臉看起來', fmt1(0.6 * 0.22 / om.dist * 100), 'cm（手臂伸直時指尖上的大小）');
-    if (state.res) addFact('推給你回應', pctFine(state.res.show), '一場 ' + state.res.songs + ' 首歌至少一次');
+    if (state.res) addFact('推給你回應', pctFine(state.res.show), '一場 ' + state.res.songs + ' 首歌');
     v.append(big, facts);
+    const more = el('details', 'fold vmore'); more.open = wasOpen; more.append(el('summary', null, '看計算細節'));
     const p = el('p', 'verdict-text' + ($('#busy').hidden ? '' : ' stale'));
-    if (!s) { p.textContent = '正在模擬 ' + SEEDS.length + ' 次入場…'; v.append(p); return; }
+    more.append(p); v.append(more);
+    if (!s) { p.textContent = '正在模擬 ' + SEEDS.length + ' 次入場…'; return; }
     p.append(document.createTextNode('模擬 ' + SEEDS.length + ' 次入場（每次的進場順序、同行朋友、身高都不同），你會站在離舞台邊 '), el('b', null, fmt1(s.dist.p10) + '–' + fmt1(s.dist.p90) + 'm'),
-      document.createTextNode('（10–90%），站到最前排的機率 '), el('b', null, pct(s.frontProb)),
+      document.createTextNode('（10–90%），' + lateralText(u.x) + '，站到最前排的機率 '), el('b', null, pct(s.frontProb)),
       document.createTextNode('。看得到臉的人數中位數：不動 '), el('b', null, Math.round(s.faceCount.p50) + ' 人'),
       document.createTextNode('、偏頭 '), el('b', null, Math.round(s.faceCountLean.p50) + ' 人'),
       document.createTextNode('。偏頭看得到推的臉的機率 '), el('b', null, pct(s.oshiFaceLeanProb)),
-      document.createTextNode('（不動 ' + pct(s.oshiFaceProb) + '）。'));
+      document.createTextNode('（不動 ' + pct(s.oshiFaceProb) + '）。推的臉看起來約 ' + fmt1(0.6 * 0.22 / om.dist * 100) + 'cm（手臂伸直時指尖上的大小）。'));
     if (state.otherFanRate > 0) p.append(document.createTextNode('聯合公演：他團粉約 ' + pct(state.otherFanRate) + '，輪到你推的團時讓出前方。'));
     if (state.armsUp) p.append(document.createTextNode('應援中（約 45% 舉單手拿螢光棒）。'));
     if (state.event !== 'normal') p.append(document.createTextNode(S.EVENTS[state.event].label + '：入場人數 ' + state.total + ' 人。'));
-    v.append(p);
   }
   function renderMembers() {
     const t = $('#memberTable'); t.textContent = '';
     const ev = state.ev; if (!ev) return;
     const thead = el('thead'); const hr = el('tr');
-    ['站位', '成員', '臉 不動→偏頭', '上半身（不動）', '全身（不動）', '全身（偏頭）', '距離'].forEach(h => hr.append(el('th', null, h)));
+    ['站位', '成員', '看得到臉嗎', '上半身（不動）', '全身（不動）', '全身（偏頭）', '距離'].forEach(h => hr.append(el('th', null, h)));
     thead.append(hr); t.append(thead);
     const tb = el('tbody');
     ev.members.slice().sort((a, b) => a.member.x - b.member.x).forEach(r => {
@@ -4043,10 +4094,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       mn.append(d, el('span', null, MEMBERS[r.member.id].name), el('small', null, Math.round(r.member.h * 100) + 'cm'));
       tdN.append(mn); tr.append(tdN);
       const tdF = el('td');
-      const s1 = sym(r.face), s2 = sym(r.faceLean);
-      const a = el('span', 'sym ' + s1[1], s1[0]); a.title = '不動：' + s1[2];
-      const b = el('span', 'sym ' + s2[1], s2[0]); b.title = '偏頭：' + s2[2];
-      tdF.append(a, el('span', 'arrow', '→'), b); tr.append(tdF);
+      tdF.append(faceCell(r.face, r.faceLean)); tr.append(tdF);
       [r.upper, r.body, r.bodyLean].forEach(v => {
         const td = el('td'); const bar = el('div', 'bar'); const tr2 = el('div', 'track'); const f = el('div', 'fill'); f.style.width = Math.round(v * 100) + '%';
         tr2.append(f); bar.append(tr2, el('span', 'num', pct(v))); td.append(bar); tr.append(td);
@@ -4065,7 +4113,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     posSorted.forEach(({ r, slot }) => {
       const c = el('div', 'slot' + (slot === curSlot ? ' here' : ''));
       c.append(el('span', 'p', slotName(r.member)));
-      const s2 = sym(r.faceLean); const sp = el('span', 'sym ' + s2[1], s2[0]); sp.style.justifySelf = 'center'; sp.title = '臉（偏頭）：' + s2[2];
+      const sp = visBadge(r.faceLean, '臉（偏頭）：'); sp.style.justifySelf = 'center';
       c.append(sp, el('span', 'u', pct(r.upper)));
       sl.append(c);
     });
@@ -4073,7 +4121,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   function slotName(m) {
     const pos = S.formationPos(S.SCENES[state.sceneIdx].key, nMembers(), S.buildVenue(params()));
     if (Math.abs(m.x) < 0.01) return '中間';
-    const side = m.x < 0 ? '下手' : '上手';
+    const side = m.x < 0 ? '左' : '右';
     const same = pos.map(p => p[0]).filter(x => (x < 0) === (m.x < 0) && Math.abs(x) > 0.01).map(Math.abs).sort((a, b) => a - b);
     const k = same.indexOf(Math.abs(m.x)) + 1;
     return side + k + (m.z < -2.0 ? '（後）' : '');
@@ -4132,8 +4180,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       tb.append(tr);
     });
     t.append(tb);
-    $('#bucketStatus').textContent = '疊加 ' + BUCKET_SEEDS.length + ' 次模擬';
-    $('#bucketSub').textContent = '用你目前的條件跑 ' + BUCKET_SEEDS.length + ' 次入場，把每個順位區間的人實際站的位置疊在平面圖上（點色塊只看那一區）。「看得到臉」是假設你本人（' + state.userHeight + 'cm）站在那一區時的結果。';
+    $('#bucketStatus').textContent = '';
+    $('#bucketSub').textContent = '每個順位區間的人實際站在哪（疊 ' + BUCKET_SEEDS.length + ' 次模擬）。點色塊只看那一區。';
   }
   // SVG plan in the venue frame, stage on the right (like most official floor plans)
   function drawBucketMap() {
@@ -4367,7 +4415,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   let aimW = null, aimId = 0;
   function startAims() {
     const id = ++aimId, p = params();
-    $('#aimNote').textContent = '計算中…';
+    $('#aimNote').textContent = '計算中…'; $('#aimAns').textContent = '計算中…';
     if (aimW) { aimW.terminate(); aimW = null; }
     aimW = makeWorker();
     const done = list => { if (id !== aimId) return; if (aimW) { aimW.terminate(); aimW = null; } state.aims = list; renderAims(); };
@@ -4401,6 +4449,17 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       tr.append(td); tb.append(tr);
     });
     t.append(tb);
+    const best = list[0], cur = list.find(r => r.aim === state.aim) || best, ans = $('#aimAns'); ans.textContent = '';
+    // less than 5 points better is noise across 8 runs: don't tell people to move for it
+    if (best.aim === state.aim || best.sum.oshiFaceLeanProb - cur.sum.oshiFaceLeanProb < 0.05)
+      ans.append(document.createTextNode('你選的「' + aimLabel(cur.aim) + '」已經夠好了，偏頭看得到推的臉的機率 '), el('b', null, pct(cur.sum.oshiFaceLeanProb)), document.createTextNode('。'));
+    else {
+      ans.append(document.createTextNode('改站「' + aimLabel(best.aim) + '」比較划算：偏頭看得到推的臉 '), el('b', null, pct(best.sum.oshiFaceLeanProb)),
+        document.createTextNode('（現在 ' + pct(cur.sum.oshiFaceLeanProb) + '）。'));
+      const go = el('button', 'btn-ghost', '改用'); go.type = 'button';
+      go.addEventListener('click', () => { state.aim = best.aim; setPressed($('#aimSeg'), state.aim); schedule(); });
+      ans.append(' ', go);
+    }
     $('#aimNote').textContent = '同一批 ' + CURVE_SEEDS.length + ' 次入場模擬，只換你的站位目標。排序：推的臉優先，其次看得到的人數。';
   }
 
@@ -4579,7 +4638,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       '站位密度：最前排每人 ' + S.FRONT_PITCH + 'm 寬（最前管理時 ' + S.GUARD_PITCH + 'm，雙手張開趴在欄杆上）。第 2–3 排每平方公尺 3.0 人，接近滿場時最多 3.5 人。第 4 排以後依人數自動決定（人少就站得鬆）。',
       '能見度：每位成員身上放 33 個點，從你的眼睛（身高 × 0.933）看過去，判斷有沒有被前面觀眾的身體、舞台邊、柱子、欄杆擋住。「偏頭」是頭往左右各移動 12cm 內看得到的點。',
       '場面：觀眾照 MC 時的站位進場排好，之後每首歌換隊形（' + S.SCENES.filter(sc => sc.song).map(sc => sc.label).join('、') + '），成員站位每次開頁隨機，3D 和判定看目前選的場面。',
-      '推給你的回應：推每次對特定一個人回應（目線、指人、揮手），會從推看得到臉的觀眾裡依權重挑一個人。權重 = 看得到（1，要偏頭 0.5，看不到 0）× 距離（3m 內 1，之後每 1.5m 約剩 0.37 倍）× 角度（推的正面 1、正側面 0.25）× 推的粉絲 5 倍（你和約 1/成員數 的觀眾）。每首歌回應 ' + state.resPerSong + ' 次，一場 ' + state.resSongs + ' 首歌，每首隨機換場面和推的站位後平均。這些權重是推定值，沒有算進認知度、應援、推色等個人差異。',
+      '推給你的回應：推每次對特定一個人回應（目線、指人、揮手），會從推看得到臉的觀眾裡依權重挑一個人。權重 = 看得到（1，要偏頭 0.5，看不到 0）× 距離（3m 內 1，之後每 1.5m 約剩 0.37 倍）× 角度（推的正面 1、正側面 0.25）× 推的粉絲 5 倍（你和約 1/成員數 的觀眾）。每首歌回應 ' + S.RES.perSong + ' 次，一場 ' + S.RES.songs + ' 首歌（約聯合公演 30 分鐘），每首隨機換場面和推的站位後平均。這些權重是推定值，沒有算進認知度、應援、推色等個人差異。',
       '結果是 20 次入場模擬的統計。3D 預設顯示最接近中位數的那一次（一般），3D 左下「最前／最後」是 20 次裡你站得最前面、最後面的那一次。',
       '入口：「觀眾塞在入口附近」開啟時，第 ' + S.BACK_PREF_FROM + ' 位以後進場的人約 ' + Math.round(S.ENTRANCE_SHARE * 100) + '% 會停在入口附近，不往裡面走，所以願意往內走的人比較容易找到好位置。只套用在平面圖有標入口的場館。',
       '場次：生誕祭時人數預設多 30%，大部分粉絲搶壽星（你推的成員）正前方；熱門團體時段人數預設多 20%，他團粉絲大多留在觀眾區一起搶位。比例是推定值。',
@@ -4610,7 +4669,6 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   /* ============ boot ============ */
   syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene();
   $('#sightLegend').hidden = true;
-  if (MOBILE()) $('#method').open = false;
   $('#curveSub').textContent = '維持你的身高、站位目標和推的成員，只改排隊順位，每個點各模擬 ' + CURVE_SEEDS.length + ' 次。色帶是 10–90% 的範圍。';
   requestMain();
 })();
