@@ -791,6 +791,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   .hero-tag { font-size: 19px; }
   .hero-steps { display: none; }   /* mast-short says the same; keep the 3D view high on phones */
 }
+/* the sight legend is a multi-item box, not a pill: a 999px radius turns it into a circle */
+.vp-legend { border-radius: 14px; }
+.vp-legend span { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -969,7 +972,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
           <button type="button" data-v="3" aria-pressed="false">3 人</button>
         </div>
         <div class="seg">
-          <button type="button" id="guardToggle" aria-pressed="false">最前管理：第一排張手卡欄杆 💢</button>
+          <button type="button" id="guardToggle" aria-pressed="false">最前管理：第一排張手卡欄杆</button>
         </div>
         <p class="note" id="frontNote">沿著舞台邊排滿。</p>
       </fieldset>
@@ -2954,25 +2957,34 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     glowGeo.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(CAP * 3), 3));
     const glow = new THREE.Points(glowGeo, new THREE.PointsMaterial({ size: 0.42, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
     glow.frustumCulled = false; scene.add(glow);
-    /* 最前管理: scowl (brows + frown) on the face and a 💢 mark floating over the head */
+    /* 最前管理: glaring brows pressed down on the eyes, 最前管理 printed on the tee front and back */
     const iFace = mk(new THREE.BoxGeometry(1, 1, 1), M_EYE);
-    const EYE_BOX = {};
-    for (const sx of ['m', 'f']) { const g = TPL[sx].T.eyes; g.computeBoundingBox(); EYE_BOX[sx] = g.boundingBox; }
-    const angerTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); x.font = '52px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('💢', 32, 36); return new THREE.CanvasTexture(c); })();
-    const angerGeo = new THREE.BufferGeometry();
-    angerGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(CAP * 3), 3));
-    const anger = new THREE.Points(angerGeo, new THREE.PointsMaterial({ size: 0.4, map: angerTex, transparent: true, alphaTest: 0.3, toneMapped: false }));
-    anger.frustumCulled = false; scene.add(anger);
+    const EYE_BOX = {}, SHIRT_BOX = {};
+    for (const sx of ['m', 'f']) {
+      const T = TPL[sx].T; T.eyes.computeBoundingBox(); T.shirt.computeBoundingBox();
+      EYE_BOX[sx] = T.eyes.boundingBox; SHIRT_BOX[sx] = T.shirt.boundingBox;
+    }
+    const printTex = (() => {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 128; const x = c.getContext('2d');
+      x.font = 'bold 96px "JF Openhuninn", "Huninn", "PingFang TC", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillStyle = '#ffffff'; x.fillText('最前管理', 256, 68);
+      const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+    })();
+    const iPrint = mk(new THREE.PlaneGeometry(1, 0.25), new THREE.MeshBasicMaterial({ map: printTex, transparent: true, alphaTest: 0.4, side: THREE.FrontSide }));
     const faceQ = new THREE.Quaternion(), zAxis = new THREE.Vector3(0, 0, 1);
-    function pushScowl(q, sx, s) {
+    const backQ = new THREE.Quaternion(), frontQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+    function pushGuardLook(q, sx, s) {
       const eb = EYE_BOX[sx], fz = q.z + (eb.min.z - 0.004) * s, half = (eb.max.x - eb.min.x) / 2;
-      for (const sd of [-1, 1]) {   // brows slant down toward the nose
+      for (const sd of [-1, 1]) {   // thick brows slanting down to the nose, low enough to half-cover the eyes
         const i = iFace.userData.n++; if (i >= CAP) return;
-        faceQ.setFromAxisAngle(zAxis, sd * 0.5);
-        setInst(iFace, i, q.x + sd * half * 0.62 * s, q.floorY + (eb.max.y + 0.016) * s, fz, 0.036 * s, 0.009 * s, 0.008 * s, faceQ);
+        faceQ.setFromAxisAngle(zAxis, sd * 0.42);
+        setInst(iFace, i, q.x + sd * half * 0.6 * s, q.floorY + (eb.max.y + 0.004) * s, fz, 0.042 * s, 0.014 * s, 0.01 * s, faceQ);
       }
-      const i = iFace.userData.n++; if (i >= CAP) return;
-      setInst(iFace, i, q.x, q.floorY + (eb.min.y - 0.034) * s, fz, 0.032 * s, 0.006 * s, 0.006 * s);
+      const sb = SHIRT_BOX[sx], w = (sb.max.x - sb.min.x) * 0.62 * s, y = q.floorY + (sb.max.y - 0.16) * s;
+      for (const [z, rot] of [[q.z + sb.max.z * s + 0.004, backQ], [q.z + sb.min.z * s - 0.004, frontQ]]) {
+        const i = iPrint.userData.n++; if (i >= CAP) return;
+        setInst(iPrint, i, q.x, y, z, w, w, 1, rot);
+      }
     }
 
     const TEE = ['#1e1c2a', '#2a2738', '#ecebf2', '#3b3550', '#1d2a44', '#4c4660', '#e6dccb', '#24363a', '#5c2440', '#121018', '#7a7290', '#ff8fbf', '#9fe0ff'];
@@ -3139,7 +3151,6 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     function updateCrowd(sim) {
       crowdMeshes.forEach(m => { m.userData.n = 0; });
       const gp = glowGeo.attributes.position.array, gc = glowGeo.attributes.color.array; let ng = 0;
-      const ap = angerGeo.attributes.position.array; let na = 0;
       const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), Sv = new THREE.Vector3(), Pv = new THREE.Vector3();
       for (const q of sim.people) {
         const r = hashRng(q.idx * 31 + 7);
@@ -3168,8 +3179,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
             pushBetween(iRArm, E, ga.B, ga.d.ar * 0.85, skin);
             const hi = iRHand.userData.n++; if (hi < CAP) { setInst(iRHand, hi, ga.B[0], ga.B[1] + 0.02, ga.B[2], 0.035, 0.025, 0.045); iRHand.setColorAt(hi, skin); }
           }
-          pushScowl(q, sx, d.s);
-          if (na < CAP) { ap[na * 3] = q.x + 0.1 * d.s; ap[na * 3 + 1] = S.standTop(q) + 0.12; ap[na * 3 + 2] = q.z; na++; }
+          pushGuardLook(q, sx, d.s);
         } else {
           if (q.arm !== -1) { push(c.sleeveL, M4, tee); push(c.armL, M4, skin); }
           if (q.arm !== 1) { push(c.sleeveR, M4, tee); push(c.armR, M4, skin); }
@@ -3193,7 +3203,6 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       }
       crowdMeshes.forEach(m => { m.count = Math.min(CAP, m.userData.n); m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
       glowGeo.setDrawRange(0, ng); glowGeo.attributes.position.needsUpdate = true; glowGeo.attributes.color.needsUpdate = true;
-      angerGeo.setDrawRange(0, na); angerGeo.attributes.position.needsUpdate = true;
       const u = sim.user;
       if (u) {
         you.position.set(0, 0, 0);
