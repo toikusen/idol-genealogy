@@ -161,6 +161,7 @@ async function run() {
     staticUrl('/contributors', 'monthly', '0.5'),
     staticUrl('/leaderboard', 'daily', '0.6'),
     staticUrl('/sukigao', 'weekly', '0.8'),
+    staticUrl('/view', 'monthly', '0.7'),
     staticUrl('/wanted', 'weekly', '0.5'),
     staticUrl('/guide', 'monthly', '0.5'),
     staticUrl('/learn', 'monthly', '0.7'),
