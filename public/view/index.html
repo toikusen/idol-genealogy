@@ -794,6 +794,15 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
 /* the sight legend is a multi-item box, not a pill: a 999px radius turns it into a circle */
 .vp-legend { border-radius: 14px; }
 .vp-legend span { white-space: nowrap; }
+
+/* luck picker inside the 3D pattern box */
+.luck { display: inline-flex; gap: 2px; padding: 0 4px; }
+.luck button { font-family: var(--f-body); }
+@media (max-width: 640px) {
+  /* phones: keep the luck picker, drop the run-by-run stepper */
+  .viewport:not(.expanded) #patternBox { display: flex; }
+  .viewport:not(.expanded) #patternBox #seedPrev, .viewport:not(.expanded) #patternBox #seedNext, .viewport:not(.expanded) #patternBox #seedLabel { display: none; }
+}
 </style>
 </head>
 <body>
@@ -818,11 +827,15 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         <div class="vp-busy" id="busy" hidden="">計算中</div>
         <div class="vp-bottom">
           <div class="vp-box" id="patternBox">
-            <span class="lbl">入場情境</span>
-            <button type="button" id="seedPrev" aria-label="上一個情境">◀</button>
-            <span class="lbl" id="seedLabel" style="font-family:var(--f-num); color:var(--ink)">1/20</span>
-            <button type="button" id="seedNext" aria-label="下一個情境">▶</button>
-            <button type="button" id="seedRep">代表</button>
+            <span class="lbl" title="每次進場的順序、同行朋友、身高都不同，模擬了 20 次">這次入場</span>
+            <span class="luck" id="luckSeg" role="group" aria-label="看哪一次入場">
+              <button type="button" data-luck="bad" aria-pressed="false">運氣差</button>
+              <button type="button" data-luck="rep" aria-pressed="true">一般</button>
+              <button type="button" data-luck="good" aria-pressed="false">運氣好</button>
+            </span>
+            <button type="button" id="seedPrev" aria-label="上一次模擬">◀</button>
+            <span class="lbl" id="seedLabel" style="font-family:var(--f-num); color:var(--ink)">第 1/20 次</span>
+            <button type="button" id="seedNext" aria-label="下一次模擬">▶</button>
           </div>
           <div class="vp-box vp-legend" id="sightLegend" hidden="">
             <span><i style="background:var(--good)"></i>看得到</span>
@@ -1073,7 +1086,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     <div class="curve-head">
       <div>
         <h2>排隊順位往後，能見度怎麼變</h2>
-        <p id="curveSub">維持你的身高、站位目標和推的成員，只改順位，每個點各跑 8 個情境。色帶是 10–90% 的範圍。</p>
+        <p id="curveSub">維持你的身高、站位目標和推的成員，只改順位，每個點各模擬 8 次。色帶是 10–90% 的範圍。</p>
       </div>
       <select id="metric" aria-label="指標">
         <option value="upper">上半身看得到的比例（全員平均，不動）</option>
@@ -2095,6 +2108,14 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     return best ? best.seed : 1;
   }
 
+  // best / worst run for the user: faces seen, body seen, closeness to the stage (same weights as above)
+  function luckSeeds(rows) {
+    const score = r => r.faceCountLean + r.avgBodyLean * 4 - r.dist * 0.3;
+    let good = rows[0], bad = rows[0];
+    for (const r of rows) { if (score(r) > score(good)) good = r; if (score(r) < score(bad)) bad = r; }
+    return { good: good ? good.seed : 1, bad: bad ? bad.seed : 1 };
+  }
+
   /* ---------- queue buckets: where do the first N people end up? ---------- */
   const BUCKET_EDGES = [1, 11, 31, 51, 101, 151, 201, 301, 401, 501];
   function bucketRanges(general) {
@@ -2175,7 +2196,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FORMATIONS, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
     FRONT_ROWS, FRONT_DENSITY, MID_MAX, BODY, bodyDims, raisedArm, hangingArm,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
-    buildVenue, simulate, evaluateView, oshiAcrossSlots, runBatch, summarize, representativeSeed,
+    buildVenue, simulate, evaluateView, oshiAcrossSlots, runBatch, summarize, representativeSeed, luckSeeds,
     bucketRanges, bucketStats, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -3435,7 +3456,13 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   });
   $('#seedPrev').addEventListener('click', () => stepSeed(-1));
   $('#seedNext').addEventListener('click', () => stepSeed(1));
-  $('#seedRep').addEventListener('click', () => { state.manualSeed = false; showSeed(state.rep || 1); });
+  // 運氣差 / 一般 / 運氣好 = worst, most typical and best of the 20 runs
+  $('#luckSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const k = b.dataset.luck;
+    state.manualSeed = k !== 'rep';
+    showSeed(k === 'rep' ? state.rep || 1 : state.luck[k]);
+  });
   function stepSeed(d) {
     const i = SEEDS.indexOf(state.seed);
     state.manualSeed = true; showSeed(SEEDS[(i + d + SEEDS.length) % SEEDS.length]);
@@ -3589,7 +3616,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   }
   let curveTimer = 0, bucketTimer = 0, aimTimer = 0;
   function applyMain(d) {
-    state.rows = d.rows; state.summary = d.summary; state.rep = d.rep;
+    state.rows = d.rows; state.summary = d.summary; state.rep = d.rep; state.luck = S.luckSeeds(d.rows);
     applyView(d);
     setStale(false);
     clearTimeout(curveTimer); curveTimer = setTimeout(startCurve, 300);
@@ -3599,7 +3626,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   function applyView(v) {
     state.seed = v.seed; state.sim = v.sim; state.ev = v.ev;
     if (v.slots) state.slots = v.slots;
-    $('#seedLabel').textContent = (SEEDS.indexOf(state.seed) + 1) + '/' + SEEDS.length + (state.seed === state.rep ? ' 代表' : '');
+    $('#seedLabel').textContent = '第 ' + (SEEDS.indexOf(state.seed) + 1) + '/' + SEEDS.length + ' 次';
+    const luck = state.seed === state.rep ? 'rep' : state.luck && state.seed === state.luck.good ? 'good' : state.luck && state.seed === state.luck.bad ? 'bad' : '';
+    $('#luckSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.luck === luck)));
     if (gl) { gl.updateCrowd(state.sim); gl.updateSight(state.ev); gl.render(); }
     renderVerdict(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawBucketMap(); paintRanges();
   }
@@ -3651,8 +3680,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     addFact('推的臉看起來', fmt1(0.6 * 0.22 / om.dist * 100), 'cm（手臂伸直時指尖上的大小）');
     v.append(big, facts);
     const p = el('p', 'verdict-text' + ($('#busy').hidden ? '' : ' stale'));
-    if (!s) { p.textContent = '正在統計 ' + SEEDS.length + ' 種入場情境…'; v.append(p); return; }
-    p.append(document.createTextNode('在 ' + SEEDS.length + ' 種入場情境裡，你會站在離舞台邊 '), el('b', null, fmt1(s.dist.p10) + '–' + fmt1(s.dist.p90) + 'm'),
+    if (!s) { p.textContent = '正在模擬 ' + SEEDS.length + ' 次入場…'; v.append(p); return; }
+    p.append(document.createTextNode('模擬 ' + SEEDS.length + ' 次入場（每次的進場順序、同行朋友、身高都不同），你會站在離舞台邊 '), el('b', null, fmt1(s.dist.p10) + '–' + fmt1(s.dist.p90) + 'm'),
       document.createTextNode('（10–90%），站到最前排的機率 '), el('b', null, pct(s.frontProb)),
       document.createTextNode('。看得到臉的人數中位數：不動 '), el('b', null, Math.round(s.faceCount.p50) + ' 人'),
       document.createTextNode('、偏頭 '), el('b', null, Math.round(s.faceCountLean.p50) + ' 人'),
@@ -3766,7 +3795,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       tb.append(tr);
     });
     t.append(tb);
-    $('#bucketStatus').textContent = BUCKET_SEEDS.length + ' 種情境疊加';
+    $('#bucketStatus').textContent = '疊加 ' + BUCKET_SEEDS.length + ' 次模擬';
     $('#bucketSub').textContent = '用你目前的條件跑 ' + BUCKET_SEEDS.length + ' 次入場，把每個順位區間的人實際站的位置疊在平面圖上（點色塊只看那一區）。「看得到臉」是假設你本人（' + state.userHeight + 'cm）站在那一區時的結果。';
   }
   // SVG plan in the venue frame, stage on the right (like most official floor plans)
@@ -3935,7 +3964,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     };
     hit.addEventListener('pointermove', onMove);
     hit.addEventListener('pointerleave', () => { tip.hidden = true; cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); });
-    $('#curveStatus').textContent = curve.pts.length < curve.total ? '計算中 ' + curve.pts.length + '/' + curve.total : curve.total + ' 個點 × ' + CURVE_SEEDS.length + ' 種情境';
+    $('#curveStatus').textContent = curve.pts.length < curve.total ? '計算中 ' + curve.pts.length + '/' + curve.total : curve.total + ' 個點 × 每點模擬 ' + CURVE_SEEDS.length + ' 次';
     const tbl = $('#curveTable'); tbl.textContent = '';
     const th = el('thead'); const hr = el('tr');
     ['排隊順位', M.label + '（平均）', '10%', '90%', '離舞台邊（中位數）'].forEach(h => hr.append(el('th', null, h))); th.append(hr); tbl.append(th);
@@ -3972,7 +4001,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       const d = q - Math.min(state.ticket, N);
       ans.append(document.createTextNode(d >= 0 ? '你目前的順位還有 ' + d + ' 位的餘裕。' : '你目前的順位要再往前 ' + (-d) + ' 位。'));
     }
-    note.textContent = '用下方曲線的結果反推（站位目標：' + aimLabel(state.aim) + '，每點 ' + CURVE_SEEDS.length + ' 種情境），曲線第一次掉到目標以下就停。' +
+    note.textContent = '用下方曲線的結果反推（站位目標：' + aimLabel(state.aim) + '，每點模擬 ' + CURVE_SEEDS.length + ' 次），曲線第一次掉到目標以下就停。' +
       (state.otherFanRate > 0 ? '已含聯合公演他團粉讓位。' : '');
   }
   $('#goal').addEventListener('change', e => {
@@ -4025,7 +4054,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       tr.append(td); tb.append(tr);
     });
     t.append(tb);
-    $('#aimNote').textContent = '同一批入場情境（' + CURVE_SEEDS.length + ' 種），只換你的站位目標。排序：推的臉優先，其次看得到的人數。';
+    $('#aimNote').textContent = '同一批 ' + CURVE_SEEDS.length + ' 次入場模擬，只換你的站位目標。排序：推的臉優先，其次看得到的人數。';
   }
 
   /* ============ sources & reference material ============ */
@@ -4202,7 +4231,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       '聯合公演：輪到你推的團時，他團粉絲有一半離開觀眾區（物販、特典會、休息），另一半往後或往旁邊讓出前方。',
       '站位密度：最前排每人 0.58m 寬。第 2–3 排每平方公尺 3.0 人，接近滿場時最多 3.5 人。第 4 排以後依人數自動決定（人少就站得鬆）。',
       '能見度：每位成員身上放 33 個點，從你的眼睛（身高 × 0.933）看過去，判斷有沒有被前面觀眾的身體、舞台邊、柱子、欄杆擋住。「偏頭」是頭往左右各移動 12cm 內看得到的點。',
-      '結果是 20 種入場情境的統計，3D 顯示最接近中位數的那一次（代表），◀▶ 可以看其他情境。',
+      '結果是 20 次入場模擬的統計。3D 預設顯示最接近中位數的那一次（一般），「運氣好／運氣差」是 20 次裡結果最好、最差的一次，◀▶ 可以逐次看。',
       '入口：「觀眾塞在入口附近」開啟時，第 ' + S.BACK_PREF_FROM + ' 位以後進場的人約 ' + Math.round(S.ENTRANCE_SHARE * 100) + '% 會停在入口附近，不往裡面走，所以願意往內走的人比較容易找到好位置。只套用在平面圖有標入口的場館。',
       '場次：生誕祭時人數預設多 30%，大部分粉絲搶壽星（你推的成員）正前方；熱門團體時段人數預設多 20%，他團粉絲大多留在觀眾區一起搶位。比例是推定值。',
       '沒有模擬的：跳躍、往前擠、帽子和髮型、演出中途換位置、特典會排隊動線。'
@@ -4233,7 +4262,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   syncOshi(); syncTicket(); syncZoom(); syncShow();
   $('#sightLegend').hidden = true;
   if (MOBILE()) $('#method').open = false;
-  $('#curveSub').textContent = '維持你的身高、站位目標和推的成員，只改排隊順位，每個點各跑 ' + CURVE_SEEDS.length + ' 個情境。色帶是 10–90% 的範圍。';
+  $('#curveSub').textContent = '維持你的身高、站位目標和推的成員，只改排隊順位，每個點各模擬 ' + CURVE_SEEDS.length + ' 次。色帶是 10–90% 的範圍。';
   requestMain();
 })();
 </script>
