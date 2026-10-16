@@ -1623,55 +1623,70 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   }
 
   /* ---------- members on stage ---------- */
-  const FORMATIONS = {
-    line: { label: '橫一列' },
-    twoRow: { label: '前後兩排' },
-    vShape: { label: 'V 字' },
-    front: { label: '靠前（煽動段）' }
-  };
   // a show is a series of scenes: the crowd lines up on the MC positions when it walks in,
   // then every song changes the formation and who stands where
   const SCENES = [
-    { key: 'mc', label: 'MC（橫一列）', song: false },
-    { key: 'songLine', label: '橫一列', song: true },
-    { key: 'twoRow', label: '前後兩排', song: true },
-    { key: 'twoRowB', label: '前後兩排（前後交換）', song: true },
-    { key: 'vShape', label: 'V 字（中間在前）', song: true },
-    { key: 'invV', label: '倒 V 字（兩端在前）', song: true },
-    { key: 'center', label: '往中間集中', song: true },
-    { key: 'front', label: '煽動段（全員往前）', song: true }
+    { key: 'line', label: 'MC（橫一列）', song: false },
+    { key: 'wave', label: '三層交錯', song: true },
+    { key: 'arc', label: '半圓（兩端在前）', song: true },
+    { key: 'diagonal', label: '斜一排（下手在前）', song: true },
+    { key: 'diagonalB', label: '斜一排（上手在前）', song: true },
+    { key: 'pyramid', label: '金字塔（前少後多）', song: true },
+    { key: 'solo', label: 'C 位獨唱（一人到最前）', song: true },
+    { key: 'pairs', label: '兩人一組', song: true },
+    { key: 'sideL', label: '全員往下手靠', song: true },
+    { key: 'sideR', label: '全員往上手靠', song: true },
+    { key: 'split', label: '左右分兩隊', song: true },
+    { key: 'front', label: '煽動段（全員衝到台邊）', song: true }
   ];
   const sceneOf = key => SCENES.find(sc => sc.key === key) || SCENES[0];
   // positions for n members, 下手 → 上手, kept inside the stage polygon
   function formationPos(name, n, V) {
     const depth = V.stageDepth, use = V.venue.stageUse;
-    const zLine = -Math.min(1.6, depth * 0.42);
-    const sp = n > 1 ? Math.min(1.0, 2 * use / (n - 1)) : 0;
-    const xs = Array.from({ length: n }, (_, i) => (i - (n - 1) / 2) * sp);
+    const zLine = -Math.min(1.6, depth * 0.42), zFront = -Math.min(1.0, depth * 0.3), zBack = -Math.min(2.6, depth * 0.62);
+    // k members centred on cx, at most `gap` apart, never wider than the usable stage
+    const row = (k, gap, cx = 0) => k > 1 ? Array.from({ length: k }, (_, i) => cx + (i - (k - 1) / 2) * Math.min(gap, 2 * use / (k - 1))) : [cx];
+    const xs = row(n, 1.0);
+    const t = i => n > 1 ? i / (n - 1) : 0.5;
     let pos;
     switch (name) {
-      case 'twoRow': {
-        const sp2 = n > 1 ? Math.min(0.8, 1.9 * use / (n - 1)) : 0;
-        pos = xs.map((_, i) => [(i - (n - 1) / 2) * sp2, i % 2 === 0 ? -1.3 : -Math.min(2.6, depth * 0.62)]);
-        break;
-      }
-      case 'twoRowB': {
-        const sp2 = n > 1 ? Math.min(0.8, 1.9 * use / (n - 1)) : 0;
-        pos = xs.map((_, i) => [(i - (n - 1) / 2) * sp2, i % 2 === 1 ? -1.3 : -Math.min(2.6, depth * 0.62)]);
-        break;
-      }
-      case 'vShape': pos = xs.map(x => [x, -Math.min(1.2 + Math.abs(x) * 0.42, depth * 0.8)]); break;
-      case 'invV': {
+      case 'wave': pos = xs.map((x, i) => [x, [zFront, zLine, zBack][i % 3]]); break;
+      case 'arc': {
         const xm = Math.max(0.01, ...xs.map(Math.abs));
-        pos = xs.map(x => [x, -Math.min(1.2 + (xm - Math.abs(x)) * 0.42, depth * 0.8)]);
+        pos = xs.map(x => [x, zBack + (zFront - zBack) * (x / xm) ** 2]);
         break;
       }
-      case 'center': {
-        const sp3 = n > 1 ? Math.min(0.6, 2 * use / (n - 1)) : 0;
-        pos = xs.map((_, i) => [(i - (n - 1) / 2) * sp3, i % 2 === 0 ? -1.3 : -Math.min(1.9, depth * 0.5)]);
+      case 'diagonal': pos = xs.map((x, i) => [x, zFront + (zBack - zFront) * t(i)]); break;
+      case 'diagonalB': pos = xs.map((x, i) => [x, zBack + (zFront - zBack) * t(i)]); break;
+      case 'pyramid': {
+        const rows = []; for (let k = 1, left = n; left > 0; k++) { rows.push(Math.min(k, left)); left -= k; }
+        pos = [];
+        rows.forEach((k, r) => row(k, 0.9).forEach(x => pos.push([x, zFront + (zBack - zFront) * (rows.length > 1 ? r / (rows.length - 1) : 0)])));
         break;
       }
-      case 'songLine': pos = xs.map(x => [x, -Math.min(1.3, depth * 0.36)]); break;
+      case 'solo': {
+        const c = Math.floor((n - 1) / 2), back = row(n - 1, 1.0);
+        pos = Array.from({ length: n }, (_, i) => i === c ? [0, -0.8] : [back[i < c ? i : i - 1], zBack]);
+        break;
+      }
+      case 'pairs': {
+        const g = Math.ceil(n / 2), cs = row(g, 1.7);
+        pos = Array.from({ length: n }, (_, i) => [cs[i >> 1] + (i % 2 ? 0.28 : -0.28) * (n - i > 1 || i % 2 ? 1 : 0), (i >> 1) % 2 ? zBack * 0.85 : zFront * 1.2]);
+        break;
+      }
+      case 'sideL': case 'sideR': {
+        const sd = name === 'sideL' ? -1 : 1, k1 = Math.ceil(n / 2);
+        pos = Array.from({ length: n }, (_, i) => {
+          const front = i < k1, k = front ? k1 : n - k1, x = row(k, 0.55, sd * use * 0.5)[front ? i : i - k1];
+          return [Math.max(-use, Math.min(use, x)), front ? zFront * 1.2 : zLine * 1.25];
+        });
+        break;
+      }
+      case 'split': {
+        const k1 = Math.ceil(n / 2), L = row(k1, 0.6, -use * 0.6), R = row(n - k1, 0.6, use * 0.6);
+        pos = Array.from({ length: n }, (_, i) => [Math.max(-use, Math.min(use, i < k1 ? L[i] : R[i - k1])), zLine]);
+        break;
+      }
       case 'front': pos = xs.map(x => [x, -0.7]); break;
       default: pos = xs.map(x => [x, zLine]);
     }
@@ -2134,32 +2149,59 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
      seen (1, 0.5 if the fan has to lean, 0) × distance × facing × fan bonus.
      ponytail: weights are judgement calls, not measured; tune RES if they feel off */
   const RES = { near: 3.0, fall: 1.5, floor: 0.02, angleFloor: 0.25, fan: 5, perSong: 8, songs: 6, lean: 0.12 };
-  function faceSeenFrom(E, q, crowd, boxes) {
+  // floor bucketed into 0.6 m cells so a sightline only tests the people it actually passes
+  const RES_CELL = 0.6, RES_SLOTS = 4;
+  let resStamp = 0;   // global, so two grids over the same people never share a stamp value
+  function crowdGrid(crowd) {
+    const cells = new Map(), key = (ix, iz) => ix * 4096 + iz, out = [];
+    for (const o of crowd) {
+      const k = key(Math.floor(o.x / RES_CELL), Math.floor(o.z / RES_CELL));
+      if (!cells.has(k)) cells.set(k, []);
+      cells.get(k).push(o);
+    }
+    // everyone within one cell of the segment E → T (the returned array is reused between calls)
+    return (E, T) => {
+      const st = ++resStamp, steps = Math.max(1, Math.ceil(Math.hypot(T[0] - E[0], T[2] - E[2]) / RES_CELL));
+      out.length = 0;
+      for (let k = 0; k <= steps; k++) {
+        const ix = Math.floor((E[0] + (T[0] - E[0]) * k / steps) / RES_CELL), iz = Math.floor((E[2] + (T[2] - E[2]) * k / steps) / RES_CELL);
+        for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+          const c = cells.get(key(ix + a, iz + b)); if (!c) continue;
+          for (let i = 0; i < c.length; i++) { const o = c[i]; if (o._rs !== st) { o._rs = st; out.push(o); } }
+        }
+      }
+      return out;
+    };
+  }
+  function faceSeenFrom(E, q, near, boxes) {
     const T = [q.x, eyeY(q), q.z];
     const fx = T[0] - E[0], fz = T[2] - E[2], L2 = fx * fx + fz * fz || 1;
     // only people standing in the corridor between the eye and this face can block it
-    const cand = crowd.filter(o => {
-      if (o === q) return false;
+    const pool = near(E, T), cand = [];
+    for (let i = 0; i < pool.length; i++) {
+      const o = pool[i]; if (o === q) continue;
       const t = ((o.x - E[0]) * fx + (o.z - E[2]) * fz) / L2;
-      if (t <= 0 || t >= 1) return false;
+      if (t <= 0 || t >= 1) continue;
       const px = E[0] + fx * t - o.x, pz = E[2] + fz * t - o.z;
-      return px * px + pz * pz < 0.36;
-    });
+      if (px * px + pz * pz < 0.36) cand.push(o);
+    }
     const L = Math.sqrt(L2), lx = -fz / L, lz = fx / L;
     const clear = off => {
       const D = [T[0] + lx * off - E[0], T[1] - E[1], T[2] + lz * off - E[2]];
-      return !boxes.some(bx => hitOBB(E, D, bx)) && !cand.some(o => personBlocks(E, D, o));
+      for (let i = 0; i < boxes.length; i++) if (hitOBB(E, D, boxes[i])) return false;
+      for (let i = 0; i < cand.length; i++) if (personBlocks(E, D, cand[i])) return false;
+      return true;
     };
     if (clear(0)) return 1;
     return clear(-RES.lean) || clear(RES.lean) ? 0.5 : 0;
   }
   // share of one res that lands on the user while the oshi stands at (x, z)
-  function resShareAt(sim, x, z, h, oshiId) {
+  function resShareAt(sim, x, z, h, oshiId, ctx) {
     const { V, people, user } = sim;
     const E = [x, V.stageH + 0.933 * h, z + 0.09];
     const boxes = V.boxes.filter(b => b.cz + Math.abs(b.uz) * b.hu + Math.abs(b.vz) * b.hv > z);
     let fx = -0.6 * x, fz = 4.0 - z; const fl = Math.hypot(fx, fz); fx /= fl; fz /= fl;   // body turned a little toward the floor centre
-    const crowd = people.concat([user]);
+    const crowd = ctx ? ctx.crowd : people.concat([user]), near = ctx ? ctx.near : crowdGrid(crowd);
     let total = 0, mine = 0, youSeen = 0;
     for (const q of crowd) {
       const ey = eyeY(q), d = Math.hypot(q.x - E[0], ey - E[1], q.z - E[2]);
@@ -2168,7 +2210,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       const c = Math.max(0, (fx * tx + fz * tz) / tl);
       const w0 = Dw * (RES.angleFloor + (1 - RES.angleFloor) * c * c) * (q === user || q.fan === oshiId ? RES.fan : 1);
       if (w0 < 1e-3) continue;
-      const v = faceSeenFrom(E, q, crowd, boxes), w = w0 * v;
+      const v = faceSeenFrom(E, q, near, boxes), w = w0 * v;
       total += w;
       if (q === user) { mine = w; youSeen = v; }
     }
@@ -2180,12 +2222,18 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const K = Math.max(1, Math.round(p.resPerSong || RES.perSong)), songs = Math.max(1, Math.round(p.resSongs || RES.songs));
     const atLeastOnce = (share, k) => 1 - Math.pow(1 - share, k);
     const om = sim.members.find(m => m.id === p.oshi) || sim.members[0];
-    const now = resShareAt(sim, om.x, om.z, om.h, p.oshi);
+    const crowd = sim.people.concat([sim.user]), ctx = { crowd, near: crowdGrid(crowd) };
+    const now = resShareAt(sim, om.x, om.z, om.h, p.oshi, ctx);
     const n = sim.members.length;
     let acc = 0, cnt = 0;
     for (const sc of SCENES) {
       if (!sc.song) continue;
-      for (const [x, z] of formationPos(sc.key, n, sim.V)) { acc += atLeastOnce(resShareAt(sim, x, z, om.h, p.oshi).share, K); cnt++; }
+      // ponytail: at most RES_SLOTS evenly spaced oshi slots per scene; use every slot if 10-member venues ever need finer odds
+      const pos = formationPos(sc.key, n, sim.V), m = Math.min(n, RES_SLOTS);
+      for (let k = 0; k < m; k++) {
+        const [x, z] = pos[m > 1 ? Math.round(k * (n - 1) / (m - 1)) : Math.floor((n - 1) / 2)];
+        acc += atLeastOnce(resShareAt(sim, x, z, om.h, p.oshi, ctx).share, K); cnt++;
+      }
     }
     const avgSong = cnt ? acc / cnt : 0;
     return { K, songs, nowSong: atLeastOnce(now.share, K), avgSong, show: atLeastOnce(avgSong, songs), youSeen: now.youSeen };
@@ -2323,7 +2371,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   }
 
   const api = {
-    VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FORMATIONS, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
+    VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
     FRONT_ROWS, FRONT_DENSITY, MID_MAX, BODY, bodyDims, raisedArm, hangingArm,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
     buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, RES, resShareAt, resEstimate, runBatch, summarize, representativeSeed, luckSeeds,
