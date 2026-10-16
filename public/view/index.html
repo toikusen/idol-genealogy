@@ -85,7 +85,7 @@ h1 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: clam
 @media (max-width: 920px) {
   .grid { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
   .quick, .viewport, .verdict, .settings, .members { width: 100%; min-width: 0; }
-  .grid > .side, .grid > .stage-col { display: contents; }
+  .grid > .side { display: contents; }
   .quick { order: 1; } .viewport { order: 2; } .verdict { order: 3; } .settings { order: 4; } .members { order: 5; }
   .settings-h { display: block; }
 }
@@ -119,7 +119,6 @@ h1 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: clam
   -moz-appearance: textfield; appearance: textfield;
 }
 #ticket::-webkit-outer-spin-button, #ticket::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.tk-perf { border-top: 1px dashed #6a2f6e; margin: 2px -16px 0; }
 .tk-foot { display: flex; justify-content: space-between; font-family: var(--f-num); font-size: 11px; color: #d99ac6; gap: 8px; flex-wrap: wrap; }
 .tk-warn { font-size: 12px; color: var(--warn); }
 .hrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -136,7 +135,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; ma
 .field > legend, .field > label, .flabel { font-size: 12px; color: var(--ink-2); font-weight: 500; padding: 0; margin-bottom: 8px; }
 .field > label { margin-bottom: 0; }
 .num-row { display: grid; grid-template-columns: minmax(0, 1fr) 64px; gap: 10px; align-items: center; }
-output, .numval { font-family: var(--f-num); font-size: 13px; text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+output { font-family: var(--f-num); font-size: 13px; text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
 
 .seg { display: flex; flex-wrap: wrap; gap: 6px; }
 .seg button, .chip {
@@ -173,7 +172,6 @@ details.more[open] summary::after { content: "－"; }
 .btn-ghost:hover { color: var(--ink); border-color: #463f75; }
 
 /* ---------- 3D ビュー ---------- */
-.stage-col { display: grid; gap: 14px; min-width: 0; grid-template-columns: minmax(0, 1fr); }
 .viewport {
   position: relative; width: 100%; aspect-ratio: 16 / 9.4; min-height: 340px; max-height: 72vh;
   border-radius: var(--r); overflow: hidden; background: #090716; border: 1px solid var(--line-soft);
@@ -429,7 +427,6 @@ h1 { font-family: var(--f-display); font-weight: 400; background: linear-gradien
 .panel { background: linear-gradient(180deg, #19152f 0%, var(--surface) 100%); border-color: var(--line); }
 .ticket { border-radius: 14px; background: linear-gradient(135deg, #34143f 0%, #1d1032 55%, #13203a 100%); border: 1px solid #5a2a66; box-shadow: 0 0 0 1px rgba(255, 95, 162, 0.08), 0 10px 30px rgba(255, 95, 162, 0.08) inset; }
 .ticket::before, .ticket::after { display: none; }
-.tk-perf { display: none; }
 .tk-label { letter-spacing: 0.12em; }
 #ticket, #dockTicket, .mb-num b { font-family: var(--f-display); font-weight: 400; }
 .qstrip { display: grid; grid-template-columns: repeat(40, minmax(0, 1fr)); gap: 3px; padding: 4px 0 2px; }
@@ -499,7 +496,6 @@ a:hover { color: var(--accent); }
 /* header */
 .v2-top { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
 .v2-brand { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; min-width: 0; }
-.v2-logo { display: none !important; font-family: var(--f-display); font-weight: 900; font-size: 22px; letter-spacing: 0.06em; display: flex; align-items: center; gap: 8px; }
 .eyebrow::before { content: ""; width: 12px; height: 12px; background: var(--accent); flex: none; }
 .eyebrow { margin: 0; color: var(--ink); font-weight: 500; display: flex; align-items: center; gap: 8px; font-family: var(--f-num); font-size: 11px; letter-spacing: 0.12em; }
 .v2-venue { min-width: 0; }
@@ -1494,7 +1490,6 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     V.boxes = boxes;
     const door = (VN.labels || []).find(l => /入口|前門|進場/.test(l.t));
     V.entrance = door ? { x: door.x, z: door.z } : null;
-    V.rails = [];
     V.blockers = boxes.filter(bx => bx.kind !== 'stage' && bx.kind !== 'barrier' && bx.kind !== 'rail');
     return V;
   }
@@ -1524,7 +1519,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   }
   function crowdDensity(V, p) {
     const m1 = presentCount(p);
-    const a = usableArea(V), need = m1 * FILL_MARGIN - a.row0 * FRONT_DENSITY;
+    // a front row of 最前管理 holds fewer people, so the rest pack the floor behind a little tighter
+    const a = usableArea(V), need = m1 * FILL_MARGIN - a.row0 * FRONT_DENSITY * FRONT_PITCH / frontPitch(p);
     const clampB = v => Math.max(BACK_MIN, Math.min(BACK_MAX, v));
     const back0 = (need - a.mid * FRONT_DENSITY) / Math.max(1, a.back);
     const pressure = Math.max(0, Math.min(1, (back0 - FRONT_DENSITY) / (BACK_MAX - FRONT_DENSITY)));
@@ -1539,7 +1535,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     if (distToPolyEdge(x, z, poly) < 0.24) return null;
     if (z < V.frontZ - 0.05) return null;
     for (const b of V.blockers) if (inBox(x, z, b, 0.22)) return null;
-    return { floorY: 0, raised: false };
+    return true;
   }
 
   // fraction of member sample points hidden by fixed objects only (stage edge, pillars, rail…)
@@ -1580,7 +1576,11 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   function inFront(V, x) { return x >= V.frontRange[0] - 1e-6 && x <= V.frontRange[1] + 1e-6; }
 
   const FRONT_PITCH = 0.58;
-  function generateFloorSpots(V, rng, members, dens) {
+  // 最前管理: the front row spreads both arms along the rail, about 1.5 × the width (15 people → 10).
+  // ponytail: 0.87 m is a judgement call from how wide a pair of spread elbows is, not measured
+  const GUARD_PITCH = 0.87;
+  const frontPitch = p => p && p.frontGuard ? GUARD_PITCH : FRONT_PITCH;
+  function generateFloorSpots(V, rng, members, dens, pitch) {
     const spots = [];
     const z0 = V.frontZ, zMax = V.bounds.z1 - 0.1;
     const rhoOf = (r) => r === 0 ? FRONT_DENSITY : r < FRONT_ROWS ? dens.mid : dens.back;
@@ -1597,14 +1597,14 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       const sb = staticBlockFrac(V, px, pz, 1.55, members);
       const avoid = FILL.pillar * pillarShade(V, px, pz, 1.55, members);
       const costNoLat = d + FILL.vis * sb + avoid - (frontRow ? FILL.front : 0) + anglePenalty(px, pz);
-      spots.push({ x: px, z: pz, floorY: 0, raised: false, row: r, depth: d, staticBlock: sb, avoid, level: 1, seated: false, front: !!frontRow,
+      spots.push({ x: px, z: pz, row: r, depth: d, staticBlock: sb, avoid, front: !!frontRow,
         second: r === 1 && inFront(V, px), costNoLat, cost: costNoLat + FILL.lat * Math.abs(px) });
     }
     for (const [rz, r] of rowsZ) {
       const d = Math.max(0, rz - z0);
       const s = 1 / Math.sqrt(rhoOf(r));
       const frontRow = r === 0;
-      const dx = frontRow ? FRONT_PITCH : s * 0.95;
+      const dx = frontRow ? pitch : s * 0.95;
       const offset = (r % 2) * dx * 0.5;
       for (const [xa, xb] of polyXRange(V.venue.floor, rz)) {
         for (let x = xa + 0.25 + offset; x <= xb - 0.25 + 1e-6; x += dx) {
@@ -1742,10 +1742,10 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const V = buildVenue(p);
     const members = buildMembers(p, V);
     const dens = crowdDensity(V, p);
-    const spotKey = JSON.stringify([V.venue.id, V.barrierZ, !!p.mixOnFloor, p.formation, p.positionOrder, V.stageH, V.stageDepth, dens.mid, dens.back]);
+    const spotKey = JSON.stringify([V.venue.id, V.barrierZ, !!p.mixOnFloor, p.formation, p.positionOrder, V.stageH, V.stageDepth, dens.mid, dens.back, frontPitch(p)]);
     let floorSpots = SPOT_CACHE.get(spotKey);
     if (!floorSpots) {
-      floorSpots = generateFloorSpots(V, mulberry32(4242), members, dens);
+      floorSpots = generateFloorSpots(V, mulberry32(4242), members, dens, frontPitch(p));
       if (SPOT_CACHE.size > 24) SPOT_CACHE.clear();
       SPOT_CACHE.set(spotKey, floorSpots);
     }
@@ -1816,14 +1816,11 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         else costFn = s => s.costNoLat + 0.35 * Math.abs(s.x - tx);
         let idx = p.aim === 'center' ? centralFront() : pickAmong(frontIdx, costFn);
         if (idx < 0) idx = pickAmong(secondIdx, costFn);
-        if (idx < 0) {
-          idx = pickSpot(costFn);
-          if (idx >= 0 && floorSpots[idx].front && p.aim === 'center') idx = centralFront();
-        }
+        if (idx < 0) idx = pickSpot(costFn);
         if (idx < 0) idx = floorSpots.reduce((bi, s, i) => s.depth > floorSpots[bi].depth ? i : bi, 0);   // full: stand at the very back
         freeF[idx] = false; placed.set(no, idx);
         const sp = floorSpots[idx];
-        user = { no: qno, idx: no, vip: isVip, x: sp.x, z: sp.z, floorY: 0, h: p.userHeight / 100, male: true, level: 1, seated: false, row: sp.row, front: sp.front, isUser: true };
+        user = { no: qno, idx: no, vip: isVip, x: sp.x, z: sp.z, floorY: 0, h: p.userHeight / 100, male: true, row: sp.row, front: sp.front, isUser: true };
         continue;
       }
       if (P.other && rng() < EV.otherOut) continue;   // off the floor during your group's set
@@ -1861,20 +1858,17 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         // birthday fans go for the front spot in front of the birthday member, not the centre
         idx = backPref || atDoor ? -1 : bdayFan ? pickAmong(frontIdx, costFn) : centralFront();
         if (idx < 0 && !backPref && !atDoor) idx = pickAmong(secondIdx, costFn);
-        if (idx < 0) {
-          idx = pickSpot(costFn);
-          if (idx >= 0 && floorSpots[idx].front) idx = centralFront();
-        }
+        if (idx < 0) idx = pickSpot(costFn);
       }
       if (idx < 0) continue;
       freeF[idx] = false; placed.set(no, idx);
       const sp = floorSpots[idx];
-      people.push({ no: qno, idx: no, vip: isVip, other: P.other, fan: fanOf, x: sp.x, z: sp.z, floorY: 0, h: body.h, male: body.male, level: 1, seated: false, row: sp.row, front: sp.front });
+      people.push({ no: qno, idx: no, vip: isVip, other: P.other, fan: fanOf, x: sp.x, z: sp.z, floorY: 0, h: body.h, male: body.male, row: sp.row, front: sp.front });
     }
 
     for (const q of people) {
       q.arm = 0;
-      if (p.armsUp && !q.other && rng() < 0.45) {
+      if (p.armsUp && !q.other && !(p.frontGuard && q.front) && rng() < 0.45) {
         q.arm = rng() < 0.5 ? -1 : 1;
         q.penColor = Math.floor(rng() * members.length);
       }
@@ -1883,7 +1877,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     if (user) { user.arm = 0; user.shoulderW = 0.19; }
     const frontCap = floorSpots.filter(sp => sp.front).length;
     // the crowd placed itself on the entry (MC) positions; sightlines are judged in the scene being viewed
-    return { V, members: sceneMembers(p, V), entryMembers: members, people, user, floorSpots, balSpots: [], userNo: user ? user.no : 0, frontCap, rhoBack: dens.back, rhoMid: dens.mid, vip };
+    return { V, members: sceneMembers(p, V), entryMembers: members, people, user, floorSpots, userNo: user ? user.no : 0, frontCap, rhoBack: dens.back, rhoMid: dens.mid, vip };
   }
 
   function userTargetX(p, members) {
@@ -1896,9 +1890,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   }
 
   /* ---------- body shape ---------- */
-  function standTop(q) { return q.seated ? q.floorY + 0.42 + 0.52 * q.h : q.floorY + q.h; }
-  function eyeY(q) { return q.seated ? q.floorY + 0.42 + 0.465 * q.h : q.floorY + 0.933 * q.h; }
-  function shoulderY(q) { return q.seated ? q.floorY + 0.42 + 0.34 * q.h : q.floorY + 0.818 * q.h; }
+  function standTop(q) { return q.floorY + q.h; }
+  function eyeY(q) { return q.floorY + 0.933 * q.h; }
+  function shoulderY(q) { return q.floorY + 0.818 * q.h; }
 
   /* ---------- ray tests (segment P0 + t*D, t∈(eps,1-eps)) ---------- */
   const EPS = 1e-4;
@@ -2004,7 +1998,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   }
   function hangingArm(q, side) {
     const d = bodyDims(q), sh = shoulderY(q);
-    return { A: [q.x + side * d.ax, sh - 0.03 * d.s, q.z], B: [q.x + side * (d.ax + 0.012 * d.s), sh - 0.338 * q.h * (q.seated ? 0.8 : 1), q.z - 0.02], r: d.ar, d };
+    return { A: [q.x + side * d.ax, sh - 0.03 * d.s, q.z], B: [q.x + side * (d.ax + 0.012 * d.s), sh - 0.338 * q.h, q.z - 0.02], r: d.ar, d };
   }
   function personBlocks(P0, D, q) {
     const dx = D[0], dz = D[2], L2 = dx * dx + dz * dz;
@@ -2019,8 +2013,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     if (hitEllipsoid(P0, D, q.x, top - H[1] * d.s, q.z, H[0] * d.s, H[1] * d.s, H[2] * d.s)) return true;
     const sh = shoulderY(q);
     if (hitEllCyl(P0, D, q.x, q.z, 0.05 * d.s, 0.05 * d.s, sh - 0.02, top - 0.2 * d.s)) return true;
-    const base = q.seated ? q.floorY + 0.42 : q.floorY;
-    if (hitEllCyl(P0, D, q.x, q.z, d.tw, d.td, base, sh)) return true;
+    if (hitEllCyl(P0, D, q.x, q.z, d.tw, d.td, q.floorY, sh)) return true;
     for (const side of [-1, 1]) {
       if (q.arm === side) continue;
       const a = hangingArm(q, side);
@@ -2289,6 +2282,14 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     return { good: good ? good.seed : 1, bad: bad ? bad.seed : 1 };
   }
 
+  // which of the runs the 3D shows: 'good' / 'bad' = closest / furthest stand, anything else = the typical run
+  function pickSeed(rows, summary, key) {
+    if (key === 'good' || key === 'bad') return luckSeeds(rows)[key];
+    return representativeSeed(rows, summary);
+  }
+  // the 入場總人數 slider's ceiling: room for every venue's default turnout plus a special-show boost
+  const totalMax = VN => Math.max(500, Math.ceil(VN.defaults.total * 2 / 100) * 100);
+
   /* ---------- queue buckets: where do the first N people end up? ---------- */
   const BUCKET_EDGES = [1, 11, 31, 51, 101, 151, 201, 301, 401, 501];
   function bucketRanges(general) {
@@ -2367,9 +2368,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
 
   const api = {
     VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
-    FRONT_ROWS, FRONT_DENSITY, MID_MAX, BODY, bodyDims, raisedArm, hangingArm,
+    FRONT_ROWS, FRONT_DENSITY, MID_MAX, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, hangingArm,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
-    buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, RES, resShareAt, resEstimate, runBatch, summarize, representativeSeed, luckSeeds,
+    buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, RES, resShareAt, resEstimate, runBatch, summarize, representativeSeed, luckSeeds, pickSeed, totalMax,
     bucketRanges, bucketStats, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -2515,6 +2516,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   const BUCKET_SEEDS = Array.from({ length: LOW ? 6 : 10 }, (_, i) => 2001 + i);
   const BUCKET_COLORS = ['#b6f24a', '#6fe3a8', '#3fd0d4', '#4aa8ff', '#7d7cff', '#b06bff', '#e25fd6', '#ff5fa2', '#ff8a6b'];
   const VIP_COLOR = '#c9a0ff';
+  const TOTAL_MAX = S.totalMax(VN);
 
   const state = {
     ticket: 50, userHeight: 170, aim: 'center', oshi: 2,
@@ -2523,7 +2525,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false,
     memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4],
     sceneIdx: 0, sceneOrders: null, resSongs: 6, resPerSong: 8, res: null,
-    view: 'eye', zoom: 1, seed: 1, manualSeed: false, metric: 'upper',
+    view: 'eye', zoom: 1, seed: 1, luckKey: 'rep', metric: 'upper',
     rows: null, summary: null, sim: null, ev: null, slots: null, rep: 0, expanded: false,
     buckets: null, bucketSel: null
   };
@@ -2537,7 +2539,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       barrier: state.barrier, stageH: state.stageH, stageDepth: state.stageDepth, mixOnFloor: state.mixOnFloor,
       formation: 'line', scene: S.SCENES[state.sceneIdx].key, sceneOrder: sceneOrder(), resSongs: state.resSongs, resPerSong: state.resPerSong,
       memberHeights: state.memberHeights.slice(), armsUp: state.armsUp, positionOrder: state.positionOrder.slice(),
-      event: state.event, entranceCrowd: state.entranceCrowd
+      event: state.event, entranceCrowd: state.entranceCrowd, frontGuard: state.frontGuard
     };
   }
 
@@ -2567,6 +2569,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       : '這個場館的平面圖沒有標入口位置，不套用。';
     setPressed($('#barrierSeg'), state.barrier); setPressed($('#stageHSeg'), String(state.stageH));
     if (VN.stageDepths) setPressed($('#depthSeg'), String(state.stageDepth));
+    $('#n1').max = String(TOTAL_MAX); $('#n1').value = String(state.total); $('#n1Out').textContent = state.total + '人';
     if (venueParam) document.title = VN.short + '｜' + document.title;
     $('.eyebrow').textContent = VN.eyebrow;
   })();
@@ -2699,7 +2702,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   function setEvent(v) {
     const base = state.total / S.EVENTS[state.event].boost;
     state.event = v;
-    state.total = Math.max(30, Math.min(500, Math.round(base * S.EVENTS[v].boost / 10) * 10));
+    state.total = Math.max(30, Math.min(TOTAL_MAX, Math.round(base * S.EVENTS[v].boost / 10) * 10));
     $('#n1').value = String(state.total); $('#n1Out').textContent = state.total + '人';
     if (state.vip > state.total - 10) { state.vip = Math.max(0, state.total - 10); $('#vip').value = state.vip; $('#vipOut').textContent = state.vip + '人'; }
     syncTicket();
@@ -2758,12 +2761,12 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   function updateFrontNote() {
     const rail = S.buildVenue(params()).barrierZ != null;
     $('#frontNote').textContent = '第一排沿著舞台邊排滿，約 ' + state.sim.frontCap + ' 人。' +
-      (state.frontGuard ? '最前管理中：第一排換成黑 T、眼神兇狠、雙手撐在' + (rail ? '護城河欄杆' : '舞台邊') + '上。只是造型，不影響計算。' : '');
+      (state.frontGuard ? '最前管理中：第一排雙手張開趴在' + (rail ? '護城河欄杆' : '舞台邊') + '上，每人佔約 ' + Math.round(S.GUARD_PITCH * 100) + 'cm（平常 ' + Math.round(S.FRONT_PITCH * 100) + 'cm），所以第一排少了約 1/3 的位子，其他人只能往後站。' : '');
   }
-  // 最前管理 is a costume for the front row only: re-render, no re-simulation
+  // 最前管理: the front row spreads its arms along the rail, so fewer people fit there
   $('#guardToggle').addEventListener('click', e => {
     state.frontGuard = !state.frontGuard; e.currentTarget.setAttribute('aria-pressed', String(state.frontGuard));
-    updateFrontNote(); if (gl) { gl.updateCrowd(state.sim); gl.render(); }
+    schedule();
   });
   /* scenes: the crowd lines up on the MC (entry) order; every song scene has its own random order */
   function shuffled(n) {
@@ -3078,7 +3081,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     }
 
     /* ---- audience (instanced per body part) ---- */
-    const CAP = 520;
+    const CAP = TOTAL_MAX;
     const crowdMeshes = [];
     const mk = (geo, mat, noList) => {
       const m = new THREE.InstancedMesh(geo, mat, CAP);
@@ -3129,17 +3132,32 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const iPrint = mk(new THREE.PlaneGeometry(1, 0.25), new THREE.MeshBasicMaterial({ map: printTex, transparent: true, alphaTest: 0.4, side: THREE.FrontSide }));
     const faceQ = new THREE.Quaternion(), zAxis = new THREE.Vector3(0, 0, 1);
     const backQ = new THREE.Quaternion(), frontQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+    // 最前管理 lean: the upper body tips toward the stage around the hips (legs stay upright)
+    const GUARD_LEAN = 0.38, xAxis = new THREE.Vector3(1, 0, 0), leanQ = new THREE.Quaternion().setFromAxisAngle(xAxis, -GUARD_LEAN);
+    const hipOf = q => 0.53 * q.h, tmpV = new THREE.Vector3(), rotQ = new THREE.Quaternion();
+    function leanPt(q, lx, ly, lz) {   // body-local point (metres above the floor) → world, after the lean
+      const hip = hipOf(q); tmpV.set(lx, ly - hip, lz).applyQuaternion(leanQ);
+      return [q.x + tmpV.x, q.floorY + hip + tmpV.y, q.z + tmpV.z];
+    }
+    function leanMatrix(q, s, out) {
+      const hip = hipOf(q);
+      out.makeTranslation(q.x, q.floorY + hip, q.z).multiply(new THREE.Matrix4().makeRotationFromQuaternion(leanQ))
+        .multiply(new THREE.Matrix4().makeTranslation(0, -hip, 0)).multiply(new THREE.Matrix4().makeScale(s, s, s));
+      return out;
+    }
     function pushGuardLook(q, sx, s) {
-      const eb = EYE_BOX[sx], fz = q.z + (eb.min.z - 0.004) * s, half = (eb.max.x - eb.min.x) / 2;
+      const eb = EYE_BOX[sx], half = (eb.max.x - eb.min.x) / 2;
       for (const sd of [-1, 1]) {   // thick brows slanting down to the nose, low enough to half-cover the eyes
         const i = iFace.userData.n++; if (i >= CAP) return;
-        faceQ.setFromAxisAngle(zAxis, sd * 0.42);
-        setInst(iFace, i, q.x + sd * half * 0.6 * s, q.floorY + (eb.max.y + 0.004) * s, fz, 0.042 * s, 0.014 * s, 0.01 * s, faceQ);
+        const P = leanPt(q, sd * half * 0.6 * s, (eb.max.y + 0.004) * s, (eb.min.z - 0.004) * s);
+        rotQ.copy(leanQ).multiply(faceQ.setFromAxisAngle(zAxis, sd * 0.42));
+        setInst(iFace, i, P[0], P[1], P[2], 0.042 * s, 0.014 * s, 0.01 * s, rotQ);
       }
-      const sb = SHIRT_BOX[sx], w = (sb.max.x - sb.min.x) * 0.62 * s, y = q.floorY + (sb.max.y - 0.16) * s;
-      for (const [z, rot] of [[q.z + sb.max.z * s + 0.004, backQ], [q.z + sb.min.z * s - 0.004, frontQ]]) {
+      const sb = SHIRT_BOX[sx], w = (sb.max.x - sb.min.x) * 0.62 * s, y = (sb.max.y - 0.16) * s;
+      for (const [z, rot] of [[sb.max.z * s + 0.004, backQ], [sb.min.z * s - 0.004, frontQ]]) {
         const i = iPrint.userData.n++; if (i >= CAP) return;
-        setInst(iPrint, i, q.x, y, z, w, w, 1, rot);
+        const P = leanPt(q, 0, y, z);
+        setInst(iPrint, i, P[0], P[1], P[2], w, w, 1, rotQ.copy(leanQ).multiply(rot));
       }
     }
 
@@ -3172,7 +3190,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
 
     /* ---- queue numbers above heads (orbit view): one atlas, one draw call ---- */
     const NUM = (() => {
-      const maxN = 520, cols = 20, cw = LOW ? 56 : 84, ch = LOW ? 26 : 38;
+      const maxN = TOTAL_MAX, cols = maxN > 520 ? 40 : 20, cw = LOW ? 56 : 84, ch = LOW ? 26 : 38;
       const rows = Math.ceil(maxN / cols);
       const W = cols * cw, Hh = rows * ch;
       const c = document.createElement('canvas'); c.width = W; c.height = Hh;
@@ -3247,7 +3265,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     /* ---- queue numbers in plan view: glyph quads aligned to the screen ---- */
     let planRot = false;   // true = stage on the right (landscape), like the official plan
     const PNUM = (() => {
-      const maxN = 520, cols = 20, cw = LOW ? 60 : 80, ch = Math.round(cw * 0.6);
+      const maxN = TOTAL_MAX, cols = maxN > 520 ? 40 : 20, cw = LOW ? 60 : 80, ch = Math.round(cw * 0.6);
       const rows = Math.ceil(maxN / cols), W = cols * cw, Hh = rows * ch;
       const c = document.createElement('canvas'); c.width = W; c.height = Hh;
       const x = c.getContext('2d');
@@ -3304,8 +3322,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     scene.add(you);
     let youLabel = null;
 
-    // 最前管理 costume: hands on the moat rail, or the stage lip when there is none
-    const GUARD_REACH = 0.3;
+    // 最前管理 costume: leaning over the moat rail (or the stage lip when there is none), elbows spread
+    // half a front-row spot out to each side so neighbours' elbows meet, forearms flat on the rail
+    const GUARD_REACH = S.GUARD_PITCH / 2 - 0.03;
     function guardGrip() {
       const V = S.buildVenue(params());
       return V.barrierZ != null ? { y: V.barrierH, z: V.barrierZ + 0.02 } : { y: Math.max(0.6, Math.min(1.3, V.stageH)), z: 0.02 };
@@ -3314,7 +3333,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       crowdMeshes.forEach(m => { m.userData.n = 0; });
       const grip = state.frontGuard ? guardGrip() : null;
       const gp = glowGeo.attributes.position.array, gc = glowGeo.attributes.color.array; let ng = 0;
-      const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), Sv = new THREE.Vector3(), Pv = new THREE.Vector3();
+      const M4 = new THREE.Matrix4(), ML = new THREE.Matrix4(), Q = new THREE.Quaternion(), Sv = new THREE.Vector3(), Pv = new THREE.Vector3();
       for (const q of sim.people) {
         const r = hashRng(q.idx * 31 + 7);
         const sx = q.male ? 'm' : 'f', c = crowd[sx], d = S.bodyDims(q);
@@ -3323,6 +3342,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         const yaw = q.arm || guard ? 0 : Math.max(-0.25, Math.min(0.25, toStage * 0.5)) + (r() - 0.5) * 0.2;
         Q.setFromAxisAngle(up, yaw);
         M4.compose(Pv.set(q.x, q.floorY, q.z), Q, Sv.set(d.s, d.s, d.s));
+        const MU = guard ? leanMatrix(q, d.s, ML) : M4;   // upper body
         const skin = col(pick(r, SKIN));
         const teeHex = r() < 0.14 ? '#' + new THREE.Color(COSTUME[Math.floor(r() * COSTUME.length)]).multiplyScalar(0.62).getHexString() : pick(r, TEE);
         const tee = col(guard ? '#121018' : teeHex);
@@ -3333,31 +3353,32 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         push(c.shoes, M4, col(pick(r, SHOES)));
         if (skirt) { push(c.pants, M4, col('#1c1b20')); push(c.skirt, M4, col(pick(r, SKIRT))); }
         else push(c.pants, M4, col(pick(r, PANTS)));
-        push(c.shirt, M4, tee);
+        push(c.shirt, MU, tee);
         if (guard) {
-          // both arms straight out to the rail
+          // elbows spread wide on the rail, forearms lying along it, hands back toward the middle
           for (const side of [-1, 1]) {
-            const dd = S.bodyDims(q), sh = S.shoulderY(q);
-            const ga = { A: [q.x + side * dd.ax, sh - 0.03 * dd.s, q.z], B: [q.x + side * GUARD_REACH, grip.y, grip.z], d: dd };
-            const E = [ga.A[0] + (ga.B[0] - ga.A[0]) * 0.32, ga.A[1] + (ga.B[1] - ga.A[1]) * 0.32, ga.A[2] + (ga.B[2] - ga.A[2]) * 0.32];
-            pushBetween(iRSleeve, ga.A, E, ga.d.ar + 0.012, tee);
-            pushBetween(iRArm, E, ga.B, ga.d.ar * 0.85, skin);
-            const hi = iRHand.userData.n++; if (hi < CAP) { setInst(iRHand, hi, ga.B[0], ga.B[1] + 0.02, ga.B[2], 0.035, 0.025, 0.045); iRHand.setColorAt(hi, skin); }
+            const A = leanPt(q, side * d.ax, S.shoulderY(q) - q.floorY - 0.03 * d.s, 0);
+            const y = grip.y + d.ar, E = [q.x + side * GUARD_REACH, y, grip.z + 0.02], H = [q.x + side * 0.13, y, grip.z - 0.03];
+            const S1 = [A[0] + (E[0] - A[0]) * 0.55, A[1] + (E[1] - A[1]) * 0.55, A[2] + (E[2] - A[2]) * 0.55];
+            pushBetween(iRSleeve, A, S1, d.ar + 0.012, tee);
+            pushBetween(iRArm, S1, E, d.ar * 0.9, skin);
+            pushBetween(iRArm, E, H, d.ar * 0.85, skin);
+            const hi = iRHand.userData.n++; if (hi < CAP) { setInst(iRHand, hi, H[0], H[1], H[2], 0.045, 0.024, 0.04); iRHand.setColorAt(hi, skin); }
           }
           pushGuardLook(q, sx, d.s);
         } else {
           if (q.arm !== -1) { push(c.sleeveL, M4, tee); push(c.armL, M4, skin); }
           if (q.arm !== 1) { push(c.sleeveR, M4, tee); push(c.armR, M4, skin); }
         }
-        push(c.neck, M4, skin); push(c.head, M4, skin); push(c.eyes, M4, null);
-        push(c.hair[hairIdx], M4, hairC);
-        if (towel) push(c.towel, M4, towel);
+        push(c.neck, MU, skin); push(c.head, MU, skin); push(c.eyes, MU, null);
+        push(c.hair[hairIdx], MU, hairC);
+        if (towel) push(c.towel, MU, towel);
         if (q.arm && !guard) {
           const ra = S.raisedArm(q);
           const E = [ra.A[0] + (ra.B[0] - ra.A[0]) * 0.42, ra.A[1] + (ra.B[1] - ra.A[1]) * 0.42, ra.A[2] + (ra.B[2] - ra.A[2]) * 0.42];
           pushBetween(iRSleeve, ra.A, E, ra.d.ar + 0.012, tee);
           pushBetween(iRArm, E, ra.B, ra.d.ar * 0.85, skin);
-          const hi = iRHand.userData.n++; setInst(iRHand, hi, ra.B[0], ra.B[1], ra.B[2], 0.03, 0.045, 0.03); iRHand.setColorAt(hi, skin);
+          const hi = iRHand.userData.n++; if (hi < CAP) { setInst(iRHand, hi, ra.B[0], ra.B[1], ra.B[2], 0.03, 0.045, 0.03); iRHand.setColorAt(hi, skin); }
           const pc = col(COSTUME[sim.members[q.penColor % sim.members.length].id]);
           pushBetween(iPen, ra.B, ra.C, 0.017, pc.clone().multiplyScalar(1.4));
           if (ng < CAP) {
@@ -3654,12 +3675,13 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     updateHud(); if (gl) gl.render();
     planHint();
   });
-  // 最前 / 通常 / 最後 = the runs where you stand closest, typical, furthest (of the 20)
+  // 最前 / 通常 / 最後 = the runs where you stand closest, typical, furthest (of the 20); the choice sticks
+  // when the conditions change, and the worker re-resolves it (res odds are too slow for the main thread)
   $('#luckSeg').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    const k = b.dataset.luck;
-    state.manualSeed = k !== 'rep';
-    showSeed(k === 'rep' ? state.rep || 1 : state.luck[k]);
+    state.luckKey = b.dataset.luck;
+    if (state.rows) state.seed = S.pickSeed(state.rows, state.summary, state.luckKey);
+    renderLuck(); schedule();
   });
 
   /* ============ fullscreen, hints, mobile bar ============ */
@@ -3741,8 +3763,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       main(msg) {
         const p = msg.params;
         const rows = S.runBatch(p, msg.seeds), summary = S.summarize(rows);
-        const rep = S.representativeSeed(rows, summary);
-        const seed = msg.manualSeed && msg.seeds.indexOf(msg.manualSeed) >= 0 ? msg.manualSeed : rep;
+        const rep = S.representativeSeed(rows, summary), seed = S.pickSeed(rows, summary, msg.luckKey);
         const v = view(p, seed);
         return Object.assign({ type: 'main', id: msg.id, rows, summary, rep }, v);
       },
@@ -3797,7 +3818,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   }
   function requestMain() {
     const id = ++reqId;
-    const msg = { type: 'main', id, params: params(), seeds: SEEDS, manualSeed: state.manualSeed ? state.seed : 0 };
+    const msg = { type: 'main', id, params: params(), seeds: SEEDS, luckKey: state.luckKey };
     if (mainBusy && mainW) { mainW.terminate(); mainW = null; }   // drop stale work, compute only the latest
     if (!mainW) {
       mainW = makeWorker();
@@ -3823,13 +3844,12 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     if (v.slots) state.slots = v.slots;
     if (v.res) state.res = v.res;
     // live crowd density for the current turnout (the model packs the floor to fit everyone present)
-    $('#densNote').textContent = '目前人數下：第一排每人約 58cm 寬，第 2–' + S.FRONT_ROWS + ' 排每平方公尺 ' + fmt1(state.sim.rhoMid) + ' 人，後面每平方公尺 ' + fmt1(state.sim.rhoBack) + ' 人' +
+    $('#densNote').textContent = '目前人數下：第一排每人約 ' + Math.round((state.frontGuard ? S.GUARD_PITCH : S.FRONT_PITCH) * 100) + 'cm 寬，第 2–' + S.FRONT_ROWS + ' 排每平方公尺 ' + fmt1(state.sim.rhoMid) + ' 人，後面每平方公尺 ' + fmt1(state.sim.rhoBack) + ' 人' +
       (state.sim.rhoBack >= 3.5 ? '（很擠）。' : state.sim.rhoBack < 1.5 ? '（還很鬆）。' : '。');
     renderLuck();
     if (gl) { gl.updateCrowd(state.sim); gl.updateSight(state.ev); gl.render(); }
-    renderVerdict(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawBucketMap(); paintRanges(); renderResBox();
+    renderVerdict(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawYou(); paintRanges(); renderResBox();
   }
-  function showSeed(seed) { applyView(TASKS.view(params(), seed)); }
   // WebKit has no ::range-progress: expose the fill position as --pct for the track gradient
   const paintRange = r => r.style.setProperty('--pct', ((r.value - r.min) / ((r.max - r.min) || 1) * 100) + '%');
   const paintRanges = () => document.querySelectorAll('input[type="range"]').forEach(paintRange);
@@ -3873,7 +3893,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       const k = b.dataset.luck, r = row(seedOf[k]);
       b.textContent = r ? name[k] + '：' + (r.front ? '第 1 排' : rowText({ front: 0, row: r.row })) : name[k];
       b.title = r ? '離舞台邊 ' + fmt1(r.dist) + 'm' : '';
-      b.setAttribute('aria-pressed', String(state.seed === seedOf[k]));
+      b.setAttribute('aria-pressed', String(state.luckKey === k));
     });
   }
   function updateHud() {
@@ -3974,7 +3994,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     $('#bucketStatus').textContent = '計算中…';
     if (bucketW) { bucketW.terminate(); bucketW = null; }
     bucketW = makeWorker();
-    const done = groups => { if (id !== bucketId) return; state.buckets = groups; renderBuckets(); };
+    const done = groups => { if (id !== bucketId) return; if (bucketW) { bucketW.terminate(); bucketW = null; } state.buckets = groups; renderBuckets(); };
     if (bucketW) {
       bucketW.onmessage = e => { if (e.data.type === 'buckets' && e.data.id === bucketId) done(e.data.groups); };
       bucketW.postMessage({ type: 'buckets', id, params: p, seeds: BUCKET_SEEDS, per });
@@ -4071,11 +4091,21 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         });
       });
     }
-    const u = state.sim && state.sim.user;
-    if (u) {
-      mk('circle', { cx: ((Zr - u.z) * k).toFixed(1), cy: ((u.x - Xt) * k).toFixed(1), r: 8, fill: 'none', stroke: '#b6f24a', 'stroke-width': 2.5 });
-      label('你', u.x - 0.42, u.z, '#b6f24a', 12);
-    }
+    svg.mapFrame = { Zr, Xt, k };
+    drawYou();
+  }
+  function drawYou() {
+    const svg = $('#bucketMap'), f = svg && svg.mapFrame, u = state.sim && state.sim.user;
+    const old = svg && svg.querySelector('.you'); if (old) old.remove();
+    if (!f || !u) return;
+    const NS = 'http://www.w3.org/2000/svg', g = document.createElementNS(NS, 'g'), cx = ((f.Zr - u.z) * f.k).toFixed(1);
+    g.setAttribute('class', 'you');
+    const c = document.createElementNS(NS, 'circle');
+    [['cx', cx], ['cy', ((u.x - f.Xt) * f.k).toFixed(1)], ['r', 8], ['fill', 'none'], ['stroke', '#b6f24a'], ['stroke-width', 2.5]].forEach(([a, v]) => c.setAttribute(a, v));
+    const t = document.createElementNS(NS, 'text');
+    [['x', cx], ['y', ((u.x - 0.42 - f.Xt) * f.k).toFixed(1)], ['fill', '#b6f24a'], ['font-size', 12], ['text-anchor', 'middle'], ['dominant-baseline', 'middle']].forEach(([a, v]) => t.setAttribute(a, v));
+    t.textContent = '你';
+    g.append(c, t); svg.appendChild(g);
   }
 
   /* ============ queue-position curve ============ */
@@ -4093,7 +4123,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     if (curveW) { curveW.terminate(); curveW = null; }
     curveW = makeWorker();
     if (curveW) {
-      curveW.onmessage = e => { const d = e.data; if (d.id !== curveId) return; if (d.type === 'curvePoint') { curve.pts.push({ n: d.n, sum: d.sum }); drawCurveSoon(); } };
+      curveW.onmessage = e => { const d = e.data; if (d.id !== curveId) return; if (d.type === 'curvePoint') { curve.pts.push({ n: d.n, sum: d.sum }); drawCurveSoon(); } else if (d.type === 'curveDone') { curveW.terminate(); curveW = null; } };
       curveW.postMessage({ type: 'curve', id, params: base, nums, seeds: CURVE_SEEDS, pause: LOW ? 30 : 12 });
       return;
     }
@@ -4247,7 +4277,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     $('#aimNote').textContent = '計算中…';
     if (aimW) { aimW.terminate(); aimW = null; }
     aimW = makeWorker();
-    const done = list => { if (id !== aimId) return; state.aims = list; renderAims(); };
+    const done = list => { if (id !== aimId) return; if (aimW) { aimW.terminate(); aimW = null; } state.aims = list; renderAims(); };
     if (aimW) {
       aimW.onmessage = e => { if (e.data.type === 'aims' && e.data.id === aimId) done(e.data.list); };
       aimW.postMessage({ type: 'aims', id, params: p, seeds: CURVE_SEEDS });
@@ -4453,7 +4483,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       '和朋友一起排的人會一起進場，站在朋友旁邊，而不是各自找最好的位置。',
       '每個人進場後找空位：先填最前排（從中間往兩側），再填第 2 排，之後照「靠前、靠中間」的順序。斜角太大、被設備擋到的位置比較晚才有人站；柱子正後方幾乎沒人要站，要等其他位置都滿了才會有人。約一半的人會往自己推的成員前面靠；排第 31 位以後約 5% 的人喜歡站後面。',
       '聯合公演：輪到你推的團時，他團粉絲有一半離開觀眾區（物販、特典會、休息），另一半往後或往旁邊讓出前方。',
-      '站位密度：最前排每人 0.58m 寬。第 2–3 排每平方公尺 3.0 人，接近滿場時最多 3.5 人。第 4 排以後依人數自動決定（人少就站得鬆）。',
+      '站位密度：最前排每人 ' + S.FRONT_PITCH + 'm 寬（最前管理時 ' + S.GUARD_PITCH + 'm，雙手張開趴在欄杆上）。第 2–3 排每平方公尺 3.0 人，接近滿場時最多 3.5 人。第 4 排以後依人數自動決定（人少就站得鬆）。',
       '能見度：每位成員身上放 33 個點，從你的眼睛（身高 × 0.933）看過去，判斷有沒有被前面觀眾的身體、舞台邊、柱子、欄杆擋住。「偏頭」是頭往左右各移動 12cm 內看得到的點。',
       '場面：觀眾照 MC 時的站位進場排好，之後每首歌換隊形（' + S.SCENES.filter(sc => sc.song).map(sc => sc.label).join('、') + '），成員站位每次開頁隨機，3D 和判定看目前選的場面。',
       '推給你的回應：推每次對特定一個人回應（目線、指人、揮手），會從推看得到臉的觀眾裡依權重挑一個人。權重 = 看得到（1，要偏頭 0.5，看不到 0）× 距離（3m 內 1，之後每 1.5m 約剩 0.37 倍）× 角度（推的正面 1、正側面 0.25）× 推的粉絲 5 倍（你和約 1/成員數 的觀眾）。每首歌回應 ' + state.resPerSong + ' 次，一場 ' + state.resSongs + ' 首歌，每首隨機換場面和推的站位後平均。這些權重是推定值，沒有算進認知度、應援、推色等個人差異。',
