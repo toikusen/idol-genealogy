@@ -2439,6 +2439,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         shoes: part(p + 'Shoes'), pants: part(p + 'Pants'), shirt: part(p + 'Shirt'),
         sleeveL: empty, sleeveR: empty, armL: part(p + 'ArmL'), armR: part(p + 'ArmR'),
         neck: part(p + 'Neck'), head: part(p + 'Head'), eyes: part(p + 'Eyes'), towel: part(p + 'Towel'),
+        brows: part(p + 'Brows'), mouth: part(p + 'Mouth'), glasses: part(p + 'Glasses'), bag: part(p + 'Bag'),
         hair: [0, 1, 2, 3, 4].map(i => part(p + 'Hair' + i))
       };
       if (sex === 'f') T.skirt = part(p + 'Skirt');
@@ -2465,7 +2466,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       const tint = {
         Costume: col(costumeHex),
         Accent: col('#' + costume.clone().lerp(new THREE.Color('#ffffff'), 0.5).getHexString()),
-        Hair: col(st.hairColor)
+        Hair: col(st.hairColor),
+        Iris: col('#' + costume.clone().multiplyScalar(0.7).getHexString())
       };
       const mats = new Map();
       const matFor = m => {
@@ -2807,11 +2809,13 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     $('#fallback').hidden = false;
     $('#viewTabs').hidden = true; $('#patternBox').hidden = true; $('#zoomBox').hidden = true;
   }
-  // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://)
+  // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
+  // bump the version whenever blender/build_figures.py is re-run so browsers drop the old file
+  const FIGURES_VERSION = 2;
   function loadFigures() {
     return new Promise((resolve, reject) => {
       if (typeof THREE === 'undefined' || !THREE.GLTFLoader) return reject(new Error('three.js / GLTFLoader not loaded'));
-      new THREE.GLTFLoader().load('assets/figures.glb', resolve, undefined, reject);
+      new THREE.GLTFLoader().load('assets/figures.glb?v=' + FIGURES_VERSION, resolve, undefined, reject);
     });
   }
   loadFigures().then(gltf => {
@@ -3054,7 +3058,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       grp.position.set(m.x, m.baseY, m.z);
       const lab = labelSprite(MEMBERS[m.id].name + ' ' + Math.round(m.h * 100), MEMBERS[m.id].color, { h: 0.16 });
       lab.position.set(m.x, m.baseY + m.h + 0.28, m.z);
-      memberGroup.add(grp); memberGroup.add(lab);
+      const sh = new THREE.Mesh(shadowGeo, shadowMat); sh.position.set(m.x, m.baseY + 0.008, m.z); sh.scale.set(0.7, 1, 0.55); sh.renderOrder = 1;
+      sh.userData.dispose = () => {};   // shared geometry / material
+      memberGroup.add(grp, lab, sh);
       return grp;
     }
     function rebuildMembersImpl() {
@@ -3105,6 +3111,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       c.armL = mk(T.armL, M_SKIN); c.armR = mk(T.armR, M_SKIN);
       c.neck = mk(T.neck, M_SKIN); c.head = mk(T.head, M_SKIN); c.eyes = mk(T.eyes, M_EYE);
       c.towel = mk(T.towel, M_CLOTH);
+      c.brows = mk(T.brows, M_HAIR); c.mouth = mk(T.mouth, M_SKIN); c.glasses = mk(T.glasses, M_EYE); c.bag = mk(T.bag, M_CLOTH);
       if (T.skirt) c.skirt = mk(T.skirt, M_PANTS);
       c.hair = T.hair.map(gg => mk(gg, M_HAIR));
     }
@@ -3116,6 +3123,19 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     glowGeo.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(CAP * 3), 3));
     const glow = new THREE.Points(glowGeo, new THREE.PointsMaterial({ size: 0.42, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
     glow.frustumCulled = false; scene.add(glow);
+    // soft contact shadow under every figure, so nobody floats above the floor
+    const shadowTex = (() => {
+      const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+      const g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.addColorStop(0, 'rgba(0,0,0,0.75)'); g.addColorStop(0.55, 'rgba(0,0,0,0.35)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c);
+    })();
+    const shadowGeo = new THREE.PlaneGeometry(1, 1); shadowGeo.rotateX(-Math.PI / 2);
+    const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex, color: 0x000000, transparent: true, depthWrite: false, toneMapped: false });
+    const iShadow = mk(shadowGeo, shadowMat);
+    iShadow.renderOrder = 1;
+    function pushShadow(x, z, s) { const i = iShadow.userData.n++; if (i < CAP) setInst(iShadow, i, x, 0.006, z, 0.62 * s, 1, 0.5 * s); }
+
     /* 最前管理: glaring brows, a grim mouth, 最前／管理 printed in two lines on the tee front and back */
     const iFace = mk(new THREE.BoxGeometry(1, 1, 1), M_EYE);
     const EYE_BOX = {}, SHIRT_BOX = {}, HEAD_BOX = {};
@@ -3174,6 +3194,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const SKIRT = ['#1b1c20', '#26304a', '#7a6a58', '#3e2a33'];
     const SHOES = ['#ececee', '#1a1a1d', '#3a3a3f', '#d8d0c4'];
     const SKIN = ['#f1d0bb', '#e9c3a9', '#dfb79c', '#f4d7c6', '#d9ad8f'];
+    const BAG = ['#1b1c22', '#2e3a52', '#5a4a3c', '#e8e4dc', '#c45a7c', '#3f5f4a'];
+    const LIP = col('#b86a6a');
     const HAIR = ['#141010', '#1d1512', '#2b1f17', '#3a2a1d', '#18181a', '#5a3d27', '#7a5638'];
     const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpS = new THREE.Vector3(), tmpP = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), tmpD = new THREE.Vector3();
     function setInst(mesh, i, x, y, z, sx, sy, sz, q) { tmpP.set(x, y, z); tmpS.set(sx, sy, sz); tmpM.compose(tmpP, q || tmpQ.identity(), tmpS); mesh.setMatrixAt(i, tmpM); }
@@ -3340,6 +3362,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     }
     function updateCrowd(sim) {
       crowdMeshes.forEach(m => { m.userData.n = 0; });
+      iShadow.userData.n = 0;
       const grip = state.frontGuard ? guardGrip() : null;
       const gp = glowGeo.attributes.position.array, gc = glowGeo.attributes.color.array; let ng = 0;
       const M4 = new THREE.Matrix4(), ML = new THREE.Matrix4(), MH = new THREE.Matrix4(), Q = new THREE.Quaternion(), Sv = new THREE.Vector3(), Pv = new THREE.Vector3();
@@ -3363,6 +3386,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         const towel = r() < 0.22 ? col(COSTUME[Math.floor(r() * COSTUME.length)]) : null;
         const skirt = !q.male && r() < 0.35;
         const hairIdx = Math.floor(r() * c.hair.length);
+        const glasses = r() < 0.22, bag = r() < 0.16 ? col(pick(r, BAG)) : null;
         push(c.shoes, M4, col(pick(r, SHOES)));
         if (skirt) { push(c.pants, M4, col('#1c1b20')); push(c.skirt, M4, col(pick(r, SKIRT))); }
         else push(c.pants, M4, col(pick(r, PANTS)));
@@ -3393,6 +3417,10 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         push(c.neck, MU, skin); push(c.head, MHd, skin); push(c.eyes, MHd, null);
         push(c.hair[hairIdx], MHd, hairC);
         if (towel) push(c.towel, MU, towel);
+        if (!guard) { push(c.brows, MHd, hairC); push(c.mouth, MHd, LIP); }   // guards get their own glare
+        if (glasses) push(c.glasses, MHd, null);
+        if (bag) push(c.bag, MU, bag);
+        pushShadow(q.x, q.z, d.s);
         if (q.arm && !guard) {
           const ra = S.raisedArm(q);
           const E = [ra.A[0] + (ra.B[0] - ra.A[0]) * 0.42, ra.A[1] + (ra.B[1] - ra.A[1]) * 0.42, ra.A[2] + (ra.B[2] - ra.A[2]) * 0.42];
@@ -3408,6 +3436,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         }
       }
       crowdMeshes.forEach(m => { m.count = Math.min(CAP, m.userData.n); m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
+      if (sim.user) pushShadow(sim.user.x, sim.user.z, sim.user.h / 1.7);
+      iShadow.count = Math.min(CAP, iShadow.userData.n); iShadow.instanceMatrix.needsUpdate = true;
       glowGeo.setDrawRange(0, ng); glowGeo.attributes.position.needsUpdate = true; glowGeo.attributes.color.needsUpdate = true;
       const u = sim.user;
       if (u) {
