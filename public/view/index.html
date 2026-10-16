@@ -857,6 +857,21 @@ details.fold[open] > summary { margin-bottom: 8px; }
   #memberTable th:nth-child(n+4), #memberTable td:nth-child(n+4) { display: none; }
 }
 .members > details.fold { padding: 0 14px 12px; }
+
+/* ---- free standing mode ---- */
+.vp-box .free-btn { color: #fff; border: 1px solid rgba(255, 255, 255, 0.28); white-space: nowrap; }
+.vp-box .free-btn[aria-pressed="true"] { background: #b6f24a; color: #1a2604; border-color: #b6f24a; }
+.vp-freehint { position: absolute; left: 50%; top: 62px; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px;
+  background: rgba(182, 242, 74, 0.92); color: #1a2604; font-size: 12.5px; font-weight: 700; white-space: nowrap; pointer-events: none; z-index: 3; }
+.vp-move { position: absolute; right: 14px; bottom: 64px; display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); z-index: 3; }
+.vp-move button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(12, 10, 26, 0.78);
+  color: #fff; font-size: 15px; cursor: pointer; touch-action: none; backdrop-filter: blur(6px); }
+.vp-move button:active { background: #b6f24a; color: #1a2604; }
+.vp-move [data-d="f"] { grid-area: 1 / 2; } .vp-move [data-d="l"] { grid-area: 2 / 1; } .vp-move [data-d="r"] { grid-area: 2 / 3; } .vp-move [data-d="b"] { grid-area: 3 / 2; }
+.viewport.expanded .vp-move { bottom: calc(var(--dock-h, 112px) + 64px); }
+.v2-a .plan[hidden], .curve[hidden] { display: none; }
+@media (max-width: 560px) { .vp-move { right: 8px; bottom: 56px; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); } .vp-move button { width: 40px; height: 40px; } }
+.big .s.cmp { color: #d8f5a8; } .big .s.cmp .btn-ghost { color: #f9a8c8; border-color: rgba(255, 255, 255, 0.3); padding: 1px 10px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -880,6 +895,13 @@ details.fold[open] > summary { margin-bottom: 8px; }
         <div class="vp-hint" id="hint">左右滑動環顧四周</div>
         <div class="vp-busy" id="busy" hidden="">計算中</div>
         <div class="vp-res" id="resBox" hidden aria-live="polite"></div>
+        <div class="vp-freehint" id="freeHint" hidden></div>
+        <div class="vp-move" id="movePad" hidden role="group" aria-label="移動你的位置">
+          <button type="button" data-d="f" aria-label="往前（靠近舞台）">▲</button>
+          <button type="button" data-d="l" aria-label="往左">◀</button>
+          <button type="button" data-d="r" aria-label="往右">▶</button>
+          <button type="button" data-d="b" aria-label="往後">▼</button>
+        </div>
         <div class="vp-bottom">
           <div class="vp-box" id="sceneBox" role="group" aria-label="場面">
             <span class="lbl">場面</span>
@@ -888,12 +910,13 @@ details.fold[open] > summary { margin-bottom: 8px; }
             <button type="button" id="scNext" aria-label="下一個場面">▶</button>
           </div>
           <div class="vp-box" id="patternBox">
-            <span class="lbl" id="luckLead" title="每次進場的順序、同行朋友、身高都不同；這是模擬 20 次入場裡的三種結果">同樣的排隊順位，你可能站在</span>
+            <span class="lbl" id="luckLead" title="每次進場的順序、同行朋友、身高都不同；這是模擬 20 次入場裡的三種結果">同樣的排隊順位，看進場運氣：</span>
             <span class="luck" id="luckSeg" role="group" aria-label="同樣的排隊順位，你可能站的位置">
-              <button type="button" data-luck="good" aria-pressed="false">最前</button>
-              <button type="button" data-luck="rep" aria-pressed="true">通常</button>
-              <button type="button" data-luck="bad" aria-pressed="false">最後</button>
+              <button type="button" data-luck="good" aria-pressed="false">運氣好</button>
+              <button type="button" data-luck="rep" aria-pressed="true">一般</button>
+              <button type="button" data-luck="bad" aria-pressed="false">運氣差</button>
             </span>
+            <button type="button" class="free-btn" id="freeBtn" aria-pressed="false">📍 自己選位置</button>
           </div>
           <div class="vp-box vp-legend" id="sightLegend" hidden="">
             <span><i style="background:var(--good)"></i>看得到</span>
@@ -928,6 +951,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
           <details class="fold"><summary>換一個目標</summary>
           <div class="goal-row">
             <select id="goal" aria-label="目標">
+              <option value="oshiStill">不動就看得到推的臉的機率</option>
               <option value="oshi">偏頭看得到推的臉的機率</option>
               <option value="faceLean">偏頭看得到臉的人數（平均）</option>
               <option value="upper">上半身看得到的比例（全員平均）</option>
@@ -1864,7 +1888,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
         if (idx < 0) idx = floorSpots.reduce((bi, s, i) => s.depth > floorSpots[bi].depth ? i : bi, 0);   // full: stand at the very back
         freeF[idx] = false; placed.set(no, idx);
         const sp = floorSpots[idx];
-        user = { no: qno, idx: no, vip: isVip, x: sp.x, z: sp.z, floorY: 0, h: p.userHeight / 100, male: true, row: sp.row, front: sp.front, isUser: true };
+        user = { no: qno, idx: no, vip: isVip, x: sp.x, z: sp.z, floorY: 0, h: p.userHeight / 100, male: true, row: sp.row, front: sp.front, isUser: true, spot: idx };
         continue;
       }
       if (P.other && rng() < EV.otherOut) continue;   // off the floor during your group's set
@@ -1907,8 +1931,9 @@ details.fold[open] > summary { margin-bottom: 8px; }
       if (idx < 0) continue;
       freeF[idx] = false; placed.set(no, idx);
       const sp = floorSpots[idx];
-      people.push({ no: qno, idx: no, vip: isVip, other: P.other, fan: fanOf, x: sp.x, z: sp.z, floorY: 0, h: body.h, male: body.male, row: sp.row, front: sp.front });
+      people.push({ no: qno, idx: no, vip: isVip, other: P.other, fan: fanOf, x: sp.x, z: sp.z, floorY: 0, h: body.h, male: body.male, row: sp.row, front: sp.front, spot: idx });
     }
+    if (p.freeSpot && user) moveUserTo(user, people, floorSpots, p.freeSpot);
 
     for (const q of people) {
       q.arm = 0;
@@ -1922,6 +1947,17 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const frontCap = floorSpots.filter(sp => sp.front).length;
     // the crowd placed itself on the entry (MC) positions; sightlines are judged in the scene being viewed
     return { V, members: sceneMembers(p, V), entryMembers: members, people, user, floorSpots, userNo: user ? user.no : 0, frontCap, rhoBack: dens.back, rhoMid: dens.mid, vip };
+  }
+
+  // free mode: the user stands on the floor spot nearest (x, z), trading places with whoever stood there,
+  // so the crowd and its density stay exactly as the entry left them
+  function moveUserTo(user, people, floorSpots, at) {
+    let best = -1, bd = Infinity;
+    floorSpots.forEach((s, i) => { const d = (s.x - at.x) ** 2 + (s.z - at.z) ** 2; if (d < bd) { bd = d; best = i; } });
+    if (best < 0 || best === user.spot) return;
+    const from = floorSpots[user.spot], to = floorSpots[best], q = people.find(o => o.spot === best);
+    if (q) Object.assign(q, { x: from.x, z: from.z, row: from.row, front: from.front, spot: user.spot });
+    Object.assign(user, { x: to.x, z: to.z, row: to.row, front: to.front, spot: best });
   }
 
   function userTargetX(p, members) {
@@ -2100,6 +2136,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const result = [];
     const leanList = opts.noLean ? [0] : LEAN_OFFSETS;
     for (const m of members) {
+      if (opts.onlyId != null && m.id !== opts.onlyId) continue;
       const mcx = m.x, mcz = m.z;
       let fx = mcx - eye[0], fz = mcz - eye[2];
       const fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl;
@@ -2122,7 +2159,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
         const ex = Math.abs(b.ux) * b.hu + Math.abs(b.vx) * b.hv, ez = Math.abs(b.uz) * b.hu + Math.abs(b.vz) * b.hv;
         return b.cx + ex >= bx0 && b.cx - ex <= bx1 && b.cz + ez >= bz0 && b.cz - ez <= bz1 && b.y1 >= by0 && b.y0 <= by1;
       });
-      const pts = memberSamples(m);
+      // faceOnly: head and face samples only (the heat map needs thousands of these)
+      const pts = opts.faceOnly ? memberSamples(m).filter(pt => pt.group !== 'upper' && pt.group !== 'lower') : memberSamples(m);
       const vis = [];
       for (const pt of pts) {
         const tx = mcx + lx * pt.lat - fx * 0.09, tz = mcz + lz * pt.lat - fz * 0.09;
@@ -2334,6 +2372,27 @@ details.fold[open] > summary { margin-bottom: 8px; }
   // the 入場總人數 slider's ceiling: room for every venue's default turnout plus a special-show boost
   const totalMax = VN => Math.max(500, Math.ceil(VN.defaults.total * 2 / 100) * 100);
 
+  /* ---------- heat map: how well the oshi's face shows from every floor spot ---------- */
+  // The crowd walks in as usual; then a viewer of the user's height is tried on each spot (trading places with
+  // whoever stood there). Returns [{ x, z, still, lean }] averaged over seeds, on at most ~maxSpots spots.
+  function spotScores(p, seeds, maxSpots) {
+    const base = Object.assign({}, p, { freeSpot: null }), acc = new Map();
+    for (const seed of seeds) {
+      const sim = simulate(base, seed), spots = sim.floorSpots;
+      const stride = Math.max(1, Math.ceil(spots.length / (maxSpots || 600)));
+      const crowd = sim.people.concat(sim.user ? [Object.assign({}, sim.user, { arm: 0, shoulderW: 0.19 })] : []);
+      for (let i = 0; i < spots.length; i += stride) {
+        const sp = spots[i];
+        const me = { x: sp.x, z: sp.z, floorY: 0, h: p.userHeight / 100, male: true, arm: 0, row: sp.row, front: sp.front };
+        const ev = evaluateView(Object.assign({}, sim, { user: me, people: crowd.filter(q => q.spot !== i) }), { faceOnly: true, onlyId: p.oshi });
+        const r = ev && ev.members[0]; if (!r) continue;
+        const a = acc.get(i) || { x: sp.x, z: sp.z, still: 0, lean: 0, n: 0, stride };
+        a.still += r.face; a.lean += r.faceLean; a.n++; acc.set(i, a);
+      }
+    }
+    return [...acc.values()].map(a => ({ x: a.x, z: a.z, still: a.still / a.n, lean: a.lean / a.n, stride: a.stride }));
+  }
+
   /* ---------- queue buckets: where do the first N people end up? ---------- */
   const BUCKET_EDGES = [1, 11, 31, 51, 101, 151, 201, 301, 401, 501];
   function bucketRanges(general) {
@@ -2353,7 +2412,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const groups = ranges.map(r => ({ range: r, vip: false, dist: [], row: [], front: 0, n: 0, face: [], faceLean: [], upper: [], oshiLean: [], pts: [] }));
     if (vip > 0) groups.unshift({ range: [1, vip], vip: true, dist: [], row: [], front: 0, n: 0, face: [], faceLean: [], upper: [], oshiLean: [], pts: [] });
     const groupOf = q => q.vip ? (vip > 0 ? groups[0] : null) : groups.find(g => !g.vip && q.no >= g.range[0] && q.no <= g.range[1]);
-    const pp = Object.assign({}, p, { queue: Math.max(1, N - vip) });   // park the user at the end of the line
+    const pp = Object.assign({}, p, { queue: Math.max(1, N - vip), freeSpot: null });   // park the user at the end of the line
     for (const seed of seeds) {
       const sim = simulate(pp, seed);
       const rng = mulberry32(seed * 31 + 5);
@@ -2402,8 +2461,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
     }
     return pts[pts.length - 1].n;
   }
-  // ponytail: fixed weights (oshi face prob dominates, then faces seen, then upper body); make tunable if users disagree
-  const aimScore = s => s.oshiFaceLeanProb * 100 + s.faceCountLean.mean * 2 + s.avgUpper.mean;
+  // ponytail: fixed weights (oshi's face without leaning dominates, then with leaning, faces seen, upper body); make tunable if users disagree
+  const aimScore = s => s.oshiFaceProb * 100 + s.oshiFaceLeanProb * 40 + s.faceCountLean.mean * 2 + s.avgUpper.mean;
   // same crowd seeds, only the user's aim changes; sorted best first
   function compareAims(p, seeds) {
     return AIMS.map(aim => ({ aim, sum: summarize(runBatch(Object.assign({}, p, { aim }), seeds)) }))
@@ -2415,7 +2474,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     FRONT_ROWS, FRONT_DENSITY, MID_MAX, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, hangingArm,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
     buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, RES, resShareAt, resEstimate, runBatch, summarize, representativeSeed, luckSeeds, pickSeed, totalMax,
-    bucketRanges, bucketStats, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
+    bucketRanges, bucketStats, spotScores, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.OWSim = api;
@@ -2594,7 +2653,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true, frontGuard: false,
     barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false,
     memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4],
-    sceneIdx: 0, sceneOrders: null, res: null,
+    sceneIdx: 0, sceneOrders: null, res: null, free: null, qsum: null,
     view: 'eye', zoom: 1, seed: 1, luckKey: 'rep', metric: 'upper',
     rows: null, summary: null, sim: null, ev: null, slots: null, rep: 0, expanded: false,
     buckets: null, bucketSel: null
@@ -2609,7 +2668,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       barrier: state.barrier, stageH: state.stageH, stageDepth: state.stageDepth, mixOnFloor: state.mixOnFloor,
       formation: 'line', scene: S.SCENES[state.sceneIdx].key, sceneOrder: sceneOrder(),
       memberHeights: state.memberHeights.slice(), armsUp: state.armsUp, positionOrder: state.positionOrder.slice(),
-      event: state.event, entranceCrowd: state.entranceCrowd, frontGuard: state.frontGuard
+      event: state.event, entranceCrowd: state.entranceCrowd, frontGuard: state.frontGuard, freeSpot: state.free
     };
   }
 
@@ -2702,7 +2761,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     $('#tkTotal').textContent = '一般排隊 ' + G + ' 人';
     $('#tkFloor').textContent = 'VIP ' + state.vip + ' 人 / 一般 ' + G + ' 人';
     $('#tkAhead').textContent = '排在你前面 ' + (state.vip + state.ticket - 1) + ' 人' + (state.vip ? '（含 VIP）' : '');
-    $('#tkWarn').hidden = true;
+    $('#tkWarn').hidden = !state.free;
     // 40 dots = whole line (VIP + general); each dot is total/40 people
     const strip = $('#qstrip'), D = 40, per = state.total / D;
     const me = Math.min(D - 1, Math.floor((state.vip + state.ticket - 1) / per));
@@ -3548,6 +3607,22 @@ details.fold[open] > summary { margin-bottom: 8px; }
       V0.boxes.forEach(bx => { if (bx.kind === 'pillar' || bx.kind === 'curtain') add(polyLines(boxCorners(bx), true, 9), planLineMat('#8a90a0')); });
       VN.labels.forEach(l => lbl(l.t, l.x, l.z));
     }
+    // heat tiles under the crowd discs: green = the oshi's face shows, red = blocked
+    let heatMesh = null, heatOn = false;
+    const HEAT_C = [[0.83, '#33c46b'], [0.5, '#a6d84a'], [0.15, '#f2b33d'], [-1, '#e5534b']].map(([t, h]) => [t, col(h)]);
+    function setHeat(pts) {
+      if (heatMesh) { planGroup.remove(heatMesh); heatMesh.geometry.dispose(); heatMesh.material.dispose(); heatMesh = null; }
+      if (!pts || !pts.length) return;
+      const size = 0.62 * Math.sqrt(pts[0].stride || 1), g = new THREE.PlaneGeometry(size, size); g.rotateX(-Math.PI / 2);
+      heatMesh = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.85, depthTest: false, depthWrite: false, toneMapped: false }), pts.length);
+      pts.forEach((q, i) => {
+        setInst(heatMesh, i, q.x, 9.05, q.z, 1, 1, 1);
+        // standing still counts fully, leaning half
+        const v = Math.max(q.still, q.lean * 0.75);
+        heatMesh.setColorAt(i, HEAT_C.find(([t]) => v >= t)[1]);
+      });
+      heatMesh.renderOrder = 3; heatMesh.frustumCulled = false; heatMesh.visible = heatOn; planGroup.add(heatMesh);
+    }
     const discGeo = new THREE.CircleGeometry(0.23, 20); discGeo.rotateX(-Math.PI / 2);
     const iDisc = new THREE.InstancedMesh(discGeo, new THREE.MeshBasicMaterial({ depthTest: false, transparent: true, toneMapped: false }), CAP);
     for (let i = 0; i < CAP; i++) iDisc.setColorAt(i, new THREE.Color(1, 1, 1)); iDisc.count = 0; iDisc.renderOrder = 5; iDisc.frustumCulled = false; planGroup.add(iDisc);
@@ -3716,7 +3791,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
 
     /* ---- input ---- */
     const pointers = new Map(); let pinch0 = 0, zoom0 = 1, r0 = 15;
-    canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]); if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); zoom0 = state.view === 'plan' ? planZoom : state.zoom; r0 = orbit.r; } });
+    canvas.addEventListener('pointerdown', e => { try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* pointer already gone */ } pointers.set(e.pointerId, [e.clientX, e.clientY]); if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); zoom0 = state.view === 'plan' ? planZoom : state.zoom; r0 = orbit.r; } });
     canvas.addEventListener('pointermove', e => {
       if (!pointers.has(e.pointerId)) return;
       const prev = pointers.get(e.pointerId); const dx = e.clientX - prev[0], dy = e.clientY - prev[1];
@@ -3743,6 +3818,19 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const endP = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = 0; };
     canvas.addEventListener('pointerup', endP); canvas.addEventListener('pointercancel', endP);
     canvas.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(-e.deltaY * 0.0015), false); }, { passive: false });
+    // free mode: a tap (not a drag or pinch) on the floor in the plan or orbit view moves you there
+    const ray = new THREE.Raycaster(), floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    let tap = null;
+    canvas.addEventListener('pointerdown', e => { tap = pointers.size <= 1 ? { x: e.clientX, y: e.clientY, t: performance.now() } : null; });
+    canvas.addEventListener('pointerup', e => {
+      const t0 = tap; tap = null;
+      if (!t0 || !state.free || (state.view !== 'plan' && state.view !== 'orbit')) return;
+      if (Math.hypot(e.clientX - t0.x, e.clientY - t0.y) > 8 || performance.now() - t0.t > 600) return;
+      const r = canvas.getBoundingClientRect(), c = applyCamera(); if (!c) return;
+      ray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, c);
+      const hit = ray.ray.intersectPlane(floorPlane, new THREE.Vector3());
+      if (hit) freePick(hit.x, hit.z);
+    });
     function zoomBy(f, absolute) {
       if (state.view === 'orbit') { orbit.r = Math.max(4, Math.min(30, (absolute ? r0 : orbit.r) / f)); }
       else if (state.view === 'plan') { planZoom = Math.max(1, Math.min(5, (absolute ? zoom0 : planZoom) * f)); syncZoom(); }
@@ -3753,7 +3841,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
     buildStatic(); buildPlanStatic(); rebuildDyn(); rebuildMembersImpl();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { rebuildMembersImpl(); if (state.sim) updateCrowd(state.sim); render(); });
     return {
-      render, rebuildDyn, rebuildMembers: rebuildMembersImpl, updateCrowd, updateSight,
+      render, rebuildDyn, rebuildMembers: rebuildMembersImpl, updateCrowd, updateSight, setHeat,
+      showHeat(on) { heatOn = on; if (heatMesh) heatMesh.visible = on; iDisc.material.opacity = on ? 0.5 : 1; render(); },
       resetLook() { look.yaw = 0; look.pitch = 0; },
       planZoom: () => planZoom,
       setPlanZoom(z) {
@@ -3801,10 +3890,50 @@ details.fold[open] > summary { margin-bottom: 8px; }
     syncZoom();
     $('#sightLegend').hidden = !(state.view === 'orbit' || state.view === 'plan');
     $('#sightLegend').classList.toggle('plan', state.view === 'plan' || state.view === 'orbit');
-    updateHud(); if (gl) gl.render();
+    updateHud(); syncFree(); if (gl) gl.render();
     planHint();
   });
-  // 最前 / 通常 / 最後 = the runs where you stand closest, typical, furthest (of the 20); the choice sticks
+
+  /* ============ free mode: stand anywhere ============ */
+  function syncFree() {
+    const on = !!state.free, b = $('#freeBtn');
+    b.setAttribute('aria-pressed', String(on)); b.textContent = on ? '↩ 回到排隊位置' : '📍 自己選位置';
+    $('#luckLead').hidden = on; $('#luckSeg').hidden = on;
+    $('#movePad').hidden = !(on && (state.view === 'eye' || state.view === 'orbit'));
+    $('#freeHint').hidden = !on;
+    $('#freeHint').textContent = state.view === 'eye' ? '用方向鍵移動，或切到平面圖看哪裡最清楚' : state.view === 'oshi' ? '切到平面圖或俯瞰，點地板換位置'
+      : state.view === 'plan' ? (state.heat ? '綠色＝看得到推的臉，紅色＝被擋住。點地板換位置' : '正在算哪裡看得最清楚…點地板可以先換位置') : '點地板換位置';
+    if (gl) gl.showHeat(on);
+    // the sightline legend would cover half the map; the hint already explains the colours
+    $('#sightLegend').hidden = on || !(state.view === 'orbit' || state.view === 'plan');
+    $('#plan').hidden = on; $('#curvePanel').hidden = on;
+    const w = $('#tkWarn'); w.hidden = !on; w.textContent = on ? '自由站位中：位置是你選的，順位只影響其他人怎麼站。' : '';
+  }
+  function setFree(on) {
+    const u = state.sim && state.sim.user;
+    state.free = on ? (u ? { x: u.x, z: u.z } : { x: 0, z: 3 }) : null;
+    if (on && state.view === 'eye') $('#viewTabs [data-v="plan"]').click();   // the map (with the heat colours) is where you pick
+    if (on) state.luckKey = 'rep';
+    syncFree(); renderLuck(); schedule();
+  }
+  // stand on the floor spot nearest (x, z); the sim trades places with whoever stood there
+  function freePick(x, z) { if (!state.free) return; state.free = { x, z }; schedule(); }
+  $('#freeBtn').addEventListener('click', () => setFree(!state.free));
+  // one step ≈ one person over; held down it keeps walking
+  const STEP = { f: [0, -0.6], b: [0, 0.6], l: [-0.58, 0], r: [0.58, 0] };
+  const stepFree = d => { const u = state.sim && state.sim.user; if (u && state.free) freePick(u.x + STEP[d][0], u.z + STEP[d][1]); };
+  $('#movePad').querySelectorAll('button').forEach(btn => {
+    let t = 0;
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); stepFree(btn.dataset.d); clearInterval(t); t = setInterval(() => stepFree(btn.dataset.d), 280); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, () => clearInterval(t)));
+    btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); stepFree(btn.dataset.d); } });
+  });
+  document.addEventListener('keydown', e => {
+    const d = { ArrowUp: 'f', ArrowDown: 'b', ArrowLeft: 'l', ArrowRight: 'r' }[e.key];
+    if (!d || !state.free || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    e.preventDefault(); stepFree(d);
+  });
+  // 運氣好 / 一般 / 運氣差 = the runs where you stand closest, typical, furthest (of the 20); the choice sticks
   // when the conditions change, and the worker re-resolves it (res odds are too slow for the main thread)
   $('#luckSeg').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -3893,12 +4022,15 @@ details.fold[open] > summary { margin-bottom: 8px; }
         const p = msg.params;
         const rows = S.runBatch(p, msg.seeds), summary = S.summarize(rows);
         const rep = S.representativeSeed(rows, summary), seed = S.pickSeed(rows, summary, msg.luckKey);
+        // free mode: where the queue would have put you, for the "比排隊的位置多看到…" line
+        const qsum = p.freeSpot ? S.summarize(S.runBatch(Object.assign({}, p, { freeSpot: null }), msg.seeds)) : null;
         const v = view(p, seed);
-        return Object.assign({ type: 'main', id: msg.id, rows, summary, rep }, v);
+        return Object.assign({ type: 'main', id: msg.id, rows, summary, rep, qsum }, v);
       },
       curvePoint(p, n, seeds) { const rows = S.runBatch(Object.assign({}, p, { queue: n }), seeds); return { n, sum: S.summarize(rows) }; },
       buckets(p, seeds, per) { return S.bucketStats(p, seeds, per); },
-      aims(p, seeds) { return S.compareAims(p, seeds); }
+      aims(p, seeds) { return S.compareAims(p, seeds); },
+      heat(p, seeds) { return S.spotScores(p, seeds, 1500); }
     };
   }
   function workerMain() {
@@ -3906,6 +4038,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       const m = e.data;
       if (m.type === 'main') self.postMessage(TASKS.main(m));
       else if (m.type === 'aims') self.postMessage({ type: 'aims', id: m.id, list: TASKS.aims(m.params, m.seeds) });
+      else if (m.type === 'heat') self.postMessage({ type: 'heat', id: m.id, pts: TASKS.heat(m.params, m.seeds) });
       else if (m.type === 'buckets') self.postMessage({ type: 'buckets', id: m.id, groups: TASKS.buckets(m.params, m.seeds, m.per) });
       else if (m.type === 'curve') {
         // yield between points so the page stays responsive
@@ -3961,11 +4094,12 @@ details.fold[open] > summary { margin-bottom: 8px; }
   }
   let curveTimer = 0, bucketTimer = 0, aimTimer = 0;
   function applyMain(d) {
-    state.rows = d.rows; state.summary = d.summary; state.rep = d.rep; state.luck = S.luckSeeds(d.rows);
+    state.rows = d.rows; state.summary = d.summary; state.rep = d.rep; state.luck = S.luckSeeds(d.rows); state.qsum = d.qsum;
     applyView(d);
     setStale(false);
-    clearTimeout(curveTimer); curveTimer = setTimeout(startCurve, 300);
     clearTimeout(bucketTimer); bucketTimer = setTimeout(startBuckets, 200);
+    if (state.free) { startHeat(); return; }   // queue curve and aim comparison don't apply to a spot you picked yourself
+    clearTimeout(curveTimer); curveTimer = setTimeout(startCurve, 300);
     clearTimeout(aimTimer); aimTimer = setTimeout(startAims, 250);
   }
   function applyView(v) {
@@ -4029,14 +4163,15 @@ details.fold[open] > summary { margin-bottom: 8px; }
   const rowText = u => u.front ? '最前排' : '第 ' + (u.row + 1) + ' 排';
   // each button says where you would stand, so the choice explains itself
   function renderLuck() {
-    $('#luckLead').textContent = '同樣排第 ' + Math.min(state.ticket, general()) + ' 位，你可能站在';
+    // framed as luck at the door, so nobody reads 第 1 排 as a spot they get to choose
+    $('#luckLead').textContent = '同樣排第 ' + Math.min(state.ticket, general()) + ' 位，看進場運氣：';
     const seedOf = { good: state.luck && state.luck.good, rep: state.rep, bad: state.luck && state.luck.bad };
-    const name = { good: '最前', rep: '通常', bad: '最後' };
+    const name = { good: '運氣好', rep: '一般', bad: '運氣差' };
     const row = sd => state.rows && state.rows.find(r => r.seed === sd);
     $('#luckSeg').querySelectorAll('button').forEach(b => {
       const k = b.dataset.luck, r = row(seedOf[k]);
-      b.textContent = r ? name[k] + '：' + (r.front ? '第 1 排' : rowText({ front: 0, row: r.row })) : name[k];
-      b.title = r ? '離舞台邊 ' + fmt1(r.dist) + 'm' : '';
+      b.textContent = r ? name[k] + '・' + (r.front ? '第 1 排' : rowText({ front: 0, row: r.row })) : name[k];
+      b.title = r ? '進場順序、同行朋友都看運氣，模擬 ' + SEEDS.length + ' 次裡' + { good: '站得最前面', rep: '最常見', bad: '站得最後面' }[k] + '的一次：離舞台邊 ' + fmt1(r.dist) + 'm' : '';
       b.setAttribute('aria-pressed', String(state.luckKey === k));
     });
   }
@@ -4055,15 +4190,23 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const n = ev.members.length, om = ev.members.find(r => r.member.id === state.oshi) || ev.members[0];
     const head = om.face >= 0.5 ? ['g', '看得到'] : om.faceLean >= 0.5 ? ['g2', '偏頭就看得到'] : om.faceLean > 0 ? ['w', '只看得到一部分'] : ['b', '被擋住了'];
     const big = el('div', 'big');
-    big.append(el('span', 'k', '推（' + MEMBERS[om.member.id].name + '）的臉'), el('span', 'v vt ' + head[0], head[1]));
+    const free = !!state.free;
+    big.append(el('span', 'k', (free ? '站在這裡，' : '') + '推（' + MEMBERS[om.member.id].name + '）的臉'), el('span', 'v vt ' + head[0], head[1]));
     const ss = el('span', 's');
-    ss.append(document.createTextNode('排第 ' + Math.min(state.ticket, general()) + ' 位，大概站' + rowText(u) + '。' + n + ' 位成員裡看得到 '), el('b', null, ev.faceCount + ' 位'),
+    ss.append(document.createTextNode((free ? '離舞台邊 ' + fmt1(u.z) + 'm，' + lateralText(u.x) + '。' : '排第 ' + Math.min(state.ticket, general()) + ' 位，大概站' + rowText(u) + '。') + n + ' 位成員裡看得到 '), el('b', null, ev.faceCount + ' 位'),
       document.createTextNode(ev.faceCountLean > ev.faceCount ? '的臉（偏頭 ' + ev.faceCountLean + ' 位）。' : '的臉。'));
     big.append(ss);
+    if (free && state.qsum && s) {   // compared with where the queue would have put you
+      const q = state.qsum, diff = Math.round(s.faceCountLean.p50 - q.faceCountLean.p50);
+      const cmp = el('span', 's cmp', '比排第 ' + Math.min(state.ticket, general()) + ' 位通常會站的位置（' + (q.frontProb >= 0.5 ? '最前排' : '第 ' + Math.round(q.row.p50 + 1) + ' 排') + '）' +
+        (diff > 0 ? '多看到 ' + diff + ' 位成員的臉。' : diff < 0 ? '少看到 ' + (-diff) + ' 位成員的臉。' : '看到的成員一樣多。'));
+      const back = el('button', 'btn-ghost', '回到排隊位置'); back.type = 'button'; back.addEventListener('click', () => setFree(false));
+      cmp.append(' ', back); big.append(cmp);
+    }
     const facts = el('div', 'facts');
     const addFact = (k, val, unit) => { const f = el('div', 'fact'); f.append(el('span', 'k', k)); const vEl = el('span', 'v', val); if (unit) vEl.append(el('span', 'u', ' ' + unit)); f.append(vEl); facts.append(f); };
     addFact('離舞台邊', fmt1(u.z), 'm');
-    addFact('前後位置', rowText(u));
+    if (free) addFact('左右位置', lateralText(u.x)); else addFact('前後位置', rowText(u));
     if (state.res) addFact('推給你回應', pctFine(state.res.show), '一場 ' + state.res.songs + ' 首歌');
     v.append(big, facts);
     const more = el('details', 'fold vmore'); more.open = wasOpen; more.append(el('summary', null, '看計算細節'));
@@ -4371,13 +4514,15 @@ details.fold[open] > summary { margin-bottom: 8px; }
   new ResizeObserver(() => drawCurve()).observe($('#chartBox'));
 
   /* ============ reverse lookup: how far back can you queue? ============ */
+  // default: the oshi's face without leaning — leaning finds a gap almost anywhere when the floor is loose
   const GOALS = {
+    oshiStill: { get: s => s.oshiFaceProb, scale: 100, unit: '%', def: 80, max: 100, text: v => '不動就看得到推的臉的機率 ≥ ' + v + '%' },
     oshi: { get: s => s.oshiFaceLeanProb, scale: 100, unit: '%', def: 80, max: 100, text: v => '偏頭看得到推的臉的機率 ≥ ' + v + '%' },
     faceLean: { get: s => s.faceCountLean.mean, scale: 1, unit: '人', def: () => Math.ceil(nMembers() * 0.6), max: () => nMembers(), text: v => '偏頭平均看得到 ' + v + ' 人以上的臉' },
     upper: { get: s => s.avgUpper.mean, scale: 100, unit: '%', def: 60, max: 100, text: v => '上半身平均看得到 ' + v + '% 以上' }
   };
   const val = (f) => typeof f === 'function' ? f() : f;
-  state.goal = 'oshi'; state.goalVal = 80;
+  state.goal = 'oshiStill'; state.goalVal = 80;
   const curveDone = () => curve.total && curve.pts.length >= curve.total;
   function goalQueue(pts) {
     if (!curveDone()) return -1;
@@ -4390,7 +4535,11 @@ details.fold[open] > summary { margin-bottom: 8px; }
     if (!curveDone()) { ans.textContent = '計算中 ' + curve.pts.length + '/' + (curve.total || '…'); note.textContent = ''; return; }
     const N = general(), q = goalQueue(pts);
     if (q === 0) ans.append(document.createTextNode('排第 1 位也不一定達得到「' + G.text(state.goalVal) + '」。'));
-    else if (q >= N) ans.append(document.createTextNode('排到隊伍最後（第 ' + N + ' 位）都還達得到。'));
+    else if (q >= N) {
+      ans.append(document.createTextNode('排到隊伍最後（第 ' + N + ' 位）都還達得到。'));
+      const rho = state.sim && state.sim.rhoBack;
+      if (rho && rho < 2.5) ans.append(document.createTextNode('今天 ' + state.total + ' 人，後面每平方公尺約 ' + fmt1(rho) + ' 人，站後面也有縫可以看。'));
+    }
     else {
       ans.append(document.createTextNode('排在 '), el('b', null, '第 ' + q + ' 位以內'), document.createTextNode('，平均能達到「' + G.text(state.goalVal) + '」。'));
       const d = q - Math.min(state.ticket, N);
@@ -4409,6 +4558,20 @@ details.fold[open] > summary { margin-bottom: 8px; }
     state.goalVal = Math.max(0, Math.min(val(G.max), Number(e.target.value) || 0));
     e.target.value = String(state.goalVal); drawCurve();
   });
+
+  /* ============ heat map (free mode): where the oshi's face shows best ============ */
+  const HEAT_SEEDS = [3001, 3002, 3003];
+  let heatW = null, heatId = 0;
+  function startHeat() {
+    const p = Object.assign(params(), { freeSpot: null }), key = JSON.stringify(p);
+    if (key === state.heatKey) { if (gl) gl.setHeat(state.heat); return; }   // same crowd and members: reuse
+    const id = ++heatId; state.heatKey = key; state.heat = null; syncFree();
+    if (heatW) { heatW.terminate(); heatW = null; }
+    heatW = makeWorker();
+    const done = pts => { if (id !== heatId) return; if (heatW) { heatW.terminate(); heatW = null; } state.heat = pts; syncFree(); if (gl) { gl.setHeat(pts); gl.render(); } };
+    if (heatW) { heatW.onmessage = e => { if (e.data.type === 'heat' && e.data.id === heatId) done(e.data.pts); }; heatW.postMessage({ type: 'heat', id, params: p, seeds: HEAT_SEEDS }); return; }
+    setTimeout(() => done(TASKS.heat(p, HEAT_SEEDS)), 0);
+  }
 
   /* ============ aim comparison at your queue position ============ */
   const aimLabel = a => { const b = $('#aimSeg [data-v="' + a + '"]'); return b ? b.textContent : a; };
@@ -4430,15 +4593,15 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const t = $('#aimTable'), list = state.aims; t.textContent = '';
     if (!list) return;
     const hr = el('tr');
-    ['站法', '推的臉（偏頭）', '看得到臉（偏頭）', '上半身', '離舞台邊', ''].forEach(h => hr.append(el('th', null, h)));
+    ['站法', '推的臉（不動）', '推的臉（偏頭）', '看得到臉（偏頭）', '離舞台邊', ''].forEach(h => hr.append(el('th', null, h)));
     const th = el('thead'); th.append(hr); t.append(th);
     const tb = el('tbody');
     list.forEach((r, i) => {
       const tr = el('tr'); if (r.aim === state.aim) tr.className = 'is-oshi';
       const name = el('td'); name.append(document.createTextNode(aimLabel(r.aim)));
       if (i === 0) name.append(el('span', 'best', '最划算'));
-      tr.append(name, el('td', null, pct(r.sum.oshiFaceLeanProb)), el('td', null, fmt1(r.sum.faceCountLean.mean) + ' 人'),
-        el('td', null, pct(r.sum.avgUpper.mean)), el('td', null, fmt1(r.sum.dist.p50) + 'm'));
+      tr.append(name, el('td', null, pct(r.sum.oshiFaceProb)), el('td', null, pct(r.sum.oshiFaceLeanProb)), el('td', null, fmt1(r.sum.faceCountLean.mean) + ' 人'),
+        el('td', null, fmt1(r.sum.dist.p50) + 'm'));
       const td = el('td');
       if (r.aim === state.aim) td.append(el('span', 'note', '目前'));
       else {
@@ -4451,16 +4614,16 @@ details.fold[open] > summary { margin-bottom: 8px; }
     t.append(tb);
     const best = list[0], cur = list.find(r => r.aim === state.aim) || best, ans = $('#aimAns'); ans.textContent = '';
     // less than 5 points better is noise across 8 runs: don't tell people to move for it
-    if (best.aim === state.aim || best.sum.oshiFaceLeanProb - cur.sum.oshiFaceLeanProb < 0.05)
-      ans.append(document.createTextNode('你選的「' + aimLabel(cur.aim) + '」已經夠好了，偏頭看得到推的臉的機率 '), el('b', null, pct(cur.sum.oshiFaceLeanProb)), document.createTextNode('。'));
+    if (best.aim === state.aim || best.sum.oshiFaceProb - cur.sum.oshiFaceProb < 0.05)
+      ans.append(document.createTextNode('站「' + aimLabel(cur.aim) + '」就很好，不動就看得到推的臉的機率 '), el('b', null, pct(cur.sum.oshiFaceProb)), document.createTextNode('。'));
     else {
-      ans.append(document.createTextNode('改站「' + aimLabel(best.aim) + '」比較划算：偏頭看得到推的臉 '), el('b', null, pct(best.sum.oshiFaceLeanProb)),
-        document.createTextNode('（現在 ' + pct(cur.sum.oshiFaceLeanProb) + '）。'));
+      ans.append(document.createTextNode('改站「' + aimLabel(best.aim) + '」比較划算：不動就看得到推的臉 '), el('b', null, pct(best.sum.oshiFaceProb)),
+        document.createTextNode('（站「' + aimLabel(cur.aim) + '」是 ' + pct(cur.sum.oshiFaceProb) + '）。'));
       const go = el('button', 'btn-ghost', '改用'); go.type = 'button';
       go.addEventListener('click', () => { state.aim = best.aim; setPressed($('#aimSeg'), state.aim); schedule(); });
       ans.append(' ', go);
     }
-    $('#aimNote').textContent = '同一批 ' + CURVE_SEEDS.length + ' 次入場模擬，只換你的站位目標。排序：推的臉優先，其次看得到的人數。';
+    $('#aimNote').textContent = '同一批 ' + CURVE_SEEDS.length + ' 次入場模擬，只換你的站位目標。排序：不動就看得到推的臉優先，其次偏頭、看得到的人數。';
   }
 
   /* ============ sources & reference material ============ */
@@ -4639,7 +4802,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       '能見度：每位成員身上放 33 個點，從你的眼睛（身高 × 0.933）看過去，判斷有沒有被前面觀眾的身體、舞台邊、柱子、欄杆擋住。「偏頭」是頭往左右各移動 12cm 內看得到的點。',
       '場面：觀眾照 MC 時的站位進場排好，之後每首歌換隊形（' + S.SCENES.filter(sc => sc.song).map(sc => sc.label).join('、') + '），成員站位每次開頁隨機，3D 和判定看目前選的場面。',
       '推給你的回應：推每次對特定一個人回應（目線、指人、揮手），會從推看得到臉的觀眾裡依權重挑一個人。權重 = 看得到（1，要偏頭 0.5，看不到 0）× 距離（3m 內 1，之後每 1.5m 約剩 0.37 倍）× 角度（推的正面 1、正側面 0.25）× 推的粉絲 5 倍（你和約 1/成員數 的觀眾）。每首歌回應 ' + S.RES.perSong + ' 次，一場 ' + S.RES.songs + ' 首歌（約聯合公演 30 分鐘），每首隨機換場面和推的站位後平均。這些權重是推定值，沒有算進認知度、應援、推色等個人差異。',
-      '結果是 20 次入場模擬的統計。3D 預設顯示最接近中位數的那一次（一般），3D 左下「最前／最後」是 20 次裡你站得最前面、最後面的那一次。',
+      '結果是 20 次入場模擬的統計。3D 預設顯示最接近中位數的那一次（一般），3D 左下「運氣好／運氣差」是 20 次裡你站得最前面、最後面的那一次。',
       '入口：「觀眾塞在入口附近」開啟時，第 ' + S.BACK_PREF_FROM + ' 位以後進場的人約 ' + Math.round(S.ENTRANCE_SHARE * 100) + '% 會停在入口附近，不往裡面走，所以願意往內走的人比較容易找到好位置。只套用在平面圖有標入口的場館。',
       '場次：生誕祭時人數預設多 30%，大部分粉絲搶壽星（你推的成員）正前方；熱門團體時段人數預設多 20%，他團粉絲大多留在觀眾區一起搶位。比例是推定值。',
       '沒有模擬的：跳躍、往前擠、帽子和髮型、演出中途換位置、特典會排隊動線。'
