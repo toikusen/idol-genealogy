@@ -968,6 +968,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
           <button type="button" data-v="2" aria-pressed="true">2 人</button>
           <button type="button" data-v="3" aria-pressed="false">3 人</button>
         </div>
+        <div class="seg">
+          <button type="button" id="guardToggle" aria-pressed="false">最前管理：第一排張手卡欄杆 💢</button>
+        </div>
         <p class="note" id="frontNote">沿著舞台邊排滿。</p>
       </fieldset>
 
@@ -1440,7 +1443,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       venue: VN, stageH, stage, stageDepth: -sb.z0, ceiling: VN.ceiling,
       barrierZ: barrier !== 'none' ? Number(barrier) : null,
       barrierH: PROVISIONAL.barrierHeight, mixOnFloor: !!p.mixOnFloor,
-      frontMode: p.frontMode === 'bami' ? 'bami' : 'pack', bamiPer: Math.max(1, Math.min(3, p.bamiPer || 2)),
+      frontMode: p.frontMode === 'bami' ? 'bami' : 'pack', bamiPer: Math.max(1, Math.min(3, p.bamiPer || 2)), frontGuard: !!p.frontGuard,
       bounds: bounds([VN.floor, stage])
     };
     const boxes = [obbFromCorners([[sb.x0, sb.z0], [sb.x1, sb.z0], [sb.x1, sb.z1], [sb.x0, sb.z1]], 0, stageH, { kind: 'stage' })];
@@ -1549,6 +1552,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   function inFront(V, x) { return x >= V.frontRange[0] - 1e-6 && x <= V.frontRange[1] + 1e-6; }
 
   const FRONT_PITCH = 0.58;
+  // 最前管理: front-row regulars plant both hands on the rail, elbows out, so each takes a wider slot
+  const GUARD_PITCH = 0.84, GUARD_REACH = 0.42;
+  const frontPitch = V => V.frontGuard ? GUARD_PITCH : FRONT_PITCH;
   function generateFloorSpots(V, rng, members, dens) {
     const spots = [];
     const z0 = V.frontZ, zMax = V.bounds.z1 - 0.1;
@@ -1574,7 +1580,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       const s = 1 / Math.sqrt(rhoOf(r));
       const frontRow = r === 0;
       const bamiRow = frontRow && V.frontMode === 'bami';
-      const dx = frontRow ? FRONT_PITCH : s * 0.95;
+      const dx = frontRow ? frontPitch(V) : s * 0.95;
       const offset = (r % 2) * dx * 0.5;
       for (const [xa, xb] of polyXRange(V.venue.floor, rz)) {
         for (let x = xa + 0.25 + offset; x <= xb - 0.25 + 1e-6; x += dx) {
@@ -1584,15 +1590,15 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
           pushSpot(x + jx, rz + jz, r, d, frontRow && inFront(V, x));
         }
       }
-      if (bamiRow) for (const x of bamiFrontXs(members, V.bamiPer, V.frontRange)) pushSpot(x, rz, r, d, true);
+      if (bamiRow) for (const x of bamiFrontXs(members, V.bamiPer, V.frontRange, frontPitch(V))) pushSpot(x, rz, r, d, true);
     }
     return spots;
   }
 
   // front-row x positions when fans line up in front of each member's mark (バミ)
-  function bamiFrontXs(members, per, range) {
+  function bamiFrontXs(members, per, range, pitch = FRONT_PITCH) {
     const [lo0, hi0] = range;
-    const w = per * FRONT_PITCH;
+    const w = per * pitch;
     const iv = members.map(m => [m.x - w / 2, m.x + w / 2]).sort((a, b) => a[0] - b[0]);
     const merged = [];
     for (const [a, b] of iv) {
@@ -1601,16 +1607,16 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     }
     const out = [];
     for (let [a, b] of merged) {
-      a = Math.max(a, lo0 - FRONT_PITCH / 2); b = Math.min(b, hi0 + FRONT_PITCH / 2);
+      a = Math.max(a, lo0 - pitch / 2); b = Math.min(b, hi0 + pitch / 2);
       if (b <= a) continue;
-      const n = Math.max(1, Math.floor((b - a) / FRONT_PITCH + 1e-6));
+      const n = Math.max(1, Math.floor((b - a) / pitch + 1e-6));
       const step = (b - a) / n;
       for (let k = 0; k < n; k++) out.push(a + step * (k + 0.5));
     }
     if (out.length) {
       const lo = Math.min(...merged.map(m => m[0])), hi = Math.max(...merged.map(m => m[1]));
-      for (let x = hi + FRONT_PITCH / 2; x <= hi0 + 1e-6; x += FRONT_PITCH) out.push(x);
-      for (let x = lo - FRONT_PITCH / 2; x >= lo0 - 1e-6; x -= FRONT_PITCH) out.push(x);
+      for (let x = hi + pitch / 2; x <= hi0 + 1e-6; x += pitch) out.push(x);
+      for (let x = lo - pitch / 2; x >= lo0 - 1e-6; x -= pitch) out.push(x);
       out.sort((a, b) => a - b);
     }
     return out;
@@ -1689,7 +1695,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const V = buildVenue(p);
     const members = buildMembers(p, V);
     const dens = crowdDensity(V, p);
-    const spotKey = JSON.stringify([V.venue.id, V.barrierZ, !!p.mixOnFloor, p.frontMode, p.bamiPer, p.formation, p.positionOrder, V.stageH, V.stageDepth, dens.mid, dens.back]);
+    const spotKey = JSON.stringify([V.venue.id, V.barrierZ, !!p.mixOnFloor, p.frontMode, p.bamiPer, V.frontGuard, p.formation, p.positionOrder, V.stageH, V.stageDepth, dens.mid, dens.back]);
     let floorSpots = SPOT_CACHE.get(spotKey);
     if (!floorSpots) {
       floorSpots = generateFloorSpots(V, mulberry32(4242), members, dens);
@@ -1816,9 +1822,11 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       people.push({ no: qno, idx: no, vip: isVip, other: P.other, x: sp.x, z: sp.z, floorY: 0, h: body.h, male: body.male, level: 1, seated: false, row: sp.row, front: sp.front });
     }
 
+    const grip = guardGrip(V);
     for (const q of people) {
       q.arm = 0;
-      if (p.armsUp && !q.other && rng() < 0.45) {
+      if (V.frontGuard && q.front) { q.guard = true; q.hands = [-1, 1].map(sd => [q.x + sd * GUARD_REACH, grip.y, grip.z]); }
+      else if (p.armsUp && !q.other && rng() < 0.45) {
         q.arm = rng() < 0.5 ? -1 : 1;
         q.penColor = Math.floor(rng() * members.length);
       }
@@ -1827,6 +1835,16 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     if (user) { user.arm = 0; user.shoulderW = 0.19; }
     const frontCap = floorSpots.filter(sp => sp.front).length;
     return { V, members, people, user, floorSpots, balSpots: [], userNo: user ? user.no : 0, frontCap, rhoBack: dens.back, rhoMid: dens.mid, vip };
+  }
+
+  // where 最前管理 hands land: the moat rail, or the stage lip when there is no rail
+  function guardGrip(V) {
+    return V.barrierZ != null ? { y: V.barrierH, z: V.barrierZ + 0.02 } : { y: Math.max(0.6, Math.min(1.3, V.stageH)), z: 0.02 };
+  }
+  // shoulder → hand on the rail, one per side
+  function guardArm(q, side) {
+    const d = bodyDims(q), sh = shoulderY(q);
+    return { A: [q.x + side * d.ax, sh - 0.03 * d.s, q.z], B: q.hands[side < 0 ? 0 : 1], r: d.ar, d };
   }
 
   function userTargetX(p, members) {
@@ -1966,7 +1984,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     if (hitEllCyl(P0, D, q.x, q.z, d.tw, d.td, base, sh)) return true;
     for (const side of [-1, 1]) {
       if (q.arm === side) continue;
-      const a = hangingArm(q, side);
+      const a = q.guard ? guardArm(q, side) : hangingArm(q, side);
       if (hitCapsule(P0, D, a.A, a.B, a.r)) return true;
     }
     if (q.arm) {
@@ -2210,7 +2228,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     FRONT_ROWS, FRONT_DENSITY, MID_MAX, BODY, bodyDims, raisedArm, hangingArm,
     pointInPoly, polyXRange, formationPos, bamiFrontXs, usableArea, crowdDensity, presentCount, floorSpotInfo,
     buildVenue, simulate, evaluateView, oshiAcrossSlots, runBatch, summarize, representativeSeed,
-    bucketRanges, bucketStats, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
+    bucketRanges, bucketStats, guardArm, GUARD_PITCH, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.OWSim = api;
@@ -2359,7 +2377,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
   const state = {
     ticket: 50, userHeight: 170, aim: 'center', oshi: 2,
     total: VN.defaults.total, vip: 0, chaos: 'mid', groupRate: 0.25, otherFanRate: 0,
-    maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true,
+    maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true, frontGuard: false,
     barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false,
     formation: 'line', frontMode: 'pack', bamiPer: 2,
     memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4],
@@ -2377,7 +2395,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       barrier: state.barrier, stageH: state.stageH, stageDepth: state.stageDepth, mixOnFloor: state.mixOnFloor,
       formation: state.formation, frontMode: state.frontMode, bamiPer: state.bamiPer,
       memberHeights: state.memberHeights.slice(), armsUp: state.armsUp, positionOrder: state.positionOrder.slice(),
-      event: state.event, entranceCrowd: state.entranceCrowd
+      event: state.event, entranceCrowd: state.entranceCrowd, frontGuard: state.frontGuard
     };
   }
 
@@ -2608,7 +2626,11 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     const note = $('#frontNote');
     if (state.frontMode === 'pack') note.textContent = '沿著舞台邊排滿，最前排約 ' + state.packedCap + ' 人。';
     else note.textContent = '對著每位成員的站位排，站位之間留空，兩端照常排滿。最前排約 ' + state.sim.frontCap + ' 人（全部排滿是 ' + state.packedCap + ' 人）。';
+    if (state.frontGuard) note.textContent += '最前管理開啟：第一排雙手張開撐在' + (S.buildVenue(params()).barrierZ != null ? '護城河欄杆' : '舞台邊') + '上，每人佔約 ' + Math.round(S.GUARD_PITCH * 100) + 'cm 寬，不會讓位，手臂也會擋到第二排的視線。';
   }
+  $('#guardToggle').addEventListener('click', e => {
+    state.frontGuard = !state.frontGuard; e.currentTarget.setAttribute('aria-pressed', String(state.frontGuard)); schedule();
+  });
   $('#formation').addEventListener('change', e => { state.formation = e.target.value; rebuildMembers(); schedule(); });
   $('#rotateBtn').addEventListener('click', () => {
     state.positionOrder = state.positionOrder.slice(1).concat(state.positionOrder[0]);
@@ -2932,6 +2954,26 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     glowGeo.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(CAP * 3), 3));
     const glow = new THREE.Points(glowGeo, new THREE.PointsMaterial({ size: 0.42, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
     glow.frustumCulled = false; scene.add(glow);
+    /* 最前管理: scowl (brows + frown) on the face and a 💢 mark floating over the head */
+    const iFace = mk(new THREE.BoxGeometry(1, 1, 1), M_EYE);
+    const EYE_BOX = {};
+    for (const sx of ['m', 'f']) { const g = TPL[sx].T.eyes; g.computeBoundingBox(); EYE_BOX[sx] = g.boundingBox; }
+    const angerTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); x.font = '52px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('💢', 32, 36); return new THREE.CanvasTexture(c); })();
+    const angerGeo = new THREE.BufferGeometry();
+    angerGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(CAP * 3), 3));
+    const anger = new THREE.Points(angerGeo, new THREE.PointsMaterial({ size: 0.4, map: angerTex, transparent: true, alphaTest: 0.3, toneMapped: false }));
+    anger.frustumCulled = false; scene.add(anger);
+    const faceQ = new THREE.Quaternion(), zAxis = new THREE.Vector3(0, 0, 1);
+    function pushScowl(q, sx, s) {
+      const eb = EYE_BOX[sx], fz = q.z + (eb.min.z - 0.004) * s, half = (eb.max.x - eb.min.x) / 2;
+      for (const sd of [-1, 1]) {   // brows slant down toward the nose
+        const i = iFace.userData.n++; if (i >= CAP) return;
+        faceQ.setFromAxisAngle(zAxis, sd * 0.5);
+        setInst(iFace, i, q.x + sd * half * 0.62 * s, q.floorY + (eb.max.y + 0.016) * s, fz, 0.036 * s, 0.009 * s, 0.008 * s, faceQ);
+      }
+      const i = iFace.userData.n++; if (i >= CAP) return;
+      setInst(iFace, i, q.x, q.floorY + (eb.min.y - 0.034) * s, fz, 0.032 * s, 0.006 * s, 0.006 * s);
+    }
 
     const TEE = ['#1e1c2a', '#2a2738', '#ecebf2', '#3b3550', '#1d2a44', '#4c4660', '#e6dccb', '#24363a', '#5c2440', '#121018', '#7a7290', '#ff8fbf', '#9fe0ff'];
     const PANTS = ['#2c3e5a', '#1b1c20', '#5f584a', '#3d4048', '#26354f', '#141417'];
@@ -3097,17 +3139,18 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     function updateCrowd(sim) {
       crowdMeshes.forEach(m => { m.userData.n = 0; });
       const gp = glowGeo.attributes.position.array, gc = glowGeo.attributes.color.array; let ng = 0;
+      const ap = angerGeo.attributes.position.array; let na = 0;
       const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), Sv = new THREE.Vector3(), Pv = new THREE.Vector3();
       for (const q of sim.people) {
         const r = hashRng(q.idx * 31 + 7);
         const sx = q.male ? 'm' : 'f', c = crowd[sx], d = S.bodyDims(q);
         const toStage = Math.atan2(-(0 - q.x), -(-1.6 - q.z));
-        const yaw = q.arm ? 0 : Math.max(-0.25, Math.min(0.25, toStage * 0.5)) + (r() - 0.5) * 0.2;
+        const yaw = q.arm || q.guard ? 0 : Math.max(-0.25, Math.min(0.25, toStage * 0.5)) + (r() - 0.5) * 0.2;
         Q.setFromAxisAngle(up, yaw);
         M4.compose(Pv.set(q.x, q.floorY, q.z), Q, Sv.set(d.s, d.s, d.s));
         const skin = col(pick(r, SKIN));
         const teeHex = r() < 0.14 ? '#' + new THREE.Color(COSTUME[Math.floor(r() * COSTUME.length)]).multiplyScalar(0.62).getHexString() : pick(r, TEE);
-        const tee = col(teeHex);
+        const tee = col(q.guard ? '#121018' : teeHex);
         const hairC = col(pick(r, HAIR));
         const towel = r() < 0.22 ? col(COSTUME[Math.floor(r() * COSTUME.length)]) : null;
         const skirt = !q.male && r() < 0.35;
@@ -3116,8 +3159,21 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         if (skirt) { push(c.pants, M4, col('#1c1b20')); push(c.skirt, M4, col(pick(r, SKIRT))); }
         else push(c.pants, M4, col(pick(r, PANTS)));
         push(c.shirt, M4, tee);
-        if (q.arm !== -1) { push(c.sleeveL, M4, tee); push(c.armL, M4, skin); }
-        if (q.arm !== 1) { push(c.sleeveR, M4, tee); push(c.armR, M4, skin); }
+        if (q.guard) {
+          // both arms straight out to the rail (same capsules the sightline test uses)
+          for (const side of [-1, 1]) {
+            const ga = S.guardArm(q, side);
+            const E = [ga.A[0] + (ga.B[0] - ga.A[0]) * 0.32, ga.A[1] + (ga.B[1] - ga.A[1]) * 0.32, ga.A[2] + (ga.B[2] - ga.A[2]) * 0.32];
+            pushBetween(iRSleeve, ga.A, E, ga.d.ar + 0.012, tee);
+            pushBetween(iRArm, E, ga.B, ga.d.ar * 0.85, skin);
+            const hi = iRHand.userData.n++; if (hi < CAP) { setInst(iRHand, hi, ga.B[0], ga.B[1] + 0.02, ga.B[2], 0.035, 0.025, 0.045); iRHand.setColorAt(hi, skin); }
+          }
+          pushScowl(q, sx, d.s);
+          if (na < CAP) { ap[na * 3] = q.x + 0.1 * d.s; ap[na * 3 + 1] = S.standTop(q) + 0.12; ap[na * 3 + 2] = q.z; na++; }
+        } else {
+          if (q.arm !== -1) { push(c.sleeveL, M4, tee); push(c.armL, M4, skin); }
+          if (q.arm !== 1) { push(c.sleeveR, M4, tee); push(c.armR, M4, skin); }
+        }
         push(c.neck, M4, skin); push(c.head, M4, skin); push(c.eyes, M4, null);
         push(c.hair[hairIdx], M4, hairC);
         if (towel) push(c.towel, M4, towel);
@@ -3137,6 +3193,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       }
       crowdMeshes.forEach(m => { m.count = Math.min(CAP, m.userData.n); m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
       glowGeo.setDrawRange(0, ng); glowGeo.attributes.position.needsUpdate = true; glowGeo.attributes.color.needsUpdate = true;
+      angerGeo.setDrawRange(0, na); angerGeo.attributes.position.needsUpdate = true;
       const u = sim.user;
       if (u) {
         you.position.set(0, 0, 0);
@@ -3650,6 +3707,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       document.createTextNode('（不動 ' + pct(s.oshiFaceProb) + '）。'));
     if (state.otherFanRate > 0) p.append(document.createTextNode('聯合公演：他團粉約 ' + pct(state.otherFanRate) + '，輪到你推的團時讓出前方。'));
     if (state.armsUp) p.append(document.createTextNode('應援中（約 45% 舉單手拿螢光棒）。'));
+    if (state.frontGuard) p.append(document.createTextNode('最前管理中：第一排約 ' + state.sim.frontCap + ' 人張手卡住欄杆。'));
     if (state.event !== 'normal') p.append(document.createTextNode(S.EVENTS[state.event].label + '：入場人數 ' + state.total + ' 人。'));
     v.append(p);
   }
@@ -4195,6 +4253,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       '結果是 20 種入場情境的統計，3D 顯示最接近中位數的那一次（代表），◀▶ 可以看其他情境。',
       '入口：「觀眾塞在入口附近」開啟時，第 ' + S.BACK_PREF_FROM + ' 位以後進場的人約 ' + Math.round(S.ENTRANCE_SHARE * 100) + '% 會停在入口附近，不往裡面走，所以願意往內走的人比較容易找到好位置。只套用在平面圖有標入口的場館。',
       '場次：生誕祭時人數預設多 30%，大部分粉絲搶壽星（你推的成員）正前方；熱門團體時段人數預設多 20%，他團粉絲大多留在觀眾區一起搶位。比例是推定值。',
+      '最前管理：開啟時第一排的人雙手張開撐在護城河欄杆（沒有欄杆就撐舞台邊），每人佔 ' + Math.round(S.GUARD_PITCH * 100) + 'cm 寬（一般 58cm），手臂也算進視線遮擋。',
       '沒有模擬的：跳躍、往前擠、帽子和髮型、演出中途換位置、特典會排隊動線。'
     ];
     const ul = $('#assumptions'); A.forEach(x => ul.append(el('li', null, x)));
