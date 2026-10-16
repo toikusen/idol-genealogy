@@ -799,9 +799,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
 .luck { display: inline-flex; gap: 2px; padding: 0 4px; }
 .luck button { font-family: var(--f-body); }
 @media (max-width: 640px) {
-  /* phones: keep the luck picker, drop the run-by-run stepper */
-  .viewport:not(.expanded) #patternBox { display: flex; }
-  .viewport:not(.expanded) #patternBox #seedPrev, .viewport:not(.expanded) #patternBox #seedNext, .viewport:not(.expanded) #patternBox #seedLabel { display: none; }
+  .viewport:not(.expanded) #patternBox { display: flex; }   /* phones keep the 最前／通常／最後 picker */
 }
 
 /* 推的回應 overlay (從推的角度) and scene stepper */
@@ -848,15 +846,12 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
             <button type="button" id="scNext" aria-label="下一個場面">▶</button>
           </div>
           <div class="vp-box" id="patternBox">
-            <span class="lbl" title="每次進場的順序、同行朋友、身高都不同，模擬了 20 次">這次入場</span>
-            <span class="luck" id="luckSeg" role="group" aria-label="看哪一次入場">
-              <button type="button" data-luck="bad" aria-pressed="false">運氣差</button>
-              <button type="button" data-luck="rep" aria-pressed="true">一般</button>
-              <button type="button" data-luck="good" aria-pressed="false">運氣好</button>
+            <span class="lbl" id="luckLead" title="每次進場的順序、同行朋友、身高都不同；這是模擬 20 次入場裡的三種結果">同樣的排隊順位，你可能站在</span>
+            <span class="luck" id="luckSeg" role="group" aria-label="同樣的排隊順位，你可能站的位置">
+              <button type="button" data-luck="good" aria-pressed="false">最前</button>
+              <button type="button" data-luck="rep" aria-pressed="true">通常</button>
+              <button type="button" data-luck="bad" aria-pressed="false">最後</button>
             </span>
-            <button type="button" id="seedPrev" aria-label="上一次模擬">◀</button>
-            <span class="lbl" id="seedLabel" style="font-family:var(--f-num); color:var(--ink)">第 1/20 次</span>
-            <button type="button" id="seedNext" aria-label="下一次模擬">▶</button>
           </div>
           <div class="vp-box vp-legend" id="sightLegend" hidden="">
             <span><i style="background:var(--good)"></i>看得到</span>
@@ -3659,19 +3654,13 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     updateHud(); if (gl) gl.render();
     planHint();
   });
-  $('#seedPrev').addEventListener('click', () => stepSeed(-1));
-  $('#seedNext').addEventListener('click', () => stepSeed(1));
-  // 運氣差 / 一般 / 運氣好 = worst, most typical and best of the 20 runs
+  // 最前 / 通常 / 最後 = the runs where you stand closest, typical, furthest (of the 20)
   $('#luckSeg').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const k = b.dataset.luck;
     state.manualSeed = k !== 'rep';
     showSeed(k === 'rep' ? state.rep || 1 : state.luck[k]);
   });
-  function stepSeed(d) {
-    const i = SEEDS.indexOf(state.seed);
-    state.manualSeed = true; showSeed(SEEDS[(i + d + SEEDS.length) % SEEDS.length]);
-  }
 
   /* ============ fullscreen, hints, mobile bar ============ */
   const vpEl = $('#viewport');
@@ -3836,9 +3825,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     // live crowd density for the current turnout (the model packs the floor to fit everyone present)
     $('#densNote').textContent = '目前人數下：第一排每人約 58cm 寬，第 2–' + S.FRONT_ROWS + ' 排每平方公尺 ' + fmt1(state.sim.rhoMid) + ' 人，後面每平方公尺 ' + fmt1(state.sim.rhoBack) + ' 人' +
       (state.sim.rhoBack >= 3.5 ? '（很擠）。' : state.sim.rhoBack < 1.5 ? '（還很鬆）。' : '。');
-    $('#seedLabel').textContent = '第 ' + (SEEDS.indexOf(state.seed) + 1) + '/' + SEEDS.length + ' 次';
-    const luck = state.seed === state.rep ? 'rep' : state.luck && state.seed === state.luck.good ? 'good' : state.luck && state.seed === state.luck.bad ? 'bad' : '';
-    $('#luckSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.luck === luck)));
+    renderLuck();
     if (gl) { gl.updateCrowd(state.sim); gl.updateSight(state.ev); gl.render(); }
     renderVerdict(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawBucketMap(); paintRanges(); renderResBox();
   }
@@ -3876,6 +3863,19 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     return (x < 0 ? '偏左（下手）' : '偏右（上手）') + ' ' + fmt1(Math.abs(x)) + 'm';
   }
   const rowText = u => u.front ? '最前排' : '第 ' + (u.row + 1) + ' 排';
+  // each button says where you would stand, so the choice explains itself
+  function renderLuck() {
+    $('#luckLead').textContent = '同樣排第 ' + Math.min(state.ticket, general()) + ' 位，你可能站在';
+    const seedOf = { good: state.luck && state.luck.good, rep: state.rep, bad: state.luck && state.luck.bad };
+    const name = { good: '最前', rep: '通常', bad: '最後' };
+    const row = sd => state.rows && state.rows.find(r => r.seed === sd);
+    $('#luckSeg').querySelectorAll('button').forEach(b => {
+      const k = b.dataset.luck, r = row(seedOf[k]);
+      b.textContent = r ? name[k] + '：' + (r.front ? '第 1 排' : rowText({ front: 0, row: r.row })) : name[k];
+      b.title = r ? '離舞台邊 ' + fmt1(r.dist) + 'm' : '';
+      b.setAttribute('aria-pressed', String(state.seed === seedOf[k]));
+    });
+  }
   function updateHud() {
     const hud = $('#hud'); const u = state.sim && state.sim.user; if (!u) { hud.textContent = ''; return; }
     hud.textContent = '';
@@ -4457,7 +4457,7 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       '能見度：每位成員身上放 33 個點，從你的眼睛（身高 × 0.933）看過去，判斷有沒有被前面觀眾的身體、舞台邊、柱子、欄杆擋住。「偏頭」是頭往左右各移動 12cm 內看得到的點。',
       '場面：觀眾照 MC 時的站位進場排好，之後每首歌換隊形（' + S.SCENES.filter(sc => sc.song).map(sc => sc.label).join('、') + '），成員站位每次開頁隨機，3D 和判定看目前選的場面。',
       '推給你的回應：推每次對特定一個人回應（目線、指人、揮手），會從推看得到臉的觀眾裡依權重挑一個人。權重 = 看得到（1，要偏頭 0.5，看不到 0）× 距離（3m 內 1，之後每 1.5m 約剩 0.37 倍）× 角度（推的正面 1、正側面 0.25）× 推的粉絲 5 倍（你和約 1/成員數 的觀眾）。每首歌回應 ' + state.resPerSong + ' 次，一場 ' + state.resSongs + ' 首歌，每首隨機換場面和推的站位後平均。這些權重是推定值，沒有算進認知度、應援、推色等個人差異。',
-      '結果是 20 次入場模擬的統計。3D 預設顯示最接近中位數的那一次（一般），「運氣好／運氣差」是 20 次裡你站得最前面、最後面的一次，◀▶ 可以逐次看。',
+      '結果是 20 次入場模擬的統計。3D 預設顯示最接近中位數的那一次（一般），3D 左下「最前／最後」是 20 次裡你站得最前面、最後面的那一次。',
       '入口：「觀眾塞在入口附近」開啟時，第 ' + S.BACK_PREF_FROM + ' 位以後進場的人約 ' + Math.round(S.ENTRANCE_SHARE * 100) + '% 會停在入口附近，不往裡面走，所以願意往內走的人比較容易找到好位置。只套用在平面圖有標入口的場館。',
       '場次：生誕祭時人數預設多 30%，大部分粉絲搶壽星（你推的成員）正前方；熱門團體時段人數預設多 20%，他團粉絲大多留在觀眾區一起搶位。比例是推定值。',
       '沒有模擬的：跳躍、往前擠、帽子和髮型、演出中途換位置、特典會排隊動線。'
