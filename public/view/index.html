@@ -3116,44 +3116,52 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
     glowGeo.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(CAP * 3), 3));
     const glow = new THREE.Points(glowGeo, new THREE.PointsMaterial({ size: 0.42, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
     glow.frustumCulled = false; scene.add(glow);
-    /* 最前管理: glaring brows pressed down on the eyes, 最前管理 printed on the tee front and back */
+    /* 最前管理: glaring brows, a grim mouth, 最前／管理 printed in two lines on the tee front and back */
     const iFace = mk(new THREE.BoxGeometry(1, 1, 1), M_EYE);
-    const EYE_BOX = {}, SHIRT_BOX = {};
+    const EYE_BOX = {}, SHIRT_BOX = {}, HEAD_BOX = {};
     for (const sx of ['m', 'f']) {
-      const T = TPL[sx].T; T.eyes.computeBoundingBox(); T.shirt.computeBoundingBox();
-      EYE_BOX[sx] = T.eyes.boundingBox; SHIRT_BOX[sx] = T.shirt.boundingBox;
+      const T = TPL[sx].T; T.eyes.computeBoundingBox(); T.shirt.computeBoundingBox(); T.head.computeBoundingBox();
+      EYE_BOX[sx] = T.eyes.boundingBox; SHIRT_BOX[sx] = T.shirt.boundingBox; HEAD_BOX[sx] = T.head.boundingBox;
     }
+    const PRINT_ASPECT = 0.875;
     const printTex = (() => {
-      const c = document.createElement('canvas'); c.width = 512; c.height = 128; const x = c.getContext('2d');
-      x.font = 'bold 96px "JF Openhuninn", "Huninn", "PingFang TC", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-      x.fillStyle = '#ffffff'; x.fillText('最前管理', 256, 68);
+      const c = document.createElement('canvas'); c.width = 256; c.height = 256 * PRINT_ASPECT; const x = c.getContext('2d');
+      x.font = 'bold 100px "JF Openhuninn", "Huninn", "PingFang TC", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillStyle = '#ffffff'; x.fillText('最前', 128, 60); x.fillText('管理', 128, 168);
       const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
     })();
-    const iPrint = mk(new THREE.PlaneGeometry(1, 0.25), new THREE.MeshBasicMaterial({ map: printTex, transparent: true, alphaTest: 0.4, side: THREE.FrontSide }));
+    const iPrint = mk(new THREE.PlaneGeometry(1, PRINT_ASPECT), new THREE.MeshBasicMaterial({ map: printTex, transparent: true, alphaTest: 0.4, side: THREE.FrontSide }));
     const faceQ = new THREE.Quaternion(), zAxis = new THREE.Vector3(0, 0, 1);
     const backQ = new THREE.Quaternion(), frontQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-    // 最前管理 lean: the upper body tips toward the stage around the hips (legs stay upright)
-    const GUARD_LEAN = 0.38, xAxis = new THREE.Vector3(1, 0, 0), leanQ = new THREE.Quaternion().setFromAxisAngle(xAxis, -GUARD_LEAN);
-    const hipOf = q => 0.53 * q.h, tmpV = new THREE.Vector3(), rotQ = new THREE.Quaternion();
+    // 最前管理 pose: the upper body tips toward the stage around the hips (legs stay upright), while the
+    // head stays up, chin raised a little, so the glare reaches the stage
+    const xAxis = new THREE.Vector3(1, 0, 0), leanQ = new THREE.Quaternion(), headQ = new THREE.Quaternion().setFromAxisAngle(xAxis, 0.18);
+    const hipOf = q => 0.53 * q.h, neckOf = q => 0.84 * q.h, tmpV = new THREE.Vector3(), rotQ = new THREE.Quaternion();
+    const setLean = a => leanQ.setFromAxisAngle(xAxis, -a);
     function leanPt(q, lx, ly, lz) {   // body-local point (metres above the floor) → world, after the lean
       const hip = hipOf(q); tmpV.set(lx, ly - hip, lz).applyQuaternion(leanQ);
       return [q.x + tmpV.x, q.floorY + hip + tmpV.y, q.z + tmpV.z];
     }
-    function leanMatrix(q, s, out) {
-      const hip = hipOf(q);
-      out.makeTranslation(q.x, q.floorY + hip, q.z).multiply(new THREE.Matrix4().makeRotationFromQuaternion(leanQ))
-        .multiply(new THREE.Matrix4().makeTranslation(0, -hip, 0)).multiply(new THREE.Matrix4().makeScale(s, s, s));
-      return out;
+    function headPt(q, lx, ly, lz) {   // head-local point → world: follows the leaning neck, stays upright
+      const N = leanPt(q, 0, neckOf(q), 0); tmpV.set(lx, ly - neckOf(q), lz).applyQuaternion(headQ);
+      return [N[0] + tmpV.x, N[1] + tmpV.y, N[2] + tmpV.z];
     }
+    const pivotMatrix = (P, pivotY, rq, s, out) => out.makeTranslation(P[0], P[1], P[2]).multiply(new THREE.Matrix4().makeRotationFromQuaternion(rq))
+      .multiply(new THREE.Matrix4().makeTranslation(0, -pivotY, 0)).multiply(new THREE.Matrix4().makeScale(s, s, s));
+    const leanMatrix = (q, s, out) => pivotMatrix([q.x, q.floorY + hipOf(q), q.z], hipOf(q), leanQ, s, out);
+    const headMatrix = (q, s, out) => pivotMatrix(leanPt(q, 0, neckOf(q), 0), neckOf(q), headQ, s, out);
     function pushGuardLook(q, sx, s) {
-      const eb = EYE_BOX[sx], half = (eb.max.x - eb.min.x) / 2;
-      for (const sd of [-1, 1]) {   // thick brows slanting down to the nose, low enough to half-cover the eyes
+      const eb = EYE_BOX[sx], hb = HEAD_BOX[sx], half = (eb.max.x - eb.min.x) / 2;
+      const face = (lx, ly, lz, w, h, ang) => {
         const i = iFace.userData.n++; if (i >= CAP) return;
-        const P = leanPt(q, sd * half * 0.6 * s, (eb.max.y + 0.004) * s, (eb.min.z - 0.004) * s);
-        rotQ.copy(leanQ).multiply(faceQ.setFromAxisAngle(zAxis, sd * 0.42));
-        setInst(iFace, i, P[0], P[1], P[2], 0.042 * s, 0.014 * s, 0.01 * s, rotQ);
-      }
-      const sb = SHIRT_BOX[sx], w = (sb.max.x - sb.min.x) * 0.62 * s, y = (sb.max.y - 0.16) * s;
+        const P = headPt(q, lx * s, ly * s, lz * s);
+        rotQ.copy(headQ).multiply(faceQ.setFromAxisAngle(zAxis, ang));
+        setInst(iFace, i, P[0], P[1], P[2], w * s, h * s, 0.012 * s, rotQ);
+      };
+      // thick brows slanting down to the nose, low enough to half-cover the eyes
+      for (const sd of [-1, 1]) face(sd * half * 0.62, eb.max.y + 0.003, eb.min.z - 0.005, 0.05, 0.017, sd * 0.45);
+      face(0, eb.min.y - 0.032, Math.min(eb.min.z + 0.006, hb.min.z + 0.01), 0.044, 0.01, 0);   // grim, flat mouth
+      const sb = SHIRT_BOX[sx], w = (sb.max.x - sb.min.x) * 0.62 * s, y = (sb.max.y - 0.2) * s;
       for (const [z, rot] of [[sb.max.z * s + 0.004, backQ], [sb.min.z * s - 0.004, frontQ]]) {
         const i = iPrint.userData.n++; if (i >= CAP) return;
         const P = leanPt(q, 0, y, z);
@@ -3333,7 +3341,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
       crowdMeshes.forEach(m => { m.userData.n = 0; });
       const grip = state.frontGuard ? guardGrip() : null;
       const gp = glowGeo.attributes.position.array, gc = glowGeo.attributes.color.array; let ng = 0;
-      const M4 = new THREE.Matrix4(), ML = new THREE.Matrix4(), Q = new THREE.Quaternion(), Sv = new THREE.Vector3(), Pv = new THREE.Vector3();
+      const M4 = new THREE.Matrix4(), ML = new THREE.Matrix4(), MH = new THREE.Matrix4(), Q = new THREE.Quaternion(), Sv = new THREE.Vector3(), Pv = new THREE.Vector3();
+      // every other guard along the rail spreads both arms out over it, the rest lean on their forearms
+      const spread = new Set(grip ? sim.people.filter(q => q.front).sort((a, b) => a.x - b.x).filter((q, i) => i % 2 === 0) : []);
       for (const q of sim.people) {
         const r = hashRng(q.idx * 31 + 7);
         const sx = q.male ? 'm' : 'f', c = crowd[sx], d = S.bodyDims(q);
@@ -3342,7 +3352,9 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         const yaw = q.arm || guard ? 0 : Math.max(-0.25, Math.min(0.25, toStage * 0.5)) + (r() - 0.5) * 0.2;
         Q.setFromAxisAngle(up, yaw);
         M4.compose(Pv.set(q.x, q.floorY, q.z), Q, Sv.set(d.s, d.s, d.s));
-        const MU = guard ? leanMatrix(q, d.s, ML) : M4;   // upper body
+        const wide = guard && spread.has(q);
+        if (guard) setLean(wide ? 0.14 : 0.38);
+        const MU = guard ? leanMatrix(q, d.s, ML) : M4, MHd = guard ? headMatrix(q, d.s, MH) : M4;   // upper body, head
         const skin = col(pick(r, SKIN));
         const teeHex = r() < 0.14 ? '#' + new THREE.Color(COSTUME[Math.floor(r() * COSTUME.length)]).multiplyScalar(0.62).getHexString() : pick(r, TEE);
         const tee = col(guard ? '#121018' : teeHex);
@@ -3355,9 +3367,16 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
         else push(c.pants, M4, col(pick(r, PANTS)));
         push(c.shirt, MU, tee);
         if (guard) {
-          // elbows spread wide on the rail, forearms lying along it, hands back toward the middle
           for (const side of [-1, 1]) {
             const A = leanPt(q, side * d.ax, S.shoulderY(q) - q.floorY - 0.03 * d.s, 0);
+            if (wide) {   // arms straight out, wide and over the rail, palms open
+              const H = [q.x + side * 0.62, A[1] + 0.04, grip.z - 0.28], S1 = [A[0] + (H[0] - A[0]) * 0.3, A[1] + (H[1] - A[1]) * 0.3, A[2] + (H[2] - A[2]) * 0.3];
+              pushBetween(iRSleeve, A, S1, d.ar + 0.012, tee);
+              pushBetween(iRArm, S1, H, d.ar * 0.88, skin);
+              const hi = iRHand.userData.n++; if (hi < CAP) { setInst(iRHand, hi, H[0], H[1], H[2], 0.045, 0.055, 0.02); iRHand.setColorAt(hi, skin); }
+              continue;
+            }
+            // elbows spread wide on the rail, forearms lying along it, hands back toward the middle
             const y = grip.y + d.ar, E = [q.x + side * GUARD_REACH, y, grip.z + 0.02], H = [q.x + side * 0.13, y, grip.z - 0.03];
             const S1 = [A[0] + (E[0] - A[0]) * 0.55, A[1] + (E[1] - A[1]) * 0.55, A[2] + (E[2] - A[2]) * 0.55];
             pushBetween(iRSleeve, A, S1, d.ar + 0.012, tee);
@@ -3370,8 +3389,8 @@ h1.hero-title { margin: 0; display: grid; gap: 10px; font-size: inherit; line-he
           if (q.arm !== -1) { push(c.sleeveL, M4, tee); push(c.armL, M4, skin); }
           if (q.arm !== 1) { push(c.sleeveR, M4, tee); push(c.armR, M4, skin); }
         }
-        push(c.neck, MU, skin); push(c.head, MU, skin); push(c.eyes, MU, null);
-        push(c.hair[hairIdx], MU, hairC);
+        push(c.neck, MU, skin); push(c.head, MHd, skin); push(c.eyes, MHd, null);
+        push(c.hair[hairIdx], MHd, hairC);
         if (towel) push(c.towel, MU, towel);
         if (q.arm && !guard) {
           const ra = S.raisedArm(q);
