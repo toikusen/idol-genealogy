@@ -5,17 +5,23 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base href="/view/">
 <link rel="canonical" href="https://idolmaps.com/view">
-<title>別擋我推</title>
+<title>別擋我推｜台灣 Live House 排隊順位與視線模擬</title>
 <meta name="description" content="輸入排隊順位和身高，用台灣 live house 的官方平面圖 3D 模擬你會站在哪、看得到幾位成員。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="idolmaps">
-<meta property="og:title" content="別擋我推｜排隊順位看舞台">
+<meta property="og:title" content="別擋我推｜台灣 Live House 排隊順位與視線模擬">
 <meta property="og:description" content="輸入排隊順位和身高，用台灣 live house 的官方平面圖 3D 模擬你會站在哪、看得到幾位成員。">
 <meta property="og:url" content="https://idolmaps.com/view">
 <meta property="og:image" content="https://idolmaps.com/view/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"別擋我推","alternateName":"Oshi View",
+"url":"https://idolmaps.com/view","description":"輸入排隊順位和身高，用台灣 live house 的官方平面圖 3D 模擬你會站在哪、看得到幾位成員。","inLanguage":"zh-Hant-TW",
+"applicationCategory":"EntertainmentApplication","operatingSystem":"Any","isAccessibleForFree":true,
+"isPartOf":{"@type":"WebSite","name":"idolmaps","url":"https://idolmaps.com"}}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@900&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -2202,7 +2208,7 @@ td { border-bottom: 1px solid var(--line-soft); }
     $('#mixToggle').hidden = !VN.blockers.some(b => b.toggle === 'mixOnFloor');
     setPressed($('#barrierSeg'), state.barrier); setPressed($('#stageHSeg'), String(state.stageH));
     if (VN.stageDepths) setPressed($('#depthSeg'), String(state.stageDepth));
-    document.title = VN.short + '｜別擋我推';
+    if (venueParam) document.title = VN.short + '｜' + document.title;
     $('.eyebrow').textContent = '別擋我推 OSHI VIEW · ' + VN.eyebrow;
   })();
 
