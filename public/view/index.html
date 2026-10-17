@@ -875,9 +875,9 @@ details.fold[open] > summary { margin-bottom: 8px; }
   color: #fff; font-size: 15px; cursor: pointer; touch-action: none; backdrop-filter: blur(6px); }
 .vp-move button:active { background: #b6f24a; color: #1a2604; }
 .vp-move [data-d="f"] { grid-area: 1 / 2; } .vp-move [data-d="l"] { grid-area: 2 / 1; } .vp-move [data-d="r"] { grid-area: 2 / 3; } .vp-move [data-d="b"] { grid-area: 3 / 2; }
-/* one triangle turned four ways: ▲▼ and ◀▶ glyphs come from different fonts and never match in size */
-.vp-move svg { width: 13px; height: 13px; fill: currentColor; display: block; margin: auto; }
-.vp-move [data-d="l"] svg { transform: rotate(-90deg); } .vp-move [data-d="r"] svg { transform: rotate(90deg); } .vp-move [data-d="b"] svg { transform: rotate(180deg); }
+/* one SVG triangle turned four ways: iOS draws ◀▶ as emoji but ▲▼ as text, so glyph arrows never match */
+.tri { width: 13px; height: 13px; fill: currentColor; display: block; margin: auto; }
+.tri.l { transform: rotate(-90deg); } .tri.r { transform: rotate(90deg); } .tri.b { transform: rotate(180deg); }
 .viewport.expanded .vp-move { bottom: calc(var(--dock-h, 112px) + 64px); }
 .v2-a .plan[hidden], .curve[hidden] { display: none; }
 @media (max-width: 560px) { .vp-move { right: 8px; bottom: 56px; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); } .vp-move button { width: 40px; height: 40px; } }
@@ -957,22 +957,22 @@ details.fold[open] > summary { margin-bottom: 8px; }
         <div class="vp-freehint" id="freeHint" hidden></div>
         <div class="vp-box vp-lean" id="leanBox" role="group" aria-label="偏頭">
           <span class="lbl">偏頭</span>
-          <button type="button" data-l="-1" aria-pressed="false" aria-label="頭往左偏">◀</button>
+          <button type="button" data-l="-1" aria-pressed="false" aria-label="頭往左偏"><svg class="tri l" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
           <button type="button" data-l="0" aria-pressed="true" aria-label="頭擺正">正</button>
-          <button type="button" data-l="1" aria-pressed="false" aria-label="頭往右偏">▶</button>
+          <button type="button" data-l="1" aria-pressed="false" aria-label="頭往右偏"><svg class="tri r" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
         </div>
         <div class="vp-move" id="movePad" hidden role="group" aria-label="移動你的位置">
-          <button type="button" data-d="f" aria-label="往前（靠近舞台）"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
-          <button type="button" data-d="l" aria-label="往左"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
-          <button type="button" data-d="r" aria-label="往右"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
-          <button type="button" data-d="b" aria-label="往後"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
+          <button type="button" data-d="f" aria-label="往前（靠近舞台）"><svg class="tri" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
+          <button type="button" data-d="l" aria-label="往左"><svg class="tri l" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
+          <button type="button" data-d="r" aria-label="往右"><svg class="tri r" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
+          <button type="button" data-d="b" aria-label="往後"><svg class="tri b" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
         </div>
         <div class="vp-bottom">
           <div class="vp-box" id="sceneBox" role="group" aria-label="場面">
             <span class="lbl">場面</span>
-            <button type="button" id="scPrev" aria-label="上一個場面">◀</button>
+            <button type="button" id="scPrev" aria-label="上一個場面"><svg class="tri l" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
             <span class="lbl sc-label" id="scLabel">MC</span>
-            <button type="button" id="scNext" aria-label="下一個場面">▶</button>
+            <button type="button" id="scNext" aria-label="下一個場面"><svg class="tri r" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
           </div>
           <div class="vp-box" id="patternBox">
             <span class="lbl" id="luckLead" title="每次進場的順序、同行朋友、身高都不同；這是模擬 20 次入場裡的三種結果">同樣的排隊順位，看進場運氣：</span>
