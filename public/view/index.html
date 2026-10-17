@@ -2680,15 +2680,19 @@ details.fold[open] > summary { margin-bottom: 8px; }
     });
 
     /* ============ idols (+z facing, feet at y=0, modelled at 1.60 m) ============ */
-    // per-member hair style, hair colour, pose and VRoid model; same order as MEMBERS in app.js
+    // per-member hair style, hair colour, pose and VRoid haircut (whose hair goes on the Vivi body); same order as MEMBERS in app.js
+    // cuts: the five CC0 VRoid beta hair meshes; flip mirrors one (a side ponytail on the other side)
     const IDOL = [
-      { hair: 'twin', hairColor: '#3a2026', pose: 'mic', model: 'Vivi' },
-      { hair: 'long', hairColor: '#1d1520', pose: 'heart', model: 'Sendagaya_Shino' },
-      { hair: 'sidePony', hairColor: '#6a3a24', pose: 'mic', model: 'Victoria_Rubin' },
-      { hair: 'bobBuns', hairColor: '#8a5050', pose: 'peace', model: 'Vita' },
-      { hair: 'wavy', hairColor: '#c09868', pose: 'mic', model: 'Victoria_Rubin' },
-      { hair: 'bob', hairColor: '#402418', pose: 'down', model: 'Vivi' },
-      { hair: 'twinLong', hairColor: '#141018', pose: 'both', model: 'Sendagaya_Shino' }
+      { hair: 'twin', hairColor: '#3a2026', pose: 'mic', cut: 'Vivi' },
+      { hair: 'long', hairColor: '#1d1520', pose: 'heart', cut: 'Sendagaya_Shino' },
+      { hair: 'sidePony', hairColor: '#6a3a24', pose: 'mic', cut: 'Victoria_Rubin' },
+      { hair: 'bobBuns', hairColor: '#8a5050', pose: 'peace', cut: 'Vita' },
+      { hair: 'wavy', hairColor: '#c09868', pose: 'mic', cut: 'HairSample_Female' },
+      { hair: 'bob', hairColor: '#402418', pose: 'down', cut: 'Victoria_Rubin', flip: true },
+      { hair: 'twinLong', hairColor: '#141018', pose: 'both', cut: 'Sendagaya_Shino' },
+      { hair: 'long', hairColor: '#b0705a', pose: 'peace', cut: 'Vita' },
+      { hair: 'wavy', hairColor: '#2a1a14', pose: 'heart', cut: 'HairSample_Female' },
+      { hair: 'bob', hairColor: '#5a2a3a', pose: 'mic', cut: 'Vivi' }
     ];
     const MODEL_H = 1.6, IDOL_SKIN = '#f2c2a8';
 
@@ -2833,7 +2837,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       }
     }
     // skin a SkinnedMesh on the CPU into a static world-space geometry (positions + normals)
-    function bake(sm) {
+    function bake(sm, flip) {
       sm.skeleton.update();
       const g = sm.geometry, pos = g.attributes.position, nor = g.attributes.normal, si = g.attributes.skinIndex, sw = g.attributes.skinWeight;
       const bm = sm.skeleton.boneMatrices, n = pos.count, P = new Float32Array(n * 3), N = new Float32Array(n * 3);
@@ -2854,28 +2858,43 @@ details.fold[open] > summary { margin-bottom: 8px; }
       out.setAttribute('position', new THREE.BufferAttribute(P, 3));
       out.setAttribute('normal', new THREE.BufferAttribute(N, 3));
       if (g.attributes.uv) out.setAttribute('uv', g.attributes.uv);
-      if (g.index) out.setIndex(g.index);
+      if (flip) {   // mirror across x: negate x, reverse the winding so faces still point out
+        for (let i = 0; i < n * 3; i += 3) { P[i] = -P[i]; N[i] = -N[i]; }
+        const ix = g.index.array.slice();
+        for (let i = 0; i < ix.length; i += 3) { const t = ix[i + 1]; ix[i + 1] = ix[i + 2]; ix[i + 2] = t; }
+        out.setIndex(new THREE.BufferAttribute(ix, 1));
+      } else if (g.index) out.setIndex(g.index);
       return out;
     }
     // colourise the costume texture in the shader: every tinted pixel takes the member's hue (YIQ), keeping its
-    // brightness and colourfulness, so greys, whites and black trims stay put
-    function hueShift(mat, rad) {
+    // brightness; colourfulness scales with the member colour's, so greys, whites and black trims stay put
+    function hueShift(mat, rad, sat) {
       mat.onBeforeCompile = sh => {
-        sh.uniforms.hueTo = { value: rad };
-        sh.fragmentShader = 'uniform float hueTo;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+        sh.uniforms.hueTo = { value: rad }; sh.uniforms.hueSat = { value: sat };
+        sh.fragmentShader = 'uniform float hueTo, hueSat;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
           {
             vec3 c = diffuseColor.rgb;
             float y = dot(c, vec3(0.299, 0.587, 0.114)), i = dot(c, vec3(0.596, -0.274, -0.322)), q = dot(c, vec3(0.211, -0.523, 0.312));
-            float ch = length(vec2(i, q)) * 1.15, i2 = ch * cos(hueTo), q2 = ch * sin(hueTo);
+            float ch = length(vec2(i, q)) * hueSat, i2 = ch * cos(hueTo), q2 = ch * sin(hueTo);
             diffuseColor.rgb = clamp(vec3(y + 0.956 * i2 + 0.621 * q2, y - 0.272 * i2 - 0.647 * q2, y - 1.106 * i2 + 1.703 * q2), 0.0, 1.0);
           }`);
       };
     }
+    // outline that honours the texture's cut-out, so transparent parts of a mesh (ribbons, lace) leave no ink shape
+    const cutOutline = map => {
+      map.updateMatrix();
+      return new THREE.ShaderMaterial({
+        uniforms: { ink: outlineMat.uniforms.ink, thick: outlineMat.uniforms.thick, map: { value: map }, uvT: { value: map.matrix } },
+        vertexShader: 'uniform float thick; uniform mat3 uvT; varying vec2 vUv; void main() { vUv = (uvT * vec3(uv, 1.0)).xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position + normal * thick, 1.0); }',
+        fragmentShader: 'uniform vec3 ink; uniform sampler2D map; varying vec2 vUv; void main() { if (texture2D(map, vUv).a < 0.5) discard; gl_FragColor = vec4(ink, 1.0); }',
+        side: THREE.BackSide
+      });
+    };
     const micGeo = [new THREE.CylinderGeometry(0.012, 0.01, 0.16, 10), new THREE.SphereGeometry(0.024, 12, 8)];
     const micMat = toon(col('#18181c'), { gradientMap: idolGradient });
 
     function buildVroid(st, h, costumeHex) {
-      const m = vroid[st.model] || Object.values(vroid)[0];
+      const m = Object.values(vroid)[0];   // one body (Vivi) for everyone; only hair and colours change
       const B = n => m.bones.get(n);
       m.rest.forEach((q, b) => b.quaternion.copy(q));
       m.root.updateMatrixWorld(true);
@@ -2888,22 +2907,26 @@ details.fold[open] > summary { margin-bottom: 8px; }
       }
       const grp = new THREE.Group(), owned = [];
       const [ti, tq] = yiq(new THREE.Color(costumeHex));
-      const hue = Math.atan2(tq, ti);
+      const hue = Math.atan2(tq, ti), sat = Math.min(1.6, Math.hypot(ti, tq) * 3.5);
       const mats = new Map();
       m.skinned.forEach(o => {
         const s = o.material, name = s.name, hair = /_HAIR/.test(name);
+        // haircut meshes are named after the model they came from; the scalp layer (HairBack) is on every head
+        if (/_Hair_00_HAIR/.test(name) && !name.startsWith(st.cut + '_')) return;
         if (!mats.has(s)) {
           const mat = toon(hair ? col(st.hairColor).multiplyScalar(1.6) : new THREE.Color(0.72, 0.72, 0.72), {
             map: s.map, gradientMap: idolGradient, side: s.side,
             // cut-out hair sorts cleanly; only the thin face decals blend
             transparent: s.transparent && !hair, alphaTest: hair || s.alphaTest ? 0.5 : 0, depthWrite: !s.transparent || hair
           });
-          if (/_(Tops|Bottoms)_/.test(name)) hueShift(mat, hue);
-          mats.set(s, mat); owned.push(mat);
+          if (/_(Tops|Bottoms)_/.test(name)) hueShift(mat, hue, sat);
+          const ol = s.map && s.alphaTest ? cutOutline(s.map) : outlineMat;
+          if (ol !== outlineMat) owned.push(ol);
+          mats.set(s, mat); mats.set(mat, ol); owned.push(mat);
         }
-        const geo = bake(o); owned.push(geo);
-        grp.add(new THREE.Mesh(geo, mats.get(s)));
-        if (/_(SKIN|CLOTH)/.test(name) && !/_Face_/.test(name)) grp.add(new THREE.Mesh(geo, outlineMat));
+        const geo = bake(o, st.flip && /_Hair_00_HAIR/.test(name)), mat = mats.get(s); owned.push(geo);
+        grp.add(new THREE.Mesh(geo, mat));
+        if (/_(SKIN|CLOTH)/.test(name) && !/_Face_/.test(name)) grp.add(new THREE.Mesh(geo, mats.get(mat)));
       });
       if (st.pose === 'mic') {
         const hand = wp(B('J_Bip_R_Hand')), grip = hand.lerp(wp(B('J_Bip_R_Middle1')), 0.9);
@@ -3326,7 +3349,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
   // build.sh fills in a hash of the file, so the URL changes whenever the GLB does (served immutable)
   const FIGURES_URL = 'assets/figures.glb?v=c0871a3845';
-  const VROID_URL = 'assets/idol-vroid.glb?v=c74c339238';
+  const VROID_URL = 'assets/idol-vroid.glb?v=6b274e16e7';
   function loadGlb(url, onProgress) {
     return new Promise((resolve, reject) => {
       if (typeof THREE === 'undefined' || !THREE.GLTFLoader) return reject(new Error('three.js / GLTFLoader not loaded'));
