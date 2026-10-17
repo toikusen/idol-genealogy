@@ -2680,15 +2680,15 @@ details.fold[open] > summary { margin-bottom: 8px; }
     });
 
     /* ============ idols (+z facing, feet at y=0, modelled at 1.60 m) ============ */
-    // per-member hair style, hair colour and pose; same order as MEMBERS in app.js
+    // per-member hair style, hair colour, pose and VRoid model; same order as MEMBERS in app.js
     const IDOL = [
-      { hair: 'twin', hairColor: '#3a2026', pose: 'mic' },
-      { hair: 'long', hairColor: '#1d1520', pose: 'heart' },
-      { hair: 'sidePony', hairColor: '#6a3a24', pose: 'mic' },
-      { hair: 'bobBuns', hairColor: '#8a5050', pose: 'peace' },
-      { hair: 'wavy', hairColor: '#c09868', pose: 'mic' },
-      { hair: 'bob', hairColor: '#402418', pose: 'down' },
-      { hair: 'twinLong', hairColor: '#141018', pose: 'both' }
+      { hair: 'twin', hairColor: '#3a2026', pose: 'mic', model: 'Vivi' },
+      { hair: 'long', hairColor: '#1d1520', pose: 'heart', model: 'Sendagaya_Shino' },
+      { hair: 'sidePony', hairColor: '#6a3a24', pose: 'mic', model: 'Victoria_Rubin' },
+      { hair: 'bobBuns', hairColor: '#8a5050', pose: 'peace', model: 'Vita' },
+      { hair: 'wavy', hairColor: '#c09868', pose: 'mic', model: 'Victoria_Rubin' },
+      { hair: 'bob', hairColor: '#402418', pose: 'down', model: 'Vivi' },
+      { hair: 'twinLong', hairColor: '#141018', pose: 'both', model: 'Sendagaya_Shino' }
     ];
     const MODEL_H = 1.6, IDOL_SKIN = '#f2c2a8';
 
@@ -2761,8 +2761,164 @@ details.fold[open] > summary { margin-bottom: 8px; }
     // stickers baked in the GLB that the painted face replaces
     const PAINTED = /^Idol_Body_(Head|Eye|Iris|Pupil|Lash|Brow|Blush|Nose|Mouth)/;
 
+    /* ---- VRoid idols: CC0 VRoid beta samples (blender/vroid_idol.py), posed here and baked to static meshes ----
+       Model space: facing +z, up +y, the model's right hand on -x. */
+    const V3 = THREE.Vector3;
+    let vroid = null;   // model name -> { root, skinned, rest, bones }
+    const yiq = c => [0.596 * c.r - 0.274 * c.g - 0.322 * c.b, 0.211 * c.r - 0.523 * c.g + 0.312 * c.b];
+    function setVroid(g) {
+      const out = {};
+      g.scene.updateMatrixWorld(true);
+      g.scene.children.forEach(root => {
+        if (!root.name.startsWith('Vroid_')) return;
+        const skinned = [];
+        root.traverse(o => {
+          if (!o.isSkinnedMesh) return;
+          const a = o.geometry.attributes;
+          ['position', 'normal', 'skinWeight'].forEach(n => o.geometry.setAttribute(n, toFloat(a[n])));
+          skinned.push(o);
+        });
+        // three.js de-duplicates node names across the four models (J_Bip_C_Head_3): key bones by their VRM name
+        const rest = new Map(), bones = new Map();
+        root.traverse(o => { if (o.isBone) { rest.set(o, o.quaternion.clone()); bones.set(o.name.replace(/_\d+$/, ''), o); } });
+        out[root.name.slice(6)] = { root, skinned, rest, bones };
+      });
+      if (Object.keys(out).length) vroid = out;
+    }
+
+    const wp = o => o.getWorldPosition(new V3());
+    // turn a bone (with its children) about a world axis
+    function rotW(bone, q) {
+      const bw = bone.getWorldQuaternion(new THREE.Quaternion()), pw = bone.parent.getWorldQuaternion(new THREE.Quaternion());
+      bone.quaternion.copy(pw.invert().multiply(q.multiply(bw)));
+      bone.updateMatrixWorld(true);
+    }
+    const aim = (bone, child, target) => rotW(bone, new THREE.Quaternion().setFromUnitVectors(wp(child).sub(wp(bone)).normalize(), target.clone().sub(wp(bone)).normalize()));
+    // two-bone IK: wrist to target, elbow bent toward the pole
+    function reach(B, side, target, pole) {
+      const up = B('J_Bip_' + side + '_UpperArm'), lo = B('J_Bip_' + side + '_LowerArm'), hand = B('J_Bip_' + side + '_Hand');
+      const S = wp(up), a = S.distanceTo(wp(lo)), b = wp(lo).distanceTo(wp(hand));
+      const d = target.clone().sub(S), len = Math.min(d.length(), (a + b) * 0.999); d.normalize();
+      const along = (a * a - b * b + len * len) / (2 * len), h = Math.sqrt(Math.max(0, a * a - along * along));
+      const p = pole.clone().sub(S); p.addScaledVector(d, -p.dot(d)).normalize();
+      aim(up, lo, S.clone().addScaledVector(d, along).addScaledVector(p, h));
+      aim(lo, hand, S.clone().addScaledVector(d, len));
+    }
+    // finger curl in the rest (T) pose, where palms face down and fingers point out along x
+    const FINGERS = ['Index', 'Middle', 'Ring', 'Little'];
+    function curl(B, side, deg) {
+      const sg = side === 'L' ? 1 : -1;
+      FINGERS.forEach((f, i) => [1, 2, 3].forEach(j => {
+        const bone = B('J_Bip_' + side + '_' + f + j);
+        if (bone) rotW(bone, new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, -sg), THREE.MathUtils.degToRad(deg[i])));
+      }));
+    }
+    const FIST = [75, 80, 80, 80], SOFT = [20, 25, 30, 35], PEACE = [0, 0, 80, 80];
+    // hand targets per pose, from the skeleton's own landmarks so every model fits
+    const ARMS = {
+      down: L => ({ L: ['down', SOFT], R: ['down', SOFT] }),
+      mic: L => ({ R: ['mic', FIST], L: ['raise', SOFT] }),
+      heart: L => ({ L: ['heart', FIST], R: ['heart', FIST] }),
+      peace: L => ({ R: ['peace', PEACE], L: ['down', SOFT] }),
+      both: L => ({ L: ['raise', SOFT], R: ['raise', SOFT] })
+    };
+    function armTarget(kind, sg, L) {
+      const sx = Math.abs(L.S.x);
+      switch (kind) {
+        case 'mic': return [new V3(sg * 0.04, L.neck.y - 0.05, 0.16), new V3(sg * 0.5, L.S.y - 0.45, -0.1)];
+        case 'raise': return [new V3(sg * (sx + 0.2), 1.62, 0.06), new V3(sg * 0.8, L.S.y, -0.2)];
+        case 'heart': return [new V3(sg * 0.035, L.S.y - 0.07, 0.19), new V3(sg * 0.5, L.S.y - 0.45, -0.05)];
+        case 'peace': return [new V3(sg * 0.2, L.head.y + 0.05, 0.13), new V3(sg * 0.6, L.S.y - 0.45, -0.1)];
+        default: return [new V3(sg * (sx + 0.07), L.hips.y - 0.02, 0.05), new V3(sg * 0.6, L.S.y - 0.25, -0.5)];
+      }
+    }
+    // skin a SkinnedMesh on the CPU into a static world-space geometry (positions + normals)
+    function bake(sm) {
+      sm.skeleton.update();
+      const g = sm.geometry, pos = g.attributes.position, nor = g.attributes.normal, si = g.attributes.skinIndex, sw = g.attributes.skinWeight;
+      const bm = sm.skeleton.boneMatrices, n = pos.count, P = new Float32Array(n * 3), N = new Float32Array(n * 3);
+      const acc = new THREE.Matrix4(), e = acc.elements, v = new V3();
+      for (let i = 0; i < n; i++) {
+        e.fill(0);
+        for (let k = 0; k < 4; k++) {
+          const w = sw.getComponent ? sw.getComponent(i, k) : [sw.getX, sw.getY, sw.getZ, sw.getW][k].call(sw, i);
+          if (!w) continue;
+          const o = [si.getX, si.getY, si.getZ, si.getW][k].call(si, i) * 16;
+          for (let c = 0; c < 16; c++) e[c] += w * bm[o + c];
+        }
+        acc.multiply(sm.bindMatrix);
+        v.fromBufferAttribute(pos, i).applyMatrix4(acc); v.toArray(P, i * 3);
+        v.fromBufferAttribute(nor, i).transformDirection(acc); v.toArray(N, i * 3);
+      }
+      const out = new THREE.BufferGeometry();
+      out.setAttribute('position', new THREE.BufferAttribute(P, 3));
+      out.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+      if (g.attributes.uv) out.setAttribute('uv', g.attributes.uv);
+      if (g.index) out.setIndex(g.index);
+      return out;
+    }
+    // colourise the costume texture in the shader: every tinted pixel takes the member's hue (YIQ), keeping its
+    // brightness and colourfulness, so greys, whites and black trims stay put
+    function hueShift(mat, rad) {
+      mat.onBeforeCompile = sh => {
+        sh.uniforms.hueTo = { value: rad };
+        sh.fragmentShader = 'uniform float hueTo;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+          {
+            vec3 c = diffuseColor.rgb;
+            float y = dot(c, vec3(0.299, 0.587, 0.114)), i = dot(c, vec3(0.596, -0.274, -0.322)), q = dot(c, vec3(0.211, -0.523, 0.312));
+            float ch = length(vec2(i, q)) * 1.15, i2 = ch * cos(hueTo), q2 = ch * sin(hueTo);
+            diffuseColor.rgb = clamp(vec3(y + 0.956 * i2 + 0.621 * q2, y - 0.272 * i2 - 0.647 * q2, y - 1.106 * i2 + 1.703 * q2), 0.0, 1.0);
+          }`);
+      };
+    }
+    const micGeo = [new THREE.CylinderGeometry(0.012, 0.01, 0.16, 10), new THREE.SphereGeometry(0.024, 12, 8)];
+    const micMat = toon(col('#18181c'), { gradientMap: idolGradient });
+
+    function buildVroid(st, h, costumeHex) {
+      const m = vroid[st.model] || Object.values(vroid)[0];
+      const B = n => m.bones.get(n);
+      m.rest.forEach((q, b) => b.quaternion.copy(q));
+      m.root.updateMatrixWorld(true);
+      const L = { S: wp(B('J_Bip_L_UpperArm')), neck: wp(B('J_Bip_C_Neck')), head: wp(B('J_Bip_C_Head')), hips: wp(B('J_Bip_C_Hips')) };
+      const arms = ARMS[st.pose](L);
+      for (const side of ['L', 'R']) curl(B, side, arms[side][1]);
+      for (const side of ['L', 'R']) {
+        const [t, p] = armTarget(arms[side][0], side === 'L' ? 1 : -1, L);
+        reach(B, side, t, p);
+      }
+      const grp = new THREE.Group(), owned = [];
+      const [ti, tq] = yiq(new THREE.Color(costumeHex));
+      const hue = Math.atan2(tq, ti);
+      const mats = new Map();
+      m.skinned.forEach(o => {
+        const s = o.material, name = s.name, hair = /_HAIR/.test(name);
+        if (!mats.has(s)) {
+          const mat = toon(hair ? col(st.hairColor).multiplyScalar(1.6) : new THREE.Color(0.72, 0.72, 0.72), {
+            map: s.map, gradientMap: idolGradient, side: s.side,
+            // cut-out hair sorts cleanly; only the thin face decals blend
+            transparent: s.transparent && !hair, alphaTest: hair || s.alphaTest ? 0.5 : 0, depthWrite: !s.transparent || hair
+          });
+          if (/_(Tops|Bottoms)_/.test(name)) hueShift(mat, hue);
+          mats.set(s, mat); owned.push(mat);
+        }
+        const geo = bake(o); owned.push(geo);
+        grp.add(new THREE.Mesh(geo, mats.get(s)));
+        if (/_(SKIN|CLOTH)/.test(name) && !/_Face_/.test(name)) grp.add(new THREE.Mesh(geo, outlineMat));
+      });
+      if (st.pose === 'mic') {
+        const hand = wp(B('J_Bip_R_Hand')), grip = hand.lerp(wp(B('J_Bip_R_Middle1')), 0.9);
+        const mouth = new V3(0, L.head.y + 0.03, L.head.z + 0.09), d = mouth.sub(grip).normalize();
+        const q = new THREE.Quaternion().setFromUnitVectors(new V3(0, 1, 0), d);
+        micGeo.forEach((g, i) => { const k = new THREE.Mesh(g, micMat); k.position.copy(grip).addScaledVector(d, i ? 0.11 : 0.03); k.quaternion.copy(q); grp.add(k); });
+      }
+      grp.scale.setScalar(h / MODEL_H);
+      grp.userData.dispose = () => owned.forEach(o => o.dispose());
+      return grp;
+    }
+
     function buildIdol(id, h, costumeHex) {
       const st = IDOL[id % IDOL.length];
+      if (vroid) return buildVroid(st, h, costumeHex);
       const grp = new THREE.Group();
       const costume = new THREE.Color(costumeHex);
       const tint = {
@@ -2811,7 +2967,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       return grp;
     }
 
-    return { merge, audienceTemplate, buildIdol, toon, toonGradient };
+    return { merge, audienceTemplate, buildIdol, setVroid, toon, toonGradient };
   }
   root.OWFig = { init };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -3170,19 +3326,26 @@ details.fold[open] > summary { margin-bottom: 8px; }
   // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
   // build.sh fills in a hash of the file, so the URL changes whenever the GLB does (served immutable)
   const FIGURES_URL = 'assets/figures.glb?v=c0871a3845';
-  function loadFigures() {
+  const VROID_URL = 'assets/idol-vroid.glb?v=c74c339238';
+  function loadGlb(url, onProgress) {
     return new Promise((resolve, reject) => {
       if (typeof THREE === 'undefined' || !THREE.GLTFLoader) return reject(new Error('three.js / GLTFLoader not loaded'));
       const loader = new THREE.GLTFLoader();
       if (window.MeshoptDecoder) loader.setMeshoptDecoder(window.MeshoptDecoder);
-      const msg = $('#vpLoad');
-      loader.load(FIGURES_URL, resolve, e => { if (e.total) msg.textContent = '載入 3D 模型… ' + Math.round(e.loaded / e.total * 100) + '%'; }, reject);
+      loader.load(url, resolve, onProgress, reject);
     });
   }
+  function loadFigures() {
+    const msg = $('#vpLoad');
+    return loadGlb(FIGURES_URL, e => { if (e.total) msg.textContent = '載入 3D 模型… ' + Math.round(e.loaded / e.total * 100) + '%'; });
+  }
+  // VRoid idols arrive after the scene is up; until then (or if they fail) the hand-built idols stand in
+  const vroidP = loadGlb(VROID_URL).catch(() => null);
   loadFigures().then(gltf => {
     $('#vpLoad').hidden = true;
     try {
       gl = initThree(gltf);
+      vroidP.then(v => { if (v && gl) gl.setVroid(v); });
       if (state.sim) { gl.updateCrowd(state.sim); if (state.ev) gl.updateSight(state.ev); gl.render(); }
     } catch (err) { fail3D(err); }
   }, err => { $('#vpLoad').hidden = true; fail3D(err); });
@@ -4101,6 +4264,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     buildStatic(); buildPlanStatic(); rebuildDyn(); rebuildMembersImpl();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { rebuildMembersImpl(); if (state.sim) updateCrowd(state.sim); render(); });
     return {
+      setVroid: v => { try { FIG.setVroid(v); rebuildMembersImpl(); render(); } catch (err) { console.error(err); } },
       render, rebuildDyn, rebuildMembers: rebuildMembersImpl, updateCrowd, updateSight, setHeat,
       showHeat(on) { heatOn = on; if (heatMesh) heatMesh.visible = on; iDisc.material.opacity = on ? 0.5 : 1; render(); },
       resetLook() { look.yaw = 0; look.pitch = 0; },
