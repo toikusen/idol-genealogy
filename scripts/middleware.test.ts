@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { shouldNoIndexQueryUrl } from '../functions/_middleware.ts';
+import { isSpaRoute, shouldNoIndexQueryUrl } from '../functions/_middleware.ts';
 
 const check = (path: string) => shouldNoIndexQueryUrl(new URL(`https://idolmaps.com${path}`));
 
@@ -25,4 +25,10 @@ test('cache-busted static assets are not noindexed', () => {
 test('existing exemptions still hold', () => {
   assert.equal(check('/api/sukigao-stats?id=1'), false);
   assert.equal(check('/sitemap.xml?x=1'), false);
+});
+
+test('client-rendered pages are served the SPA shell', () => {
+  assert.equal(isSpaRoute('/upload-plan'), true);
+  assert.equal(isSpaRoute('/login'), true);
+  assert.equal(isSpaRoute('/members'), false);
 });

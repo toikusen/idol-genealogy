@@ -1,9 +1,10 @@
 const PRODUCTION_HOST = 'idolmaps.com';
 
-function isSpaRoute(pathname: string): boolean {
+export function isSpaRoute(pathname: string): boolean {
   if (pathname === '/login' || pathname === '/login/') return true;
   if (pathname === '/my-contributions' || pathname === '/my-contributions/') return true;
   if (pathname === '/my-favorites' || pathname === '/my-favorites/') return true;
+  if (pathname === '/upload-plan' || pathname === '/upload-plan/') return true;
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return true;
   if (pathname.startsWith('/@')) return true;
   return false;
