@@ -195,7 +195,7 @@ details.more[open] summary::after { content: "－"; }
 .vp-legend i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 4px; border-radius: 1px; }
 .vp-legend i.dot { width: 9px; height: 9px; border-radius: 50%; }
 .vp-legend .plan-only { display: none; }
-.vp-legend.plan .plan-only { display: inline; }
+.vp-legend.show-dots .plan-only { display: inline; }
 @media (max-width: 640px) { .vp-legend { flex-wrap: wrap; max-width: 230px; row-gap: 2px; } }
 .vp-busy { position: absolute; top: 12px; right: 12px; font-size: 11.5px; color: var(--accent); font-family: var(--f-num); background: rgba(12, 10, 26, 0.72); padding: 3px 8px; border-radius: 6px; }
 .vp-fallback { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--ink-2); }
@@ -276,7 +276,9 @@ html.noscroll, html.noscroll body { overflow: hidden; }
   .vp-expand-t { display: none; }
   .viewport:not(.expanded) #patternBox { display: none; }
   .vp-box button { min-height: 32px; }
-  .vp-legend { font-size: 11px; gap: 8px; }
+  .vp-legend { font-size: 10px; gap: 2px 7px; padding: 3px 7px; max-width: 160px; line-height: 1.35; }
+  .vp-legend i { width: 9px; margin-right: 3px; }
+  .vp-legend i.dot { width: 7px; height: 7px; }
   .viewport.expanded .vp-tabs { max-width: calc(100% - 70px); }
 }
 
@@ -2535,7 +2537,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       const T = {
         shoes: part(p + 'Shoes'), pants: part(p + 'Pants'), shirt: part(p + 'Shirt'),
         sleeveL: empty, sleeveR: empty, armL: part(p + 'ArmL'), armR: part(p + 'ArmR'),
-        neck: part(p + 'Neck'), head: part(p + 'Head'), eyes: part(p + 'Eyes'), towel: part(p + 'Towel'),
+        neck: part(p + 'Neck'), head: part(p + 'Head'), eyes: part(p + 'Eyes'), penGrip: part(p + 'PenGrip'), penTube: part(p + 'PenTube'),
         brows: part(p + 'Brows'), mouth: part(p + 'Mouth'), glasses: part(p + 'Glasses'), bag: part(p + 'Bag'),
         poses: { front: ['L', 'R'].map(s => part(p + 'PoseFront' + s)), pocket: ['L', 'R'].map(s => part(p + 'PosePocket' + s)),
           fold: ['L', 'R'].map(s => part(p + 'PoseFold' + s)) },
@@ -3014,7 +3016,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   }
   // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
   // bump the version whenever blender/build_figures.py is re-run so browsers drop the old file
-  const FIGURES_VERSION = 7;
+  const FIGURES_VERSION = 8;
   function loadFigures() {
     return new Promise((resolve, reject) => {
       if (typeof THREE === 'undefined' || !THREE.GLTFLoader) return reject(new Error('three.js / GLTFLoader not loaded'));
@@ -3314,7 +3316,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
       c.sleeveL = mk(T.sleeveL, M_CLOTH); c.sleeveR = mk(T.sleeveR, M_CLOTH);
       c.armL = mk(T.armL, M_SKIN); c.armR = mk(T.armR, M_SKIN);
       c.neck = mk(T.neck, M_SKIN); c.head = mk(T.head, M_SKIN); c.eyes = mk(T.eyes, M_EYE);
-      c.towel = mk(T.towel, M_CLOTH);
+      c.penGrip = mk(T.penGrip, M_CLOTH); c.penTube = mk(T.penTube, M_PEN);
+      T.penTube.computeBoundingBox(); c.penTop = T.penTube.boundingBox.getCenter(new THREE.Vector3()).lerp(T.penTube.boundingBox.max, 0.5);
       c.pose = { down: [c.armL, c.armR] };
       for (const k in T.poses) c.pose[k] = [mk(T.poses[k][0], M_SKIN), mk(T.poses[k][1], M_SKIN)];
       c.brows = mk(T.brows, M_HAIR); c.mouth = mk(T.mouth, M_SKIN); c.glasses = mk(T.glasses, M_EYE); c.bag = mk(T.bag, M_CLOTH);
@@ -3602,7 +3605,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
         const teeHex = r() < 0.14 ? '#' + new THREE.Color(COSTUME[Math.floor(r() * COSTUME.length)]).multiplyScalar(0.62).getHexString() : pick(r, TEE);
         const tee = col(guard ? '#121018' : teeHex);
         const hairC = col(pick(r, HAIR));
-        const towel = r() < 0.22 ? col(COSTUME[Math.floor(r() * COSTUME.length)]) : null;
+        const pen = !q.arm && !guard && r() < 0.3;   // some fans rest a penlight in both hands
         const skirt = !q.male && r() < 0.35;
         const hairIdx = Math.floor(r() * c.hair.length);
         // no backpack over long hair or a ponytail (styles 1 and 2 hang down the back)
@@ -3632,14 +3635,18 @@ details.fold[open] > summary { margin-bottom: 8px; }
           pushGuardLook(q, sx, d.s);
         } else {
           // relaxed poses: arms down, hands together in front, a hand in the pocket, arms folded
-          const pr = r(), pose = q.arm ? 'down' : pr < 0.45 ? 'down' : pr < 0.65 ? 'front' : pr < 0.85 ? 'pocket' : 'fold';
+          const pr = r(), pose = q.arm ? 'down' : pen ? 'front' : pr < 0.45 ? 'down' : pr < 0.65 ? 'front' : pr < 0.85 ? 'pocket' : 'fold';
           const arms = c.pose[pose] || c.pose.down;
           if (q.arm !== -1) { push(c.sleeveL, M4, tee); push(arms[0], M4, skin); }
           if (q.arm !== 1) { push(c.sleeveR, M4, tee); push(arms[1], M4, skin); }
         }
         push(c.neck, MU, skin); push(c.head, MHd, skin); push(c.eyes, MHd, null);
         push(c.hair[hairIdx], MHd, hairC);
-        if (towel) push(c.towel, MU, towel);
+        if (pen) {
+          const pc = col(COSTUME[(memberById.get(q.fan) || sim.members[q.idx % sim.members.length]).id]);
+          push(c.penGrip, M4, col('#2a2830')); push(c.penTube, M4, pc.clone().multiplyScalar(1.4));
+          if (ng < CAP) { Pv.copy(c.penTop).applyMatrix4(M4); gp[ng * 3] = Pv.x; gp[ng * 3 + 1] = Pv.y; gp[ng * 3 + 2] = Pv.z; gc[ng * 3] = pc.r; gc[ng * 3 + 1] = pc.g; gc[ng * 3 + 2] = pc.b; ng++; }
+        }
         if (!guard) { push(c.brows, MHd, hairC); push(c.mouth, MHd, LIP); }   // guards get their own glare
         if (glasses) push(c.glasses, MHd, null);
         if (bag) push(c.bag, MU, bag);
@@ -3982,7 +3989,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     $('#leanBox').hidden = state.view !== 'eye';
     syncZoom();
     $('#sightLegend').hidden = !(state.view === 'orbit' || state.view === 'plan');
-    $('#sightLegend').classList.toggle('plan', state.view === 'plan' || state.view === 'orbit');
+    $('#sightLegend').classList.toggle('show-dots', state.view === 'plan' || state.view === 'orbit');
     updateHud(); syncFree(); if (gl) gl.render();
     planHint();
   });
