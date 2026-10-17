@@ -135,6 +135,12 @@ h1 {
   color: var(--text-primary);
 }
 .btn--primary svg { color: var(--idol-purple); }
+.btn--3d {
+  background: var(--idol-pink);
+  border-color: var(--idol-pink);
+  color: #fff;
+}
+.btn--3d:hover { filter: brightness(1.05); }
 
 .sr-live {
   position: absolute;

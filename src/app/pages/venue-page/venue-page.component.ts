@@ -1,6 +1,6 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SeoService } from '../../core/seo.service';
 import { siteUrl } from '../../core/public-url.utils';
@@ -27,6 +27,23 @@ export interface ScheduleDay {
 
 const SCHEDULE_PREVIEW_DAYS = 3;
 
+/** A row of /view/venues.json, written by the 別擋我推 build (oshi-view build.sh). */
+export interface ViewVenue { id: string; idolmaps: string; name: string }
+
+/** idolmaps venue id -> 別擋我推 venue id, for the venues that have a 3D model. */
+export function viewVenueMap(rows: ViewVenue[] | unknown): Map<string, string> {
+  if (!Array.isArray(rows)) return new Map();
+  return new Map(rows.filter(r => r && r.idolmaps && r.id).map(r => [r.idolmaps as string, r.id as string]));
+}
+
+// ponytail: one fetch per page load, shared by every venue page visited; a failed fetch just hides the 3D button
+let viewVenues: Promise<Map<string, string>> | null = null;
+const loadViewVenues = () =>
+  (viewVenues ??= fetch('/view/venues.json')
+    .then(r => (r.ok ? r.json() : []))
+    .then(viewVenueMap)
+    .catch(() => new Map<string, string>()));
+
 @Component({
   selector: 'app-venue-page',
   standalone: true,
@@ -51,8 +68,11 @@ export class VenuePageComponent implements OnInit {
   mapUrl = '';
   eventCount = 0;
   updatedYmd = '';
+  /** 別擋我推 venue id when this venue has a 3D model (browser only: /view is a static page beside the app). */
+  view3d: string | null = null;
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   constructor(
     private route: ActivatedRoute,
@@ -84,6 +104,7 @@ export class VenuePageComponent implements OnInit {
     this.mapUrl = '';
     this.eventCount = 0;
     this.updatedYmd = '';
+    this.view3d = null;
   }
 
   private apply(data: VenuePageData | undefined): void {
@@ -128,6 +149,10 @@ export class VenuePageComponent implements OnInit {
     this.cityLabel = [city, district].filter(Boolean).join(' · ');
 
     this.applySeo(venue, city, district);
+
+    if (this.isBrowser) {
+      loadViewVenues().then(m => { if (this.venue?.id === venue.id) this.view3d = m.get(venue.id) ?? null; });
+    }
 
     if (data.pendingCalendar) {
       this.scheduleLoading = true;

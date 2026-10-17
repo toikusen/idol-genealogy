@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { VenuePageComponent, groupByTaipeiDay } from './venue-page.component';
+import { VenuePageComponent, groupByTaipeiDay, viewVenueMap } from './venue-page.component';
 import { VenueMapComponent } from '../../shared/venue-map/venue-map.component';
 import { SeoService } from '../../core/seo.service';
 import { VenuePageData } from '../../core/page-data.resolvers';
@@ -318,5 +318,20 @@ describe('venue schedule formatting', () => {
     expect(component.showTime(event())).toBe('19:00');
     expect(component.showTime(event({ isAllDay: true }))).toBe('全日');
     expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('開場');
+  });
+});
+
+describe('viewVenueMap', () => {
+  it('maps idolmaps venue ids to 別擋我推 venue ids', () => {
+    const m = viewVenueMap([{ id: 'jack', idolmaps: 'uuid-jack', name: '杰克音樂' }, { id: 'pipe', idolmaps: 'uuid-pipe', name: 'PIPE' }]);
+    expect(m.get('uuid-jack')).toBe('jack');
+    expect(m.get('uuid-pipe')).toBe('pipe');
+    expect(m.has('other')).toBeFalse();
+  });
+
+  it('treats anything but a list of rows as no 3D venues', () => {
+    expect(viewVenueMap(null).size).toBe(0);
+    expect(viewVenueMap({ error: 'x' }).size).toBe(0);
+    expect(viewVenueMap([{ id: 'jack' }, null]).size).toBe(0);
   });
 });

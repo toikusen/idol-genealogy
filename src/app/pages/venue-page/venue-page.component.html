@@ -37,6 +37,12 @@
       </p>
 
       <div class="actions">
+        @if (view3d) {
+          <a class="btn btn--3d" [href]="'/view#v=' + view3d">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+            3D 看視線
+          </a>
+        }
         <a class="btn btn--primary" [href]="mapUrl" target="_blank" rel="noopener">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 20l-6-3V4l6 3m0 13l6-3m-6 3V7m6 10l6 3V7l-6-3m0 13V4m0 0L9 7"/></svg>
           開啟地圖
@@ -170,9 +176,15 @@
     }
 
     <section class="plan-cta" aria-labelledby="plan-heading">
-      <h2 id="plan-heading">場地平面圖</h2>
-      <p>有這個場地的官方平面圖嗎？上傳後經過審核，就能做成「別擋我推」的 3D 視線模擬，看排第幾位站哪裡、看不看得到推。</p>
-      <a class="plan-cta-btn" routerLink="/upload-plan" [queryParams]="{ venue: v.id }">上傳平面圖</a>
+      @if (view3d) {
+        <h2 id="plan-heading">別擋我推：3D 視線模擬</h2>
+        <p>這個場地已經依官方平面圖做成 3D。輸入排隊順位和身高，看你大概站哪裡、看不看得到推。</p>
+        <a class="plan-cta-btn" [href]="'/view#v=' + view3d">打開 3D 模擬</a>
+      } @else {
+        <h2 id="plan-heading">場地平面圖</h2>
+        <p>有這個場地的官方平面圖嗎？上傳後經過審核，就能做成「別擋我推」的 3D 視線模擬，看排第幾位站哪裡、看不看得到推。</p>
+        <a class="plan-cta-btn" routerLink="/upload-plan" [queryParams]="{ venue: v.id }">上傳平面圖</a>
+      }
     </section>
 
     @if (nearbyVenues.length > 0) {
