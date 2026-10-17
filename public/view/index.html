@@ -926,11 +926,13 @@ details.fold[open] > summary { margin-bottom: 8px; }
 .venue-cta { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 1px dashed var(--accent-text);
   font-size: 13px; color: var(--accent-text); text-decoration: none; white-space: nowrap; }
 .venue-cta:hover { border-style: solid; }
+.venue-info { margin-left: 6px; color: var(--accent-text); text-decoration: none; letter-spacing: 0.04em; white-space: nowrap; }
+.venue-info:hover { text-decoration: underline; }
 @media (max-width: 920px) { .venue-pop { right: auto; left: 0; } }
 </style>
 </head>
 <body>
-<div class="app"><header class="v2-top"><div class="v2-brand"><a class="v2-home" href="/">Idol Maps</a><p class="eyebrow">NUZONE 2F</p></div><div class="v2-venue"><div class="field">
+<div class="app"><header class="v2-top"><div class="v2-brand"><a class="v2-home" href="/">Idol Maps</a><p class="eyebrow"><span id="venueEyebrow">NUZONE 2F</span> <a class="venue-info" id="venueInfo" href="/venue">場館資訊・近期演出 →</a></p></div><div class="v2-venue"><div class="field">
         <span class="flabel">場館</span>
         <div class="venue-pick" id="venuePick">
           <button type="button" class="venue-btn" id="venueBtn" aria-haspopup="listbox" aria-expanded="false"><span id="venueCur"></span><i aria-hidden="true">▾</i></button>
@@ -1333,7 +1335,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      stage width 9.0 m = 1832 px → 203.6 px/m (official depth 3.6 m measures 3.50 m, ≈3% short).
      x = (imgY − 2912) / 203.6, z = (4952 − imgX) / 203.6 */
   const NUZONE = {
-    id: 'nuzone2f', name: 'NUZONE 2F 展演空間', short: 'NUZONE', eyebrow: 'NUZONE 2F · 台北 市民大道',
+    id: 'nuzone2f', idolmaps: 'e3fa29f0-bbe5-4668-8c2a-13203fc98924', name: 'NUZONE 2F 展演空間', short: 'NUZONE', eyebrow: 'NUZONE 2F · 台北 市民大道',
     ceiling: 6.0, stageUse: 3.2,
     stageDepths: [3.6, 4.8], stageRect: { x0: -4.5, x1: 4.5 },
     stageH: { def: 0.8, options: [0.6, 0.8, 1.0, 1.2], official: false },
@@ -1370,7 +1372,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      Stage 1092 × 562, stage height 120, moat 190 with a 1600 barrier, hall width 1688,
      barrier → back wall 1736, PA/LD booth 360 × 240 placed 60 from the back wall. */
   const MOONDOG = {
-    id: 'moondog', name: 'MOONDOG（微風廣場 9F）', short: 'MOONDOG', eyebrow: 'MOONDOG · 台北 微風廣場 9F',
+    id: 'moondog', idolmaps: 'e0463a6c-5ca3-4ef1-89a2-663a7f9d06f9', name: 'MOONDOG（微風廣場 9F）', short: 'MOONDOG', eyebrow: 'MOONDOG · 台北 微風廣場 9F',
     ceiling: 6.35, stageUse: 4.0,
     stage: rect(-5.46, 5.46, -5.62, 0),
     stageH: { def: 1.2, options: [1.2], official: true },
@@ -1396,7 +1398,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      478/873/873/358). The stage sits diagonally in a corner; this frame is rotated so the diagonal
      stage front (7.55 m) lies on z = 0. 2.33 cm/px from the 1905 cm overall dimension. */
   const JACK = {
-    id: 'jack', name: "杰克音樂 Jack's Studio", short: '杰克音樂', eyebrow: "JACK'S STUDIO · 台北 西門 B1",
+    id: 'jack', idolmaps: '0f9726b9-8f77-4dc1-bc19-f699e9d88ad7', name: "杰克音樂 Jack's Studio", short: '杰克音樂', eyebrow: "JACK'S STUDIO · 台北 西門 B1",
     ceiling: 3.8, stageUse: 2.6,
     stage: [[0.48, -5.03], [4.39, -0.53], [3.78, 0], [-3.78, 0], [-4.43, -0.75]],
     stageH: { def: 0.6, options: [0.4, 0.6, 0.8, 1.0], official: false },
@@ -1422,7 +1424,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      Scale 2.23 cm/px at 150 dpi, checked against the drawing's metre ruler and the 5.5 m / 1.8 m
      dimension lines. Stage 11 × 6 m (official site), hall 14.3 m wide, 15.8 m + 16.2 m deep. */
   const LEGACY = {
-    id: 'legacy', name: 'Legacy Taipei 傳音樂展演空間', short: 'Legacy Taipei', eyebrow: 'LEGACY TAIPEI · 華山1914 中5A館',
+    id: 'legacy', idolmaps: 'bfa6faea-7123-4dfc-bae3-7ddd504c231f', name: 'Legacy Taipei 傳音樂展演空間', short: 'Legacy Taipei', eyebrow: 'LEGACY TAIPEI · 華山1914 中5A館',
     ceiling: 8.0, stageUse: 4.2,
     stage: rect(-5.45, 5.45, -6.0, 0),
     stageH: { def: 1.0, options: [0.8, 1.0, 1.2, 1.5], official: false },
@@ -1446,7 +1448,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      The drawing is not uniformly scaled: 2.20 cm/px across (670 cm hall width) and 2.37 cm/px
      along (500 / 1190 / 1690 cm). Stage 670 × 500 × 60 cm (official). */
   const PIPE = {
-    id: 'pipe', name: 'PIPE Live Music 水管音樂', short: 'PIPE', eyebrow: 'PIPE LIVE MUSIC · 台北 公館水岸廣場',
+    id: 'pipe', idolmaps: 'bfe07f59-4a73-4b55-a0d4-efd149c27cc5', name: 'PIPE Live Music 水管音樂', short: 'PIPE', eyebrow: 'PIPE LIVE MUSIC · 台北 公館水岸廣場',
     ceiling: 8.0, stageUse: 2.6,
     stage: rect(-3.35, 3.35, -5.0, 0),
     stageH: { def: 0.6, options: [0.6], official: true },
@@ -1473,7 +1475,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      2.255 cm/px at 150 dpi, matching the 11.9 m / 18.7 m / 25.8 m dimension lines. Stage 1020 × 600,
      height 120, LED 700 × 400 cm. The plan marks 視線受阻區 (blocked view) in the left alcove. */
   const SUB = {
-    id: 'sub', name: 'SUB Live（北流 南基地）', short: 'SUB', eyebrow: 'SUB LIVE · 台北 南港 北流',
+    id: 'sub', idolmaps: '6ea73129-d932-4e3a-a5f2-211f8de8d50d', name: 'SUB Live（北流 南基地）', short: 'SUB', eyebrow: 'SUB LIVE · 台北 南港 北流',
     ceiling: 7.0, stageUse: 4.0,
     stage: rect(-5.1, 5.1, -6.0, 0),
     stageH: { def: 1.2, options: [1.2], official: true },
@@ -1500,7 +1502,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      Hall 2060 × 1242, stage 1091 wide × 645 deep; LED 360" P5 (≈ 7.97 × 4.48 m). The scanned plan is
      not uniformly scaled (3.71 cm/px along, 4.07 cm/px across), so positions follow the stated dimensions. */
   const CLAPPER = {
-    id: 'clapper', name: '三創 CLAPPER STUDIO', short: 'CLAPPER', eyebrow: 'CLAPPER STUDIO · 台北 三創生活園區 5F',
+    id: 'clapper', idolmaps: '7b8b96bb-0f9c-450c-a73d-1daf880f93dd', name: '三創 CLAPPER STUDIO', short: 'CLAPPER', eyebrow: 'CLAPPER STUDIO · 台北 三創生活園區 5F',
     ceiling: 7.0, stageUse: 4.0,
     stage: rect(-5.455, 5.455, -6.45, 0),
     stageH: { def: 1.0, options: [0.8, 1.0, 1.2], official: false },
@@ -1519,7 +1521,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      chair width ≈ 0.45 m and row pitch ≈ 0.89 m (38 seats × 23 rows), and the official 1F standing
      capacity 1,871 at ≈ 3 people/m². 2F balcony not modelled. */
   const ZEPP = {
-    id: 'zepp', name: 'Zepp New Taipei（1F）', short: 'Zepp', eyebrow: 'ZEPP NEW TAIPEI · 新北 新莊 宏匯廣場 8F',
+    id: 'zepp', idolmaps: 'a0ac9593-f829-4220-8a62-c398854dd980', name: 'Zepp New Taipei（1F）', short: 'Zepp', eyebrow: 'ZEPP NEW TAIPEI · 新北 新莊 宏匯廣場 8F',
     ceiling: 9.0, stageUse: 5.0,
     stage: rect(-9.81, 9.81, -5.86, 0),
     stageH: { def: 1.0, options: [0.8, 1.0, 1.2, 1.5], official: false },
@@ -1539,7 +1541,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      pillars, the stair block and the door vestibule are measured with the scale of their own axis. */
   const pillarsAt = (x0, x1, zs) => zs.map(z => ({ x0, x1, z0: z - 0.37, z1: z + 0.37, kind: 'pillar' }));
   const LEGACY_TC = {
-    id: 'legacytc', name: 'Legacy Taichung 傳音樂展演空間', short: 'Legacy Taichung', eyebrow: 'LEGACY TAICHUNG · 台中',
+    id: 'legacytc', idolmaps: '8c98722f-25fb-48a9-a80a-968c0677db2f', name: 'Legacy Taichung 傳音樂展演空間', short: 'Legacy Taichung', eyebrow: 'LEGACY TAICHUNG · 台中',
     ceiling: 8.0, stageUse: 4.5,
     stage: rect(-5.85, 5.85, -6.7, 0),
     stageH: { def: 1.0, options: [0.8, 1.0, 1.2, 1.5], official: false },
@@ -1565,7 +1567,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      1.72 cm/px at 110 dpi; the three dimension lines agree within 3%. The floor runs to the bar front
      (about 850 cm wide, measured). */
   const LWH = {
-    id: 'lwh', name: 'LIVE WAREHOUSE 小庫（高雄 駁二）', short: 'LIVE WAREHOUSE', eyebrow: 'LIVE WAREHOUSE 小庫 · 高雄 駁二 C10',
+    id: 'lwh', idolmaps: '6e44c8be-0454-400d-9ca5-84bfeafc0c20', name: 'LIVE WAREHOUSE 小庫（高雄 駁二）', short: 'LIVE WAREHOUSE', eyebrow: 'LIVE WAREHOUSE 小庫 · 高雄 駁二 C10',
     ceiling: 5.7, stageUse: 3.0,
     stage: rect(-3.825, 3.825, -4.51, 0),
     stageH: { def: 0.7, options: [0.7], official: true },
@@ -1580,6 +1582,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     defaults: { total: 200 }
   };
 
+  // each venue's `idolmaps` is its id on idolmaps.com (/venue/<id>); build.sh exports the pairs to venues.json
   const VENUES = { jack: JACK, nuzone2f: NUZONE, moondog: MOONDOG, legacy: LEGACY, legacytc: LEGACY_TC, pipe: PIPE, sub: SUB, clapper: CLAPPER, zepp: ZEPP, lwh: LWH };
 
   function aabb(x0, x1, z0, z1, y0, y1, extra) {
@@ -3125,7 +3128,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
     if (VN.stageDepths) setPressed($('#depthSeg'), String(state.stageDepth));
     $('#n1').max = String(TOTAL_MAX); $('#n1').value = String(state.total); $('#n1Out').textContent = state.total + '人';
     if (venueParam) document.title = VN.short + '｜' + document.title;
-    $('.eyebrow').textContent = VN.eyebrow;
+    $('#venueEyebrow').textContent = VN.eyebrow;
+    $('#venueInfo').href = '/venue/' + VN.idolmaps;
   })();
 
   /* ============ condition panel ============ */
