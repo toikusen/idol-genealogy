@@ -923,6 +923,9 @@ details.fold[open] > summary { margin-bottom: 8px; }
 #venueList .venue-none { color: var(--ink-3); cursor: default; }
 .venue-add { display: block; margin-top: 6px; padding: 10px 12px; border-top: 1px dashed var(--line); font-size: 13px; color: var(--accent-text); text-decoration: none; }
 .venue-add:hover { text-decoration: underline; }
+.venue-cta { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 1px dashed var(--accent-text);
+  font-size: 13px; color: var(--accent-text); text-decoration: none; white-space: nowrap; }
+.venue-cta:hover { border-style: solid; }
 @media (max-width: 920px) { .venue-pop { right: auto; left: 0; } }
 </style>
 </head>
@@ -937,6 +940,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
             <a class="venue-add" href="/upload-plan" target="_blank" rel="noopener">找不到你的場館？上傳平面圖 ↗</a>
           </div>
         </div>
+        <a class="venue-cta" href="/upload-plan" target="_blank" rel="noopener">＋ 提供平面圖</a>
       </div></div></header><div class="masthead hero"><div class="hero-main"><p class="hero-kicker">OSHI VIEW · 排隊站位 × 視線模擬</p><h1 class="hero-title"><span class="hero-brand">別擋我推</span><span class="hero-tag"><span class="h1-part">排隊順位看舞台：</span><span class="h1-part">你會站在哪、看得到誰</span></span></h1><p class="mast-short">輸入排隊順位和身高，看你大概站哪、看得到幾個人。</p></div><div class="hero-side"><p class="mast-note">依場館的官方平面圖把場地做成 3D，模擬大家照排隊順序進場、各自找位置，再從你的眼睛高度計算每位成員被擋住多少。數字是可調整的預設值，輸入你的排隊順位和身高就會重算。</p><ol class="hero-steps"><li><b>1</b>輸入排隊順位</li><li><b>2</b>輸入身高</li><li><b>3</b>看你的視線和推看不看得到</li></ol></div></div><main class="v2-main"><div class="v2-a"><div class="viewport" id="viewport">
         <canvas id="c3d" aria-label="場地 3D 視圖"></canvas>
         <div class="vp-tabs" id="viewTabs" role="group" aria-label="視角">
@@ -1576,7 +1580,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     defaults: { total: 200 }
   };
 
-  const VENUES = { nuzone2f: NUZONE, moondog: MOONDOG, jack: JACK, legacy: LEGACY, legacytc: LEGACY_TC, pipe: PIPE, sub: SUB, clapper: CLAPPER, zepp: ZEPP, lwh: LWH };
+  const VENUES = { jack: JACK, nuzone2f: NUZONE, moondog: MOONDOG, legacy: LEGACY, legacytc: LEGACY_TC, pipe: PIPE, sub: SUB, clapper: CLAPPER, zepp: ZEPP, lwh: LWH };
 
   function aabb(x0, x1, z0, z1, y0, y1, extra) {
     return Object.assign({ cx: (x0 + x1) / 2, cz: (z0 + z1) / 2, ux: 1, uz: 0, vx: 0, vz: 1,
@@ -3647,12 +3651,25 @@ details.fold[open] > summary { margin-bottom: 8px; }
       if (!noList) crowdMeshes.push(m);
       return m;
     };
-    // cel-shaded like the idols, so the whole room reads as one illustration
-    const M_CLOTH = FIG.toon(0xffffff, { side: THREE.DoubleSide });
-    const M_PANTS = FIG.toon(0xffffff, { side: THREE.DoubleSide });
-    const M_SKIN = FIG.toon(0xffffff);
-    const M_HAIR = FIG.toon(0xffffff, { side: THREE.DoubleSide });
-    const M_SHOE = FIG.toon(0xffffff);
+    // cel-shaded like the idols, so the whole room reads as one illustration. In the first-person views the crowd
+    // drops into the dark like a real live-house floor: dimmed, greyed, with a stage-coloured rim on the silhouettes
+    const CROWD_DARK = false;   // dark live-house crowd: built, waiting for a go-ahead before it ships
+    const CROWD_LOOK = { dim: { value: CROWD_DARK ? 0.42 : 1 }, rim: { value: CROWD_DARK ? 0.55 : 0 }, rimColor: { value: col('#c9a2ff') } };
+    const darkable = m => {
+      m.onBeforeCompile = sh => {
+        Object.assign(sh.uniforms, { crowdDim: CROWD_LOOK.dim, crowdRim: CROWD_LOOK.rim, rimColor: CROWD_LOOK.rimColor });
+        sh.fragmentShader = 'uniform float crowdDim, crowdRim; uniform vec3 rimColor;\n' + sh.fragmentShader.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', `
+          float rimK = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.5);
+          outgoingLight = mix(outgoingLight, vec3(dot(outgoingLight, vec3(0.3, 0.59, 0.11))), 0.45 * (1.0 - crowdDim)) * crowdDim + rimColor * rimK * crowdRim;
+          gl_FragColor = vec4( outgoingLight, diffuseColor.a );`);
+      };
+      return m;
+    };
+    const M_CLOTH = darkable(FIG.toon(0xffffff, { side: THREE.DoubleSide }));
+    const M_PANTS = darkable(FIG.toon(0xffffff, { side: THREE.DoubleSide }));
+    const M_SKIN = darkable(FIG.toon(0xffffff));
+    const M_HAIR = darkable(FIG.toon(0xffffff, { side: THREE.DoubleSide }));
+    const M_SHOE = darkable(FIG.toon(0xffffff));
     const M_EYE = new THREE.MeshBasicMaterial({ color: col('#160f13') });
     const M_PEN = new THREE.MeshBasicMaterial({ toneMapped: false });
     const crowd = {};
@@ -4154,6 +4171,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
       if (youLabel) youLabel.visible = state.view === 'orbit' || state.view === 'oshi';
       planGroup.visible = isPlan;
       crowdMeshes.forEach(m => { m.visible = !isPlan; }); glow.visible = penGlow.visible = !isPlan;
+      const dark = CROWD_DARK && (state.view === 'eye' || state.view === 'oshi');
+      CROWD_LOOK.dim.value = dark ? 0.42 : 1; CROWD_LOOK.rim.value = dark ? 0.55 : 0;
       NUM.mesh.visible = state.view === 'orbit';
       memberGroup.visible = !isPlan; you.visible = state.view !== 'eye' && !isPlan;
       venueGroup.children.forEach(c => { if (c.userData.beam) c.visible = !isPlan; });
