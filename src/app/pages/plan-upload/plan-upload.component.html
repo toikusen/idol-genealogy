@@ -1,0 +1,80 @@
+<main class="plan-up">
+  <a class="back" routerLink="/">← 返回首頁</a>
+
+  <header class="head">
+    <p class="eyebrow">Venue Floor Plan</p>
+    <h1>上傳場館平面圖</h1>
+    <p class="lead">
+      有 live house 的官方平面圖嗎？上傳後由 Idol Maps 編輯審核，用來做成
+      <a href="/view">別擋我推</a>的 3D 視線模擬。審核前不會公開，也不會顯示上傳者資訊。
+    </p>
+  </header>
+
+  @if (state === 'done') {
+    <section class="done" aria-live="polite">
+      <h2>收到了，謝謝你！</h2>
+      <p>「{{ venueName }}」的平面圖已送出審核。通過後會做成 3D 模擬，有問題的話會用你留的 Email 聯絡。</p>
+      <div class="actions">
+        <button type="button" class="btn" (click)="again()">再上傳一張</button>
+        <a class="btn ghost" [routerLink]="['/venue', venueId]">回到場館頁</a>
+      </div>
+    </section>
+  } @else {
+    <form class="form" (ngSubmit)="submit()">
+      <label class="f">
+        <span class="k">場館<b>必填</b></span>
+        <select name="venue" [(ngModel)]="venueId" required>
+          <option value="" disabled>選擇場館</option>
+          @for (v of venues; track v.id) {
+            <option [value]="v.id">{{ v.name }}</option>
+          }
+        </select>
+        <span class="hint">清單裡沒有？請先到<a routerLink="/contact">聯絡我們</a>告訴我們場館名稱。</span>
+      </label>
+
+      <label class="f">
+        <span class="k">平面圖檔案<b>必填</b></span>
+        <input #fileInput type="file" name="file" accept="image/jpeg,image/png,image/webp,application/pdf" (change)="onFile($event)" required>
+        <span class="hint">JPG、PNG、WebP 或 PDF，15MB 以內。官方圖面最好；手繪或拍照也可以，請盡量拍正。</span>
+      </label>
+
+      <label class="f">
+        <span class="k">圖上的一個已知尺寸</span>
+        <input type="text" name="dim" [(ngModel)]="knownDimension" maxlength="200" placeholder="例如：舞台寬 9m、觀眾區長 18m">
+        <span class="hint">圖上沒標尺寸時特別重要，有一個實際長度才能換算比例。</span>
+      </label>
+
+      <label class="f">
+        <span class="k">來源網址</span>
+        <input type="url" name="src" [(ngModel)]="sourceUrl" maxlength="500" placeholder="例如場館官網的下載頁">
+      </label>
+
+      <label class="f">
+        <span class="k">聯絡 Email</span>
+        <input type="email" name="email" [(ngModel)]="email" maxlength="200" placeholder="審核有問題時聯絡你，不會公開" autocomplete="email">
+      </label>
+
+      <label class="f">
+        <span class="k">備註</span>
+        <textarea name="note" [(ngModel)]="note" maxlength="500" rows="3" placeholder="例如：2024 年改裝後的版本、舞台高度 80cm"></textarea>
+      </label>
+
+      <label class="ack">
+        <input type="checkbox" name="ack" [(ngModel)]="licenseAck" required>
+        <span>這是公開資料，或我有權提供；同意 Idol Maps 用來製作模擬，並在網站上註明來源展示。</span>
+      </label>
+
+      @if (needsTurnstile) {
+        <div #turnstile class="turnstile"></div>
+      }
+
+      @if (error) {
+        <p class="err" role="alert">{{ error }}</p>
+      }
+
+      <button type="submit" class="btn" [disabled]="!canSubmit">
+        {{ state === 'sending' ? '上傳中…' : '送出審核' }}
+      </button>
+    </form>
+  }
+</main>

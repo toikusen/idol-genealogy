@@ -169,6 +169,12 @@
       </section>
     }
 
+    <section class="plan-cta" aria-labelledby="plan-heading">
+      <h2 id="plan-heading">場地平面圖</h2>
+      <p>有這個場地的官方平面圖嗎？上傳後經過審核，就能做成「別擋我推」的 3D 視線模擬，看排第幾位站哪裡、看不看得到推。</p>
+      <a class="plan-cta-btn" routerLink="/upload-plan" [queryParams]="{ venue: v.id }">上傳平面圖</a>
+    </section>
+
     @if (nearbyVenues.length > 0) {
       <nav class="near-section" aria-label="同區域場地">
         <h2>同區域場地</h2>

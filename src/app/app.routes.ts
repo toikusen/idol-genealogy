@@ -122,6 +122,11 @@ export const routes: Routes = [
       { path: 'history', loadComponent: () => import('./pages/admin/admin-history/admin-history.component').then(m => m.AdminHistoryComponent) },
       { path: 'songs', loadComponent: () => import('./pages/admin/admin-songs/admin-songs.component').then(m => m.AdminSongsComponent) },
       { path: 'venues', loadComponent: () => import('./pages/admin/admin-venues/admin-venues.component').then(m => m.AdminVenuesComponent) },
+      {
+        path: 'venue-plans',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./pages/admin/admin-venue-plans/admin-venue-plans.component').then(m => m.AdminVenuePlansComponent)
+      },
       { path: 'sukigao', loadComponent: () => import('./pages/admin/admin-sukigao/admin-sukigao.component').then(m => m.AdminSukigaoComponent) },
       {
         path: 'audit-log',
@@ -173,6 +178,10 @@ export const routes: Routes = [
   {
     path: 'about',
     loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent)
+  },
+  {
+    path: 'upload-plan',
+    loadComponent: () => import('./pages/plan-upload/plan-upload.component').then(m => m.PlanUploadComponent)
   },
   {
     path: 'contact',

@@ -1,0 +1,79 @@
+<div class="p-4 md:p-8">
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-800">平面圖審核</h1>
+    <p class="mt-1 text-xs text-gray-400">
+      使用者從 <a routerLink="/upload-plan" class="underline">/upload-plan</a> 匿名上傳的場館平面圖。通過的圖會拿去做「別擋我推」的 3D 模擬；
+      退回的 7 天後刪除，30 天沒審的也會自動刪除。
+    </p>
+  </div>
+
+  @if (error) {
+    <div class="mb-4 px-4 py-2 bg-red-50 border border-red-200 rounded-md text-sm text-red-600">{{ error }}</div>
+  }
+
+  @if (loading) {
+    <div class="text-center py-16 text-gray-400">載入中…</div>
+  } @else {
+    <h2 class="mb-3 text-sm font-medium text-gray-600">待審核（{{ pending.length }}）</h2>
+    @if (pending.length === 0) {
+      <div class="mb-10 rounded-lg border border-gray-100 bg-white p-6 text-center text-sm text-gray-400">目前沒有待審核的平面圖</div>
+    }
+    <div class="mb-10 grid gap-4">
+      @for (r of pending; track r.id) {
+        <article class="grid gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-[280px_1fr]">
+          <a [href]="r.url" target="_blank" rel="noopener" class="block rounded-md border border-gray-100 bg-gray-50">
+            @if (isImage(r) && r.url) {
+              <img [src]="r.url" alt="上傳的平面圖" class="h-56 w-full object-contain" loading="lazy">
+            } @else {
+              <span class="flex h-56 items-center justify-center text-sm text-purple-600">開啟 PDF ↗</span>
+            }
+          </a>
+          <div class="grid content-start gap-2 text-sm text-gray-700">
+            <div class="text-base font-medium text-gray-800">
+              <a [routerLink]="['/venue', r.venue_id]" target="_blank" class="hover:text-pink-600">{{ r.venues?.name ?? r.venue_id }}</a>
+            </div>
+            <div class="text-xs text-gray-400">{{ r.created_at | date: 'yyyy-MM-dd HH:mm' }} · {{ r.mime }} · {{ sizeMb(r) }} MB</div>
+            @if (r.known_dimension) { <div><span class="text-gray-400">已知尺寸：</span>{{ r.known_dimension }}</div> }
+            @if (r.source_url) {
+              <div class="break-all"><span class="text-gray-400">來源：</span><a [href]="r.source_url" target="_blank" rel="noopener nofollow" class="text-purple-600 underline">{{ r.source_url }}</a></div>
+            }
+            @if (r.contact_email) { <div><span class="text-gray-400">聯絡：</span>{{ r.contact_email }}</div> }
+            @if (r.note) { <div class="whitespace-pre-line"><span class="text-gray-400">備註：</span>{{ r.note }}</div> }
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <button type="button" (click)="review(r, 'approved')" [disabled]="busyId === r.id"
+                class="rounded-md bg-green-500 px-4 py-2 text-sm text-white hover:bg-green-600 disabled:opacity-50">通過（待建模）</button>
+              <input type="text" [(ngModel)]="r.rejectDraft" maxlength="300" placeholder="退回原因，例如：沒有尺寸、不是這間場館"
+                class="min-w-[220px] flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300">
+              <button type="button" (click)="review(r, 'rejected')" [disabled]="busyId === r.id"
+                class="rounded-md border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50">退回</button>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+
+    <h2 class="mb-3 text-sm font-medium text-gray-600">最近審核</h2>
+    <div class="overflow-x-auto rounded-lg border border-gray-100 bg-white">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-left text-xs text-gray-500">
+          <tr><th class="px-4 py-2">場館</th><th class="px-4 py-2">結果</th><th class="px-4 py-2">審核</th><th class="px-4 py-2">檔案</th></tr>
+        </thead>
+        <tbody>
+          @for (r of reviewed; track r.id) {
+            <tr class="border-t border-gray-100">
+              <td class="px-4 py-2">{{ r.venues?.name ?? r.venue_id }}</td>
+              <td class="px-4 py-2">
+                @if (r.status === 'approved') { <span class="text-green-600">通過</span> }
+                @else { <span class="text-red-600">退回</span><span class="text-gray-400">：{{ r.reject_reason }}</span> }
+              </td>
+              <td class="px-4 py-2 text-xs text-gray-400">{{ r.reviewed_by }} · {{ r.reviewed_at | date: 'yyyy-MM-dd' }}</td>
+              <td class="px-4 py-2"><a [href]="r.url" target="_blank" rel="noopener" class="text-purple-600 underline">開啟</a></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">還沒有審核紀錄</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

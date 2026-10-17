@@ -2,6 +2,9 @@ export const environment = {
   production: false,
   supabaseUrl: 'https://ziiagdrrytyrmzoeegjk.supabase.co',
   supabaseAnonKey: 'sb_publishable_PtKb4LIJeJN3cECUJllW7w_UFRVTbTv',
+  // Cloudflare Turnstile site key for /upload-plan; empty = no widget (the edge function only checks
+  // tokens once TURNSTILE_SECRET is set, so set both together)
+  turnstileSiteKey: '',
   vapidPublicKey: 'BMDhexMoKNbOPswX_GF4Dyi6NBmEwa_wAhU3FcZgGK-TfwRbGCtYOL1poK1FSuQxAjvWEk49o0xIUs2KmLKnSL8',
   googleCalendar: {
     calendarId: 'mr7kibfjcm3gu52v6t64lreras@group.calendar.google.com',

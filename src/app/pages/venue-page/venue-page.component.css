@@ -402,6 +402,38 @@ a.show:hover .show-out, a.show:focus-visible .show-out { opacity: 1; }
   white-space: pre-line;
 }
 
+.plan-cta {
+  margin-top: 40px;
+  padding: 20px 22px;
+  border-radius: 16px;
+  background: var(--bg-pink-tint);
+}
+.plan-cta h2 {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--text-heading);
+  margin: 0 0 8px;
+}
+.plan-cta p {
+  font-size: 0.82rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+}
+.plan-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--idol-pink);
+  color: var(--idol-pink);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.plan-cta-btn:hover { background: var(--idol-pink); color: #fff; }
+
 .near-section { display: block; margin-top: 44px; }
 .near-section h2 {
   font-size: 1.05rem;
