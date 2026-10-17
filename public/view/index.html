@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="preload" href="assets/figures.glb?v=c0871a3845" as="fetch" type="model/gltf-binary" crossorigin>
+<link rel="preload" href="assets/figures.glb?v=f4783dc6e4" as="fetch" type="model/gltf-binary" crossorigin>
 <style>
 /* layout: left = queue + conditions panel, right = 3D view + verdict; below = queue buckets, curve, sources. Single dark theme (live house blackout) */
 :root {
@@ -3355,7 +3355,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   }
   // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
   // build.sh fills in a hash of the file, so the URL changes whenever the GLB does (served immutable)
-  const FIGURES_URL = 'assets/figures.glb?v=c0871a3845';
+  const FIGURES_URL = 'assets/figures.glb?v=f4783dc6e4';
   const VROID_URL = 'assets/idol-vroid.glb?v=6b274e16e7';
   function loadGlb(url, onProgress) {
     return new Promise((resolve, reject) => {
@@ -3651,25 +3651,12 @@ details.fold[open] > summary { margin-bottom: 8px; }
       if (!noList) crowdMeshes.push(m);
       return m;
     };
-    // cel-shaded like the idols, so the whole room reads as one illustration. In the first-person views the crowd
-    // drops into the dark like a real live-house floor: dimmed, greyed, with a stage-coloured rim on the silhouettes
-    const CROWD_DARK = false;   // dark live-house crowd: built, waiting for a go-ahead before it ships
-    const CROWD_LOOK = { dim: { value: CROWD_DARK ? 0.42 : 1 }, rim: { value: CROWD_DARK ? 0.55 : 0 }, rimColor: { value: col('#c9a2ff') } };
-    const darkable = m => {
-      m.onBeforeCompile = sh => {
-        Object.assign(sh.uniforms, { crowdDim: CROWD_LOOK.dim, crowdRim: CROWD_LOOK.rim, rimColor: CROWD_LOOK.rimColor });
-        sh.fragmentShader = 'uniform float crowdDim, crowdRim; uniform vec3 rimColor;\n' + sh.fragmentShader.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', `
-          float rimK = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.5);
-          outgoingLight = mix(outgoingLight, vec3(dot(outgoingLight, vec3(0.3, 0.59, 0.11))), 0.45 * (1.0 - crowdDim)) * crowdDim + rimColor * rimK * crowdRim;
-          gl_FragColor = vec4( outgoingLight, diffuseColor.a );`);
-      };
-      return m;
-    };
-    const M_CLOTH = darkable(FIG.toon(0xffffff, { side: THREE.DoubleSide }));
-    const M_PANTS = darkable(FIG.toon(0xffffff, { side: THREE.DoubleSide }));
-    const M_SKIN = darkable(FIG.toon(0xffffff));
-    const M_HAIR = darkable(FIG.toon(0xffffff, { side: THREE.DoubleSide }));
-    const M_SHOE = darkable(FIG.toon(0xffffff));
+    // cel-shaded like the idols, so the whole room reads as one illustration
+    const M_CLOTH = FIG.toon(0xffffff, { side: THREE.DoubleSide });
+    const M_PANTS = FIG.toon(0xffffff, { side: THREE.DoubleSide });
+    const M_SKIN = FIG.toon(0xffffff);
+    const M_HAIR = FIG.toon(0xffffff, { side: THREE.DoubleSide });
+    const M_SHOE = FIG.toon(0xffffff);
     const M_EYE = new THREE.MeshBasicMaterial({ color: col('#160f13') });
     const M_PEN = new THREE.MeshBasicMaterial({ toneMapped: false });
     const crowd = {};
@@ -4171,8 +4158,6 @@ details.fold[open] > summary { margin-bottom: 8px; }
       if (youLabel) youLabel.visible = state.view === 'orbit' || state.view === 'oshi';
       planGroup.visible = isPlan;
       crowdMeshes.forEach(m => { m.visible = !isPlan; }); glow.visible = penGlow.visible = !isPlan;
-      const dark = CROWD_DARK && (state.view === 'eye' || state.view === 'oshi');
-      CROWD_LOOK.dim.value = dark ? 0.42 : 1; CROWD_LOOK.rim.value = dark ? 0.55 : 0;
       NUM.mesh.visible = state.view === 'orbit';
       memberGroup.visible = !isPlan; you.visible = state.view !== 'eye' && !isPlan;
       venueGroup.children.forEach(c => { if (c.userData.beam) c.visible = !isPlan; });
