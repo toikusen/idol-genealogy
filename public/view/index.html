@@ -898,8 +898,6 @@ details.fold[open] > summary { margin-bottom: 8px; }
 .vp-load { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 8px 16px; border-radius: 999px;
   background: rgba(12, 10, 26, 0.72); color: #fff; font-size: 13px; pointer-events: none; }
 .vp-load[hidden] { display: none; }
-/* switching venue is a page load: cross-fade instead of a white flash (browsers without support just load) */
-@view-transition { navigation: auto; }
 </style>
 </head>
 <body>
@@ -2807,7 +2805,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
     $('#venueSeg').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b || b.dataset.v === VN.id) return;
       try { sessionStorage.setItem(CARRY, JSON.stringify({ ticket: state.ticket, userHeight: state.userHeight, oshi: state.oshi, view: state.view })); } catch (err) { /* private mode: start fresh */ }
-      location.assign(location.pathname + '?v=' + b.dataset.v);
+      // ponytail: hash, not ?v= — idolmaps' Angular service worker answers /view?v=… with its own 404 page
+      location.hash = 'v=' + b.dataset.v; location.reload();
     });
     segButtons($('#barrierSeg'), VN.barrier.options.map(v => [v, v === 'none' ? '沒有' : '離舞台 ' + v + 'm']));
     $('#barrierSeg').hidden = VN.barrier.options.length < 2;
