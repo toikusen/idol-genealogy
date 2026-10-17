@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
-<link rel="preload" href="assets/figures.glb?v=f4783dc6e4" as="fetch" type="model/gltf-binary" crossorigin>
+<link rel="preload" href="assets/figures.glb?v=c0871a3845" as="fetch" type="model/gltf-binary" crossorigin>
 <style>
 /* layout: left = queue + conditions panel, right = 3D view + verdict; below = queue buckets, curve, sources. Single dark theme (live house blackout) */
 :root {
@@ -3355,7 +3355,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   }
   // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
   // build.sh fills in a hash of the file, so the URL changes whenever the GLB does (served immutable)
-  const FIGURES_URL = 'assets/figures.glb?v=f4783dc6e4';
+  const FIGURES_URL = 'assets/figures.glb?v=c0871a3845';
   const VROID_URL = 'assets/idol-vroid.glb?v=6b274e16e7';
   function loadGlb(url, onProgress) {
     return new Promise((resolve, reject) => {
