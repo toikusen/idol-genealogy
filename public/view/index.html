@@ -1412,7 +1412,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
      Scale 2.23 cm/px at 150 dpi, checked against the drawing's metre ruler and the 5.5 m / 1.8 m
      dimension lines. Stage 11 × 6 m (official site), hall 14.3 m wide, 15.8 m + 16.2 m deep. */
   const LEGACY = {
-    id: 'legacy', name: 'Legacy Taipei 傳音樂展演空間', short: 'Legacy', eyebrow: 'LEGACY TAIPEI · 華山1914 中5A館',
+    id: 'legacy', name: 'Legacy Taipei 傳音樂展演空間', short: 'Legacy Taipei', eyebrow: 'LEGACY TAIPEI · 華山1914 中5A館',
     ceiling: 8.0, stageUse: 4.2,
     stage: rect(-5.45, 5.45, -6.0, 0),
     stageH: { def: 1.0, options: [0.8, 1.0, 1.2, 1.5], official: false },
@@ -1523,7 +1523,54 @@ details.fold[open] > summary { margin-bottom: 8px; }
     defaults: { total: 900 }
   };
 
-  const VENUES = { nuzone2f: NUZONE, moondog: MOONDOG, jack: JACK, legacy: LEGACY, pipe: PIPE, sub: SUB, clapper: CLAPPER, zepp: ZEPP };
+  /* Legacy Taichung 1F — official「場館平面圖 Venue Floor Plan」(2017/11/28), dimension lines in cm:
+     hall 1800 wide (1680 between the pillars) × 1880 from the stage front to the lobby wall, stage 1170 × 670.
+     The PDF is not uniformly scaled (2.37 cm/px across, 2.23 cm/px along at 200 dpi), so the dimensions win;
+     pillars, the stair block and the door vestibule are measured with the scale of their own axis. */
+  const pillarsAt = (x0, x1, zs) => zs.map(z => ({ x0, x1, z0: z - 0.37, z1: z + 0.37, kind: 'pillar' }));
+  const LEGACY_TC = {
+    id: 'legacytc', name: 'Legacy Taichung 傳音樂展演空間', short: 'Legacy Taichung', eyebrow: 'LEGACY TAICHUNG · 台中',
+    ceiling: 8.0, stageUse: 4.5,
+    stage: rect(-5.85, 5.85, -6.7, 0),
+    stageH: { def: 1.0, options: [0.8, 1.0, 1.2, 1.5], official: false },
+    led: null,
+    floor: [[-5.85, 0], [-5.85, -0.71], [-9.0, -0.71], [-9.0, 16.9], [-5.45, 16.9], [-5.45, 18.8], [-1.45, 18.8], [-1.45, 17.37],
+            [1.45, 17.37], [1.45, 18.8], [9.0, 18.8], [9.0, -0.71], [5.85, -0.71], [5.85, 0]],
+    walls: [[[-9.0, -7.17], [9.0, -7.17]], [[9.0, -7.17], [9.0, 18.8]], [[9.0, 18.8], [-9.0, 18.8]], [[-9.0, 18.8], [-9.0, -7.17]],
+            [[-9.0, -0.71], [-5.85, -0.71]], [[5.85, -0.71], [9.0, -0.71]], [[-9.0, 16.9], [-5.45, 16.9]], [[-5.45, 16.9], [-5.45, 18.8]],
+            [[-1.45, 18.8], [-1.45, 17.37]], [[-1.45, 17.37], [1.45, 17.37]], [[1.45, 17.37], [1.45, 18.8]]],
+    barrier: { options: ['none', '1.0', '1.5'], def: 'none', range: [-8.4, 8.4] },
+    blockers: [...pillarsAt(-9.0, -8.4, [3.2, 7.3, 12.6, 16.4]), ...pillarsAt(8.4, 9.0, [3.2, 7.3, 12.6, 16.4])],
+    zones: [
+      { poly: rect(-9.0, -5.85, -7.17, -0.71), h: 0, color: '#8a90a0', label: '側台', lx: -7.4, lz: -3.9 },
+      { poly: rect(5.85, 9.0, -7.17, -0.71), h: 0, color: '#8a90a0', label: '側台', lx: 7.4, lz: -3.9 },
+      { poly: rect(-9.0, -5.45, 16.9, 18.8), h: 0, color: '#a9adbf', label: '樓梯', lx: -7.2, lz: 17.85 }
+    ],
+    labels: [{ t: '入口 ↑', x: 0, z: 16.9 }, { t: '← 側門', x: -8.2, z: 5.2 }],
+    defaults: { total: 600 }
+  };
+
+  /* LIVE WAREHOUSE 小庫 (Kaohsiung, Pier-2 C10) — official「LIVE WAREHOUSE 小庫尺寸圖」, all in cm:
+     stage 451 deep × 765 wide × 70 high, audience 930 long, ceiling 570 over the floor, console 93 × 270.
+     1.72 cm/px at 110 dpi; the three dimension lines agree within 3%. The floor runs to the bar front
+     (about 850 cm wide, measured). */
+  const LWH = {
+    id: 'lwh', name: 'LIVE WAREHOUSE 小庫（高雄 駁二）', short: 'LIVE WAREHOUSE', eyebrow: 'LIVE WAREHOUSE 小庫 · 高雄 駁二 C10',
+    ceiling: 5.7, stageUse: 3.0,
+    stage: rect(-3.825, 3.825, -4.51, 0),
+    stageH: { def: 0.7, options: [0.7], official: true },
+    led: null,
+    floor: rect(-4.87, 3.84, 0, 9.3),
+    walls: [[[-3.84, -4.51], [3.84, -4.51]], [[3.84, -4.51], [3.84, 9.3]], [[3.84, 9.3], [-4.87, 9.3]], [[-4.87, 9.3], [-4.87, 0]],
+            [[-4.87, 0], [-3.84, 0]], [[-3.84, 0], [-3.84, -4.51]]],
+    barrier: { options: ['none'], def: 'none', range: [-3.8, 3.8] },
+    blockers: [{ x0: -0.73, x1: 1.94, z0: 7.09, z1: 8.02, h: 1.2, kind: 'booth' }],   // 控台 93 × 270
+    zones: [{ poly: rect(-0.73, 1.94, 7.09, 8.02), h: 0, color: '#a9adbf', label: '控台', lx: 0.6, lz: 7.55 }],
+    labels: [{ t: '← 入口', x: -4.4, z: 6.9 }],
+    defaults: { total: 200 }
+  };
+
+  const VENUES = { nuzone2f: NUZONE, moondog: MOONDOG, jack: JACK, legacy: LEGACY, legacytc: LEGACY_TC, pipe: PIPE, sub: SUB, clapper: CLAPPER, zepp: ZEPP, lwh: LWH };
 
   function aabb(x0, x1, z0, z1, y0, y1, extra) {
     return Object.assign({ cx: (x0 + x1) / 2, cz: (z0 + z1) / 2, ux: 1, uz: 0, vx: 0, vz: 1,
@@ -4986,6 +5033,36 @@ details.fold[open] > summary { margin-bottom: 8px; }
       links: [
         { t: '三創 場地租借下載頁', url: 'https://www.syntrend.com.tw/space/download.html' },
         { t: '室內展演空間簡介 PDF（第 11 頁為平面圖）', url: 'https://drive.google.com/file/d/13Yjj7yTPqQTHVrf3lKQpnasHsBhsg_tX/view' }
+      ]
+    },
+    legacytc: {
+      src: [
+        ['觀眾區', '寬 1800cm（柱間 1680cm）× 深 1880cm', '官方場館平面圖（2017/11/28）尺寸線', 'off'],
+        ['舞台', '寬 1170cm × 深 670cm', '官方平面圖尺寸線', 'off'],
+        ['柱子、樓梯間、入口門斗', '位置與大小', '官方平面圖量測（各方向用各自的比例）', 'meas'],
+        ['舞台高度', '預設 1.0m（可調）', '官方未公布，推定', 'est'],
+        ['挑高', '8m', '官方未公布，推定', 'est'],
+        ['二樓看台', '未建模', '只模擬一樓站區', 'est']
+      ],
+      method: '官方平面圖直接標示公分尺寸。PDF 圖面橫縱比例不一致（200dpi 時橫向 2.37、縱向 2.23cm/px），所以主要尺寸照圖上數字，柱子、樓梯間和入口門斗才用各自方向的比例量測。',
+      site: 'https://www.legacy.com.tw/',
+      refs: [{ src: 'assets/ref/legacy-taichung-plan.jpg', cap: 'Legacy Taichung 場館平面圖（2017/11/28，一樓）', from: 'https://www.legacy.com.tw/download/Taichung_interiormap.pdf' }],
+      links: [{ t: 'Legacy Taichung 官方平面圖 PDF', url: 'https://www.legacy.com.tw/download/Taichung_interiormap.pdf' }]
+    },
+    lwh: {
+      src: [
+        ['舞台', '深 451cm × 寬 765cm，高 70cm', '官方「小庫尺寸圖」', 'off'],
+        ['觀眾區', '長 930cm × 寬約 850cm', '長度照官方尺寸圖；寬度到吧檯前，量測', 'meas'],
+        ['挑高', '觀眾區到天花板 570cm', '官方尺寸圖', 'off'],
+        ['控台', '93 × 270cm', '官方尺寸圖', 'off'],
+        ['容量', '站位 230 人／座位 100 人', '高雄流行音樂中心官網', 'off']
+      ],
+      method: '官方尺寸圖標示公分尺寸（110dpi 時 1.72cm/px），舞台長 451、觀眾區長 930、舞台寬 765 三條尺寸線互相驗算，誤差在 3% 以內。只模擬小庫，大庫沒有公開圖面。',
+      site: 'https://kpmc.com.tw/',
+      refs: [{ src: 'assets/ref/lwh-small-plan.jpg', cap: 'LIVE WAREHOUSE 小庫尺寸圖', from: 'https://kpmc.com.tw/wp-content/uploads/2021/01/LIVE-WAREHOUSE-%E5%B0%8F%E5%BA%AB%E5%B0%BA%E5%AF%B8%E5%9C%96.pdf' }],
+      links: [
+        { t: 'LIVE WAREHOUSE 介紹（高雄流行音樂中心）', url: 'https://kpmc.com.tw/en/newslist/live-warehouse%E4%BB%8B%E7%B4%B9/' },
+        { t: '小庫尺寸圖 PDF', url: 'https://kpmc.com.tw/wp-content/uploads/2021/01/LIVE-WAREHOUSE-%E5%B0%8F%E5%BA%AB%E5%B0%BA%E5%AF%B8%E5%9C%96.pdf' }
       ]
     },
     zepp: {
