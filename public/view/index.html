@@ -25,6 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
+<link rel="preload" href="assets/figures.glb?v=c0871a3845" as="fetch" type="model/gltf-binary" crossorigin>
 <style>
 /* layout: left = queue + conditions panel, right = 3D view + verdict; below = queue buckets, curve, sources. Single dark theme (live house blackout) */
 :root {
@@ -892,6 +893,13 @@ details.fold[open] > summary { margin-bottom: 8px; }
   .viewport.expanded .dock-res span { display: none; }
   .viewport.expanded .vp-hud, .viewport.expanded #luckLead { display: none; }
 }
+/* plan and orbit are maps: on phones a drag pans/turns them instead of scrolling the page (the eye view keeps pan-y) */
+.viewport[data-view="plan"] canvas, .viewport[data-view="orbit"] canvas { touch-action: none; }
+.vp-load { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 8px 16px; border-radius: 999px;
+  background: rgba(12, 10, 26, 0.72); color: #fff; font-size: 13px; pointer-events: none; }
+.vp-load[hidden] { display: none; }
+/* switching venue is a page load: cross-fade instead of a white flash (browsers without support just load) */
+@view-transition { navigation: auto; }
 </style>
 </head>
 <body>
@@ -968,6 +976,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
           </div>
           <input id="dockRange" type="range" min="1" max="200" value="50" aria-label="排隊順位滑桿">
         </div>
+        <div class="vp-load" id="vpLoad" aria-live="polite">載入 3D 模型…</div>
         <div class="vp-fallback" id="fallback" hidden="">無法開啟 3D 顯示（這個環境不支援 WebGL）。下方的判定和表格仍然有計算。</div>
       </div><div class="panel verdict" id="verdict" aria-live="polite"></div>
       <section class="panel plan" id="plan" aria-label="排隊與站位建議">
@@ -1242,6 +1251,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   <button type="button" class="mb-open" id="mbOpen">看 3D</button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/meshoptimizer@0.21.0/meshopt_decoder.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script id="simScript">
 /* ============================================================
@@ -2503,6 +2513,18 @@ details.fold[open] > summary { margin-bottom: 8px; }
     gltf.scene.updateMatrixWorld(true);
     const meshes = [];
     gltf.scene.traverse(o => { if (o.isMesh) meshes.push(o); });
+    // the GLB is meshopt-packed with 8-bit normals: turn them back into plain floats so the CPU-side merges and
+    // matrix maths below keep working (r128 getX returns the raw integer)
+    const DIV = { Int8Array: 127, Uint8Array: 255, Int16Array: 32767, Uint16Array: 65535 };
+    const toFloat = a => {
+      const raw = a.isInterleavedBufferAttribute ? a.data.array : a.array;
+      if (raw instanceof Float32Array && !a.isInterleavedBufferAttribute) return a;
+      const div = a.normalized ? DIV[raw.constructor.name] || 1 : 1, k = a.itemSize, out = new Float32Array(a.count * k);
+      const get = [a.getX, a.getY, a.getZ, a.getW];
+      for (let i = 0; i < a.count; i++) for (let c = 0; c < k; c++) { const v = get[c].call(a, i) / div; out[i * k + c] = div > 1 ? Math.max(-1, v) : v; }
+      return new THREE.BufferAttribute(out, k);
+    };
+    meshes.forEach(o => ['position', 'normal'].forEach(n => { if (o.geometry.attributes[n]) o.geometry.setAttribute(n, toFloat(o.geometry.attributes[n])); }));
     // three.js may name a single-primitive mesh after its node or leave it on the parent node
     const nameOf = o => o.name || (o.parent ? o.parent.name : '') || '';
     const byPrefix = p => meshes.filter(o => nameOf(o).startsWith(p));
@@ -2757,6 +2779,12 @@ details.fold[open] > summary { margin-bottom: 8px; }
     rows: null, summary: null, sim: null, ev: null, slots: null, rep: 0, expanded: false,
     buckets: null, bucketSel: null
   };
+  // settings carried over a venue switch (the page reloads for the new venue)
+  const CARRY = 'ow-carry';
+  try {
+    const c = JSON.parse(sessionStorage.getItem(CARRY) || 'null'); sessionStorage.removeItem(CARRY);
+    if (c) Object.assign(state, { ticket: Math.max(1, Math.min(state.total, c.ticket | 0)) || 50, userHeight: c.userHeight || 170, oshi: c.oshi | 0, carryView: c.view });
+  } catch (err) { /* no storage */ }
   const general = () => state.total - state.vip;
   const nMembers = () => state.positionOrder.length;
   function params() {
@@ -2778,7 +2806,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
     $('#venueSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === VN.id)));
     $('#venueSeg').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b || b.dataset.v === VN.id) return;
-      location.hash = 'v=' + b.dataset.v; location.reload();
+      try { sessionStorage.setItem(CARRY, JSON.stringify({ ticket: state.ticket, userHeight: state.userHeight, oshi: state.oshi, view: state.view })); } catch (err) { /* private mode: start fresh */ }
+      location.assign(location.pathname + '?v=' + b.dataset.v);
     });
     segButtons($('#barrierSeg'), VN.barrier.options.map(v => [v, v === 'none' ? '沒有' : '離舞台 ' + v + 'm']));
     $('#barrierSeg').hidden = VN.barrier.options.length < 2;
@@ -3028,20 +3057,24 @@ details.fold[open] > summary { margin-bottom: 8px; }
     $('#viewTabs').hidden = true; $('#patternBox').hidden = true; $('#zoomBox').hidden = true; $('#leanBox').hidden = true;
   }
   // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
-  // bump the version whenever blender/build_figures.py is re-run so browsers drop the old file
-  const FIGURES_VERSION = 9;
+  // build.sh fills in a hash of the file, so the URL changes whenever the GLB does (served immutable)
+  const FIGURES_URL = 'assets/figures.glb?v=c0871a3845';
   function loadFigures() {
     return new Promise((resolve, reject) => {
       if (typeof THREE === 'undefined' || !THREE.GLTFLoader) return reject(new Error('three.js / GLTFLoader not loaded'));
-      new THREE.GLTFLoader().load('assets/figures.glb?v=' + FIGURES_VERSION, resolve, undefined, reject);
+      const loader = new THREE.GLTFLoader();
+      if (window.MeshoptDecoder) loader.setMeshoptDecoder(window.MeshoptDecoder);
+      const msg = $('#vpLoad');
+      loader.load(FIGURES_URL, resolve, e => { if (e.total) msg.textContent = '載入 3D 模型… ' + Math.round(e.loaded / e.total * 100) + '%'; }, reject);
     });
   }
   loadFigures().then(gltf => {
+    $('#vpLoad').hidden = true;
     try {
       gl = initThree(gltf);
       if (state.sim) { gl.updateCrowd(state.sim); if (state.ev) gl.updateSight(state.ev); gl.render(); }
     } catch (err) { fail3D(err); }
-  }, fail3D);
+  }, err => { $('#vpLoad').hidden = true; fail3D(err); });
 
   function initThree(gltf) {
     const canvas = $('#c3d');
@@ -3982,9 +4015,12 @@ details.fold[open] > summary { margin-bottom: 8px; }
   function syncZoom() {
     const v = state.view, set = ZOOM_SETS[v] || ZOOM_SETS.eye;
     const z = v === 'plan' ? (gl ? gl.planZoom() : 1) : v === 'orbit' ? (gl ? gl.orbitZoom() : 1) : state.zoom;
+    // between presets (wheel / pinch) the nearest preset shows the live value instead of nothing lighting up
+    const exact = set.some(p => Math.abs(p[0] - z) < 0.05);
+    const near = set.reduce((bi, p, i) => Math.abs(Math.log(p[0] / z)) < Math.abs(Math.log(set[bi][0] / z)) ? i : bi, 0);
     $('#zoomBox').querySelectorAll('button').forEach((b, i) => {
-      b.dataset.z = String(set[i][0]); b.textContent = set[i][1];
-      b.setAttribute('aria-pressed', String(Math.abs(set[i][0] - z) < 0.01));
+      b.dataset.z = String(set[i][0]); b.textContent = !exact && i === near ? '×' + z.toFixed(1) : set[i][1];
+      b.setAttribute('aria-pressed', String(i === near));
     });
   }
   $('#zoomBox').addEventListener('click', e => {
@@ -4002,7 +4038,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   }
   $('#viewTabs').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    state.view = b.dataset.v; setPressed($('#viewTabs'), state.view);
+    state.view = b.dataset.v; setPressed($('#viewTabs'), state.view); $('.viewport').dataset.view = state.view;
     if (gl) gl.resetLook();
     renderResBox();
     $('#zoomBox').hidden = false;
@@ -4956,7 +4992,9 @@ details.fold[open] > summary { margin-bottom: 8px; }
   })();
 
   /* ============ boot ============ */
+  $('#height').value = String(state.userHeight); $('#heightOut').textContent = state.userHeight + 'cm';
   syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene();
+  if (state.carryView && state.carryView !== 'eye') { const b = $('#viewTabs [data-v="' + state.carryView + '"]'); if (b) b.click(); }
   $('#sightLegend').hidden = true;
   $('#curveSub').textContent = '維持你的身高、站位目標和推的成員，只改排隊順位，每個點各模擬 ' + CURVE_SEEDS.length + ' 次。色帶是 10–90% 的範圍。';
   requestMain();

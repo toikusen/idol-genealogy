@@ -49,3 +49,7 @@
 /feed.xml
   Content-Type: application/rss+xml; charset=UTF-8
   Cache-Control: public, max-age=3600
+
+# Oshi View figures: the URL carries a content hash (?v=…), so the file never changes under the same URL
+/view/assets/figures.glb
+  Cache-Control: public, max-age=31536000, immutable
