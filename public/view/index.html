@@ -933,6 +933,37 @@ details.fold[open] > summary { margin-bottom: 8px; }
 .venue-info { margin-left: 6px; color: var(--accent-text); text-decoration: none; letter-spacing: 0.04em; white-space: nowrap; }
 .venue-info:hover { text-decoration: underline; }
 @media (max-width: 920px) { .venue-pop { right: auto; left: 0; } }
+
+/* ---------- share: banner for people opening a shared link, share button, share dialog ---------- */
+.share-banner { margin: 12px 0 4px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--r); box-shadow: var(--shadow-sm); display: grid; gap: 8px; }
+.share-banner[hidden] { display: none; }
+.sb-lead { margin: 0; font-size: 12.5px; color: var(--ink-2); }
+.sb-text { margin: 0; font-size: 17px; line-height: 1.5; color: var(--ink); }
+.sb-act { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.sb-main, .share-btn, .sd-main { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 999px; padding: 9px 18px; font: inherit; font-size: 14px; cursor: pointer; }
+.sb-main:hover, .share-btn:hover, .sd-main:hover { background: var(--accent-text); }
+.sb-venue { color: var(--accent-text); font-size: 14px; }
+.is-shared .masthead.hero { display: none; }   /* the banner already says what this is; keep the 3D above the fold */
+.share-btn { justify-self: start; margin-top: 4px; }
+.vp-share { position: absolute; top: 10px; right: 112px; display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 999px; background: rgba(12, 10, 26, 0.72); backdrop-filter: blur(6px); color: #f3f1ea; font-size: 12.5px; cursor: pointer; }
+.viewport:not(.expanded) .vp-share { display: none; }   /* inline, the verdict card's button sits right below */
+.viewport.expanded .vp-share { top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(58px + env(safe-area-inset-right, 0px)); }
+.share-dlg { width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 16px; border: 0; border-radius: var(--r); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-md); }
+.share-dlg::backdrop { background: rgba(45, 27, 46, 0.45); }
+.sd-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.sd-head h2 { margin: 0; font-size: 17px; }
+.sd-x { border: 0; background: none; font-size: 18px; color: var(--ink-2); cursor: pointer; padding: 4px 8px; }
+.sd-img { display: grid; place-items: center; aspect-ratio: 4 / 5; max-height: 52dvh; margin: 0 auto; background: var(--surface-2); border-radius: 10px; overflow: hidden; }
+.sd-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sd-img p { margin: 0; color: var(--ink-3); font-size: 13px; }
+.sd-btns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.sd-btns > * { display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13.5px; text-decoration: none; cursor: pointer; }
+.sd-btns > *:hover { border-color: var(--accent); color: var(--accent-text); }
+.sd-btns > [hidden] { display: none; }
+.sd-btns > .sd-main { grid-column: 1 / -1; border: 0; background: var(--accent); color: var(--accent-ink); }
+.sd-btns > .sd-main:hover { background: var(--accent-text); color: var(--accent-ink); }
+.share-dlg .note { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
+.sd-img { width: min(100%, calc(52dvh * 0.8)); }
 </style>
 </head>
 <body>
@@ -947,7 +978,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
           </div>
         </div>
         <a class="venue-cta" href="/upload-plan" target="_blank" rel="noopener">＋ 提供平面圖</a>
-      </div></div></header><div class="masthead hero"><div class="hero-main"><p class="hero-kicker">OSHI VIEW · 排隊站位 × 視線模擬</p><h1 class="hero-title"><span class="hero-brand">別擋我推</span><span class="hero-tag"><span class="h1-part">排隊順位看舞台：</span><span class="h1-part">你會站在哪、看得到誰</span></span></h1><p class="mast-short">輸入排隊順位和身高，看你大概站哪、看得到幾個人。</p></div><div class="hero-side"><p class="mast-note">依場館的官方平面圖把場地做成 3D，模擬大家照排隊順序進場、各自找位置，再從你的眼睛高度計算每位成員被擋住多少。數字是可調整的預設值，輸入你的排隊順位和身高就會重算。</p><ol class="hero-steps"><li><b>1</b>輸入排隊順位</li><li><b>2</b>輸入身高</li><li><b>3</b>看你的視線和推看不看得到</li></ol></div></div><main class="v2-main"><div class="v2-a"><div class="viewport" id="viewport">
+      </div></div></header><div class="share-banner" id="shareBanner" hidden><p class="sb-lead">別擋我推：輸入排隊順位和身高，模擬你在 live house 看得到誰。有人分享了這個視野：</p><p class="sb-text" id="sbText">載入中…</p><div class="sb-act"><button type="button" class="sb-main" id="sbMine">換成我的身高和順位看看</button><a class="sb-venue" id="sbVenue" href="/venue">這裡近期演出 →</a></div></div><div class="masthead hero"><div class="hero-main"><p class="hero-kicker">OSHI VIEW · 排隊站位 × 視線模擬</p><h1 class="hero-title"><span class="hero-brand">別擋我推</span><span class="hero-tag"><span class="h1-part">排隊順位看舞台：</span><span class="h1-part">你會站在哪、看得到誰</span></span></h1><p class="mast-short">輸入排隊順位和身高，看你大概站哪、看得到幾個人。</p></div><div class="hero-side"><p class="mast-note">依場館的官方平面圖把場地做成 3D，模擬大家照排隊順序進場、各自找位置，再從你的眼睛高度計算每位成員被擋住多少。數字是可調整的預設值，輸入你的排隊順位和身高就會重算。</p><ol class="hero-steps"><li><b>1</b>輸入排隊順位</li><li><b>2</b>輸入身高</li><li><b>3</b>看你的視線和推看不看得到</li></ol></div></div><main class="v2-main"><div class="v2-a"><div class="viewport" id="viewport">
         <canvas id="c3d" aria-label="場地 3D 視圖"></canvas>
         <div class="vp-tabs" id="viewTabs" role="group" aria-label="視角">
           <button type="button" data-v="eye" aria-pressed="true">你的視線</button>
@@ -959,6 +990,10 @@ details.fold[open] > summary { margin-bottom: 8px; }
           <svg class="ic-open" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
           <svg class="ic-close" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg>
           <span class="vp-expand-t">全螢幕</span>
+        </button>
+        <button type="button" class="vp-share" id="vpShare" aria-label="分享我的視野">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 15V3m0 0L7 8m5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>分享</span>
         </button>
         <div class="vp-hud" id="hud"></div>
         <div class="vp-hint" id="hint">左右滑動環顧四周</div>
@@ -1286,6 +1321,19 @@ details.fold[open] > summary { margin-bottom: 8px; }
     <ol class="ref-links" id="refLinks"></ol>
     <p class="note">平面圖版權屬各場館所有，此處僅作為模擬的參考依據。實際配置依每場活動而定，請以主辦公告為準。</p>
   </details></div></div>
+<dialog class="share-dlg" id="shareDlg" aria-labelledby="sdTitle">
+  <div class="sd-head"><h2 id="sdTitle">分享我的視野</h2><button type="button" class="sd-x" id="sdClose" aria-label="關閉">✕</button></div>
+  <div class="sd-img"><img id="sdImg" alt="分享圖卡預覽" hidden><p id="sdImgMsg">產生圖片中…</p></div>
+  <div class="sd-btns">
+    <button type="button" class="sd-main" id="sdImgShare">分享圖片</button>
+    <button type="button" id="sdImgSave">下載圖片</button>
+    <button type="button" id="sdCopy">複製連結</button>
+    <a id="sdLine" href="#" target="_blank" rel="noopener">LINE</a>
+    <a id="sdThreads" href="#" target="_blank" rel="noopener">Threads</a>
+    <button type="button" id="sdMore">更多…</button>
+  </div>
+  <p class="note" id="sdNote">連結會帶著你的身高、順位和所有設定，對方打開就是同樣的畫面。不含任何個人資料。</p>
+</dialog>
 <div class="minibar" id="minibar" aria-label="排隊順位快捷列">
   <button type="button" class="mb-step" id="mbMinus" aria-label="往前一位">−</button>
   <button type="button" class="mb-num" id="mbNum" aria-label="回到排隊順位輸入">第<b id="mbNumV">50</b></button>
@@ -2579,7 +2627,66 @@ details.fold[open] > summary { margin-bottom: 8px; }
       .sort((a, b) => aimScore(b.sum) - aimScore(a.sum));
   }
 
+  /* ---- share links: settings <-> short hash params (#v=jack&t=30&h=150…) ----
+     [param, state field, kind, min, max]. Only fields that differ from the defaults go in the link. */
+  const SHARE_FIELDS = [
+    ['t', 'ticket', 'int', 1, 2000], ['h', 'userHeight', 'int', 140, 195], ['o', 'oshi', 'int', 0, 9], ['n', 'memberCount', 'int', 1, 10],
+    ['tot', 'total', 'int', 30, 2000], ['vip', 'vip', 'int', 0, 500], ['sc', 'sceneIdx', 'int', 0, SCENES.length - 1],
+    ['mm', 'maleMean', 'int', 150, 190], ['fm', 'femaleMean', 'int', 140, 180],
+    ['of', 'otherFanRate', 'pct', 0, 80], ['g', 'groupRate', 'pct', 0, 60], ['m', 'maleRatio', 'pct', 0, 100], ['sh', 'stageH', 'pct', 20, 200],
+    ['sd', 'stageDepth', 'num', 1, 10], ['z', 'zoom', 'num', 1, 8], ['ln', 'lean', 'int', -1, 1],
+    ['aim', 'aim', AIMS], ['ch', 'chaos', ['none', 'low', 'mid', 'high']], ['ev', 'event', Object.keys(EVENTS)],
+    ['lk', 'luckKey', ['good', 'rep', 'bad']], ['vw', 'view', ['eye', 'orbit', 'plan', 'oshi']], ['br', 'barrier', 'word'],
+    ['fg', 'frontGuard', 'bool'], ['au', 'armsUp', 'bool'], ['ec', 'entranceCrowd', 'bool'], ['mx', 'mixOnFloor', 'bool'],
+    ['mh', 'memberHeights', 'list', 140, 185], ['po', 'positionOrder', 'perm'], ['so', 'curOrder', 'perm'], ['fr', 'free', 'xz']
+  ];
+  function shareValue(kind, v, o) {
+    if (v == null) return '';
+    if (kind === 'bool') return v ? '1' : '0';
+    if (kind === 'pct') return String(Math.round(v * 100));
+    if (kind === 'num') return String(Math.round(v * 100) / 100);
+    if (kind === 'list') return v.slice(0, o.memberCount).join('.');
+    if (kind === 'perm') return v.join('.');
+    if (kind === 'xz') return (Math.round(v.x * 100) / 100) + ',' + (Math.round(v.z * 100) / 100);
+    return String(v);
+  }
+  /** state-like object → "t=30&h=150…" holding only what differs from `defaults` (same shape) */
+  function shareEncode(o, defaults) {
+    const isIdentity = a => Array.isArray(a) && a.every((v, i) => v === i);
+    // lists compare at the shared member count; an unshuffled order is the default at any count
+    return SHARE_FIELDS.filter(([, f, kind]) => kind === 'perm' ? !isIdentity(o[f]) && shareValue(kind, o[f], o) !== shareValue(kind, defaults[f], defaults)
+      : shareValue(kind, o[f], o) !== shareValue(kind, defaults[f], kind === 'list' ? o : defaults))
+      .map(([k, f, kind]) => k + '=' + encodeURIComponent(shareValue(kind, o[f], o))).join('&');
+  }
+  /** "t=30&h=150…" → validated partial state; anything malformed or out of range is dropped */
+  function shareDecode(str) {
+    const q = new URLSearchParams(String(str || '').replace(/^#/, '')), out = {};
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    for (const [k, f, kind, lo, hi] of SHARE_FIELDS) {
+      const s = q.get(k); if (s == null || s === '') continue;
+      const x = Number(s);
+      if (Array.isArray(kind)) { if (kind.includes(s)) out[f] = s; }
+      else if (kind === 'bool') { if (s === '0' || s === '1') out[f] = s === '1'; }
+      else if (kind === 'word') { if (/^[\w.]{1,12}$/.test(s)) out[f] = s; }
+      else if (kind === 'int') { if (Number.isFinite(x)) out[f] = clamp(Math.round(x), lo, hi); }
+      else if (kind === 'pct') { if (Number.isFinite(x)) out[f] = clamp(Math.round(x), lo, hi) / 100; }
+      else if (kind === 'num') { if (Number.isFinite(x)) out[f] = clamp(x, lo, hi); }
+      else if (kind === 'list') {
+        const a = s.split('.').map(Number);
+        if (a.length <= 10 && a.every(Number.isFinite)) out[f] = a.map(v => clamp(Math.round(v), lo, hi));
+      } else if (kind === 'perm') {
+        const a = s.split('.').map(Number);
+        if (a.length <= 10 && a.slice().sort((p, r) => p - r).every((v, i) => v === i)) out[f] = a;
+      } else if (kind === 'xz') {
+        const [px, pz] = s.split(',').map(Number);
+        if (Number.isFinite(px) && Number.isFinite(pz) && Math.abs(px) < 100 && Math.abs(pz) < 100) out[f] = { x: px, z: pz };
+      }
+    }
+    return out;
+  }
+
   const api = {
+    SHARE_FIELDS, shareEncode, shareDecode,
     VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
     FRONT_ROWS, FRONT_DENSITY, MID_MAX, LEAN_OFFSETS, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, hangingArm,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
@@ -3055,6 +3162,30 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const c = JSON.parse(sessionStorage.getItem(CARRY) || 'null'); sessionStorage.removeItem(CARRY);
     if (c) Object.assign(state, { ticket: Math.max(1, Math.min(state.total, c.ticket | 0)) || 50, userHeight: c.userHeight || 170, oshi: c.oshi | 0, carryView: c.view });
   } catch (err) { /* no storage */ }
+  // share links: #v=jack&t=30&h=150… opens someone else's exact view; the snapshot is what the link diffs against
+  const SHARE_DEFAULTS = JSON.parse(JSON.stringify(Object.assign({}, state, { curOrder: state.positionOrder })));
+  const ME = 'ow-me';   // the viewer's own height, remembered so a shared view can switch back to it
+  const shared = S.shareDecode(location.hash);
+  let sharedView = Object.keys(shared).length > 0;
+  if (sharedView) {
+    const { curOrder, memberHeights, view, ...rest } = shared;
+    Object.assign(state, rest);
+    if (!VN.barrier.options.includes(state.barrier)) state.barrier = VN.barrier.def;
+    if (!VN.stageH.options.includes(state.stageH)) state.stageH = VN.stageH.def;
+    if (VN.stageDepths && !VN.stageDepths.includes(state.stageDepth)) state.stageDepth = VN.stageDepths[0];
+    if (!VN.stageDepths) state.stageDepth = null;
+    state.total = Math.min(state.total, TOTAL_MAX); state.vip = Math.min(state.vip, state.total - 10);
+    state.ticket = Math.min(state.ticket, state.total - state.vip);
+    const n = state.memberCount;
+    if (memberHeights) memberHeights.slice(0, n).forEach((h, i) => { state.memberHeights[i] = h; });
+    if (state.positionOrder.length !== n) state.positionOrder = Array.from({ length: n }, (_, i) => i);
+    if (state.oshi >= n) state.oshi = 0;
+    if (state.sceneIdx > 0 && curOrder && curOrder.length === n) state.sceneOrders = S.SCENES.map((_, i) => i === state.sceneIdx ? curOrder : shuffled(n));
+    if (view) state.carryView = view;
+  } else {
+    try { const me = JSON.parse(localStorage.getItem(ME) || 'null'); if (me && me.userHeight && !state.carryView) state.userHeight = me.userHeight; } catch (err) { /* no storage */ }
+  }
+  const saveMe = () => { if (!sharedView) try { localStorage.setItem(ME, JSON.stringify({ userHeight: state.userHeight })); } catch (err) { /* no storage */ } };
   const general = () => state.total - state.vip;
   const nMembers = () => state.positionOrder.length;
   function params() {
@@ -3232,7 +3363,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   repeater($('#mbMinus'), -1); repeater($('#mbPlus'), 1);
   function setHeight(v) {
     state.userHeight = Math.max(140, Math.min(195, v));
-    $('#height').value = String(state.userHeight); $('#heightOut').textContent = state.userHeight + 'cm'; schedule();
+    $('#height').value = String(state.userHeight); $('#heightOut').textContent = state.userHeight + 'cm'; saveMe(); schedule();
   }
   $('#height').addEventListener('input', () => setHeight(Number($('#height').value)));
   $('#hMinus').addEventListener('click', () => setHeight(state.userHeight - 1));
@@ -4241,6 +4372,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
         renderer.render(scene, c);
       });
     }
+    // synchronous frame for the share card: the WebGL buffer is only readable in the same task it was drawn
+    function renderNow() { const c = applyCamera(); if (c) renderer.render(scene, c); }
     function resize() {
       const vp = $('#viewport');
       const w = vp.clientWidth, h = vp.clientHeight;
@@ -4305,7 +4438,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { rebuildMembersImpl(); if (state.sim) updateCrowd(state.sim); render(); });
     return {
       setVroid: v => { try { FIG.setVroid(v); rebuildMembersImpl(); render(); } catch (err) { console.error(err); } },
-      render, rebuildDyn, rebuildMembers: rebuildMembersImpl, updateCrowd, updateSight, setHeat,
+      render, renderNow, rebuildDyn, rebuildMembers: rebuildMembersImpl, updateCrowd, updateSight, setHeat,
       showHeat(on) { heatOn = on; if (heatMesh) heatMesh.visible = on; iDisc.material.opacity = on ? 0.5 : 1; render(); },
       resetLook() { look.yaw = 0; look.pitch = 0; },
       planZoom: () => planZoom,
@@ -4589,7 +4722,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       (state.sim.rhoBack >= 3.5 ? '（很擠）。' : state.sim.rhoBack < 1.5 ? '（還很鬆）。' : '。');
     renderLuck();
     if (gl) { gl.updateCrowd(state.sim); gl.updateSight(state.ev); gl.render(); }
-    renderVerdict(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawYou(); paintRanges(); renderResBox();
+    renderVerdict(); renderShareBanner(); renderMembers(); updateHud(); updateFrontNote(); updateDock(); drawYou(); paintRanges(); renderResBox();
   }
   // WebKit has no ::range-progress: expose the fill position as --pct for the track gradient
   const paintRange = r => r.style.setProperty('--pct', ((r.value - r.min) / ((r.max - r.min) || 1) * 100) + '%');
@@ -4660,12 +4793,13 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const tip = { eye: '拖曳環顧', orbit: '頭上數字是排隊順位 · 拖曳旋轉／滾輪縮放', plan: '從上往下看 · 圓點數字是排隊順位 · 放大後可拖曳移動', oshi: '從推的成員眼睛看你' }[state.view];
     hud.append(document.createTextNode(' — ' + tip));
   }
+  const oshiHead = om => om.face >= 0.5 ? ['g', '看得到'] : om.faceLean >= 0.5 ? ['g2', '偏頭就看得到'] : om.faceLean > 0 ? ['w', '只看得到一部分'] : ['b', '被擋住了'];
   // one plain answer (can you see your oshi's face), three numbers, the statistics folded away
   function renderVerdict() {
     const v = $('#verdict'), wasOpen = !!(v.querySelector('details') || {}).open; v.textContent = '';
     const ev = state.ev, s = state.summary, u = state.sim.user; if (!ev || !u) return;
     const n = ev.members.length, om = ev.members.find(r => r.member.id === state.oshi) || ev.members[0];
-    const head = om.face >= 0.5 ? ['g', '看得到'] : om.faceLean >= 0.5 ? ['g2', '偏頭就看得到'] : om.faceLean > 0 ? ['w', '只看得到一部分'] : ['b', '被擋住了'];
+    const head = oshiHead(om);
     const big = el('div', 'big');
     const free = !!state.free;
     big.append(el('span', 'k', (free ? '站在這裡，' : '') + '推（' + MEMBERS[om.member.id].name + '）的臉'), el('span', 'v vt ' + head[0], head[1]));
@@ -4685,7 +4819,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
     addFact('離舞台邊', fmt1(u.z), 'm');
     if (free) addFact('左右位置', lateralText(u.x)); else addFact('前後位置', rowText(u));
     if (state.res) addFact('推看得到你', pct(state.res.show), '唱歌時平均');
-    v.append(big, facts);
+    const sb = el('button', 'share-btn', '分享我的視野'); sb.type = 'button'; sb.addEventListener('click', openShare);
+    v.append(big, facts, sb);
     const more = el('details', 'fold vmore'); more.open = wasOpen; more.append(el('summary', null, '看計算細節'));
     const p = el('p', 'verdict-text' + ($('#busy').hidden ? '' : ' stale'));
     more.append(p); v.append(more);
@@ -5336,9 +5471,142 @@ details.fold[open] > summary { margin-bottom: 8px; }
     info.links.forEach(l => { const li = el('li'); const a = el('a', null, l.t); a.href = l.url; a.target = '_blank'; a.rel = 'noopener'; li.append(a, el('span', 'ref-url', ' ' + l.url)); ol.append(li); });
   })();
 
+  /* ============ share: link + 1080×1350 image card ============ */
+  function shareFacts() {
+    const ev = state.ev, u = state.sim && state.sim.user; if (!ev || !u) return null;
+    const n = ev.members.length, om = ev.members.find(r => r.member.id === state.oshi) || ev.members[0];
+    const where = state.free ? '站在自選位置' : '排第 ' + Math.min(state.ticket, general()) + ' 位';
+    return { ev, n, om, where, oshiWord: oshiHead(om)[1],
+      line: '身高 ' + state.userHeight + 'cm、' + where + '，在' + VN.short + '看得到 ' + ev.faceCount + '/' + n + ' 位成員的臉' };
+  }
+  function shareUrl() {
+    const enc = S.shareEncode(Object.assign({}, state, { curOrder: sceneOrder() }), SHARE_DEFAULTS);
+    return location.origin + location.pathname + '#v=' + VN.id + (enc ? '&' + enc : '');
+  }
+  function renderShareBanner() {
+    const b = $('#shareBanner'); b.hidden = !sharedView;
+    const f = sharedView && shareFacts(); if (!f) return;
+    $('#sbText').textContent = '👀 ' + f.line + '（推：' + MEMBERS[f.om.member.id].name + ' ' + f.oshiWord + '）';
+  }
+  document.documentElement.classList.toggle('is-shared', sharedView);
+  $('#sbVenue').href = '/venue/' + VN.idolmaps;
+  $('#sbMine').addEventListener('click', () => {
+    sharedView = false; document.documentElement.classList.remove('is-shared'); $('#shareBanner').hidden = true;
+    history.replaceState(null, '', location.pathname + location.search + '#v=' + VN.id);
+    let h = 170; try { h = (JSON.parse(localStorage.getItem(ME) || 'null') || {}).userHeight || 170; } catch (err) { /* no storage */ }
+    setHeight(h);
+    $('#quick').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => { try { $('#ticket').focus({ preventScroll: true }); } catch (e) { /* noop */ } }, 350);
+  });
+
+  const CARD_FONT = "'JF Openhuninn', 'Huninn', 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+  /** Draws the share card (1080×1350, 4:5 like the 顏控9選 card): 3D snapshot, who/where, faces seen per member. */
+  async function renderCard(f) {
+    const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    try { await Promise.all(['40px "JF Openhuninn"', '40px Huninn'].map(q => document.fonts.load(q))); } catch (err) { /* system font */ }
+    const font = px => { x.font = px + 'px ' + CARD_FONT; };
+    const fit = (t, px, maxW) => { font(px); while (px > 20 && x.measureText(t).width > maxW) font(px -= 2); };
+    x.fillStyle = '#fdf6fb'; x.fillRect(0, 0, W, H);
+    const g = x.createRadialGradient(0, 0, 0, 0, 0, 900); g.addColorStop(0, '#fce4ef'); g.addColorStop(1, 'rgba(252,228,239,0)');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.textBaseline = 'alphabetic';
+    x.fillStyle = '#2d1b2e'; font(52); x.fillText('別擋我推', 60, 100);
+    x.fillStyle = '#7a5a7a'; font(28); x.textAlign = 'right'; x.fillText('排隊順位 × 視線模擬', W - 60, 96); x.textAlign = 'left';
+    // 3D snapshot, cover-cropped; drawn right after a render so the WebGL buffer is still valid
+    const ix = 60, iy = 140, iw = 960, ih = 690;
+    x.save(); x.beginPath(); x.roundRect(ix, iy, iw, ih, 28); x.clip(); x.fillStyle = '#0a0716'; x.fillRect(ix, iy, iw, ih);
+    const src = $('#c3d');
+    if (gl && src.width) {
+      gl.renderNow();
+      const k = Math.max(iw / src.width, ih / src.height), sw = iw / k, sh = ih / k;
+      x.drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, ix, iy, iw, ih);
+    }
+    x.restore();
+    x.fillStyle = '#2d1b2e'; fit('身高 ' + state.userHeight + 'cm・' + f.where, 64, 960); x.fillText('身高 ' + state.userHeight + 'cm・' + f.where, 60, 920);
+    x.fillStyle = '#c04070'; fit(VN.name, 40, 960); x.fillText(VN.name, 60, 978);
+    // members as the audience sees them, left → right: filled = face seen, faded = only when leaning, grey = blocked
+    const ms = f.ev.members.slice().sort((a, b) => a.member.x - b.member.x);
+    const d = Math.min(72, (960 - (f.n - 1) * 18) / f.n), cy = 1058;
+    ms.forEach((r, i) => {
+      const cx = 60 + d / 2 + i * (d + 18), col = MEMBERS[r.member.id].color;
+      x.beginPath(); x.arc(cx, cy, d / 2, 0, Math.PI * 2);
+      x.globalAlpha = r.face >= 0.5 ? 1 : r.faceLean >= 0.5 ? 0.45 : 1;
+      x.fillStyle = r.face >= 0.5 || r.faceLean >= 0.5 ? col : '#ece3ea'; x.fill(); x.globalAlpha = 1;
+      x.lineWidth = 4; x.strokeStyle = col; x.stroke();
+      if (r.member.id === state.oshi) {
+        x.beginPath(); x.arc(cx, cy, d / 2 + 9, 0, Math.PI * 2); x.lineWidth = 5; x.strokeStyle = '#e879a0'; x.stroke();
+        x.fillStyle = '#c04070'; font(26); x.textAlign = 'center'; x.fillText('推', cx, cy + d / 2 + 40); x.textAlign = 'left';
+      }
+    });
+    x.fillStyle = '#2d1b2e'; font(44); x.fillText('看得到 ' + f.ev.faceCount + '/' + f.n + ' 位成員的臉', 60, 1195);
+    x.fillStyle = '#7a5a7a'; font(34); x.fillText('推（' + MEMBERS[f.om.member.id].name + '）的臉：' + f.oshiWord, 60, 1245);
+    x.fillStyle = 'rgba(232,121,160,0.35)'; x.fillRect(60, 1276, 960, 2);
+    x.fillStyle = '#7a5a7a'; font(28); x.fillText('你排第幾位看得到？輸入順位和身高試試', 60, 1320);
+    x.fillStyle = '#c04070'; x.textAlign = 'right'; x.fillText('idolmaps.com/view', W - 60, 1320); x.textAlign = 'left';
+    return new Promise((res, rej) => c.toBlob(b => (b ? res(b) : rej(new Error('toBlob failed'))), 'image/png'));
+  }
+
+  const dlg = $('#shareDlg');
+  let shareCur = null;
+  async function openShare() {
+    const f = shareFacts(); if (!f) return;
+    const url = shareUrl(), text = f.line + '。你排第幾位看得到？';
+    shareCur = { url, text, blob: null };
+    $('#sdLine').href = 'https://line.me/R/share?text=' + encodeURIComponent(text + '\n' + url);
+    $('#sdThreads').href = 'https://www.threads.net/intent/post?text=' + encodeURIComponent(text + ' ' + url);
+    $('#sdMore').hidden = typeof navigator.share !== 'function';
+    let files = false;
+    try { files = !!navigator.canShare && navigator.canShare({ files: [new File([''], 'a.png', { type: 'image/png' })] }); } catch (err) { /* no file sharing */ }
+    $('#sdImgShare').hidden = !files;
+    $('#sdCopy').textContent = '複製連結';
+    const img = $('#sdImg'), msg = $('#sdImgMsg');
+    img.hidden = true; msg.hidden = false; msg.textContent = '產生圖片中…';
+    if (!dlg.open) dlg.showModal();
+    try {
+      const cur = shareCur, blob = await renderCard(f);
+      if (cur !== shareCur) return;
+      cur.blob = blob;
+      if (img.src) URL.revokeObjectURL(img.src);
+      img.src = URL.createObjectURL(blob); img.hidden = false; msg.hidden = true;
+    } catch (err) { msg.textContent = '無法產生圖片，可以改用連結分享。'; }
+  }
+  const fileName = () => 'oshi-view-' + VN.id + '-' + state.userHeight + 'cm.png';
+  $('#vpShare').addEventListener('click', openShare);
+  $('#sdClose').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });   // backdrop tap
+  $('#sdImgSave').addEventListener('click', () => {
+    if (!shareCur || !shareCur.blob) return;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(shareCur.blob); a.download = fileName(); a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('#sdImgShare').addEventListener('click', async () => {
+    if (!shareCur || !shareCur.blob) return;
+    try { await navigator.share({ files: [new File([shareCur.blob], fileName(), { type: 'image/png' })], text: shareCur.text + ' ' + shareCur.url }); }
+    catch (err) { /* cancelled */ }
+  });
+  $('#sdMore').addEventListener('click', async () => {
+    try { await navigator.share({ title: document.title, text: shareCur.text, url: shareCur.url }); } catch (err) { /* cancelled */ }
+  });
+  $('#sdCopy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(shareCur.url); $('#sdCopy').textContent = '已複製 ✓'; }
+    catch (err) { $('#sdNote').textContent = '無法自動複製，請手動複製：' + shareCur.url; }
+  });
+
   /* ============ boot ============ */
   $('#height').value = String(state.userHeight); $('#heightOut').textContent = state.userHeight + 'cm';
   syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene();
+  if (sharedView) {
+    setPressed($('#aimSeg'), state.aim); setPressed($('#chaosSeg'), state.chaos); $('#chaosNote').textContent = CHAOS_TEXT[state.chaos];
+    setPressed($('#countSeg'), String(state.memberCount)); $('#guardToggle').setAttribute('aria-pressed', String(state.frontGuard));
+    $('#toggleSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(!!state[b.dataset.k])));
+    [['vip', state.vip, '人'], ['group', Math.round(state.groupRate * 100), '%'], ['other', Math.round(state.otherFanRate * 100), '%'], ['male', Math.round(state.maleRatio * 100), '%']]
+      .forEach(([id, v, u]) => { $('#' + id).value = String(v); $('#' + id + 'Out').textContent = v + u; });
+    $('#maleMean').value = String(state.maleMean); $('#femaleMean').value = String(state.femaleMean);
+    state.memberHeights.forEach((h, i) => { $('#mh' + i).value = String(h); });
+    setPressed($('#leanBox'), String(state.lean), 'l');
+    if (state.free) syncFree();
+  }
   if (state.carryView && state.carryView !== 'eye') { const b = $('#viewTabs [data-v="' + state.carryView + '"]'); if (b) b.click(); }
   $('#sightLegend').hidden = true;
   $('#curveSub').textContent = '維持你的身高、站位目標和推的成員，只改排隊順位，每個點各模擬 ' + CURVE_SEEDS.length + ' 次。色帶是 10–90% 的範圍。';
