@@ -18,6 +18,7 @@ import { SafeUrlPipe } from '../../shared/safe-url.pipe';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { VenueMapComponent } from '../../shared/venue-map/venue-map.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
+import { SwipeCarouselComponent } from '../../shared/swipe-carousel/swipe-carousel.component';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 import type { HomePageData } from '../../core/page-data.resolvers';
 
@@ -39,7 +40,7 @@ const VENUE_REGION_FILTERS: readonly VenueRegionFilter[] = ['all', 'north', 'cen
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe, VenueMapComponent, AdBannerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe, VenueMapComponent, AdBannerComponent, SwipeCarouselComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })

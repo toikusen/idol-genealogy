@@ -90,8 +90,27 @@
       </div>
     </section>
 
-    <!-- ══ 顏控9選 entry ══ -->
+    <!-- ══ Feature cards: 別擋我推 first, swipe either way for 顏控9選 ══ -->
     @if (!hasResults) {
+      <app-swipe-carousel class="home-promos" label="精選功能">
+      <!-- /view is a static page outside the Angular app, so a plain href -->
+      <a href="/view" class="home-oshiview" aria-label="試試別擋我推：輸入排隊順位和身高，3D 模擬你站哪、看得到誰">
+        <span class="home-oshiview__art" aria-hidden="true">
+          <svg viewBox="0 0 64 44" width="64" height="44">
+            <rect x="4" y="4" width="56" height="9" rx="3" fill="#7c6cf2" opacity="0.85" />
+            <circle cx="20" cy="9" r="2.6" fill="#fff" /><circle cx="32" cy="9" r="2.6" fill="#ffd6e6" /><circle cx="44" cy="9" r="2.6" fill="#fff" />
+            <circle cx="16" cy="25" r="5" fill="#cbb8e8" /><circle cx="32" cy="23" r="5.5" fill="#cbb8e8" /><circle cx="48" cy="25" r="5" fill="#cbb8e8" />
+            <circle cx="25" cy="36" r="5.5" fill="#e879a0" />
+            <path d="M25 36 L32 10" stroke="#e879a0" stroke-width="1.6" stroke-dasharray="2 2" />
+          </svg>
+        </span>
+        <span class="home-sukigao__text">
+          <span class="home-sukigao__badge home-oshiview__badge">NEW 3D 模擬</span>
+          <strong class="home-sukigao__title">別擋我推</strong>
+          <span class="home-sukigao__sub">輸入排隊順位和身高，看你站哪、看得到誰</span>
+        </span>
+        <span class="home-sukigao__cta home-oshiview__cta" aria-hidden="true">試試看<span class="home-sukigao__arrow">→</span></span>
+      </a>
       <a routerLink="/sukigao" class="home-sukigao" aria-label="玩台灣地偶顏控9選：憑直覺選出最中你臉的 9 位偶像">
         <span class="home-sukigao__faces" aria-hidden="true">
           @for (f of sukigaoFaces; track f.id) {
@@ -110,6 +129,7 @@
         </span>
         <span class="home-sukigao__cta" aria-hidden="true">開始玩<span class="home-sukigao__arrow">→</span></span>
       </a>
+      </app-swipe-carousel>
     }
 
     <!-- ══ CATEGORY TABS ══ -->
