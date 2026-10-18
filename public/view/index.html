@@ -1286,6 +1286,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
             <div class="seg" id="toggleSeg">
               <button type="button" data-k="mixOnFloor" id="mixToggle" aria-pressed="false">主控台移到觀眾區後方</button>
               <button type="button" data-k="armsUp" aria-pressed="false">應援中（舉手、螢光棒）</button>
+              <button type="button" data-k="phonesUp" aria-pressed="false">錄影中（舉手機）</button>
               <button type="button" data-k="entranceCrowd" id="doorToggle" aria-pressed="true">觀眾塞在入口附近</button>
             </div>
             <p class="note" id="doorNote"></p>
@@ -2128,6 +2129,9 @@ details.fold[open] > summary { margin-bottom: 8px; }
         q.arm = rng() < 0.5 ? -1 : 1;
         q.penColor = Math.floor(rng() * members.length);
       }
+      // 錄影: phone held up in both hands; most at face height, a few stretch it high over the crowd
+      q.phone = 0;
+      if (p.phonesUp && !q.arm && !q.other && !(p.frontGuard && q.front) && rng() < 0.22) q.phone = 0.05 + 0.95 * rng() ** 1.6;
       q.shoulderW = bodyDims(q).tw;
     }
     if (user) { user.arm = 0; user.shoulderW = 0.19; }
@@ -2264,6 +2268,13 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const C = [B[0], B[1] + 0.26, B[2] - 0.06];
     return { A, B, C, d };
   }
+  /** phone held in both hands in front of the face; q.phone 0…1 runs from eye level to arms stretched overhead */
+  function phoneHold(q) {
+    const d = bodyDims(q), sh = shoulderY(q), t = q.phone;
+    const P = [q.x, eyeY(q) + t * 0.42 * d.s, q.z - (0.28 - 0.08 * t) * d.s];
+    const arms = [-1, 1].map(side => ({ A: [q.x + side * (d.ax - 0.01), sh - 0.02, q.z], B: [P[0] + side * 0.042, P[1] - 0.045, P[2] + 0.012] }));
+    return { P, w: 0.072, h: 0.15, arms, d };
+  }
   function hangingArm(q, side) {
     const d = bodyDims(q), sh = shoulderY(q);
     return { A: [q.x + side * d.ax, sh - 0.03 * d.s, q.z], B: [q.x + side * (d.ax + 0.012 * d.s), sh - 0.338 * q.h, q.z - 0.02], r: d.ar, d };
@@ -2283,7 +2294,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     if (hitEllCyl(P0, D, q.x, q.z, 0.05 * d.s, 0.05 * d.s, sh - 0.02, top - 0.2 * d.s)) return true;
     if (hitEllCyl(P0, D, q.x, q.z, d.tw, d.td, q.floorY, sh)) return true;
     for (const side of [-1, 1]) {
-      if (q.arm === side) continue;
+      if (q.arm === side || q.phone) continue;
       const a = hangingArm(q, side);
       if (hitCapsule(P0, D, a.A, a.B, a.r)) return true;
     }
@@ -2291,6 +2302,11 @@ details.fold[open] > summary { margin-bottom: 8px; }
       const r = raisedArm(q);
       if (hitCapsule(P0, D, r.A, r.B, r.d.ar + 0.008)) return true;
       if (hitCapsule(P0, D, r.B, r.C, 0.02)) return true;
+    }
+    if (q.phone) {
+      const ph = phoneHold(q);
+      if (hitEllCyl(P0, D, ph.P[0], ph.P[2], ph.w / 2, 0.012, ph.P[1] - ph.h / 2, ph.P[1] + ph.h / 2)) return true;
+      for (const a of ph.arms) if (hitCapsule(P0, D, a.A, a.B, ph.d.ar)) return true;
     }
     return false;
   }
@@ -2647,7 +2663,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     ['sd', 'stageDepth', 'num', 1, 10], ['z', 'zoom', 'num', 1, 8], ['ln', 'lean', 'int', -1, 1],
     ['aim', 'aim', AIMS], ['ch', 'chaos', ['none', 'low', 'mid', 'high']], ['ev', 'event', Object.keys(EVENTS)],
     ['sx', 'idolSex', ['f', 'm']], ['lk', 'luckKey', ['good', 'rep', 'bad']], ['vw', 'view', ['eye', 'orbit', 'plan', 'oshi']], ['br', 'barrier', 'word'],
-    ['fg', 'frontGuard', 'bool'], ['au', 'armsUp', 'bool'], ['ec', 'entranceCrowd', 'bool'], ['mx', 'mixOnFloor', 'bool'],
+    ['fg', 'frontGuard', 'bool'], ['au', 'armsUp', 'bool'], ['ph', 'phonesUp', 'bool'], ['ec', 'entranceCrowd', 'bool'], ['mx', 'mixOnFloor', 'bool'],
     ['mh', 'memberHeights', 'list', 140, 185], ['po', 'positionOrder', 'perm'], ['so', 'curOrder', 'perm'], ['fr', 'free', 'xz']
   ];
   function shareValue(kind, v, o) {
@@ -2698,7 +2714,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   const api = {
     SHARE_FIELDS, shareEncode, shareDecode,
     VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
-    FRONT_ROWS, FRONT_DENSITY, MID_MAX, LEAN_OFFSETS, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, hangingArm,
+    FRONT_ROWS, FRONT_DENSITY, MID_MAX, LEAN_OFFSETS, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, phoneHold, hangingArm,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
     buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, seenEstimate, runBatch, summarize, representativeSeed, luckSeeds, pickSeed, totalMax,
     bucketRanges, bucketStats, spotScores, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
@@ -3190,7 +3206,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     ticket: 50, userHeight: 170, aim: 'center', oshi: 2,
     total: VN.defaults.total, vip: 0, chaos: 'mid', groupRate: 0.25, otherFanRate: 0,
     maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true, frontGuard: false,
-    barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false,
+    barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false, phonesUp: false,
     memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4], idolSex: 'f',
     sceneIdx: 0, sceneOrders: null, res: null, free: null, qsum: null, lean: 0,
     view: 'eye', zoom: 1, seed: 1, luckKey: 'rep', metric: 'upper',
@@ -3242,7 +3258,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       maleRatio: state.maleRatio, maleMean: state.maleMean, femaleMean: state.femaleMean,
       barrier: state.barrier, stageH: state.stageH, stageDepth: state.stageDepth, mixOnFloor: state.mixOnFloor,
       formation: 'line', scene: S.SCENES[state.sceneIdx].key, sceneOrder: sceneOrder(),
-      memberHeights: state.memberHeights.slice(), armsUp: state.armsUp, positionOrder: state.positionOrder.slice(),
+      memberHeights: state.memberHeights.slice(), armsUp: state.armsUp, phonesUp: state.phonesUp, positionOrder: state.positionOrder.slice(),
       event: state.event, entranceCrowd: state.entranceCrowd, frontGuard: state.frontGuard, freeSpot: state.free
     };
   }
@@ -3894,6 +3910,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
     }
     const unitCyl = new THREE.CylinderGeometry(1, 1, 1, 10); unitCyl.translate(0, 0.5, 0);
     const iRSleeve = mk(unitCyl, M_CLOTH), iRArm = mk(unitCyl, M_SKIN), iRHand = mk(new THREE.SphereGeometry(1, 10, 8), M_SKIN), iPen = mk(unitCyl, M_PEN);
+    const iPhone = mk(new THREE.BoxGeometry(1, 1, 1), FIG.toon(0xffffff));
+    const iScreen = mk(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: col('#bcd4ff'), toneMapped: false }));
     const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
     const mkGlow = size => {
       const g = new THREE.BufferGeometry();
@@ -4052,7 +4070,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
         const CORNERS = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]];
         ppl.forEach((q, k) => {
           const i = Math.min(maxN, q.no) - 1, u0 = (i % cols) * cw / W, v1 = 1 - Math.floor(i / cols) * ch / Hh, du = cw / W, dv = ch / Hh;
-          const y = S.standTop(q) + (q.arm ? 0.72 : 0.2);
+          const y = S.standTop(q) + (q.arm ? 0.72 : q.phone ? 0.2 + 0.45 * q.phone : 0.2);
           const tc = tintOf(q, uIdx);
           CORNERS.forEach((c, j) => {
             const o = k * 4 + j;
@@ -4157,7 +4175,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
         const sx = q.male ? 'm' : 'f', c = crowd[sx], d = S.bodyDims(q);
         const toStage = Math.atan2(-(0 - q.x), -(-1.6 - q.z));
         const guard = grip && q.front;
-        const yaw = q.arm || guard ? 0 : Math.max(-0.25, Math.min(0.25, toStage * 0.5)) + (r() - 0.5) * 0.2;
+        const yaw = q.arm || q.phone || guard ? 0 : Math.max(-0.25, Math.min(0.25, toStage * 0.5)) + (r() - 0.5) * 0.2;
         Q.setFromAxisAngle(up, yaw);
         // build varies a little (slim … broad), drawn only: sightlines keep the reference body
         const w = guard ? 1 : 0.92 + r() * 0.2;
@@ -4178,7 +4196,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
         const teeHex = r() < 0.14 ? '#' + new THREE.Color(COSTUME[Math.floor(r() * COSTUME.length)]).multiplyScalar(0.62).getHexString() : pick(r, TEE);
         const tee = col(guard ? '#121018' : teeHex);
         const hairC = col(pick(r, HAIR));
-        const pen = !q.arm && !guard && r() < 0.3;   // some fans hold a penlight casually in one hand
+        const pen = !q.arm && !q.phone && !guard && r() < 0.3;   // some fans hold a penlight casually in one hand
         const skirt = !q.male && r() < 0.35;
         const hairIdx = Math.floor(r() * c.hair.length);
         // no backpack over long hair or a ponytail (styles 1 and 2 hang down the back)
@@ -4210,8 +4228,20 @@ details.fold[open] > summary { margin-bottom: 8px; }
           // relaxed poses: arms down, hands together in front, a hand in the pocket, arms folded
           const pr = r(), pose = q.arm ? 'down' : pen ? 'pen' : pr < 0.45 ? 'down' : pr < 0.65 ? 'front' : pr < 0.85 ? 'pocket' : 'fold';
           const arms = c.pose[pose] || c.pose.down;
-          if (q.arm !== -1) { push(c.sleeveL, M4, tee); push(arms[0], M4, skin); }
-          if (q.arm !== 1) { push(c.sleeveR, M4, tee); push(arms[1], M4, skin); }
+          if (q.phone) {   // both arms up to the phone, which shows the stage on its lit screen toward you
+            const ph = S.phoneHold(q);
+            for (const a of ph.arms) {
+              const E = [a.A[0] + (a.B[0] - a.A[0]) * 0.4, a.A[1] + (a.B[1] - a.A[1]) * 0.4, a.A[2] + (a.B[2] - a.A[2]) * 0.4];
+              pushBetween(iRSleeve, a.A, E, d.ar + 0.012, tee);
+              pushBetween(iRArm, E, a.B, d.ar * 0.85, skin);
+              const hi = iRHand.userData.n++; if (hi < CAP) { setInst(iRHand, hi, a.B[0], a.B[1], a.B[2], 0.026, 0.04, 0.026); iRHand.setColorAt(hi, skin); }
+            }
+            const pi = iPhone.userData.n++;
+            if (pi < CAP) { setInst(iPhone, pi, ph.P[0], ph.P[1], ph.P[2], ph.w, ph.h, 0.009); iPhone.setColorAt(pi, col('#1a1a20')); }
+            const si = iScreen.userData.n++;
+            if (si < CAP) { setInst(iScreen, si, ph.P[0], ph.P[1], ph.P[2] + 0.005, ph.w * 0.9, ph.h * 0.92, 1); }
+          } else if (q.arm !== -1) { push(c.sleeveL, M4, tee); push(arms[0], M4, skin); }
+          if (!q.phone && q.arm !== 1) { push(c.sleeveR, M4, tee); push(arms[1], M4, skin); }
         }
         push(c.neck, MU, skin); push(c.head, MHd, skin); push(c.eyes, MHd, null);
         push(c.hair[hairIdx], MHd, hairC);
@@ -4910,6 +4940,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       document.createTextNode('（不動 ' + pct(s.oshiFaceProb) + '）。推的臉看起來約 ' + fmt1(0.6 * 0.22 / om.dist * 100) + 'cm（手臂伸直時指尖上的大小）。'));
     if (state.otherFanRate > 0) p.append(document.createTextNode('聯合公演：他團粉約 ' + pct(state.otherFanRate) + '，輪到你推的團時讓出前方。'));
     if (state.armsUp) p.append(document.createTextNode('應援中（約 45% 舉單手拿螢光棒）。'));
+    if (state.phonesUp) p.append(document.createTextNode('錄影中（約 22% 雙手舉手機，有人舉得特別高）。'));
     if (state.event !== 'normal') p.append(document.createTextNode(S.EVENTS[state.event].label + '：入場人數 ' + state.total + ' 人。'));
   }
   function renderMembers() {
