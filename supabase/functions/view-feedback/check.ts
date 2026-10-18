@@ -38,3 +38,6 @@ export function checkFeedback(b: RawFeedback): { ok: Feedback } | { error: strin
 
 /** Same text with spacing and case ignored, so trivial edits still count as a repeat. */
 export const normalizeMessage = (m: string) => m.toLowerCase().replace(/[\s\p{P}]+/gu, '');
+
+/** Rate-limit key: the address itself, or its /64 for IPv6, since one connection usually holds a whole /64. */
+export const ipKey = (ip: string) => (ip.includes(':') ? ip.toLowerCase().split(':').slice(0, 4).join(':') : ip);

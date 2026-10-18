@@ -1,5 +1,5 @@
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
-import { checkFeedback, normalizeMessage } from './check.ts';
+import { checkFeedback, ipKey, normalizeMessage } from './check.ts';
 
 const base = { venue: 'jack', category: 'venue', message: '後面中間現在固定是 PA 台', elapsed_ms: 9000 };
 
@@ -24,4 +24,9 @@ Deno.test('rejects junk content', () => {
 
 Deno.test('repeats match despite spacing and punctuation', () => {
   assertEquals(normalizeMessage('後面 中間是PA台！'), normalizeMessage('後面中間是 pa 台'));
+});
+
+Deno.test('IPv6 addresses share a limit across their /64', () => {
+  assertEquals(ipKey('2001:DB8:1:2:aaaa::1'), ipKey('2001:db8:1:2:bbbb::9'));
+  assertEquals(ipKey('203.0.113.7'), '203.0.113.7');
 });

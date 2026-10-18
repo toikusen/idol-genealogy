@@ -15,3 +15,6 @@ verify_jwt = false
 
 [functions.notify-status-change]
 verify_jwt = false
+
+[functions.view-feedback]
+verify_jwt = false
