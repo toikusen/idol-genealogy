@@ -1382,7 +1382,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     </label>
     <label class="fb-hp" aria-hidden="true">網站<input id="fbWebsite" tabindex="-1" autocomplete="off"></label>
     <button type="submit" class="sd-main" id="fbSend">送出</button>
-    <p class="note" id="fbNote">會一併附上你目前的設定（場館、身高、順位），方便我們重現。不會收集其他個人資料。</p>
+    <p class="note" id="fbNote">會一併附上你目前的設定（場館、身高、順位），方便我們重現。為了限制送出次數，會記錄雜湊過的連線來源，不會收集其他個人資料。</p>
   </form>
 </dialog>
 <div class="minibar" id="minibar" aria-label="排隊順位快捷列">
@@ -5757,14 +5757,16 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     let last = 0; try { last = Number(localStorage.getItem('ovFbAt')) || 0; } catch (err) { /* storage blocked */ }
     if (Date.now() - last < 60e3) return fbNote('剛剛才送出過，請過一分鐘再試', true);
     $('#fbSend').disabled = true; fbNote('送出中…');
+    let pageState = ''; try { pageState = shareUrl().slice(0, 600); } catch (err) { /* report without it */ }
     try {
       const res = await fetch(FB_URL, {
         method: 'POST',
         headers: { apikey: FB_KEY, Authorization: 'Bearer ' + FB_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ venue: VN.id, category: $('#fbCat').value, message: msg, contact: $('#fbContact').value,
-          page_state: shareUrl().slice(0, 600), website: $('#fbWebsite').value, elapsed_ms: Date.now() - fbOpenedAt })
+          page_state: pageState, website: $('#fbWebsite').value, elapsed_ms: Date.now() - fbOpenedAt })
       });
       const body = await res.json().catch(() => ({}));
+      if (res.status === 409) return fbNote(body.error);   // the same report already arrived: nothing to fix
       if (!res.ok) { $('#fbSend').disabled = false; return fbNote(body.error || '送出失敗，請稍後再試', true); }
       try { localStorage.setItem('ovFbAt', String(Date.now())); } catch (err) { /* storage blocked */ }
       $('#fbMsg').value = ''; $('#fbCount').textContent = '0/500';
