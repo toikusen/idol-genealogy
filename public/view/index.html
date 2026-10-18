@@ -1163,6 +1163,10 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
           </div>
         </div>
         <input id="height" type="range" min="140" max="195" step="1" value="170" aria-label="身高滑桿">
+        <div class="seg user-sex" id="userSexSeg" role="group" aria-label="你的體型">
+          <button type="button" data-v="m" aria-pressed="true">男生</button>
+          <button type="button" data-v="f" aria-pressed="false">女生</button>
+        </div>
       </div>
 
       <fieldset class="field oshi-field">
@@ -2117,7 +2121,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
         if (idx < 0) idx = floorSpots.reduce((bi, s, i) => s.depth > floorSpots[bi].depth ? i : bi, 0);   // full: stand at the very back
         freeF[idx] = false; placed.set(no, idx);
         const sp = floorSpots[idx];
-        user = { no: qno, idx: no, vip: isVip, x: sp.x, z: sp.z, floorY: 0, h: p.userHeight / 100, male: true, row: sp.row, front: sp.front, isUser: true, spot: idx };
+        user = { no: qno, idx: no, vip: isVip, x: sp.x, z: sp.z, floorY: 0, h: p.userHeight / 100, male: p.userSex !== 'f', row: sp.row, front: sp.front, isUser: true, spot: idx };
         continue;
       }
       if (P.other && rng() < EV.otherOut) continue;   // off the floor during your group's set
@@ -2608,7 +2612,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       const crowd = sim.people.concat(sim.user ? [Object.assign({}, sim.user, { arm: 0, shoulderW: 0.19 })] : []);
       for (let i = 0; i < spots.length; i += stride) {
         const sp = spots[i];
-        const me = { x: sp.x, z: sp.z, floorY: 0, h: p.userHeight / 100, male: true, arm: 0, row: sp.row, front: sp.front };
+        const me = { x: sp.x, z: sp.z, floorY: 0, h: p.userHeight / 100, male: p.userSex !== 'f', arm: 0, row: sp.row, front: sp.front };
         const ev = evaluateView(Object.assign({}, sim, { user: me, people: crowd.filter(q => q.spot !== i) }), { faceOnly: true, onlyId: p.oshi });
         const r = ev && ev.members[0]; if (!r) continue;
         const a = acc.get(i) || { x: sp.x, z: sp.z, still: 0, lean: 0, n: 0, stride };
@@ -2655,7 +2659,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
           const viewer = list.splice(Math.floor(rng() * list.length), 1)[0];
           const others = sim.people.filter(o => o !== viewer);
           // answer "if I were in this bucket": evaluate with the user's own height
-          const me = Object.assign({}, viewer, { h: p.userHeight / 100, male: true, arm: 0 });
+          const me = Object.assign({}, viewer, { h: p.userHeight / 100, male: p.userSex !== 'f', arm: 0 });
           const ev = evaluateView(Object.assign({}, sim, { user: me, people: others }));
           const om = ev.members.find(r => r.member.id === p.oshi) || ev.members[0];
           g.face.push(ev.faceCount); g.faceLean.push(ev.faceCountLean); g.upper.push(ev.avgUpper); g.oshiLean.push(om.faceLean >= 0.5 ? 1 : 0);
@@ -2703,7 +2707,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     ['of', 'otherFanRate', 'pct', 0, 80], ['g', 'groupRate', 'pct', 0, 60], ['m', 'maleRatio', 'pct', 0, 100], ['sh', 'stageH', 'pct', 20, 200],
     ['sd', 'stageDepth', 'num', 1, 10], ['z', 'zoom', 'num', 1, 8], ['ln', 'lean', 'int', -1, 1],
     ['aim', 'aim', AIMS], ['ch', 'chaos', ['none', 'low', 'mid', 'high']], ['ev', 'event', Object.keys(EVENTS)],
-    ['sx', 'idolSex', ['f', 'm']], ['lk', 'luckKey', ['good', 'rep', 'bad']], ['vw', 'view', ['eye', 'orbit', 'plan', 'oshi']], ['br', 'barrier', 'word'],
+    ['sx', 'idolSex', ['f', 'm']], ['us', 'userSex', ['m', 'f']], ['lk', 'luckKey', ['good', 'rep', 'bad']], ['vw', 'view', ['eye', 'orbit', 'plan', 'oshi']], ['br', 'barrier', 'word'],
     ['fg', 'frontGuard', 'bool'], ['au', 'armsUp', 'bool'], ['ph', 'phonesUp', 'bool'], ['ec', 'entranceCrowd', 'bool'], ['mx', 'mixOnFloor', 'bool'],
     ['mh', 'memberHeights', 'list', 140, 185], ['po', 'positionOrder', 'perm'], ['so', 'curOrder', 'perm'], ['fr', 'free', 'xz']
   ];
@@ -3248,7 +3252,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     total: VN.defaults.total, vip: 0, chaos: 'mid', groupRate: 0.25, otherFanRate: 0,
     maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true, frontGuard: false,
     barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false, phonesUp: false,
-    memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4], idolSex: 'f',
+    memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4], idolSex: 'f', userSex: 'm',
     sceneIdx: 0, sceneOrders: null, res: null, free: null, qsum: null, lean: 0,
     view: 'eye', zoom: 1, seed: 1, luckKey: 'rep', metric: 'upper',
     rows: null, summary: null, sim: null, ev: null, slots: null, rep: 0, expanded: false,
@@ -3287,14 +3291,14 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     if (state.sceneIdx > 0 && curOrder && curOrder.length === n) state.sceneOrders = S.SCENES.map((_, i) => i === state.sceneIdx ? curOrder : shuffled(n));
     if (view) state.carryView = view;
   } else {
-    try { const me = JSON.parse(localStorage.getItem(ME) || 'null'); if (me && me.userHeight && !state.carryView) state.userHeight = me.userHeight; } catch (err) { /* no storage */ }
+    try { const me = JSON.parse(localStorage.getItem(ME) || 'null'); if (me && me.userHeight && !state.carryView) state.userHeight = me.userHeight; if (me && me.userSex === 'f') state.userSex = 'f'; } catch (err) { /* no storage */ }
   }
-  const saveMe = () => { if (!sharedView) try { localStorage.setItem(ME, JSON.stringify({ userHeight: state.userHeight })); } catch (err) { /* no storage */ } };
+  const saveMe = () => { if (!sharedView) try { localStorage.setItem(ME, JSON.stringify({ userHeight: state.userHeight, userSex: state.userSex })); } catch (err) { /* no storage */ } };
   const general = () => state.total - state.vip;
   const nMembers = () => state.positionOrder.length;
   function params() {
     return {
-      venue: VN.id, total: state.total, vip: state.vip, queue: Math.min(state.ticket, general()), userHeight: state.userHeight,
+      venue: VN.id, total: state.total, vip: state.vip, queue: Math.min(state.ticket, general()), userHeight: state.userHeight, userSex: state.userSex,
       aim: state.aim, oshi: state.oshi, chaos: state.chaos, groupRate: state.groupRate, otherFanRate: state.otherFanRate,
       maleRatio: state.maleRatio, maleMean: state.maleMean, femaleMean: state.femaleMean,
       barrier: state.barrier, stageH: state.stageH, stageDepth: state.stageDepth, mixOnFloor: state.mixOnFloor,
@@ -3568,6 +3572,11 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     }
     syncSex(); syncOshi(); ensureMale(); rebuildMembers(); schedule();
     track('oshiview_idol_sex', { venue: VN.id, idol_sex: state.idolSex });
+  });
+  $('#userSexSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.dataset.v === state.userSex) return;
+    state.userSex = b.dataset.v; setPressed($('#userSexSeg'), state.userSex); saveMe(); schedule();
+    track('oshiview_user_sex', { venue: VN.id, user_sex: state.userSex });
   });
   $('#countSeg').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -4188,11 +4197,15 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     // you (reference body in cyan)
     const youMat = new THREE.MeshStandardMaterial({ color: col('#b6f24a'), emissive: col('#5f8f1c'), emissiveIntensity: 0.6, roughness: 0.5 });
     const you = new THREE.Group();
-    const TT = TPL.m.T;
-    const youBody = new THREE.Mesh(FIG.merge([TT.shirt, TT.sleeveL, TT.sleeveR, TT.armL, TT.armR, TT.neck, TT.head, TT.hair[0], TT.pants, TT.shoes]), youMat);
+    // one body per sex, swapped by visibility; the female one gets the long-hair cut so it reads at a glance
+    const youBodies = { m: TPL.m.T, f: TPL.f.T }, youHair = { m: 0, f: 1 };
+    for (const sx in youBodies) {
+      const TT = youBodies[sx];
+      youBodies[sx] = new THREE.Mesh(FIG.merge([TT.shirt, TT.sleeveL, TT.sleeveR, TT.armL, TT.armR, TT.neck, TT.head, TT.hair[youHair[sx]], TT.pants, TT.shoes]), youMat);
+    }
     const youRing = new THREE.Mesh(new THREE.RingGeometry(0.32, 0.4, 40), new THREE.MeshBasicMaterial({ color: col('#b6f24a'), side: THREE.DoubleSide }));
     youRing.rotation.x = -Math.PI / 2;
-    you.add(youBody, youRing);
+    you.add(youBodies.m, youBodies.f, youRing);
     scene.add(you);
     let youLabel = null;
 
@@ -4321,7 +4334,9 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       const u = sim.user;
       if (u) {
         you.position.set(0, 0, 0);
-        youBody.position.set(u.x, u.floorY, u.z); youBody.scale.setScalar(u.h / TPL.m.H);
+        const sx = u.male ? 'm' : 'f';
+        for (const k in youBodies) youBodies[k].visible = k === sx;
+        youBodies[sx].position.set(u.x, u.floorY, u.z); youBodies[sx].scale.setScalar(u.h / TPL[sx].H);
         youRing.position.set(u.x, u.floorY + 0.01, u.z);
         if (youLabel) { scene.remove(youLabel); youLabel.material.map.dispose(); }
         youLabel = labelSprite('你 ' + (u.vip ? 'VIP ' : '') + '第' + u.no + '位', null, { h: 0.24, bg: 'rgba(182,242,74,0.95)', fg: '#1a2604', depthTest: false });
@@ -5656,8 +5671,9 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     track('oshiview_switch_mine', { venue: VN.id });
     sharedView = false; document.documentElement.classList.remove('is-shared'); $('#shareBanner').hidden = true;
     history.replaceState(null, '', location.pathname + location.search + '#v=' + VN.id);
-    let h = 170; try { h = (JSON.parse(localStorage.getItem(ME) || 'null') || {}).userHeight || 170; } catch (err) { /* no storage */ }
-    setHeight(h);
+    let me = {}; try { me = JSON.parse(localStorage.getItem(ME) || 'null') || {}; } catch (err) { /* no storage */ }
+    state.userSex = me.userSex === 'f' ? 'f' : 'm'; setPressed($('#userSexSeg'), state.userSex);
+    setHeight(me.userHeight || 170);
     $('#quick').scrollIntoView({ behavior: 'smooth', block: 'start' });
     setTimeout(() => { try { $('#ticket').focus({ preventScroll: true }); } catch (e) { /* noop */ } }, 350);
   });
@@ -5801,7 +5817,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
 
   /* ============ boot ============ */
   $('#height').value = String(state.userHeight); $('#heightOut').textContent = state.userHeight + 'cm';
-  syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene(); syncSex();
+  syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene(); syncSex(); setPressed($('#userSexSeg'), state.userSex);
   if (sharedView) {
     setPressed($('#aimSeg'), state.aim); setPressed($('#chaosSeg'), state.chaos); $('#chaosNote').textContent = CHAOS_TEXT[state.chaos];
     setPressed($('#countSeg'), String(state.memberCount)); $('#guardToggle').setAttribute('aria-pressed', String(state.frontGuard));
