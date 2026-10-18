@@ -652,6 +652,8 @@ td { border-bottom: 1px solid var(--line-soft); }
 .stage-cfg .settings-h { margin-bottom: -4px; }
 @media (max-width: 1180px) { .stage-cfg { order: 3; } }
 .stage-cfg #countSeg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.scene-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.scene-row select { flex: 1 1 180px; min-width: 0; }
 /* ---------- idolmaps skin: brand tokens from idol-genealogy src/styles.css, layered over v2 ----------
    Layout stays v2. Stage windows (3D, bucket map) stay dark. Pink #e879a0 is a fill colour only;
    pink text uses #c04070 (idolmaps --text-link) for contrast. */
@@ -1162,6 +1164,19 @@ details.fold[open] > summary { margin-bottom: 8px; }
           <button type="button" data-v="10" aria-pressed="false">10</button>
         </div>
       </fieldset>
+      <div class="field">
+        <p class="flabel">成員身高（cm）</p>
+        <div class="mh-grid" id="mhGrid"></div>
+        <p class="note" id="mhAvg">平均 160.0cm</p>
+      </div>
+      <div class="field">
+        <label class="flabel" for="sceneSel">場面（隊形）</label>
+        <div class="scene-row">
+          <select id="sceneSel"></select>
+          <button type="button" class="btn-ghost" id="shuffleBtn">打亂歌曲站位</button>
+        </div>
+        <p class="note">觀眾照 MC 時的站位進場排好；之後每首歌換隊形，成員的站位也會換（每次開頁隨機）。3D 和判定看的是這裡選的場面。</p>
+      </div>
       <fieldset class="field">
         <legend id="stageHLegend">舞台高度</legend>
         <div class="seg" id="stageHSeg"></div>
@@ -1170,24 +1185,6 @@ details.fold[open] > summary { margin-bottom: 8px; }
         <legend>舞台深度（官網：3.6m 或 4.8m）</legend>
         <div class="seg" id="depthSeg"></div>
       </fieldset>
-      <details class="more">
-        <summary>隊形與成員身高</summary>
-        <div class="more-body">
-          <div class="mini">
-            <label for="sceneSel">場面（隊形）</label>
-            <select id="sceneSel"></select>
-          </div>
-          <p class="note">觀眾照 MC 時的站位進場排好；之後每首歌換隊形，成員的站位也會換（每次開頁隨機）。3D 和判定看的是這裡選的場面。</p>
-          <div>
-            <p class="flabel">成員身高（cm）</p>
-            <div class="mh-grid" id="mhGrid"></div>
-          </div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-            <button type="button" class="btn-ghost" id="shuffleBtn">打亂歌曲站位</button>
-            <p class="note" id="mhAvg">平均 160.0cm</p>
-          </div>
-        </div>
-      </details>
     </section><section class="panel controls settings" id="settings" aria-label="條件">
       <h2 class="settings-h">調整條件</h2>
 
