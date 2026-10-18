@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base href="/view/">
 <link rel="canonical" href="https://idolmaps.com/view">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MHSKDZ2NZF"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-MHSKDZ2NZF',{send_page_view:false});</script>
 <title>別擋我推｜台灣 Live House 排隊順位與視線模擬</title>
 <meta name="description" content="輸入排隊順位和身高，用台灣 live house 的官方平面圖 3D 模擬你會站在哪、看得到幾位成員。">
 <meta property="og:type" content="website">
@@ -967,6 +969,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
 .sd-btns > .sd-main:hover { background: var(--accent-text); color: var(--accent-ink); }
 .share-dlg .note { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
 .sd-img { width: min(100%, calc(52dvh * 0.8)); }
+/* member dots: a thin rim so the white member shows on white and the black one on dark */
+.chip .dot, .mh-grid .dot, .mname .dot { box-shadow: inset 0 0 0 1px rgba(45, 27, 46, 0.28); }
 </style>
 </head>
 <body>
@@ -2911,7 +2915,6 @@ details.fold[open] > summary { margin-bottom: 8px; }
        Model space: facing +z, up +y, the model's right hand on -x. */
     const V3 = THREE.Vector3;
     const vroidBy = {};   // 'f' | 'm' -> model name -> { root, skinned, rest, bones }
-    const yiq = c => [0.596 * c.r - 0.274 * c.g - 0.322 * c.b, 0.211 * c.r - 0.523 * c.g + 0.312 * c.b];
     function setVroid(g, sex = 'f') {
       const out = {};
       g.scene.updateMatrixWorld(true);
@@ -3012,21 +3015,25 @@ details.fold[open] > summary { margin-bottom: 8px; }
     // brightness; colourfulness scales with the member colour's, so greys, whites and black trims stay put
     // gate: only recolour the male uniform's navy vest (its part of the texture, dark and muted pixels); the white
     // shirt's painted blue shadows would otherwise turn the member colour
-    function hueShift(mat, rad, sat, gate) {
+    // Costumes are dyed the member colour (linear rgb), keeping the texture's shading as brightness. Dyeing, not
+    // rotating the hue, keeps bright colours true (a hue-rotated pale dress turns orange into yellow) and makes white
+    // and black possible. Female dress: every coloured pixel; white lace and black trims (no chroma) stay.
+    // Male uniform (gate): only the navy vest, i.e. its part of the texture and its dark, muted pixels.
+    function hueShift(mat, dye, gate) {
       if (gate) mat.defines = { HUE_GATE: '' };
       mat.onBeforeCompile = sh => {
-        sh.uniforms.hueTo = { value: rad }; sh.uniforms.hueSat = { value: sat };
-        sh.fragmentShader = 'uniform float hueTo, hueSat;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+        sh.uniforms.hueDye = { value: dye };
+        sh.fragmentShader = 'uniform vec3 hueDye;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
           {
             vec3 c = diffuseColor.rgb;
-            float y = dot(c, vec3(0.299, 0.587, 0.114)), i = dot(c, vec3(0.596, -0.274, -0.322)), q = dot(c, vec3(0.211, -0.523, 0.312));
-            float ch = length(vec2(i, q)) * hueSat, i2 = ch * cos(hueTo), q2 = ch * sin(hueTo);
-            vec3 shifted = clamp(vec3(y + 0.956 * i2 + 0.621 * q2, y - 0.272 * i2 - 0.647 * q2, y - 1.106 * i2 + 1.703 * q2), 0.0, 1.0);
+            float y = dot(c, vec3(0.299, 0.587, 0.114)), chroma = length(vec2(dot(c, vec3(0.596, -0.274, -0.322)), dot(c, vec3(0.211, -0.523, 0.312))));
             #ifdef HUE_GATE
               // the vest is the lower 63% of the uniform texture (sleeves and collar sit above v = 0.37)
-              shifted = mix(c, shifted, smoothstep(0.36, 0.39, vUv.y) * (1.0 - smoothstep(0.06, 0.09, length(vec2(i, q)))) * (1.0 - smoothstep(0.34, 0.45, y)));
+              float w = smoothstep(0.36, 0.39, vUv.y) * (1.0 - smoothstep(0.06, 0.09, chroma)) * (1.0 - smoothstep(0.34, 0.45, y));
+              diffuseColor.rgb = mix(c, clamp(hueDye * (y / 0.07), 0.0, 1.0), w);
+            #else
+              diffuseColor.rgb = mix(c, clamp(hueDye * (y / 0.5), 0.0, 1.0), smoothstep(0.006, 0.03, chroma));
             #endif
-            diffuseColor.rgb = shifted;
           }`);
       };
     }
@@ -3056,8 +3063,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
         reach(B, side, t, p);
       }
       const grp = new THREE.Group(), owned = [];
-      const [ti, tq] = yiq(new THREE.Color(costumeHex));
-      const hue = Math.atan2(tq, ti), sat = Math.min(1.6, Math.hypot(ti, tq) * 3.5);
+      const dye = new THREE.Color(costumeHex).convertSRGBToLinear();
       const mats = new Map();
       m.skinned.forEach(o => {
         const s = o.material, name = s.name, hair = /_HAIR/.test(name);
@@ -3069,7 +3075,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
             // cut-out hair sorts cleanly; only the thin face decals blend
             transparent: s.transparent && !hair, alphaTest: hair || s.alphaTest ? 0.5 : 0, depthWrite: !s.transparent || hair
           });
-          if (/_(Tops|Bottoms)_/.test(name)) hueShift(mat, hue, sat, st.gate);
+          // male trousers keep their colour; only the vest (in Tops) takes the member colour
+          if (st.gate ? /_Tops_/.test(name) : /_(Tops|Bottoms)_/.test(name)) hueShift(mat, dye, st.gate);
           const ol = s.map && s.alphaTest ? cutOutline(s.map) : outlineMat;
           if (ol !== outlineMat) owned.push(ol);
           mats.set(s, mat); mats.set(mat, ol); owned.push(mat);
@@ -3152,19 +3159,24 @@ details.fold[open] > summary { margin-bottom: 8px; }
   'use strict';
   const S = window.OWSim;
   const $ = (q) => document.querySelector(q);
+  // GA4 event (gtag only exists on the site build); never let analytics break the page
+  const track = (name, params) => { try { if (window.gtag) window.gtag('event', name, params || {}); } catch (err) { /* ignore */ } };
   // venue comes from #v=<id> (or ?v=<id>); switching reloads the page so every piece is rebuilt from scratch
   const venueParam = (location.hash.match(/v=([\w-]+)/) || [])[1] || new URLSearchParams(location.search).get('v');
   const VN = S.VENUES[venueParam] || S.VENUES.jack;
 
   /* ============ members & state ============ */
   // order = default stage position (下手 → 上手); hair styles in figures.js follow the same order
+  // the member colours idol groups usually use; costumes, penlights and markers follow them
   const MEMBERS = [
-    { name: '紅', color: '#e5485a' }, { name: '紫', color: '#9d66e8' }, { name: '綠', color: '#38a866' },
-    { name: '粉', color: '#d26ba5' }, { name: '黃', color: '#a29626' }, { name: '橘', color: '#c4501c' },
-    { name: '水藍', color: '#2f9fcc' }, { name: '白', color: '#a7acb8' }, { name: '藍', color: '#4a6cf0' },
-    { name: '萊姆', color: '#7aa62a' }
+    { name: '白', color: '#FFFFFF' }, { name: '紅', color: '#EF4444' }, { name: '黃', color: '#FFD600' },
+    { name: '綠', color: '#22C55E' }, { name: '藍', color: '#2563EB' }, { name: '水藍', color: '#38BDF8' },
+    { name: '紫', color: '#A855F7' }, { name: '粉', color: '#FF69B4' }, { name: '橘', color: '#FF8C00' },
+    { name: '黑', color: '#212121' }
   ];
-  const COSTUME = ['#ff5b6e', '#ae7bff', '#3fcf7c', '#ff86c4', '#f2c838', '#ff9443', '#66ccf2', '#e8ecf4', '#5b7cff', '#a6e24a'];
+  const COSTUME = MEMBERS.map(m => m.color);
+  // light shown for a member on the dark stage (penlights, floor marks, the oshi ring): black would vanish, so it glows grey
+  const GLOW = MEMBERS.map(m => (m.color === '#212121' ? '#B0B0B0' : m.color));
   const LOW = window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false;
   const MOBILE = () => window.innerWidth <= 920;
   const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
@@ -3244,6 +3256,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     $('#venueCur').textContent = VN.short;
     const go = v => {
       if (v.id === VN.id) { close(); return; }
+      track('oshiview_venue_change', { venue: v.id, from_venue: VN.id });
       try { sessionStorage.setItem(CARRY, JSON.stringify({ ticket: state.ticket, userHeight: state.userHeight, oshi: state.oshi, view: state.view })); } catch (err) { /* private mode: start fresh */ }
       // ponytail: hash, not ?v= — idolmaps' Angular service worker answers /view?v=… with its own 404 page
       location.hash = 'v=' + v.id; location.reload();
@@ -3497,6 +3510,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       state.memberHeights.forEach((h, i) => { $('#mh' + i).value = String(h); });
     }
     syncSex(); syncOshi(); ensureMale(); rebuildMembers(); schedule();
+    track('oshiview_idol_sex', { venue: VN.id, idol_sex: state.idolSex });
   });
   $('#countSeg').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -3690,7 +3704,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       ctx.fillStyle = opts.bg || 'rgba(10,11,16,0.78)';
       const r = c.height / 2;
       ctx.beginPath(); ctx.moveTo(r, 0); ctx.lineTo(c.width - r, 0); ctx.arc(c.width - r, r, r, -Math.PI / 2, Math.PI / 2); ctx.lineTo(r, c.height); ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2); ctx.fill();
-      if (dotColor) { ctx.fillStyle = dotColor; ctx.beginPath(); ctx.arc(pad + fs * 0.28, c.height / 2, fs * 0.24, 0, Math.PI * 2); ctx.fill(); }
+      if (dotColor) { ctx.fillStyle = dotColor; ctx.beginPath(); ctx.arc(pad + fs * 0.28, c.height / 2, fs * 0.24, 0, Math.PI * 2); ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.stroke(); }
       ctx.fillStyle = opts.fg || '#eceaf2'; ctx.textBaseline = 'middle';
       ctx.fillText(text, pad + dotW, c.height / 2 + 2);
       const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
@@ -3831,13 +3845,13 @@ details.fold[open] > summary { margin-bottom: 8px; }
       ms.forEach(buildMember);
       // stage marks in each member's colour
       ms.forEach(m => {
-        const tm = new THREE.MeshBasicMaterial({ color: col(COSTUME[m.id]), toneMapped: false });
+        const tm = new THREE.MeshBasicMaterial({ color: col(GLOW[m.id]), toneMapped: false });
         const a1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.004, 0.03), tm); a1.position.set(m.x, m.baseY + 0.003, m.z + 0.2);
         const a2 = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.004, 0.2), tm); a2.position.set(m.x, m.baseY + 0.003, m.z + 0.2);
         memberGroup.add(a1, a2);
       });
       const om = ms.find(m => m.id === state.oshi) || ms[0];
-      const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.36, 40), new THREE.MeshBasicMaterial({ color: col(MEMBERS[om.id].color), transparent: true, opacity: 0.9 }));
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.36, 40), new THREE.MeshBasicMaterial({ color: col(GLOW[om.id]), transparent: true, opacity: 0.9 }));
       ring.rotation.x = -Math.PI / 2; ring.position.set(om.x, om.baseY + 0.012, om.z); memberGroup.add(ring);
     }
     function buildMembersForView(p) {
@@ -4202,7 +4216,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
         push(c.neck, MU, skin); push(c.head, MHd, skin); push(c.eyes, MHd, null);
         push(c.hair[hairIdx], MHd, hairC);
         if (pen) {
-          const pc = col(COSTUME[(memberById.get(q.fan) || sim.members[q.idx % sim.members.length]).id]);
+          const pc = col(GLOW[(memberById.get(q.fan) || sim.members[q.idx % sim.members.length]).id]);
           push(c.penGrip, M4, col('#2a2830')); push(c.penTube, M4, pc.clone().multiplyScalar(1.4));
           if (npg < CAP) { Pv.copy(c.penTop).applyMatrix4(M4); Pv.toArray(pgp, npg * 3); pc.toArray(pgc, npg * 3); npg++; }
         }
@@ -4216,7 +4230,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
           pushBetween(iRSleeve, ra.A, E, ra.d.ar + 0.012, tee);
           pushBetween(iRArm, E, ra.B, ra.d.ar * 0.85, skin);
           const hi = iRHand.userData.n++; if (hi < CAP) { setInst(iRHand, hi, ra.B[0], ra.B[1], ra.B[2], 0.03, 0.045, 0.03); iRHand.setColorAt(hi, skin); }
-          const pc = col(COSTUME[sim.members[q.penColor % sim.members.length].id]);
+          const pc = col(GLOW[sim.members[q.penColor % sim.members.length].id]);
           pushBetween(iPen, ra.B, ra.C, 0.017, pc.clone().multiplyScalar(1.4));
           if (ng < CAP) {
             gp[ng * 3] = (ra.B[0] + ra.C[0]) / 2; gp[ng * 3 + 1] = (ra.B[1] + ra.C[1] * 3) / 4; gp[ng * 3 + 2] = (ra.B[2] + ra.C[2]) / 2;
@@ -4291,7 +4305,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       iDisc.count = n; iDisc.instanceMatrix.needsUpdate = true; if (iDisc.instanceColor) iDisc.instanceColor.needsUpdate = true;
       PNUM.update(sim.people.concat(sim.user ? [sim.user] : []));
       sim.members.forEach(m => {
-        const d = new THREE.Mesh(new THREE.CircleGeometry(0.24, 20), new THREE.MeshBasicMaterial({ color: col(COSTUME[m.id]), depthTest: false, toneMapped: false }));
+        const d = new THREE.Mesh(new THREE.CircleGeometry(0.24, 20), new THREE.MeshBasicMaterial({ color: col(GLOW[m.id]), depthTest: false, toneMapped: false }));
         d.rotation.x = -Math.PI / 2; d.position.set(m.x, 9.3, m.z); d.renderOrder = 7; planDyn.add(d);
       });
       if (sim.user) {
@@ -5543,6 +5557,10 @@ details.fold[open] > summary { margin-bottom: 8px; }
     return { ev, n, om, where, who, oshiWord: oshiHead(om)[1],
       line: '身高 ' + state.userHeight + 'cm、' + where + '，在' + VN.short + '看得到 ' + ev.faceCount + '/' + n + ' 位' + who + '的臉' };
   }
+  // coarse buckets so reports can tell who shares (a 150 cm fan near the back…) without a value per slider step
+  const band = (v, edges) => { const i = edges.findIndex(e => v <= e); return i < 0 ? edges[edges.length - 1] + 1 + '+' : i ? edges[i - 1] + 1 + '-' + edges[i] : '≤' + edges[0]; };
+  const shareParams = method => ({ method, venue: VN.id, idol_sex: state.idolSex, free_spot: !!state.free,
+    height_band: band(state.userHeight, [149, 154, 159, 164, 169, 174, 179]), ticket_band: band(Math.min(state.ticket, general()), [10, 30, 60, 100]) });
   function shareUrl() {
     const enc = S.shareEncode(Object.assign({}, state, { curOrder: sceneOrder() }), shareDefaults(state.idolSex));
     return location.origin + location.pathname + '#v=' + VN.id + (enc ? '&' + enc : '');
@@ -5556,7 +5574,10 @@ details.fold[open] > summary { margin-bottom: 8px; }
   }
   document.documentElement.classList.toggle('is-shared', sharedView);
   $('#sbVenue').href = '/venue/' + VN.idolmaps;
+  $('#sbVenue').addEventListener('click', () => track('oshiview_venue_click', { venue: VN.id, target: 'share_banner' }));
+  $('#venueInfo').addEventListener('click', () => track('oshiview_venue_click', { venue: VN.id, target: 'header' }));
   $('#sbMine').addEventListener('click', () => {
+    track('oshiview_switch_mine', { venue: VN.id });
     sharedView = false; document.documentElement.classList.remove('is-shared'); $('#shareBanner').hidden = true;
     history.replaceState(null, '', location.pathname + location.search + '#v=' + VN.id);
     let h = 170; try { h = (JSON.parse(localStorage.getItem(ME) || 'null') || {}).userHeight || 170; } catch (err) { /* no storage */ }
@@ -5599,7 +5620,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       x.beginPath(); x.arc(cx, cy, d / 2, 0, Math.PI * 2);
       x.globalAlpha = r.face >= 0.5 ? 1 : r.faceLean >= 0.5 ? 0.45 : 1;
       x.fillStyle = r.face >= 0.5 || r.faceLean >= 0.5 ? col : '#ece3ea'; x.fill(); x.globalAlpha = 1;
-      x.lineWidth = 4; x.strokeStyle = col; x.stroke();
+      x.lineWidth = 4; x.strokeStyle = col === '#FFFFFF' ? '#cbb8c6' : col; x.stroke();
       if (r.member.id === state.oshi) {
         x.beginPath(); x.arc(cx, cy, d / 2 + 9, 0, Math.PI * 2); x.lineWidth = 5; x.strokeStyle = '#e879a0'; x.stroke();
         x.fillStyle = '#c04070'; font(26); x.textAlign = 'center'; x.fillText('推', cx, cy + d / 2 + 40); x.textAlign = 'left';
@@ -5629,7 +5650,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     $('#sdNote').textContent = SD_NOTE;
     const img = $('#sdImg'), msg = $('#sdImgMsg');
     img.hidden = true; msg.hidden = false; msg.textContent = '產生圖片中…';
-    if (!dlg.open) dlg.showModal();
+    if (!dlg.open) { dlg.showModal(); track('oshiview_share_open', { venue: VN.id }); }
     try {
       const cur = shareCur, blob = await renderCard(f);
       if (cur !== shareCur) return;
@@ -5640,23 +5661,26 @@ details.fold[open] > summary { margin-bottom: 8px; }
   }
   const fileName = () => 'oshi-view-' + VN.id + '-' + state.userHeight + 'cm.png';
   $('#vpShare').addEventListener('click', openShare);
+  $('#sdLine').addEventListener('click', () => track('oshiview_share', shareParams('line')));
+  $('#sdThreads').addEventListener('click', () => track('oshiview_share', shareParams('threads')));
   $('#sdClose').addEventListener('click', () => dlg.close());
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });   // backdrop tap
   $('#sdImgSave').addEventListener('click', () => {
     if (!shareCur || !shareCur.blob) return;
     const a = document.createElement('a'); a.href = URL.createObjectURL(shareCur.blob); a.download = fileName(); a.click();
+    track('oshiview_share', shareParams('image_download'));
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
   $('#sdImgShare').addEventListener('click', async () => {
     if (!shareCur || !shareCur.blob) return;
-    try { await navigator.share({ files: [new File([shareCur.blob], fileName(), { type: 'image/png' })], text: shareCur.text + ' ' + shareCur.url }); }
+    try { await navigator.share({ files: [new File([shareCur.blob], fileName(), { type: 'image/png' })], text: shareCur.text + ' ' + shareCur.url }); track('oshiview_share', shareParams('image_share')); }
     catch (err) { /* cancelled */ }
   });
   $('#sdMore').addEventListener('click', async () => {
-    try { await navigator.share({ title: document.title, text: shareCur.text, url: shareCur.url }); } catch (err) { /* cancelled */ }
+    try { await navigator.share({ title: document.title, text: shareCur.text, url: shareCur.url }); track('oshiview_share', shareParams('web_share')); } catch (err) { /* cancelled */ }
   });
   $('#sdCopy').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(shareCur.url); $('#sdCopy').textContent = '已複製 ✓'; }
+    try { await navigator.clipboard.writeText(shareCur.url); $('#sdCopy').textContent = '已複製 ✓'; track('oshiview_share', shareParams('copy_link')); }
     catch (err) { $('#sdNote').textContent = '無法自動複製，請手動複製：' + shareCur.url; }
   });
 
@@ -5677,6 +5701,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
   if (state.carryView && state.carryView !== 'eye') { const b = $('#viewTabs [data-v="' + state.carryView + '"]'); if (b) b.click(); }
   $('#sightLegend').hidden = true;
   $('#curveSub').textContent = '維持你的身高、站位目標和推的成員，只改排隊順位，每個點各模擬 ' + CURVE_SEEDS.length + ' 次。色帶是 10–90% 的範圍。';
+  track('page_view', { page_title: document.title, page_location: location.origin + location.pathname, venue: VN.id, shared: sharedView, idol_sex: state.idolSex });
+  if (sharedView) track('oshiview_shared_open', { venue: VN.id, idol_sex: state.idolSex });
   requestMain();
 })();
 </script>

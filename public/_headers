@@ -56,3 +56,6 @@
 
 /view/assets/idol-vroid.glb
   Cache-Control: public, max-age=31536000, immutable
+
+/view/assets/idol-vroid-male.glb
+  Cache-Control: public, max-age=31536000, immutable
