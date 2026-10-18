@@ -949,7 +949,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
 .share-btn { justify-self: start; margin-top: 4px; }
 .vp-share { position: absolute; top: 10px; right: 112px; display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 999px; background: rgba(12, 10, 26, 0.72); backdrop-filter: blur(6px); color: #f3f1ea; font-size: 12.5px; cursor: pointer; }
 .viewport:not(.expanded) .vp-share { display: none; }   /* inline, the verdict card's button sits right below */
-.viewport.expanded .vp-share { top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(58px + env(safe-area-inset-right, 0px)); }
+.viewport.expanded .vp-share { top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(96px + env(safe-area-inset-right, 0px)); }
+@media (max-width: 640px) { .viewport.expanded .vp-share { right: calc(58px + env(safe-area-inset-right, 0px)); } }   /* the close button drops its label here */
 .share-dlg { width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 16px; border: 0; border-radius: var(--r); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-md); }
 .share-dlg::backdrop { background: rgba(45, 27, 46, 0.45); }
 .sd-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -2824,16 +2825,16 @@ details.fold[open] > summary { margin-bottom: 8px; }
     ];
     // male idols: one CC0 body (Sakurada Fumiriya) with its own haircut or HairSample_Male's; hair colour tells members apart
     const IDOL_M = [
-      { hairColor: '#6a3a24', pose: 'mic', cut: 'Sakurada_Fumiriya' },
-      { hairColor: '#141018', pose: 'peace', cut: 'HairSample_Male' },
-      { hairColor: '#c09868', pose: 'mic', cut: 'Sakurada_Fumiriya' },
-      { hairColor: '#5a3a6a', pose: 'down', cut: 'HairSample_Male' },
-      { hairColor: '#2a1a14', pose: 'both', cut: 'Sakurada_Fumiriya' },
-      { hairColor: '#8a5050', pose: 'mic', cut: 'HairSample_Male' },
-      { hairColor: '#d8c8b0', pose: 'peace', cut: 'Sakurada_Fumiriya' },
-      { hairColor: '#2a3a5a', pose: 'mic', cut: 'HairSample_Male' },
-      { hairColor: '#402418', pose: 'down', cut: 'Sakurada_Fumiriya' },
-      { hairColor: '#1d1520', pose: 'both', cut: 'HairSample_Male', flip: true }
+      { hairColor: '#6a3a24', pose: 'mic', cut: 'Sakurada_Fumiriya', gate: true },
+      { hairColor: '#141018', pose: 'peace', cut: 'HairSample_Male', gate: true },
+      { hairColor: '#c09868', pose: 'mic', cut: 'Sakurada_Fumiriya', gate: true },
+      { hairColor: '#5a3a6a', pose: 'down', cut: 'HairSample_Male', gate: true },
+      { hairColor: '#2a1a14', pose: 'both', cut: 'Sakurada_Fumiriya', gate: true },
+      { hairColor: '#8a5050', pose: 'mic', cut: 'HairSample_Male', gate: true },
+      { hairColor: '#d8c8b0', pose: 'peace', cut: 'Sakurada_Fumiriya', gate: true },
+      { hairColor: '#2a3a5a', pose: 'mic', cut: 'HairSample_Male', gate: true },
+      { hairColor: '#402418', pose: 'down', cut: 'Sakurada_Fumiriya', gate: true },
+      { hairColor: '#1d1520', pose: 'both', cut: 'HairSample_Male', flip: true, gate: true }
     ];
     const MODEL_H = 1.6, IDOL_SKIN = '#f2c2a8';
 
@@ -3009,7 +3010,10 @@ details.fold[open] > summary { margin-bottom: 8px; }
     }
     // colourise the costume texture in the shader: every tinted pixel takes the member's hue (YIQ), keeping its
     // brightness; colourfulness scales with the member colour's, so greys, whites and black trims stay put
-    function hueShift(mat, rad, sat) {
+    // gate: only recolour the male uniform's navy vest (its part of the texture, dark and muted pixels); the white
+    // shirt's painted blue shadows would otherwise turn the member colour
+    function hueShift(mat, rad, sat, gate) {
+      if (gate) mat.defines = { HUE_GATE: '' };
       mat.onBeforeCompile = sh => {
         sh.uniforms.hueTo = { value: rad }; sh.uniforms.hueSat = { value: sat };
         sh.fragmentShader = 'uniform float hueTo, hueSat;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
@@ -3017,7 +3021,12 @@ details.fold[open] > summary { margin-bottom: 8px; }
             vec3 c = diffuseColor.rgb;
             float y = dot(c, vec3(0.299, 0.587, 0.114)), i = dot(c, vec3(0.596, -0.274, -0.322)), q = dot(c, vec3(0.211, -0.523, 0.312));
             float ch = length(vec2(i, q)) * hueSat, i2 = ch * cos(hueTo), q2 = ch * sin(hueTo);
-            diffuseColor.rgb = clamp(vec3(y + 0.956 * i2 + 0.621 * q2, y - 0.272 * i2 - 0.647 * q2, y - 1.106 * i2 + 1.703 * q2), 0.0, 1.0);
+            vec3 shifted = clamp(vec3(y + 0.956 * i2 + 0.621 * q2, y - 0.272 * i2 - 0.647 * q2, y - 1.106 * i2 + 1.703 * q2), 0.0, 1.0);
+            #ifdef HUE_GATE
+              // the vest is the lower 63% of the uniform texture (sleeves and collar sit above v = 0.37)
+              shifted = mix(c, shifted, smoothstep(0.36, 0.39, vUv.y) * (1.0 - smoothstep(0.06, 0.09, length(vec2(i, q)))) * (1.0 - smoothstep(0.34, 0.45, y)));
+            #endif
+            diffuseColor.rgb = shifted;
           }`);
       };
     }
@@ -3060,7 +3069,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
             // cut-out hair sorts cleanly; only the thin face decals blend
             transparent: s.transparent && !hair, alphaTest: hair || s.alphaTest ? 0.5 : 0, depthWrite: !s.transparent || hair
           });
-          if (/_(Tops|Bottoms)_/.test(name)) hueShift(mat, hue, sat);
+          if (/_(Tops|Bottoms)_/.test(name)) hueShift(mat, hue, sat, st.gate);
           const ol = s.map && s.alphaTest ? cutOutline(s.map) : outlineMat;
           if (ol !== outlineMat) owned.push(ol);
           mats.set(s, mat); mats.set(mat, ol); owned.push(mat);
@@ -3183,12 +3192,18 @@ details.fold[open] > summary { margin-bottom: 8px; }
     if (c) Object.assign(state, { ticket: Math.max(1, Math.min(state.total, c.ticket | 0)) || 50, userHeight: c.userHeight || 170, oshi: c.oshi | 0, carryView: c.view });
   } catch (err) { /* no storage */ }
   // share links: #v=jack&t=30&h=150… opens someone else's exact view; the snapshot is what the link diffs against
+  const IDOL_HEIGHTS = { f: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], m: [172, 175, 170, 178, 168, 174, 171, 176, 169, 173] };
   const SHARE_DEFAULTS = JSON.parse(JSON.stringify(Object.assign({}, state, { curOrder: state.positionOrder })));
+  // a male stage starts from the male heights and the swapped audience, so links only carry changes from those
+  const shareDefaults = sex => sex === 'm'
+    ? Object.assign({}, SHARE_DEFAULTS, { memberHeights: IDOL_HEIGHTS.m, maleRatio: Math.round((1 - SHARE_DEFAULTS.maleRatio) * 100) / 100 })
+    : SHARE_DEFAULTS;
   const ME = 'ow-me';   // the viewer's own height, remembered so a shared view can switch back to it
   const shared = S.shareDecode(location.hash);
   let sharedView = Object.keys(shared).length > 0;
   if (sharedView) {
     const { curOrder, memberHeights, view, ...rest } = shared;
+    if (rest.idolSex === 'm') { const d = shareDefaults('m'); state.memberHeights = d.memberHeights.slice(); state.maleRatio = d.maleRatio; }
     Object.assign(state, rest);
     if (!VN.barrier.options.includes(state.barrier)) state.barrier = VN.barrier.def;
     if (!VN.stageH.options.includes(state.stageH)) state.stageH = VN.stageH.def;
@@ -3468,7 +3483,6 @@ details.fold[open] > summary { margin-bottom: 8px; }
   });
   /* 台上: female or male idols. Fans flip with them: the audience's male/female split is swapped,
      and member heights still on one set's defaults move to the other's */
-  const IDOL_HEIGHTS = { f: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], m: [172, 175, 170, 178, 168, 174, 171, 176, 169, 173] };
   function syncSex() {
     setPressed($('#sexSeg'), state.idolSex);
     $('#sexNote').textContent = state.idolSex === 'm' ? '觀眾的男女比例跟著對調（現在女性 ' + Math.round((1 - state.maleRatio) * 100) + '%，可在「入場與觀眾」調整）。' : '';
@@ -3564,6 +3578,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
       gl = initThree(gltf);
       vroidP.then(v => { if (v && gl) gl.setVroid(v, 'f'); });
       if (state.idolSex === 'm') ensureMale();
+      if (state.free) syncFree();
       if (state.sim) { gl.updateCrowd(state.sim); if (state.ev) gl.updateSight(state.ev); gl.render(); }
     } catch (err) { fail3D(err); }
   }, err => { $('#vpLoad').hidden = true; fail3D(err); });
@@ -4619,7 +4634,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
     if (gl) gl.render();
   }
   $('#expandBtn').addEventListener('click', () => setExpanded(!state.expanded));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.expanded) setExpanded(false); });
+  // Esc inside the share dialog only closes the dialog
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.expanded && !$('#shareDlg').open) setExpanded(false); });
   $('#mbOpen').addEventListener('click', () => setExpanded(true));
   $('#mbNum').addEventListener('click', () => {
     $('#quick').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -5523,16 +5539,19 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const ev = state.ev, u = state.sim && state.sim.user; if (!ev || !u) return null;
     const n = ev.members.length, om = ev.members.find(r => r.member.id === state.oshi) || ev.members[0];
     const where = state.free ? '站在自選位置' : '排第 ' + Math.min(state.ticket, general()) + ' 位';
-    return { ev, n, om, where, oshiWord: oshiHead(om)[1],
-      line: '身高 ' + state.userHeight + 'cm、' + where + '，在' + VN.short + '看得到 ' + ev.faceCount + '/' + n + ' 位成員的臉' };
+    const who = state.idolSex === 'm' ? '男偶像' : '成員';
+    return { ev, n, om, where, who, oshiWord: oshiHead(om)[1],
+      line: '身高 ' + state.userHeight + 'cm、' + where + '，在' + VN.short + '看得到 ' + ev.faceCount + '/' + n + ' 位' + who + '的臉' };
   }
   function shareUrl() {
-    const enc = S.shareEncode(Object.assign({}, state, { curOrder: sceneOrder() }), SHARE_DEFAULTS);
+    const enc = S.shareEncode(Object.assign({}, state, { curOrder: sceneOrder() }), shareDefaults(state.idolSex));
     return location.origin + location.pathname + '#v=' + VN.id + (enc ? '&' + enc : '');
   }
   function renderShareBanner() {
     const b = $('#shareBanner'); b.hidden = !sharedView;
+    if (b.dataset.fixed) return;
     const f = sharedView && shareFacts(); if (!f) return;
+    if (state.summary) b.dataset.fixed = '1';   // the full run has picked the shared luck; freeze the sentence there
     $('#sbText').textContent = '👀 ' + f.line + '（推：' + MEMBERS[f.om.member.id].name + ' ' + f.oshiWord + '）';
   }
   document.documentElement.classList.toggle('is-shared', sharedView);
@@ -5562,7 +5581,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     x.fillStyle = '#7a5a7a'; font(28); x.textAlign = 'right'; x.fillText('排隊順位 × 視線模擬', W - 60, 96); x.textAlign = 'left';
     // 3D snapshot, cover-cropped; drawn right after a render so the WebGL buffer is still valid
     const ix = 60, iy = 140, iw = 960, ih = 690;
-    x.save(); x.beginPath(); x.roundRect(ix, iy, iw, ih, 28); x.clip(); x.fillStyle = '#0a0716'; x.fillRect(ix, iy, iw, ih);
+    x.save(); x.beginPath(); if (x.roundRect) x.roundRect(ix, iy, iw, ih, 28); else x.rect(ix, iy, iw, ih); x.clip(); x.fillStyle = '#0a0716'; x.fillRect(ix, iy, iw, ih);
     const src = $('#c3d');
     if (gl && src.width) {
       gl.renderNow();
@@ -5586,7 +5605,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
         x.fillStyle = '#c04070'; font(26); x.textAlign = 'center'; x.fillText('推', cx, cy + d / 2 + 40); x.textAlign = 'left';
       }
     });
-    x.fillStyle = '#2d1b2e'; font(44); x.fillText('看得到 ' + f.ev.faceCount + '/' + f.n + ' 位成員的臉', 60, 1195);
+    x.fillStyle = '#2d1b2e'; font(44); x.fillText('看得到 ' + f.ev.faceCount + '/' + f.n + ' 位' + f.who + '的臉', 60, 1195);
     x.fillStyle = '#7a5a7a'; font(34); x.fillText('推（' + MEMBERS[f.om.member.id].name + '）的臉：' + f.oshiWord, 60, 1245);
     x.fillStyle = 'rgba(232,121,160,0.35)'; x.fillRect(60, 1276, 960, 2);
     x.fillStyle = '#7a5a7a'; font(28); x.fillText('你排第幾位看得到？輸入順位和身高試試', 60, 1320);
@@ -5594,7 +5613,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     return new Promise((res, rej) => c.toBlob(b => (b ? res(b) : rej(new Error('toBlob failed'))), 'image/png'));
   }
 
-  const dlg = $('#shareDlg');
+  const dlg = $('#shareDlg'), SD_NOTE = $('#sdNote').textContent;
   let shareCur = null;
   async function openShare() {
     const f = shareFacts(); if (!f) return;
@@ -5607,6 +5626,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     try { files = !!navigator.canShare && navigator.canShare({ files: [new File([''], 'a.png', { type: 'image/png' })] }); } catch (err) { /* no file sharing */ }
     $('#sdImgShare').hidden = !files;
     $('#sdCopy').textContent = '複製連結';
+    $('#sdNote').textContent = SD_NOTE;
     const img = $('#sdImg'), msg = $('#sdImgMsg');
     img.hidden = true; msg.hidden = false; msg.textContent = '產生圖片中…';
     if (!dlg.open) dlg.showModal();
