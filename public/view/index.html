@@ -2185,7 +2185,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     }
     if (user) { user.arm = 0; user.shoulderW = 0.19; }
     // 起飛 never touches the random stream, so the crowd is the same run with or without it
-    const liftFail = !!(p.lift && user && !liftUser(user, people, p));
+    const liftFail = p.lift && user ? liftUser(user, people, p, V) : null;   // null, or why you could not be lifted
     const frontCap = floorSpots.filter(sp => sp.front).length;
     // the crowd placed itself on the entry (MC) positions; sightlines are judged in the scene being viewed
     return { V, members: sceneMembers(p, V), entryMembers: members, people, user, floorSpots, userNo: user ? user.no : 0, frontCap, rhoBack: dens.back, rhoMid: dens.mid, vip, liftFail };
@@ -2196,26 +2196,41 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
      you sit across their inner shoulders, thighs forward over the front, shins hanging in front of their chests.
      Everything is built from the carriers' real shoulder heights, so the eye, the 3D and the sightlines agree. */
   const SEAT_EYE = 0.45, SEAT_TOP = 0.505, SEAT_SH = 0.30;   // seated eye / head top / shoulder above the seat, × your height
-  function liftUser(user, people, p) {
+  const LIFT_MAX_DSH = 0.1;   // carriers' shoulders may differ this much (±5 cm around the seat); taller gaps would tilt you
+  function liftUser(user, people, p, V) {
     const near = people.filter(q => Math.abs(q.z - user.z) < 0.95 && Math.abs(q.x - user.x) < 1.6 && !(p.frontGuard && q.front));
     const dist = q => Math.hypot(q.x - user.x, (q.z - user.z) * 1.5);
-    const nearest = list => list.reduce((b, q) => (!b || dist(q) < dist(b) ? q : b), null);
-    let L = nearest(near.filter(q => q.x < user.x)), R = nearest(near.filter(q => q.x >= user.x));
-    if (!L || !R) {   // against a wall: take the two nearest wherever they stand
-      const two = near.slice().sort((a, b) => dist(a) - dist(b)).slice(0, 2);
-      if (two.length < 2) return false;
-      [L, R] = two;
-    }
+    const byDist = list => list.slice().sort((a, b) => dist(a) - dist(b)).slice(0, 6);
+    // a pair of carriers: close by, one on each side when possible, shoulders at nearly the same height
+    const pairs = [];
+    const lefts = byDist(near.filter(q => q.x < user.x)), rights = byDist(near.filter(q => q.x >= user.x)), all = byDist(near);
+    for (const L of lefts) for (const R of rights) pairs.push([L, R]);
+    for (let a = 0; a < all.length; a++) for (let b = a + 1; b < all.length; b++) pairs.push(all[a].x <= all[b].x ? [all[a], all[b]] : [all[b], all[a]]);
+    const dsh = ([L, R]) => Math.abs(shoulderY(L) - shoulderY(R));
+    const fit = pairs.filter(pr => dsh(pr) <= LIFT_MAX_DSH);
+    if (!pairs.length) return 'alone';
+    if (!fit.length) return 'height';
+    fit.sort((a, b) => dist(a[0]) + dist(a[1]) + 3 * dsh(a) - (dist(b[0]) + dist(b[1]) + 3 * dsh(b)));
+    const [L, R] = fit[0];
+    // shoulder to shoulder under you; against a wall the three of you shift inward together, up to 30 cm
+    const gap = q => bodyDims(q).ax + 0.035, z = user.z + 0.03;
+    const inside = (x, q) => {
+      const poly = V.venue.floor, half = bodyDims(q).tw + 0.02;
+      return pointInPoly(x, z, poly) && distToPolyEdge(x, z, poly) >= half && !V.blockers.some(b => inBox(x, z, b, half));
+    };
+    const shift = [0, 0.1, -0.1, 0.2, -0.2, 0.3, -0.3].find(o => inside(user.x + o - gap(L), L) && inside(user.x + o + gap(R), R));
+    if (shift == null) return 'wall';
+    user.x += shift;
     const bases = [[L, -1], [R, 1]].map(([q, side]) => {
-      q.x = user.x + side * (bodyDims(q).ax + 0.035); q.z = user.z + 0.03;
+      q.x = user.x + side * gap(q); q.z = z;
       q.arm = 0; q.phone = 0; q.lifting = side;
       return { idx: q.idx, side, x: q.x, z: q.z, h: q.h, male: q.male, floorY: q.floorY };
     });
     const seat = (shoulderY(L) + shoulderY(R)) / 2 + 0.02;
-    user.lift = { seat, eye: seat + SEAT_EYE * user.h, top: seat + SEAT_TOP * user.h, bases };
+    user.lift = { seat, eye: seat + SEAT_EYE * user.h, top: seat + SEAT_TOP * user.h, bases, shift };
     user.lift.pose = liftPose(user);
     for (const [q, side] of [[L, -1], [R, 1]]) q.liftArms = user.lift.pose.carry[side < 0 ? 0 : 1];
-    return true;
+    return null;
   }
   /** joint positions of you and your carriers' arms while lifted (shared by the 3D and the sightline test) */
   function liftPose(u) {
@@ -2275,6 +2290,17 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
 
   // free mode: the user stands on the floor spot nearest (x, z), trading places with whoever stood there,
   // so the crowd and its density stay exactly as the entry left them
+  /** free mode's arrow keys: the nearest floor spot in that direction (within ±45°), so a step never snaps back */
+  function nextSpot(spots, at, dx, dz) {
+    let best = null, bs = Infinity;
+    for (const s of spots) {
+      const ox = s.x - at.x, oz = s.z - at.z, along = ox * dx + oz * dz, perp = Math.abs(ox * dz - oz * dx);
+      if (along < 0.15 || perp > along) continue;
+      const sc = along + 2 * perp;
+      if (sc < bs) { bs = sc; best = s; }
+    }
+    return best;
+  }
   function moveUserTo(user, people, floorSpots, at) {
     let best = -1, bd = Infinity;
     floorSpots.forEach((s, i) => { const d = (s.x - at.x) ** 2 + (s.z - at.z) ** 2; if (d < bd) { bd = d; best = i; } });
@@ -2849,8 +2875,8 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   const api = {
     SHARE_FIELDS, shareEncode, shareDecode,
     VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
-    FRONT_ROWS, FRONT_DENSITY, MID_MAX, LEAN_OFFSETS, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, phoneHold, hangingArm, liftBlockCount,
-    pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
+    FRONT_ROWS, FRONT_DENSITY, MID_MAX, LEAN_OFFSETS, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, phoneHold, hangingArm, liftBlockCount, nextSpot,
+    pointInPoly, distToPolyEdge, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
     buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, seenEstimate, runBatch, summarize, representativeSeed, luckSeeds, pickSeed, totalMax,
     bucketRanges, bucketStats, spotScores, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
   };
@@ -4301,7 +4327,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     // same proportions as the standing marker: tapered body, a flattened dome for shoulders, the head on top
     const R = { torso: rPart(new THREE.CylinderGeometry(0.12, 0.1, 1, 20).translate(0, 0.5, 0)), head: rPart(riderSph),
       dome: rPart(new THREE.SphereGeometry(0.12, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2)),
-      segs: Array.from({ length: 8 }, () => rPart(unitCyl)), joints: Array.from({ length: 6 }, () => rPart(riderSph)),
+      segs: Array.from({ length: 8 }, () => rPart(unitCyl)), joints: Array.from({ length: 10 }, () => rPart(riderSph)),
       pen: new THREE.Mesh(unitCyl, new THREE.MeshBasicMaterial({ toneMapped: false })) };
     rider.add(R.pen); rider.visible = false;
     const vUp = new THREE.Vector3(0, 1, 0), vD = new THREE.Vector3();
@@ -4316,7 +4342,10 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       R.dome.position.set(P.torso[1][0], P.torso[1][1], P.torso[1][2]); R.dome.scale.set(h, 0.45 * h, h);
       R.head.position.set(P.head[0], P.head[1], P.head[2]); R.head.scale.setScalar(0.075 * h);
       for (const l of P.legs) { between(R.segs[i++], l.H, l.K, 0.04 * h); between(R.segs[i++], l.K, l.F, 0.031 * h); ball(R.joints[j++], l.K, 0.04 * h); ball(R.joints[j++], l.F, 0.033 * h); }
-      for (const a of P.arms) { between(R.segs[i++], a.A, a.E, 0.03 * h); between(R.segs[i++], a.E, a.H, 0.027 * h); ball(R.joints[j++], a.H, 0.032 * h); }
+      for (const a of P.arms) {
+        between(R.segs[i++], a.A, a.E, 0.03 * h); between(R.segs[i++], a.E, a.H, 0.027 * h);
+        ball(R.joints[j++], a.A, 0.034 * h); ball(R.joints[j++], a.E, 0.03 * h); ball(R.joints[j++], a.H, 0.032 * h);
+      }
       between(R.pen, P.pen[0], P.pen[1], 0.016);
       R.pen.material.color.copy(col(GLOW[state.oshi] || '#ffffff')).multiplyScalar(1.4);
     }
@@ -4827,8 +4856,13 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   function freePick(x, z) { if (!state.free) return; state.free = { x, z }; schedule(); }
   $('#freeBtn').addEventListener('click', () => setFree(!state.free));
   // one step ≈ one person over; held down it keeps walking
-  const STEP = { f: [0, -0.6], b: [0, 0.6], l: [-0.58, 0], r: [0.58, 0] };
-  const stepFree = d => { const u = state.sim && state.sim.user; if (u && state.free) freePick(u.x + STEP[d][0], u.z + STEP[d][1]); };
+  const STEP = { f: [0, -1], b: [0, 1], l: [-1, 0], r: [1, 0] };
+  const stepFree = d => {
+    const u = state.sim && state.sim.user; if (!u || !state.free) return;
+    const spots = state.sim.floorSpots || [], at = spots[u.spot] || u;   // from your spot: a lifted group may sit shifted off it
+    const sp = S.nextSpot(spots, at, STEP[d][0], STEP[d][1]);
+    if (sp) freePick(sp.x, sp.z);
+  };
   $('#movePad').querySelectorAll('button').forEach(btn => {
     let t = 0;
     btn.addEventListener('pointerdown', e => { e.preventDefault(); stepFree(btn.dataset.d); clearInterval(t); t = setInterval(() => stepFree(btn.dataset.d), 280); });
@@ -4906,7 +4940,8 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   // instant view of the current pattern on the main thread; 20-pattern stats, buckets and curve in workers
   function makeTasks(S) {
     function slimSim(sim) {
-      return { people: sim.people, user: sim.user, members: sim.members, frontCap: sim.frontCap, vip: sim.vip, rhoMid: sim.rhoMid, rhoBack: sim.rhoBack };
+      return { people: sim.people, user: sim.user, members: sim.members, frontCap: sim.frontCap, vip: sim.vip, rhoMid: sim.rhoMid, rhoBack: sim.rhoBack, liftFail: sim.liftFail,
+        floorSpots: sim.floorSpots.map(s => ({ x: s.x, z: s.z })) };
     }
     function slimEv(ev) {
       if (!ev) return null;
@@ -5145,7 +5180,10 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   // before / after on the same run, who you now block, and the ceiling over your head
   function liftLine(u) {
     const line = el('span', 's cmp');
-    if (!u.lift) { line.textContent = '旁邊沒有人可以扛你，換個位置再起飛。'; return line; }
+    if (!u.lift) {
+      line.textContent = { wall: '這裡太靠牆，兩個人沒辦法並排扛你，往內換個位置再起飛。', height: '旁邊的人身高差太多，扛起來會歪一邊，換個位置再起飛。' }[state.sim.liftFail] || '旁邊沒有人可以扛你，換個位置再起飛。';
+      return line;
+    }
     const c = state.liftCmp, ev = state.ev;
     if (c) {
       line.append(document.createTextNode('起飛前看得到 ' + c.faceCount + ' 位的臉 → 起飛後 '), el('b', null, ev.faceCount + ' 位'),
@@ -5797,7 +5835,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   function shareFacts() {
     const ev = state.ev, u = state.sim && state.sim.user; if (!ev || !u) return null;
     const n = ev.members.length, om = ev.members.find(r => r.member.id === state.oshi) || ev.members[0];
-    const where = state.free ? '站在自選位置' : '排第 ' + Math.min(state.ticket, general()) + ' 位';
+    const where = (state.free ? '站在自選位置' : '排第 ' + Math.min(state.ticket, general()) + ' 位') + (u.lift ? '、起飛中' : '');
     const who = state.idolSex === 'm' ? '男偶像' : '成員';
     return { ev, n, om, where, who, oshiWord: oshiHead(om)[1],
       line: '身高 ' + state.userHeight + 'cm、' + where + '，在' + VN.short + '看得到 ' + ev.faceCount + '/' + n + ' 位' + who + '的臉' };
@@ -5871,7 +5909,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
         x.fillStyle = '#c04070'; font(26); x.textAlign = 'center'; x.fillText('推', cx, cy + d / 2 + 40); x.textAlign = 'left';
       }
     });
-    x.fillStyle = '#2d1b2e'; font(44); x.fillText('看得到 ' + f.ev.faceCount + '/' + f.n + ' 位' + f.who + '的臉', 60, 1195);
+    x.fillStyle = '#2d1b2e'; font(44); x.fillText((state.sim.user.lift ? '起飛中・' : '') + '看得到 ' + f.ev.faceCount + '/' + f.n + ' 位' + f.who + '的臉', 60, 1195);
     x.fillStyle = '#7a5a7a'; font(34); x.fillText('推（' + MEMBERS[f.om.member.id].name + '）的臉：' + f.oshiWord, 60, 1245);
     x.fillStyle = 'rgba(232,121,160,0.35)'; x.fillRect(60, 1276, 960, 2);
     x.fillStyle = '#7a5a7a'; font(28); x.fillText('你排第幾位看得到？輸入順位和身高試試', 60, 1320);
