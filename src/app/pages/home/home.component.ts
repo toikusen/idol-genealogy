@@ -82,6 +82,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   sukigaoFaces: { id: string; name: string; photo_url: string }[] = [];
   /** 顏控9選 play count; shown on the entry card once there is a meaningful number. */
   sukigaoPlays: number | null = null;
+  /** 別擋我推 card in the home carousel; off until it goes public (the carousel shows just 顏控9選 meanwhile). */
+  showOshiViewPromo = false;
   topGroups: GroupRecentHeatEntry[] = [];
   activeTab: HomeTab = 'members';
   private soloMembersLoaded = false;

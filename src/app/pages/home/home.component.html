@@ -93,6 +93,7 @@
     <!-- ══ Feature cards: 別擋我推 first, swipe either way for 顏控9選 ══ -->
     @if (!hasResults) {
       <app-swipe-carousel class="home-promos" label="精選功能">
+      @if (showOshiViewPromo) {
       <!-- /view is a static page outside the Angular app, so a plain href -->
       <a href="/view" class="home-oshiview" aria-label="試試別擋我推：輸入排隊順位和身高，3D 模擬你站哪、看得到誰">
         <span class="home-oshiview__art" aria-hidden="true">
@@ -111,6 +112,7 @@
         </span>
         <span class="home-sukigao__cta home-oshiview__cta" aria-hidden="true">試試看<span class="home-sukigao__arrow">→</span></span>
       </a>
+      }
       <a routerLink="/sukigao" class="home-sukigao" aria-label="玩台灣地偶顏控9選：憑直覺選出最中你臉的 9 位偶像">
         <span class="home-sukigao__faces" aria-hidden="true">
           @for (f of sukigaoFaces; track f.id) {

@@ -131,9 +131,22 @@ describe('HomeComponent', () => {
       expect(card.textContent).toContain('已玩 12,873 次');
     });
 
+    it('hides the 別擋我推 card until it goes public', async () => {
+      await setup();
+      const fixture = TestBed.createComponent(HomeComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const cards = fixture.nativeElement.querySelectorAll('app-swipe-carousel .sc-track > a');
+      expect(cards.length).toBe(1);
+      expect(cards[0].classList).toContain('home-sukigao');
+      expect(fixture.nativeElement.querySelector('.sc-dot')).toBeNull();
+    });
+
     it('shows 別擋我推 as the first carousel card, 顏控9選 second', async () => {
       await setup();
       const fixture = TestBed.createComponent(HomeComponent);
+      fixture.componentInstance.showOshiViewPromo = true;
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();
