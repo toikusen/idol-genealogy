@@ -4241,10 +4241,12 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
         ppl.forEach((q, k) => {
           const i = Math.min(maxN, q.no) - 1, u0 = (i % cols) * cw / W, v1 = 1 - Math.floor(i / cols) * ch / Hh, du = cw / W, dv = ch / Hh;
           const y = S.standTop(q) + (q.arm ? 0.72 : q.phone ? 0.2 + 0.45 * q.phone : 0.2);
+          // a carrier's number moves out over the spot they stepped in from, clear of the rider on their shoulders
+          const lx = q.lifting ? q.x + q.lifting * 0.32 : q.x;
           const tc = tintOf(q, uIdx);
           CORNERS.forEach((c, j) => {
             const o = k * 4 + j;
-            pos.set([q.x, y, q.z], o * 3);
+            pos.set([lx, y, q.z], o * 3);
             cor.set(c, o * 2);
             uv.set([u0 + (c[0] + 0.5) * du, v1 - dv + (c[1] + 0.5) * dv], o * 2);
             tint.set([tc.r, tc.g, tc.b], o * 3);
