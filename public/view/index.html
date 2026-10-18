@@ -986,6 +986,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
 .v2-venue .field { flex-wrap: wrap; }
 .venue-cta { white-space: nowrap; }
 .venue-btn { white-space: nowrap; }
+.vp-fallback { align-content: center; gap: 8px; }
 </style>
 </head>
 <body>
@@ -1076,7 +1077,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
           <input id="dockRange" type="range" min="1" max="200" value="50" aria-label="排隊順位滑桿">
         </div>
         <div class="vp-load" id="vpLoad" aria-live="polite">載入 3D 模型…</div>
-        <div class="vp-fallback" id="fallback" hidden="">無法開啟 3D 顯示（這個環境不支援 WebGL）。下方的判定和表格仍然有計算。</div>
+        <div class="vp-fallback" id="fallback" hidden=""><span id="fallbackMsg">無法開啟 3D 顯示（這個環境不支援 WebGL）。</span>下方的判定和表格仍然有計算。<button type="button" class="fb-link" onclick="location.reload()">重新整理再試一次</button></div>
       </div><div class="panel verdict" id="verdict" aria-live="polite"></div>
       <section class="panel plan" id="plan" aria-label="排隊與站位建議">
         <div class="plan-col">
@@ -3611,8 +3612,12 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
 
   /* ============ 3D ============ */
   let gl = null;
-  function fail3D(err) {
+  function fail3D(err, loading) {
     console.error('3D init failed:', err && err.message, err && err.stack);
+    // usually transient (a dropped download, the GPU busy with other tabs), so say what failed and offer a reload
+    if (loading) $('#fallbackMsg').textContent = '3D 模型下載失敗，可能是網路不穩。';
+    else if (!/WebGL/i.test((err && err.message) || '')) $('#fallbackMsg').textContent = '3D 顯示發生錯誤。';
+    track('oshiview_3d_fail', { venue: VN.id, stage: loading ? 'load' : 'init', msg: String((err && err.message) || '').slice(0, 100) });
     $('#fallback').hidden = false;
     $('#viewTabs').hidden = true; $('#patternBox').hidden = true; $('#zoomBox').hidden = true; $('#leanBox').hidden = true;
   }
@@ -3651,7 +3656,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       if (state.free) syncFree();
       if (state.sim) { gl.updateCrowd(state.sim); if (state.ev) gl.updateSight(state.ev); gl.render(); }
     } catch (err) { fail3D(err); }
-  }, err => { $('#vpLoad').hidden = true; fail3D(err); });
+  }, err => { $('#vpLoad').hidden = true; fail3D(err, true); });
 
   function initThree(gltf) {
     const canvas = $('#c3d');
