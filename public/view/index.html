@@ -2245,7 +2245,9 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     // left hand steadies itself on the left carrier's head, right hand waves a penlight
     const leftHand = [baseL.x + 0.03, baseL.floorY + baseL.h + 0.02, baseL.z - 0.02];
     const rightHand = [x + 0.17 * h, S + 0.62 * h, z - 0.06 * h];
-    const arms = [[shoulder(-1), leftHand], [shoulder(1), rightHand]].map(([A, Hd]) => ({ A, E: lerp(A, Hd, 0.5, [0, 0.02, -0.04]), H: Hd }));
+    // the penlight arm keeps a soft bend, elbow out to the side, so it waves rather than raises a hand to ask
+    const arms = [[shoulder(-1), leftHand, [0, 0.02, -0.04]], [shoulder(1), rightHand, [0.07 * h, -0.02, -0.03]]]
+      .map(([A, Hd, bend]) => ({ A, E: lerp(A, Hd, 0.5, bend), H: Hd }));
     const pen = [rightHand, [rightHand[0] + 0.03, rightHand[1] + 0.26, rightHand[2] - 0.04]];
     // carriers: inner hand on your knee, outer hand around your shin
     const carry = u.lift.bases.slice().sort((a, b) => a.side - b.side).map(b => {
@@ -4327,7 +4329,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     // same proportions as the standing marker: tapered body, a flattened dome for shoulders, the head on top
     const R = { torso: rPart(new THREE.CylinderGeometry(0.12, 0.1, 1, 20).translate(0, 0.5, 0)), head: rPart(riderSph),
       dome: rPart(new THREE.SphereGeometry(0.12, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2)),
-      segs: Array.from({ length: 8 }, () => rPart(unitCyl)), joints: Array.from({ length: 10 }, () => rPart(riderSph)),
+      segs: Array.from({ length: 8 }, () => rPart(unitCyl)), joints: Array.from({ length: 12 }, () => rPart(riderSph)),
       pen: new THREE.Mesh(unitCyl, new THREE.MeshBasicMaterial({ toneMapped: false })) };
     rider.add(R.pen); rider.visible = false;
     const vUp = new THREE.Vector3(0, 1, 0), vD = new THREE.Vector3();
@@ -4341,7 +4343,8 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       between(R.torso, P.torso[0], P.torso[1], h);
       R.dome.position.set(P.torso[1][0], P.torso[1][1], P.torso[1][2]); R.dome.scale.set(h, 0.45 * h, h);
       R.head.position.set(P.head[0], P.head[1], P.head[2]); R.head.scale.setScalar(0.075 * h);
-      for (const l of P.legs) { between(R.segs[i++], l.H, l.K, 0.04 * h); between(R.segs[i++], l.K, l.F, 0.031 * h); ball(R.joints[j++], l.K, 0.04 * h); ball(R.joints[j++], l.F, 0.033 * h); }
+      // a ball at each hip rounds the corner where the body meets the thighs
+      for (const l of P.legs) { ball(R.joints[j++], [l.H[0], l.H[1] + 0.01 * h, l.H[2]], 0.062 * h); between(R.segs[i++], l.H, l.K, 0.04 * h); between(R.segs[i++], l.K, l.F, 0.031 * h); ball(R.joints[j++], l.K, 0.04 * h); ball(R.joints[j++], l.F, 0.033 * h); }
       for (const a of P.arms) {
         between(R.segs[i++], a.A, a.E, 0.03 * h); between(R.segs[i++], a.E, a.H, 0.027 * h);
         ball(R.joints[j++], a.A, 0.034 * h); ball(R.joints[j++], a.E, 0.03 * h); ball(R.joints[j++], a.H, 0.032 * h);
