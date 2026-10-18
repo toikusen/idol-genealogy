@@ -24,6 +24,24 @@ export interface VenuePlanRow {
   rejectDraft?: string;
 }
 
+export interface ViewFeedbackRow {
+  id: string;
+  venue: string;
+  category: 'venue' | 'idea' | 'bug' | 'other';
+  message: string;
+  contact: string | null;
+  page_state: string | null;
+  status: 'new' | 'done';
+  created_at: string;
+}
+
+export const FEEDBACK_LABELS: Record<ViewFeedbackRow['category'], string> = {
+  venue: '場地跟現況不同', idea: '功能建議', bug: '畫面或計算有問題', other: '其他',
+};
+
+/** Only links back into the 別擋我推 page are rendered as links: page_state is user-supplied. */
+export const safeViewLink = (s: string | null) => (s && /^https:\/\/idolmaps\.com\/view#/.test(s) ? s : null);
+
 /** Uploaded floor plans (anonymous, via the venue-plan-upload edge function): approve for 3D modelling or reject. */
 @Component({
   selector: 'app-admin-venue-plans',
@@ -36,6 +54,9 @@ export class AdminVenuePlansComponent implements OnInit {
   loading = true;
   error = '';
   busyId = '';
+  feedback: ViewFeedbackRow[] = [];
+  readonly feedbackLabels = FEEDBACK_LABELS;
+  readonly viewLink = safeViewLink;
 
   constructor(private supabase: SupabaseService) {}
 
@@ -43,6 +64,8 @@ export class AdminVenuePlansComponent implements OnInit {
 
   get pending() { return this.rows.filter(r => r.status === 'pending'); }
   get reviewed() { return this.rows.filter(r => r.status !== 'pending'); }
+  get newFeedback() { return this.feedback.filter(f => f.status === 'new'); }
+  get doneFeedback() { return this.feedback.filter(f => f.status === 'done'); }
 
   async ngOnInit() { await this.load(); }
 
@@ -54,6 +77,13 @@ export class AdminVenuePlansComponent implements OnInit {
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) { this.error = error.message; this.loading = false; return; }
+    // feedback from the /view page (view-feedback edge function, migration 118)
+    const fb = await this.db.from('view_feedback')
+      .select('id, venue, category, message, contact, page_state, status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (fb.error) this.error = fb.error.message;
+    this.feedback = (fb.data ?? []) as ViewFeedbackRow[];
     this.rows = (data ?? []) as VenuePlanRow[];
     if (this.rows.length) {
       // private bucket: short-lived links, only for admins (storage policy in migration 117)
@@ -82,5 +112,14 @@ export class AdminVenuePlansComponent implements OnInit {
     this.busyId = '';
     if (error) { this.error = error.message; return; }
     await this.load();
+  }
+
+  async setFeedbackStatus(f: ViewFeedbackRow, status: ViewFeedbackRow['status']) {
+    this.busyId = f.id;
+    this.error = '';
+    const { error } = await this.db.from('view_feedback').update({ status }).eq('id', f.id);
+    this.busyId = '';
+    if (error) { this.error = error.message; return; }
+    f.status = status;
   }
 }

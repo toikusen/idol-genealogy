@@ -1,9 +1,9 @@
 <div class="p-4 md:p-8">
   <div class="mb-6">
-    <h1 class="text-2xl font-semibold text-gray-800">平面圖審核</h1>
+    <h1 class="text-2xl font-semibold text-gray-800">平面圖與回報</h1>
     <p class="mt-1 text-xs text-gray-400">
       使用者從 <a routerLink="/upload-plan" class="underline">/upload-plan</a> 匿名上傳的場館平面圖。通過的圖會拿去做「別擋我推」的 3D 模擬；
-      退回的 7 天後刪除，30 天沒審的也會自動刪除。
+      退回的 7 天後刪除，30 天沒審的也會自動刪除。下方是「別擋我推」頁面送來的問題回報與建議。
     </p>
   </div>
 
@@ -71,6 +71,54 @@
             </tr>
           } @empty {
             <tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">還沒有審核紀錄</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-12 mb-3 text-sm font-medium text-gray-600">別擋我推回報：待處理（{{ newFeedback.length }}）</h2>
+    <div class="mb-10 grid gap-3">
+      @for (f of newFeedback; track f.id) {
+        <article class="grid gap-2 rounded-lg border border-gray-100 bg-white p-4 text-sm text-gray-700 shadow-sm">
+          <div class="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+            <span class="rounded-full bg-purple-50 px-2 py-0.5 text-purple-700">{{ feedbackLabels[f.category] }}</span>
+            <span>{{ f.venue }}</span>
+            <span>{{ f.created_at | date: 'yyyy-MM-dd HH:mm' }}</span>
+          </div>
+          <div class="whitespace-pre-line text-gray-800">{{ f.message }}</div>
+          @if (f.contact) { <div><span class="text-gray-400">聯絡：</span>{{ f.contact }}</div> }
+          <div class="flex flex-wrap items-center gap-3">
+            @if (viewLink(f.page_state); as link) {
+              <a [href]="link" target="_blank" rel="noopener" class="text-purple-600 underline">開啟對方當下的畫面 ↗</a>
+            }
+            <button type="button" (click)="setFeedbackStatus(f, 'done')" [disabled]="busyId === f.id"
+              class="rounded-md bg-green-500 px-4 py-1.5 text-sm text-white hover:bg-green-600 disabled:opacity-50">標記已處理</button>
+          </div>
+        </article>
+      } @empty {
+        <div class="rounded-lg border border-gray-100 bg-white p-6 text-center text-sm text-gray-400">目前沒有新的回報</div>
+      }
+    </div>
+
+    <h2 class="mb-3 text-sm font-medium text-gray-600">別擋我推回報：已處理</h2>
+    <div class="overflow-x-auto rounded-lg border border-gray-100 bg-white">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-left text-xs text-gray-500">
+          <tr><th class="px-4 py-2">類型</th><th class="px-4 py-2">場館</th><th class="px-4 py-2">內容</th><th class="px-4 py-2"></th></tr>
+        </thead>
+        <tbody>
+          @for (f of doneFeedback; track f.id) {
+            <tr class="border-t border-gray-100">
+              <td class="px-4 py-2 whitespace-nowrap">{{ feedbackLabels[f.category] }}</td>
+              <td class="px-4 py-2">{{ f.venue }}</td>
+              <td class="px-4 py-2 whitespace-pre-line">{{ f.message }}</td>
+              <td class="px-4 py-2">
+                <button type="button" (click)="setFeedbackStatus(f, 'new')" [disabled]="busyId === f.id"
+                  class="text-xs text-gray-400 underline hover:text-gray-600">移回待處理</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">還沒有已處理的回報</td></tr>
           }
         </tbody>
       </table>
