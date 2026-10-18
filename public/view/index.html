@@ -4195,13 +4195,17 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     })();
 
     // you (reference body in cyan)
-    const youMat = new THREE.MeshStandardMaterial({ color: col('#b6f24a'), emissive: col('#5f8f1c'), emissiveIntensity: 0.6, roughness: 0.5 });
+    const youMat = new THREE.MeshStandardMaterial({ color: col('#b6f24a'), emissive: col('#5f8f1c'), emissiveIntensity: 0.6, roughness: 0.5, side: THREE.DoubleSide });
     const you = new THREE.Group();
     // one body per sex, swapped by visibility; the female one gets the long-hair cut so it reads at a glance
+    // hair and face in a darker green so they read against the lime body from the front too; the woman also gets a skirt
+    const youDark = new THREE.MeshStandardMaterial({ color: col('#3f6312'), emissive: col('#1f3608'), emissiveIntensity: 0.5, roughness: 0.6 });
     const youBodies = { m: TPL.m.T, f: TPL.f.T }, youHair = { m: 0, f: 1 };
     for (const sx in youBodies) {
-      const TT = youBodies[sx];
-      youBodies[sx] = new THREE.Mesh(FIG.merge([TT.shirt, TT.sleeveL, TT.sleeveR, TT.armL, TT.armR, TT.neck, TT.head, TT.hair[youHair[sx]], TT.pants, TT.shoes]), youMat);
+      const TT = youBodies[sx], g = new THREE.Group();
+      g.add(new THREE.Mesh(FIG.merge([TT.shirt, TT.sleeveL, TT.sleeveR, TT.armL, TT.armR, TT.neck, TT.head, TT.pants, TT.shoes].concat(TT.skirt ? [TT.skirt] : [])), youMat),
+        new THREE.Mesh(FIG.merge([TT.hair[youHair[sx]], TT.eyes, TT.brows, TT.mouth]), youDark));
+      youBodies[sx] = g;
     }
     const youRing = new THREE.Mesh(new THREE.RingGeometry(0.32, 0.4, 40), new THREE.MeshBasicMaterial({ color: col('#b6f24a'), side: THREE.DoubleSide }));
     youRing.rotation.x = -Math.PI / 2;
