@@ -1150,6 +1150,14 @@ details.fold[open] > summary { margin-bottom: 8px; }
     </section><section class="panel controls stage-cfg" id="stageCfg" aria-label="舞台與成員">
       <h2 class="settings-h">舞台與成員</h2>
       <fieldset class="field">
+        <legend>台上</legend>
+        <div class="seg" id="sexSeg">
+          <button type="button" data-v="f" aria-pressed="true">女偶像</button>
+          <button type="button" data-v="m" aria-pressed="false">男偶像</button>
+        </div>
+        <p class="note" id="sexNote"></p>
+      </fieldset>
+      <fieldset class="field">
         <legend>成員人數</legend>
         <div class="seg" id="countSeg">
           <button type="button" data-v="1" aria-pressed="false">1</button>
@@ -2633,7 +2641,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     ['of', 'otherFanRate', 'pct', 0, 80], ['g', 'groupRate', 'pct', 0, 60], ['m', 'maleRatio', 'pct', 0, 100], ['sh', 'stageH', 'pct', 20, 200],
     ['sd', 'stageDepth', 'num', 1, 10], ['z', 'zoom', 'num', 1, 8], ['ln', 'lean', 'int', -1, 1],
     ['aim', 'aim', AIMS], ['ch', 'chaos', ['none', 'low', 'mid', 'high']], ['ev', 'event', Object.keys(EVENTS)],
-    ['lk', 'luckKey', ['good', 'rep', 'bad']], ['vw', 'view', ['eye', 'orbit', 'plan', 'oshi']], ['br', 'barrier', 'word'],
+    ['sx', 'idolSex', ['f', 'm']], ['lk', 'luckKey', ['good', 'rep', 'bad']], ['vw', 'view', ['eye', 'orbit', 'plan', 'oshi']], ['br', 'barrier', 'word'],
     ['fg', 'frontGuard', 'bool'], ['au', 'armsUp', 'bool'], ['ec', 'entranceCrowd', 'bool'], ['mx', 'mixOnFloor', 'bool'],
     ['mh', 'memberHeights', 'list', 140, 185], ['po', 'positionOrder', 'perm'], ['so', 'curOrder', 'perm'], ['fr', 'free', 'xz']
   ];
@@ -2814,6 +2822,19 @@ details.fold[open] > summary { margin-bottom: 8px; }
       { hair: 'wavy', hairColor: '#2a1a14', pose: 'heart', cut: 'HairSample_Female' },
       { hair: 'bob', hairColor: '#5a2a3a', pose: 'mic', cut: 'Vivi' }
     ];
+    // male idols: one CC0 body (Sakurada Fumiriya) with its own haircut or HairSample_Male's; hair colour tells members apart
+    const IDOL_M = [
+      { hairColor: '#6a3a24', pose: 'mic', cut: 'Sakurada_Fumiriya' },
+      { hairColor: '#141018', pose: 'peace', cut: 'HairSample_Male' },
+      { hairColor: '#c09868', pose: 'mic', cut: 'Sakurada_Fumiriya' },
+      { hairColor: '#5a3a6a', pose: 'down', cut: 'HairSample_Male' },
+      { hairColor: '#2a1a14', pose: 'both', cut: 'Sakurada_Fumiriya' },
+      { hairColor: '#8a5050', pose: 'mic', cut: 'HairSample_Male' },
+      { hairColor: '#d8c8b0', pose: 'peace', cut: 'Sakurada_Fumiriya' },
+      { hairColor: '#2a3a5a', pose: 'mic', cut: 'HairSample_Male' },
+      { hairColor: '#402418', pose: 'down', cut: 'Sakurada_Fumiriya' },
+      { hairColor: '#1d1520', pose: 'both', cut: 'HairSample_Male', flip: true }
+    ];
     const MODEL_H = 1.6, IDOL_SKIN = '#f2c2a8';
 
     /* ---- painted anime face ----
@@ -2888,9 +2909,9 @@ details.fold[open] > summary { margin-bottom: 8px; }
     /* ---- VRoid idols: CC0 VRoid beta samples (blender/vroid_idol.py), posed here and baked to static meshes ----
        Model space: facing +z, up +y, the model's right hand on -x. */
     const V3 = THREE.Vector3;
-    let vroid = null;   // model name -> { root, skinned, rest, bones }
+    const vroidBy = {};   // 'f' | 'm' -> model name -> { root, skinned, rest, bones }
     const yiq = c => [0.596 * c.r - 0.274 * c.g - 0.322 * c.b, 0.211 * c.r - 0.523 * c.g + 0.312 * c.b];
-    function setVroid(g) {
+    function setVroid(g, sex = 'f') {
       const out = {};
       g.scene.updateMatrixWorld(true);
       g.scene.children.forEach(root => {
@@ -2907,7 +2928,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
         root.traverse(o => { if (o.isBone) { rest.set(o, o.quaternion.clone()); bones.set(o.name.replace(/_\d+$/, ''), o); } });
         out[root.name.slice(6)] = { root, skinned, rest, bones };
       });
-      if (Object.keys(out).length) vroid = out;
+      if (Object.keys(out).length) vroidBy[sex] = out;
     }
 
     const wp = o => o.getWorldPosition(new V3());
@@ -3013,8 +3034,8 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const micGeo = [new THREE.CylinderGeometry(0.012, 0.01, 0.16, 10), new THREE.SphereGeometry(0.024, 12, 8)];
     const micMat = toon(col('#18181c'), { gradientMap: idolGradient });
 
-    function buildVroid(st, h, costumeHex) {
-      const m = Object.values(vroid)[0];   // one body (Vivi) for everyone; only hair and colours change
+    function buildVroid(vroid, st, h, costumeHex) {
+      const m = Object.values(vroid)[0];   // one body per set (Vivi / Fumiriya) for everyone; only hair and colours change
       const B = n => m.bones.get(n);
       m.rest.forEach((q, b) => b.quaternion.copy(q));
       m.root.updateMatrixWorld(true);
@@ -3059,9 +3080,11 @@ details.fold[open] > summary { margin-bottom: 8px; }
       return grp;
     }
 
-    function buildIdol(id, h, costumeHex) {
+    // ponytail: male idols fall back to the hand-built (female) idols until their GLB arrives
+    function buildIdol(id, h, costumeHex, sex = 'f') {
       const st = IDOL[id % IDOL.length];
-      if (vroid) return buildVroid(st, h, costumeHex);
+      if (sex === 'm' && vroidBy.m) return buildVroid(vroidBy.m, IDOL_M[id % IDOL_M.length], h, costumeHex);
+      if (vroidBy.f) return buildVroid(vroidBy.f, st, h, costumeHex);
       const grp = new THREE.Group();
       const costume = new THREE.Color(costumeHex);
       const tint = {
@@ -3147,7 +3170,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     total: VN.defaults.total, vip: 0, chaos: 'mid', groupRate: 0.25, otherFanRate: 0,
     maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true, frontGuard: false,
     barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false,
-    memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4],
+    memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4], idolSex: 'f',
     sceneIdx: 0, sceneOrders: null, res: null, free: null, qsum: null, lean: 0,
     view: 'eye', zoom: 1, seed: 1, luckKey: 'rep', metric: 'upper',
     rows: null, summary: null, sim: null, ev: null, slots: null, rep: 0, expanded: false,
@@ -3443,6 +3466,24 @@ details.fold[open] > summary { margin-bottom: 8px; }
     const b = e.target.closest('button'); if (!b) return;
     state.stageDepth = Number(b.dataset.v); setPressed($('#depthSeg'), b.dataset.v); rebuildVenue(); rebuildMembers(); schedule();
   });
+  /* 台上: female or male idols. Fans flip with them: the audience's male/female split is swapped,
+     and member heights still on one set's defaults move to the other's */
+  const IDOL_HEIGHTS = { f: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], m: [172, 175, 170, 178, 168, 174, 171, 176, 169, 173] };
+  function syncSex() {
+    setPressed($('#sexSeg'), state.idolSex);
+    $('#sexNote').textContent = state.idolSex === 'm' ? '觀眾的男女比例跟著對調（現在女性 ' + Math.round((1 - state.maleRatio) * 100) + '%，可在「入場與觀眾」調整）。' : '';
+  }
+  $('#sexSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.dataset.v === state.idolSex) return;
+    const from = state.idolSex; state.idolSex = b.dataset.v;
+    state.maleRatio = Math.round((1 - state.maleRatio) * 100) / 100;
+    $('#male').value = String(Math.round(state.maleRatio * 100)); $('#maleOut').textContent = Math.round(state.maleRatio * 100) + '%';
+    if (state.memberHeights.every((h, i) => h === IDOL_HEIGHTS[from][i])) {
+      state.memberHeights = IDOL_HEIGHTS[state.idolSex].slice();
+      state.memberHeights.forEach((h, i) => { $('#mh' + i).value = String(h); });
+    }
+    syncSex(); syncOshi(); ensureMale(); rebuildMembers(); schedule();
+  });
   $('#countSeg').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     state.memberCount = Number(b.dataset.v); setPressed($('#countSeg'), b.dataset.v);
@@ -3495,6 +3536,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
   // build.sh fills in a hash of the file, so the URL changes whenever the GLB does (served immutable)
   const FIGURES_URL = 'assets/figures.glb?v=c0871a3845';
   const VROID_URL = 'assets/idol-vroid.glb?v=6b274e16e7';
+  const VROID_M_URL = 'assets/idol-vroid-male.glb?v=68bce7400f';
   function loadGlb(url, onProgress) {
     return new Promise((resolve, reject) => {
       if (typeof THREE === 'undefined' || !THREE.GLTFLoader) return reject(new Error('three.js / GLTFLoader not loaded'));
@@ -3509,11 +3551,19 @@ details.fold[open] > summary { margin-bottom: 8px; }
   }
   // VRoid idols arrive after the scene is up; until then (or if they fail) the hand-built idols stand in
   const vroidP = loadGlb(VROID_URL).catch(() => null);
+  // male idols load only once someone switches the stage to them (or opens a link that did)
+  let maleP = null;
+  function ensureMale() {
+    if (!gl) return;   // initThree's caller retries once the scene is up
+    if (!maleP) maleP = loadGlb(VROID_M_URL).catch(() => null);
+    maleP.then(v => { if (v && gl) gl.setVroid(v, 'm'); });
+  }
   loadFigures().then(gltf => {
     $('#vpLoad').hidden = true;
     try {
       gl = initThree(gltf);
-      vroidP.then(v => { if (v && gl) gl.setVroid(v); });
+      vroidP.then(v => { if (v && gl) gl.setVroid(v, 'f'); });
+      if (state.idolSex === 'm') ensureMale();
       if (state.sim) { gl.updateCrowd(state.sim); if (state.ev) gl.updateSight(state.ev); gl.render(); }
     } catch (err) { fail3D(err); }
   }, err => { $('#vpLoad').hidden = true; fail3D(err); });
@@ -3747,7 +3797,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
 
     /* ---- members ---- */
     function buildMember(m) {
-      const grp = FIG.buildIdol(m.id, m.h, COSTUME[m.id]);
+      const grp = FIG.buildIdol(m.id, m.h, COSTUME[m.id], state.idolSex);
       grp.position.set(m.x, m.baseY, m.z);
       const lab = labelSprite(MEMBERS[m.id].name + ' ' + Math.round(m.h * 100), MEMBERS[m.id].color, { h: 0.16 });
       lab.position.set(m.x, m.baseY + m.h + 0.28, m.z);
@@ -4434,7 +4484,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
     buildStatic(); buildPlanStatic(); rebuildDyn(); rebuildMembersImpl();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { rebuildMembersImpl(); if (state.sim) updateCrowd(state.sim); render(); });
     return {
-      setVroid: v => { try { FIG.setVroid(v); rebuildMembersImpl(); render(); } catch (err) { console.error(err); } },
+      setVroid: (v, sex) => { try { FIG.setVroid(v, sex); rebuildMembersImpl(); render(); } catch (err) { console.error(err); } },
       render, renderNow, rebuildDyn, rebuildMembers: rebuildMembersImpl, updateCrowd, updateSight, setHeat,
       showHeat(on) { heatOn = on; if (heatMesh) heatMesh.visible = on; iDisc.material.opacity = on ? 0.5 : 1; render(); },
       resetLook() { look.yaw = 0; look.pitch = 0; },
@@ -5592,7 +5642,7 @@ details.fold[open] > summary { margin-bottom: 8px; }
 
   /* ============ boot ============ */
   $('#height').value = String(state.userHeight); $('#heightOut').textContent = state.userHeight + 'cm';
-  syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene();
+  syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene(); syncSex();
   if (sharedView) {
     setPressed($('#aimSeg'), state.aim); setPressed($('#chaosSeg'), state.chaos); $('#chaosNote').textContent = CHAOS_TEXT[state.chaos];
     setPressed($('#countSeg'), String(state.memberCount)); $('#guardToggle').setAttribute('aria-pressed', String(state.frontGuard));
