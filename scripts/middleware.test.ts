@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isSpaRoute, shouldNoIndexQueryUrl } from '../functions/_middleware.ts';
+import { isSpaRoute, shouldNoIndexQueryUrl, viewAliasPath } from '../functions/_middleware.ts';
 
 const check = (path: string) => shouldNoIndexQueryUrl(new URL(`https://idolmaps.com${path}`));
 
@@ -31,4 +31,9 @@ test('client-rendered pages are served the SPA shell', () => {
   assert.equal(isSpaRoute('/upload-plan'), true);
   assert.equal(isSpaRoute('/login'), true);
   assert.equal(isSpaRoute('/members'), false);
+});
+
+test('/view with junk glued on goes back to /view, the real paths are left alone', () => {
+  for (const p of ['/view%E3%80%82', '/view%F0%9F%91%80', '/view)', '/View', '/VIEW/']) assert.equal(viewAliasPath(p), '/view', p);
+  for (const p of ['/view', '/view/', '/view/assets/og.png', '/venue/abc', '/members']) assert.equal(viewAliasPath(p), null, p);
 });

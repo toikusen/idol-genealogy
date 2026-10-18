@@ -86,6 +86,15 @@ export function shouldNoIndexQueryUrl(url: URL): boolean {
   return true;
 }
 
+/**
+ * /view with junk glued on (a share text's "。", an emoji, ")" or /View) → the /view path, so links
+ * auto-detected inside a post still open the simulator; null when the path is fine as it is.
+ */
+export function viewAliasPath(pathname: string): string | null {
+  if (pathname === '/view' || pathname.startsWith('/view/')) return null;
+  return pathname.toLowerCase().startsWith('/view') ? '/view' : null;
+}
+
 function shouldRedirectTrailingSlash(pathname: string): boolean {
   if (pathname === '/' || !pathname.endsWith('/')) return false;
   return !/\.[^/]+\/$/.test(pathname);
@@ -110,6 +119,12 @@ export const onRequest: PagesFunction = async ({ request, next, env }) => {
   if (!isProductionHost) {
     const challenge = basicAuthChallenge((env as any).UAT_BASIC_AUTH, request.headers.get('Authorization'));
     if (challenge) return challenge;
+  }
+
+  const viewAlias = viewAliasPath(url.pathname);
+  if (viewAlias) {
+    url.pathname = viewAlias;
+    return Response.redirect(url.toString(), 301);
   }
 
   if (isProductionHost && shouldRedirectTrailingSlash(url.pathname)) {
