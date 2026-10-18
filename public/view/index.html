@@ -648,6 +648,10 @@ td { border-bottom: 1px solid var(--line-soft); }
   #ticket { font-size: 64px; }
   .big .v { font-size: 52px; }
 }
+/* stage & members panel: sits right under the queue/height/oshi block (same order value keeps DOM order) */
+.stage-cfg .settings-h { margin-bottom: -4px; }
+@media (max-width: 1180px) { .stage-cfg { order: 3; } }
+.stage-cfg #countSeg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
 /* ---------- idolmaps skin: brand tokens from idol-genealogy src/styles.css, layered over v2 ----------
    Layout stays v2. Stage windows (3D, bucket map) stay dark. Pink #e879a0 is a fill colour only;
    pink text uses #c04070 (idolmaps --text-link) for contrast. */
@@ -1106,6 +1110,49 @@ details.fold[open] > summary { margin-bottom: 8px; }
         <legend>推的成員</legend>
         <div class="chips" id="oshiChips"></div>
       </fieldset>
+    </section><section class="panel controls stage-cfg" id="stageCfg" aria-label="舞台與成員">
+      <h2 class="settings-h">舞台與成員</h2>
+      <fieldset class="field">
+        <legend>成員人數</legend>
+        <div class="seg" id="countSeg">
+          <button type="button" data-v="1" aria-pressed="false">1</button>
+          <button type="button" data-v="2" aria-pressed="false">2</button>
+          <button type="button" data-v="3" aria-pressed="false">3</button>
+          <button type="button" data-v="4" aria-pressed="false">4</button>
+          <button type="button" data-v="5" aria-pressed="true">5</button>
+          <button type="button" data-v="6" aria-pressed="false">6</button>
+          <button type="button" data-v="7" aria-pressed="false">7</button>
+          <button type="button" data-v="8" aria-pressed="false">8</button>
+          <button type="button" data-v="9" aria-pressed="false">9</button>
+          <button type="button" data-v="10" aria-pressed="false">10</button>
+        </div>
+      </fieldset>
+      <fieldset class="field">
+        <legend id="stageHLegend">舞台高度</legend>
+        <div class="seg" id="stageHSeg"></div>
+      </fieldset>
+      <fieldset class="field" id="depthField">
+        <legend>舞台深度（官網：3.6m 或 4.8m）</legend>
+        <div class="seg" id="depthSeg"></div>
+      </fieldset>
+      <details class="more">
+        <summary>隊形與成員身高</summary>
+        <div class="more-body">
+          <div class="mini">
+            <label for="sceneSel">場面（隊形）</label>
+            <select id="sceneSel"></select>
+          </div>
+          <p class="note">觀眾照 MC 時的站位進場排好；之後每首歌換隊形，成員的站位也會換（每次開頁隨機）。3D 和判定看的是這裡選的場面。</p>
+          <div>
+            <p class="flabel">成員身高（cm）</p>
+            <div class="mh-grid" id="mhGrid"></div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+            <button type="button" class="btn-ghost" id="shuffleBtn">打亂歌曲站位</button>
+            <p class="note" id="mhAvg">平均 160.0cm</p>
+          </div>
+        </div>
+      </details>
     </section><section class="panel controls settings" id="settings" aria-label="條件">
       <h2 class="settings-h">調整條件</h2>
 
@@ -1201,47 +1248,6 @@ details.fold[open] > summary { margin-bottom: 8px; }
         </div>
       </details>
 
-      <details class="more">
-        <summary>舞台與成員</summary>
-        <div class="more-body">
-          <fieldset class="field">
-            <legend id="stageHLegend">舞台高度</legend>
-            <div class="seg" id="stageHSeg"></div>
-          </fieldset>
-          <fieldset class="field" id="depthField">
-            <legend>舞台深度（官網：3.6m 或 4.8m）</legend>
-            <div class="seg" id="depthSeg"></div>
-          </fieldset>
-          <fieldset class="field">
-            <legend>成員人數</legend>
-            <div class="seg" id="countSeg">
-              <button type="button" data-v="1" aria-pressed="false">1</button>
-              <button type="button" data-v="2" aria-pressed="false">2</button>
-              <button type="button" data-v="3" aria-pressed="false">3</button>
-              <button type="button" data-v="4" aria-pressed="false">4</button>
-              <button type="button" data-v="5" aria-pressed="true">5</button>
-              <button type="button" data-v="6" aria-pressed="false">6</button>
-              <button type="button" data-v="7" aria-pressed="false">7</button>
-              <button type="button" data-v="8" aria-pressed="false">8</button>
-              <button type="button" data-v="9" aria-pressed="false">9</button>
-              <button type="button" data-v="10" aria-pressed="false">10</button>
-            </div>
-          </fieldset>
-          <div class="mini">
-            <label for="sceneSel">場面（隊形）</label>
-            <select id="sceneSel"></select>
-          </div>
-          <p class="note">觀眾照 MC 時的站位進場排好；之後每首歌換隊形，成員的站位也會換（每次開頁隨機）。3D 和判定看的是這裡選的場面。</p>
-          <div>
-            <p class="flabel">成員身高（cm）</p>
-            <div class="mh-grid" id="mhGrid"></div>
-          </div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-            <button type="button" class="btn-ghost" id="shuffleBtn">打亂歌曲站位</button>
-            <p class="note" id="mhAvg">平均 160.0cm</p>
-          </div>
-        </div>
-      </details>
     </section></aside></main><details class="panel curve fold-panel" id="curvePanel">
     <summary><h2>進階分析：排隊順位往後，能見度怎麼變</h2></summary>
     <div class="curve-head">
