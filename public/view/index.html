@@ -4828,13 +4828,21 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   // 起飛: two fans beside you lift you onto their shoulders; same scene, you just see from higher up
   const syncLift = () => { const b = $('#liftBtn'); b.setAttribute('aria-pressed', String(state.lift)); b.textContent = state.lift ? '🛬 降落' : '🛫 起飛'; };
   // lifting brings up the arrow keys (free mode) so you can be carried around; landing where you took off puts it away again
-  let liftFreeSpot = null;
+  // while lifted the arrow keys always stay up (also when a shared link opens lifted); liftHome = where you took off
+  let liftFreeSpot = null, liftHome = null;
+  function liftArrows() {
+    const u = state.sim && state.sim.user;
+    if (!state.lift || state.free || !u) return false;
+    const sp = state.sim.floorSpots && state.sim.floorSpots[u.spot];
+    liftFreeSpot = u.spot; liftHome = sp ? { x: sp.x, z: sp.z } : { x: u.x, z: u.z }; state.pinSeed = state.seed;
+    setFree(true, true); return true;
+  }
   $('#liftBtn').addEventListener('click', () => {
     state.lift = !state.lift; syncLift();
     const u = state.sim && state.sim.user;
-    if (state.lift && !state.free) { liftFreeSpot = u ? u.spot : null; state.pinSeed = state.seed; setFree(true, true); }
-    else if (!state.lift && liftFreeSpot != null && u && u.spot === liftFreeSpot) { liftFreeSpot = null; setFree(false); }
-    else { if (!state.lift) liftFreeSpot = null; schedule(); }
+    if (liftArrows()) { /* scheduled by setFree */ }
+    else if (!state.lift && liftFreeSpot != null && u && u.spot === liftFreeSpot) { liftFreeSpot = liftHome = null; setFree(false); }
+    else { if (!state.lift) liftFreeSpot = liftHome = null; schedule(); }
     if (state.lift) track('oshiview_lift', { venue: VN.id });
   });
   $('#leanBox').addEventListener('click', e => {
@@ -4847,10 +4855,10 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     const on = !!state.free, b = $('#freeBtn');
     b.setAttribute('aria-pressed', String(on)); b.textContent = on ? '↩ 回到排隊位置' : '📍 自己選位置';
     $('#luckLead').hidden = on; $('#luckSeg').hidden = on;
-    $('#movePad').hidden = !(on && (state.view === 'eye' || state.view === 'orbit'));
+    $('#movePad').hidden = !(on && (state.view === 'eye' || state.view === 'orbit' || state.view === 'oshi'));
     $('#freeHint').hidden = !on;
     if (on) $('#hint').classList.add('gone');   // one hint at a time on small screens
-    $('#freeHint').textContent = state.view === 'eye' ? '用方向鍵移動，或切到平面圖看哪裡最清楚' : state.view === 'oshi' ? '切到平面圖或俯瞰，點地板換位置'
+    $('#freeHint').textContent = state.view === 'eye' ? '用方向鍵移動，或切到平面圖看哪裡最清楚' : state.view === 'oshi' ? '用方向鍵移動，箭頭照畫面方向走'
       : state.view === 'plan' ? (state.heat ? '綠色＝看得到推的臉，紅色＝被擋住。點地板換位置' : '正在算哪裡看得最清楚…點地板可以先換位置') : '點地板換位置';
     if (gl) gl.showHeat(on);
     // the sightline legend would cover half the map; the hint already explains the colours
@@ -4869,13 +4877,16 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   }
   // stand on the floor spot nearest (x, z); the sim trades places with whoever stood there
   function freePick(x, z) { if (!state.free) return; state.free = { x, z }; schedule(); }
-  $('#freeBtn').addEventListener('click', () => setFree(!state.free));
+  // lifted: 回到排隊位置 carries you back to where you took off, arrows stay
+  $('#freeBtn').addEventListener('click', () => (state.lift && state.free && liftHome ? freePick(liftHome.x, liftHome.z) : setFree(!state.free)));
   // one step ≈ one person over; held down it keeps walking
   const STEP = { f: [0, -1], b: [0, 1], l: [-1, 0], r: [1, 0] };
   const stepFree = d => {
     const u = state.sim && state.sim.user; if (!u || !state.free) return;
     const spots = state.sim.floorSpots || [], at = spots[u.spot] || u;   // from your spot: a lifted group may sit shifted off it
-    const sp = S.nextSpot(spots, at, STEP[d][0], STEP[d][1]);
+    // 從推的角度 looks back from the stage: arrows follow the screen, so up walks away from the stage
+    const k = state.view === 'oshi' ? -1 : 1;
+    const sp = S.nextSpot(spots, at, k * STEP[d][0], k * STEP[d][1]);
     if (sp) freePick(sp.x, sp.z);
   };
   $('#movePad').querySelectorAll('button').forEach(btn => {
@@ -5064,6 +5075,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     applyView(d);
     setStale(false);
     clearTimeout(bucketTimer); bucketTimer = setTimeout(startBuckets, 200);
+    if (liftArrows()) return;   // opened lifted (a shared link): bring up the arrows, the free-mode run follows
     if (state.free) { startHeat(); return; }   // queue curve and aim comparison don't apply to a spot you picked yourself
     clearTimeout(curveTimer); curveTimer = setTimeout(startCurve, 300);
     clearTimeout(aimTimer); aimTimer = setTimeout(startAims, 250);
