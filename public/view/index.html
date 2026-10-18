@@ -4324,12 +4324,14 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     const youRing = new THREE.Mesh(new THREE.RingGeometry(0.32, 0.4, 40), new THREE.MeshBasicMaterial({ color: col('#b6f24a'), side: THREE.DoubleSide }));
     youRing.rotation.x = -Math.PI / 2;
     // 起飛: the same lime marker, seated — capsules for limbs, small balls for joints
-    const rider = new THREE.Group(), riderSph = new THREE.SphereGeometry(1, 16, 12);
+    // smooth, open-ended limbs: coarse capped cylinders cut into the joint balls along a zigzag seam
+    const rider = new THREE.Group(), riderSph = new THREE.SphereGeometry(1, 28, 20);
+    const riderLimb = new THREE.CylinderGeometry(1, 1, 1, 28, 1, true).translate(0, 0.5, 0);
     const rPart = geo => { const m = new THREE.Mesh(geo, youMat); rider.add(m); return m; };
     // same proportions as the standing marker: tapered body, a flattened dome for shoulders, the head on top
-    const R = { torso: rPart(new THREE.CylinderGeometry(0.12, 0.1, 1, 20).translate(0, 0.5, 0)), head: rPart(riderSph),
-      dome: rPart(new THREE.SphereGeometry(0.12, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2)),
-      segs: Array.from({ length: 8 }, () => rPart(unitCyl)), joints: Array.from({ length: 12 }, () => rPart(riderSph)),
+    const R = { torso: rPart(new THREE.CylinderGeometry(0.12, 0.1, 1, 32).translate(0, 0.5, 0)), head: rPart(riderSph),
+      dome: rPart(new THREE.SphereGeometry(0.12, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2)),
+      segs: Array.from({ length: 8 }, () => rPart(riderLimb)), joints: Array.from({ length: 12 }, () => rPart(riderSph)),
       pen: new THREE.Mesh(unitCyl, new THREE.MeshBasicMaterial({ toneMapped: false })) };
     rider.add(R.pen); rider.visible = false;
     const vUp = new THREE.Vector3(0, 1, 0), vD = new THREE.Vector3();
