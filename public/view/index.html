@@ -987,6 +987,13 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
 .venue-cta { white-space: nowrap; }
 .venue-btn { white-space: nowrap; }
 .vp-fallback { align-content: center; gap: 8px; }
+/* 起飛 button, under the 偏頭 box (or in its place when that is hidden) */
+.vp-lift { position: absolute; right: 14px; top: 160px; z-index: 3; height: 34px; padding: 0 14px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 999px; background: rgba(12, 10, 26, 0.72); backdrop-filter: blur(6px); color: #f3f1ea; font: inherit; font-size: 13px; cursor: pointer; }
+.vp-lift[aria-pressed="true"] { background: #b6f24a; color: #1a2604; }
+.vp-lift[hidden] { display: none; }
+.vp-lean[hidden] ~ .vp-lift { top: 112px; }
+.viewport.expanded .vp-lift { top: calc(160px + env(safe-area-inset-top, 0px)); }
+.viewport.expanded .vp-lean[hidden] ~ .vp-lift { top: calc(112px + env(safe-area-inset-top, 0px)); }
 </style>
 </head>
 <body>
@@ -1030,6 +1037,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
           <button type="button" data-l="0" aria-pressed="true" aria-label="頭擺正">正</button>
           <button type="button" data-l="1" aria-pressed="false" aria-label="頭往右偏"><svg class="tri r" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
         </div>
+        <button type="button" class="vp-lift" id="liftBtn" aria-pressed="false">🛫 起飛</button>
         <div class="vp-move" id="movePad" hidden role="group" aria-label="移動你的位置">
           <button type="button" data-d="f" aria-label="往前（靠近舞台）"><svg class="tri" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
           <button type="button" data-d="l" aria-label="往左"><svg class="tri l" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2 11 10H1z"/></svg></button>
@@ -2176,9 +2184,93 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       q.shoulderW = bodyDims(q).tw;
     }
     if (user) { user.arm = 0; user.shoulderW = 0.19; }
+    // 起飛 never touches the random stream, so the crowd is the same run with or without it
+    const liftFail = !!(p.lift && user && !liftUser(user, people, p));
     const frontCap = floorSpots.filter(sp => sp.front).length;
     // the crowd placed itself on the entry (MC) positions; sightlines are judged in the scene being viewed
-    return { V, members: sceneMembers(p, V), entryMembers: members, people, user, floorSpots, userNo: user ? user.no : 0, frontCap, rhoBack: dens.back, rhoMid: dens.mid, vip };
+    return { V, members: sceneMembers(p, V), entryMembers: members, people, user, floorSpots, userNo: user ? user.no : 0, frontCap, rhoBack: dens.back, rhoMid: dens.mid, vip, liftFail };
+  }
+
+  /* ---------- 起飛: two fans next to you carry you on their shoulders ----------
+     The nearest person on each side (they were standing beside you anyway) steps in shoulder to shoulder;
+     you sit across their inner shoulders, thighs forward over the front, shins hanging in front of their chests.
+     Everything is built from the carriers' real shoulder heights, so the eye, the 3D and the sightlines agree. */
+  const SEAT_EYE = 0.45, SEAT_TOP = 0.505, SEAT_SH = 0.30;   // seated eye / head top / shoulder above the seat, × your height
+  function liftUser(user, people, p) {
+    const near = people.filter(q => Math.abs(q.z - user.z) < 0.95 && Math.abs(q.x - user.x) < 1.6 && !(p.frontGuard && q.front));
+    const dist = q => Math.hypot(q.x - user.x, (q.z - user.z) * 1.5);
+    const nearest = list => list.reduce((b, q) => (!b || dist(q) < dist(b) ? q : b), null);
+    let L = nearest(near.filter(q => q.x < user.x)), R = nearest(near.filter(q => q.x >= user.x));
+    if (!L || !R) {   // against a wall: take the two nearest wherever they stand
+      const two = near.slice().sort((a, b) => dist(a) - dist(b)).slice(0, 2);
+      if (two.length < 2) return false;
+      [L, R] = two;
+    }
+    const bases = [[L, -1], [R, 1]].map(([q, side]) => {
+      q.x = user.x + side * (bodyDims(q).ax + 0.035); q.z = user.z + 0.03;
+      q.arm = 0; q.phone = 0; q.lifting = side;
+      return { idx: q.idx, side, x: q.x, z: q.z, h: q.h, male: q.male, floorY: q.floorY };
+    });
+    const seat = (shoulderY(L) + shoulderY(R)) / 2 + 0.02;
+    user.lift = { seat, eye: seat + SEAT_EYE * user.h, top: seat + SEAT_TOP * user.h, bases };
+    user.lift.pose = liftPose(user);
+    for (const [q, side] of [[L, -1], [R, 1]]) q.liftArms = user.lift.pose.carry[side < 0 ? 0 : 1];
+    return true;
+  }
+  /** joint positions of you and your carriers' arms while lifted (shared by the 3D and the sightline test) */
+  function liftPose(u) {
+    const h = u.h, S = u.lift.seat, x = u.x, z = u.z + 0.03;
+    const lerp = (A, B, t, d) => [A[0] + (B[0] - A[0]) * t + (d ? d[0] : 0), A[1] + (B[1] - A[1]) * t + (d ? d[1] : 0), A[2] + (B[2] - A[2]) * t + (d ? d[2] : 0)];
+    const legs = [-1, 1].map(s => {
+      const H = [x + s * 0.055 * h, S + 0.02, z], K = [x + s * 0.085 * h, S + 0.01, z - 0.24 * h], F = [x + s * 0.09 * h, S - 0.23 * h, z - 0.27 * h];
+      return { H, K, F };
+    });
+    const shoulder = s => [x + s * 0.12 * h, S + SEAT_SH * h - 0.02, z];
+    const baseL = u.lift.bases.find(b => b.side < 0);
+    // left hand steadies itself on the left carrier's head, right hand waves a penlight
+    const leftHand = [baseL.x + 0.03, baseL.floorY + baseL.h + 0.02, baseL.z - 0.02];
+    const rightHand = [x + 0.17 * h, S + 0.62 * h, z - 0.06 * h];
+    const arms = [[shoulder(-1), leftHand], [shoulder(1), rightHand]].map(([A, Hd]) => ({ A, E: lerp(A, Hd, 0.5, [0, 0.02, -0.04]), H: Hd }));
+    const pen = [rightHand, [rightHand[0] + 0.03, rightHand[1] + 0.26, rightHand[2] - 0.04]];
+    // carriers: inner hand on your knee, outer hand around your shin
+    const carry = u.lift.bases.slice().sort((a, b) => a.side - b.side).map(b => {
+      const d = bodyDims(b), sh = shoulderY(b) - 0.03 * d.s, leg = legs[b.side < 0 ? 0 : 1];
+      const inner = [b.x - b.side * d.ax, sh, b.z], outer = [b.x + b.side * d.ax, sh, b.z];
+      const knee = [leg.K[0], leg.K[1] - 0.04, leg.K[2] + 0.04], shin = lerp(leg.K, leg.F, 0.55, [b.side * 0.02, 0, 0.03]);
+      return [[inner, lerp(inner, knee, 0.5, [0, -0.1, 0.02]), knee], [outer, lerp(outer, shin, 0.5, [b.side * 0.07, -0.12, 0]), shin]];
+    });
+    return { torso: [[x, S, z], [x, S + SEAT_SH * h, z]], head: [x, S + (SEAT_TOP - 0.075) * h, z], legs, arms, pen, carry };
+  }
+  // you, lifted: head, torso, legs, arms and penlight as capsules
+  function liftedBlocks(P0, D, u) {
+    const h = u.h, P = u.lift.pose, s = h / BODY.m.ref, Hd = BODY.head;
+    if (hitEllipsoid(P0, D, P.head[0], P.head[1], P.head[2], Hd[0] * s, Hd[1] * s * 0.6, Hd[2] * s)) return true;
+    if (hitEllCyl(P0, D, P.torso[0][0], P.torso[0][2], 0.12 * h, 0.09 * h, P.torso[0][1], P.torso[1][1] + 0.05 * h)) return true;
+    for (const l of P.legs) if (hitCapsule(P0, D, l.H, l.K, 0.04 * h) || hitCapsule(P0, D, l.K, l.F, 0.031 * h)) return true;
+    for (const a of P.arms) if (hitCapsule(P0, D, a.A, a.E, 0.03 * h) || hitCapsule(P0, D, a.E, a.H, 0.028 * h)) return true;
+    return hitCapsule(P0, D, P.pen[0], P.pen[1], 0.02);
+  }
+  /** people behind you who saw the face of the member they follow standing, and no longer do once you are lifted */
+  function liftBlockCount(before, after) {
+    const u = after.user; if (!u || !u.lift) return 0;
+    const bases = new Set(u.lift.bases.map(b => b.idx)), prev = new Map(before.people.map(q => [q.idx, q]));
+    const crowd0 = before.people.concat([before.user]), crowd1 = after.people.concat([u]);
+    const face = (sim, viewer, crowd, id) => {
+      const ev = evaluateView(Object.assign({}, sim, { user: viewer, people: crowd.filter(o => o !== viewer) }), { faceOnly: true, noLean: true, onlyId: id });
+      return ev && ev.members[0] ? ev.members[0].face : 0;
+    };
+    let n = 0;
+    for (const q of after.people) {
+      if (bases.has(q.idx) || q.z <= u.z + 0.2) continue;
+      const m = after.members.find(mm => mm.id === q.fan); if (!m) continue;
+      // only people whose line to their member passes near you
+      const dx = m.x - q.x, dz = m.z - q.z, L2 = dx * dx + dz * dz || 1, t = ((u.x - q.x) * dx + (u.z - q.z) * dz) / L2;
+      if (t <= 0 || t >= 1) continue;
+      const px = q.x + dx * t - u.x, pz = q.z + dz * t - u.z;
+      if (px * px + pz * pz > 0.36) continue;
+      if (face(before, prev.get(q.idx), crowd0, m.id) >= 0.5 && face(after, q, crowd1, m.id) < 0.5) n++;
+    }
+    return n;
   }
 
   // free mode: the user stands on the floor spot nearest (x, z), trading places with whoever stood there,
@@ -2202,8 +2294,8 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   }
 
   /* ---------- body shape ---------- */
-  function standTop(q) { return q.floorY + q.h; }
-  function eyeY(q) { return q.floorY + 0.933 * q.h; }
+  function standTop(q) { return q.lift ? q.lift.top : q.floorY + q.h; }
+  function eyeY(q) { return q.lift ? q.lift.eye : q.floorY + 0.933 * q.h; }
   function shoulderY(q) { return q.floorY + 0.818 * q.h; }
 
   /* ---------- ray tests (segment P0 + t*D, t∈(eps,1-eps)) ---------- */
@@ -2325,8 +2417,9 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     if (L2 > 1e-9) {
       const t = Math.max(0, Math.min(1, ((q.x - P0[0]) * dx + (q.z - P0[2]) * dz) / L2));
       const ex = P0[0] + dx * t - q.x, ez = P0[2] + dz * t - q.z;
-      if (ex * ex + ez * ez > 0.16) return false;
+      if (ex * ex + ez * ez > (q.lift ? 0.49 : 0.16)) return false;   // a lifted rider's legs reach further forward
     }
+    if (q.lift) return liftedBlocks(P0, D, q);
     const d = bodyDims(q);
     const top = standTop(q);
     const H = BODY.head;
@@ -2335,7 +2428,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     if (hitEllCyl(P0, D, q.x, q.z, 0.05 * d.s, 0.05 * d.s, sh - 0.02, top - 0.2 * d.s)) return true;
     if (hitEllCyl(P0, D, q.x, q.z, d.tw, d.td, q.floorY, sh)) return true;
     for (const side of [-1, 1]) {
-      if (q.arm === side || q.phone) continue;
+      if (q.arm === side || q.phone || q.lifting) continue;
       const a = hangingArm(q, side);
       if (hitCapsule(P0, D, a.A, a.B, a.r)) return true;
     }
@@ -2344,6 +2437,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       if (hitCapsule(P0, D, r.A, r.B, r.d.ar + 0.008)) return true;
       if (hitCapsule(P0, D, r.B, r.C, 0.02)) return true;
     }
+    if (q.liftArms) for (const arm of q.liftArms) if (hitCapsule(P0, D, arm[0], arm[1], d.ar) || hitCapsule(P0, D, arm[1], arm[2], d.ar)) return true;
     if (q.phone) {
       const ph = phoneHold(q);
       if (hitEllCyl(P0, D, ph.P[0], ph.P[2], ph.w / 2, 0.012, ph.P[1] - ph.h / 2, ph.P[1] + ph.h / 2)) return true;
@@ -2704,7 +2798,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     ['sd', 'stageDepth', 'num', 1, 10], ['z', 'zoom', 'num', 1, 8], ['ln', 'lean', 'int', -1, 1],
     ['aim', 'aim', AIMS], ['ch', 'chaos', ['none', 'low', 'mid', 'high']], ['ev', 'event', Object.keys(EVENTS)],
     ['sx', 'idolSex', ['f', 'm']], ['lk', 'luckKey', ['good', 'rep', 'bad']], ['vw', 'view', ['eye', 'orbit', 'plan', 'oshi']], ['br', 'barrier', 'word'],
-    ['fg', 'frontGuard', 'bool'], ['au', 'armsUp', 'bool'], ['ph', 'phonesUp', 'bool'], ['ec', 'entranceCrowd', 'bool'], ['mx', 'mixOnFloor', 'bool'],
+    ['fg', 'frontGuard', 'bool'], ['au', 'armsUp', 'bool'], ['ph', 'phonesUp', 'bool'], ['lf', 'lift', 'bool'], ['ec', 'entranceCrowd', 'bool'], ['mx', 'mixOnFloor', 'bool'],
     ['mh', 'memberHeights', 'list', 140, 185], ['po', 'positionOrder', 'perm'], ['so', 'curOrder', 'perm'], ['fr', 'free', 'xz']
   ];
   function shareValue(kind, v, o) {
@@ -2755,7 +2849,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   const api = {
     SHARE_FIELDS, shareEncode, shareDecode,
     VENUES, NUZONE, MOONDOG, JACK, venueOf, EVENTS, eventOf, ENTRANCE_SHARE, stagePolyOf, bounds, PROVISIONAL, FILL, CHAOS_SD, OTHER_FAN_OUT, BACK_PREF_FROM,
-    FRONT_ROWS, FRONT_DENSITY, MID_MAX, LEAN_OFFSETS, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, phoneHold, hangingArm,
+    FRONT_ROWS, FRONT_DENSITY, MID_MAX, LEAN_OFFSETS, FRONT_PITCH, GUARD_PITCH, frontPitch, BODY, bodyDims, raisedArm, phoneHold, hangingArm, liftBlockCount,
     pointInPoly, polyXRange, formationPos, usableArea, crowdDensity, presentCount, floorSpotInfo,
     buildVenue, simulate, evaluateView, oshiAcrossSlots, SCENES, sceneOf, sceneMembers, seenEstimate, runBatch, summarize, representativeSeed, luckSeeds, pickSeed, totalMax,
     bucketRanges, bucketStats, spotScores, AIMS, queueForTarget, compareAims, aimScore, standTop, eyeY, shoulderY, memberSamples, quantile, mulberry32, hitOBB
@@ -3247,7 +3341,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     ticket: 50, userHeight: 170, aim: 'center', oshi: 2,
     total: VN.defaults.total, vip: 0, chaos: 'mid', groupRate: 0.25, otherFanRate: 0,
     maleRatio: 0.8, maleMean: 172, femaleMean: 160, event: 'normal', entranceCrowd: true, frontGuard: false,
-    barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false, phonesUp: false,
+    barrier: VN.barrier.def, stageH: VN.stageH.def, stageDepth: VN.stageDepths ? VN.stageDepths[0] : null, memberCount: 5, mixOnFloor: false, armsUp: false, phonesUp: false, lift: false,
     memberHeights: [160, 158, 162, 155, 165, 157, 163, 161, 156, 159], positionOrder: [0, 1, 2, 3, 4], idolSex: 'f',
     sceneIdx: 0, sceneOrders: null, res: null, free: null, qsum: null, lean: 0,
     view: 'eye', zoom: 1, seed: 1, luckKey: 'rep', metric: 'upper',
@@ -3299,10 +3393,13 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       maleRatio: state.maleRatio, maleMean: state.maleMean, femaleMean: state.femaleMean,
       barrier: state.barrier, stageH: state.stageH, stageDepth: state.stageDepth, mixOnFloor: state.mixOnFloor,
       formation: 'line', scene: S.SCENES[state.sceneIdx].key, sceneOrder: sceneOrder(),
-      memberHeights: state.memberHeights.slice(), armsUp: state.armsUp, phonesUp: state.phonesUp, positionOrder: state.positionOrder.slice(),
+      memberHeights: state.memberHeights.slice(), armsUp: state.armsUp, phonesUp: state.phonesUp, lift: state.lift, positionOrder: state.positionOrder.slice(),
       event: state.event, entranceCrowd: state.entranceCrowd, frontGuard: state.frontGuard, freeSpot: state.free
     };
   }
+
+  // where-to-stand planning (queue curve, buckets, heat map, aims) is about standing, so it ignores 起飛
+  const planParams = () => Object.assign(params(), { lift: false });
 
   /* ============ venue-specific controls ============ */
   const segButtons = (el, items) => { el.textContent = ''; items.forEach(([v, t]) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.v = v; b.textContent = t; el.appendChild(b); }); };
@@ -3619,7 +3716,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     else if (!/WebGL/i.test((err && err.message) || '')) $('#fallbackMsg').textContent = '3D 顯示發生錯誤。';
     track('oshiview_3d_fail', { venue: VN.id, stage: loading ? 'load' : 'init', msg: String((err && err.message) || '').slice(0, 100) });
     $('#fallback').hidden = false;
-    $('#viewTabs').hidden = true; $('#patternBox').hidden = true; $('#zoomBox').hidden = true; $('#leanBox').hidden = true;
+    $('#viewTabs').hidden = true; $('#patternBox').hidden = true; $('#zoomBox').hidden = true; $('#leanBox').hidden = true; $('#liftBtn').hidden = true;
   }
   // figures are a Blender-made GLB served next to the page (cacheable; needs http(s), not file://);
   // build.sh fills in a hash of the file, so the URL changes whenever the GLB does (served immutable)
@@ -4198,7 +4295,32 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     const youBody = new THREE.Mesh(youGeo, youMat);
     const youRing = new THREE.Mesh(new THREE.RingGeometry(0.32, 0.4, 40), new THREE.MeshBasicMaterial({ color: col('#b6f24a'), side: THREE.DoubleSide }));
     youRing.rotation.x = -Math.PI / 2;
-    you.add(youBody, youRing);
+    // 起飛: the same lime marker, seated — capsules for limbs, small balls for joints
+    const rider = new THREE.Group(), riderSph = new THREE.SphereGeometry(1, 16, 12);
+    const rPart = geo => { const m = new THREE.Mesh(geo, youMat); rider.add(m); return m; };
+    // same proportions as the standing marker: tapered body, a flattened dome for shoulders, the head on top
+    const R = { torso: rPart(new THREE.CylinderGeometry(0.12, 0.1, 1, 20).translate(0, 0.5, 0)), head: rPart(riderSph),
+      dome: rPart(new THREE.SphereGeometry(0.12, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2)),
+      segs: Array.from({ length: 8 }, () => rPart(unitCyl)), joints: Array.from({ length: 6 }, () => rPart(riderSph)),
+      pen: new THREE.Mesh(unitCyl, new THREE.MeshBasicMaterial({ toneMapped: false })) };
+    rider.add(R.pen); rider.visible = false;
+    const vUp = new THREE.Vector3(0, 1, 0), vD = new THREE.Vector3();
+    const between = (m, A, B, r) => {
+      vD.set(B[0] - A[0], B[1] - A[1], B[2] - A[2]); const L = vD.length();
+      m.position.set(A[0], A[1], A[2]); m.quaternion.setFromUnitVectors(vUp, vD.normalize()); m.scale.set(r, L, r);
+    };
+    const ball = (m, P, r) => { m.position.set(P[0], P[1], P[2]); m.quaternion.identity(); m.scale.setScalar(r); };
+    function placeRider(u) {
+      const P = u.lift.pose, h = u.h; let i = 0, j = 0;
+      between(R.torso, P.torso[0], P.torso[1], h);
+      R.dome.position.set(P.torso[1][0], P.torso[1][1], P.torso[1][2]); R.dome.scale.set(h, 0.45 * h, h);
+      R.head.position.set(P.head[0], P.head[1], P.head[2]); R.head.scale.setScalar(0.075 * h);
+      for (const l of P.legs) { between(R.segs[i++], l.H, l.K, 0.04 * h); between(R.segs[i++], l.K, l.F, 0.031 * h); ball(R.joints[j++], l.K, 0.04 * h); ball(R.joints[j++], l.F, 0.033 * h); }
+      for (const a of P.arms) { between(R.segs[i++], a.A, a.E, 0.03 * h); between(R.segs[i++], a.E, a.H, 0.027 * h); ball(R.joints[j++], a.H, 0.032 * h); }
+      between(R.pen, P.pen[0], P.pen[1], 0.016);
+      R.pen.material.color.copy(col(GLOW[state.oshi] || '#ffffff')).multiplyScalar(1.4);
+    }
+    you.add(youBody, youRing, rider);
     scene.add(you);
     let youLabel = null;
 
@@ -4226,7 +4348,9 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
         const sx = q.male ? 'm' : 'f', c = crowd[sx], d = S.bodyDims(q);
         const toStage = Math.atan2(-(0 - q.x), -(-1.6 - q.z));
         const guard = grip && q.front;
-        const yaw = q.arm || q.phone || guard ? 0 : Math.max(-0.25, Math.min(0.25, toStage * 0.5)) + (r() - 0.5) * 0.2;
+        // every random draw happens for everyone, so a fan looks the same whether they film, carry you or not
+        const yawR = r();
+        const yaw = q.arm || q.phone || q.lifting || guard ? 0 : Math.max(-0.25, Math.min(0.25, toStage * 0.5)) + (yawR - 0.5) * 0.2;
         Q.setFromAxisAngle(up, yaw);
         // build varies a little (slim … broad), drawn only: sightlines keep the reference body
         const w = guard ? 1 : 0.92 + r() * 0.2;
@@ -4239,6 +4363,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
           const m = memberById.get(q.fan), tx = m ? m.x : 0, tz = m ? m.z : -1.6;
           const look = Math.atan2(q.x - tx, q.z - tz);
           HE.set(0.08 + (r() - 0.5) * 0.12, Math.max(yaw - 0.7, Math.min(yaw + 0.7, look)) + (r() - 0.5) * 0.15, (r() - 0.5) * 0.08);
+          if (q.lifting) HE.set(-0.15, 0, -q.lifting * 0.2);   // carrier: head down a little, tilted away from your hip
           const nk = neckOf(q);
           MHd = pivotMatrix([q.x, q.floorY + nk, q.z], nk, HQ.setFromEuler(HE), d.s, MH);
         }
@@ -4247,7 +4372,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
         const teeHex = r() < 0.14 ? '#' + new THREE.Color(COSTUME[Math.floor(r() * COSTUME.length)]).multiplyScalar(0.62).getHexString() : pick(r, TEE);
         const tee = col(guard ? '#121018' : teeHex);
         const hairC = col(pick(r, HAIR));
-        const pen = !q.arm && !q.phone && !guard && r() < 0.3;   // some fans hold a penlight casually in one hand
+        const penR = r(), pen = !q.arm && !q.phone && !q.lifting && !guard && penR < 0.3;   // some fans hold a penlight casually in one hand
         const skirt = !q.male && r() < 0.35;
         const hairIdx = Math.floor(r() * c.hair.length);
         // no backpack over long hair or a ponytail (styles 1 and 2 hang down the back)
@@ -4279,7 +4404,13 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
           // relaxed poses: arms down, hands together in front, a hand in the pocket, arms folded
           const pr = r(), pose = q.arm ? 'down' : pen ? 'pen' : pr < 0.45 ? 'down' : pr < 0.65 ? 'front' : pr < 0.85 ? 'pocket' : 'fold';
           const arms = c.pose[pose] || c.pose.down;
-          if (q.phone) {   // both arms up to the phone, which shows the stage on its lit screen toward you
+          if (q.lifting) {   // carrying you: inner hand on your knee, outer hand around your shin
+            for (const [A, E, H] of q.liftArms) {
+              pushBetween(iRSleeve, A, [A[0] + (E[0] - A[0]) * 0.5, A[1] + (E[1] - A[1]) * 0.5, A[2] + (E[2] - A[2]) * 0.5], d.ar + 0.012, tee);
+              pushBetween(iRArm, A, E, d.ar * 0.9, skin); pushBetween(iRArm, E, H, d.ar * 0.85, skin);
+              const hi = iRHand.userData.n++; if (hi < CAP) { setInst(iRHand, hi, H[0], H[1], H[2], 0.03, 0.035, 0.04); iRHand.setColorAt(hi, skin); }
+            }
+          } else if (q.phone) {   // both arms up to the phone, which shows the stage on its lit screen toward you
             const ph = S.phoneHold(q);
             for (const a of ph.arms) {
               const E = [a.A[0] + (a.B[0] - a.A[0]) * 0.4, a.A[1] + (a.B[1] - a.A[1]) * 0.4, a.A[2] + (a.B[2] - a.A[2]) * 0.4];
@@ -4292,7 +4423,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
             const si = iScreen.userData.n++;
             if (si < CAP) { setInst(iScreen, si, ph.P[0], ph.P[1], ph.P[2] + 0.005, ph.w * 0.9, ph.h * 0.92, 1); }
           } else if (q.arm !== -1) { push(c.sleeveL, M4, tee); push(arms[0], M4, skin); }
-          if (!q.phone && q.arm !== 1) { push(c.sleeveR, M4, tee); push(arms[1], M4, skin); }
+          if (!q.phone && !q.lifting && q.arm !== 1) { push(c.sleeveR, M4, tee); push(arms[1], M4, skin); }
         }
         push(c.neck, MU, skin); push(c.head, MHd, skin); push(c.eyes, MHd, null);
         push(c.hair[hairIdx], MHd, hairC);
@@ -4328,9 +4459,11 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       if (u) {
         you.position.set(0, 0, 0);
         youBody.position.set(u.x, u.floorY, u.z); youBody.scale.setScalar(u.h);
+        youBody.visible = !u.lift; rider.visible = !!u.lift;
+        if (u.lift) placeRider(u);
         youRing.position.set(u.x, u.floorY + 0.01, u.z);
         if (youLabel) { scene.remove(youLabel); youLabel.material.map.dispose(); }
-        youLabel = labelSprite('你 ' + (u.vip ? 'VIP ' : '') + '第' + u.no + '位', null, { h: 0.24, bg: 'rgba(182,242,74,0.95)', fg: '#1a2604', depthTest: false });
+        youLabel = labelSprite('你 ' + (u.vip ? 'VIP ' : '') + '第' + u.no + '位' + (u.lift ? ' 起飛中' : ''), null, { h: 0.24, bg: 'rgba(182,242,74,0.95)', fg: '#1a2604', depthTest: false });
         youLabel.position.set(u.x, S.standTop(u) + 0.42, u.z); youLabel.renderOrder = 10; scene.add(youLabel);
       }
       updatePlan(sim);
@@ -4656,6 +4789,12 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   });
 
   // 偏頭 in the eye view: see what the "偏頭" numbers mean
+  // 起飛: two fans beside you lift you onto their shoulders; same scene, you just see from higher up
+  const syncLift = () => { const b = $('#liftBtn'); b.setAttribute('aria-pressed', String(state.lift)); b.textContent = state.lift ? '🛬 降落' : '🛫 起飛'; };
+  $('#liftBtn').addEventListener('click', () => {
+    state.lift = !state.lift; syncLift(); schedule();
+    if (state.lift) track('oshiview_lift', { venue: VN.id });
+  });
   $('#leanBox').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     state.lean = Number(b.dataset.l); setPressed($('#leanBox'), b.dataset.l, 'l'); if (gl) gl.render();
@@ -4706,7 +4845,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   $('#luckSeg').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     state.luckKey = b.dataset.luck;
-    if (state.rows) state.seed = S.pickSeed(state.rows, state.summary, state.luckKey);
+    if (state.rows) state.seed = S.pickSeed(state.rows, state.pickSummary, state.luckKey);
     renderLuck(); schedule();
   });
 
@@ -4780,6 +4919,10 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     function quick(p, seed) { const sim = S.simulate(p, seed); return { seed, sim: slimSim(sim), ev: slimEv(S.evaluateView(sim)), _sim: sim }; }
     function view(p, seed) {
       const q = quick(p, seed);
+      if (p.lift && q._sim.user && q._sim.user.lift) {   // the same run standing, for the before / after line
+        const before = S.simulate(Object.assign({}, p, { lift: false }), seed), ev0 = S.evaluateView(before);
+        q.liftCmp = { faceCount: ev0.faceCount, faceCountLean: ev0.faceCountLean, blocked: S.liftBlockCount(before, q._sim) };
+      }
       q.slots = S.oshiAcrossSlots(q._sim, p).map(r => ({ member: r.member, face: r.face, faceLean: r.faceLean, upper: r.upper, body: r.body }));
       q.res = S.seenEstimate(q._sim, p);
       delete q._sim; return q;
@@ -4790,11 +4933,14 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
       main(msg) {
         const p = msg.params;
         const rows = S.runBatch(p, msg.seeds), summary = S.summarize(rows);
-        const rep = S.representativeSeed(rows, summary), seed = S.pickSeed(rows, summary, msg.luckKey);
+        // 起飛: the run is picked from the standing runs, so lifting shows the same scene, only higher
+        const ground = p.lift ? Object.assign({}, p, { lift: false }) : p;
+        const pickRows = p.lift ? S.runBatch(ground, msg.seeds) : rows, pickSummary = p.lift ? S.summarize(pickRows) : summary;
+        const rep = S.representativeSeed(pickRows, pickSummary), seed = S.pickSeed(pickRows, pickSummary, msg.luckKey);
         // free mode: where the queue would have put you, for the "比排隊的位置多看到…" line
         const qsum = p.freeSpot ? S.summarize(S.runBatch(Object.assign({}, p, { freeSpot: null }), msg.seeds)) : null;
         const v = view(p, seed);
-        return Object.assign({ type: 'main', id: msg.id, rows, summary, rep, qsum }, v);
+        return Object.assign({ type: 'main', id: msg.id, rows: pickRows, pickSummary, summary, rep, qsum }, v);
       },
       curvePoint(p, n, seeds) { const rows = S.runBatch(Object.assign({}, p, { queue: n }), seeds); return { n, sum: S.summarize(rows) }; },
       buckets(p, seeds, per) { return S.bucketStats(p, seeds, per); },
@@ -4863,7 +5009,8 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   }
   let curveTimer = 0, bucketTimer = 0, aimTimer = 0;
   function applyMain(d) {
-    state.rows = d.rows; state.summary = d.summary; state.rep = d.rep; state.luck = S.luckSeeds(d.rows); state.qsum = d.qsum;
+    state.rows = d.rows; state.pickSummary = d.pickSummary; state.summary = d.summary; state.rep = d.rep; state.luck = S.luckSeeds(d.rows); state.qsum = d.qsum;
+    state.liftCmp = d.liftCmp || null;
     applyView(d);
     setStale(false);
     clearTimeout(bucketTimer); bucketTimer = setTimeout(startBuckets, 200);
@@ -4947,7 +5094,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     const hud = $('#hud'); const u = state.sim && state.sim.user; if (!u) { hud.textContent = ''; return; }
     hud.textContent = '';
     hud.append(el('b', null, (u.vip ? 'VIP ' : '') + '第' + u.no + '位'));
-    hud.append(document.createTextNode(' ' + rowText(u) + ' · 眼睛高度 ' + Math.round(S.eyeY(u) * 100) + 'cm'));
+    hud.append(document.createTextNode(' ' + rowText(u) + ' · 眼睛高度 ' + Math.round(S.eyeY(u) * 100) + 'cm' + (u.lift ? '（起飛中）' : '')));
     const tip = { eye: '拖曳環顧', orbit: '頭上數字是排隊順位 · 拖曳旋轉／滾輪縮放', plan: '從上往下看 · 圓點數字是排隊順位 · 放大後可拖曳移動', oshi: '從推的成員眼睛看你' }[state.view];
     hud.append(document.createTextNode(' — ' + tip));
   }
@@ -4965,6 +5112,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     ss.append(document.createTextNode((free ? '離舞台邊 ' + fmt1(u.z) + 'm，' + lateralText(u.x) + '。' : '排第 ' + Math.min(state.ticket, general()) + ' 位，大概站' + rowText(u) + '。') + n + ' 位成員裡看得到 '), el('b', null, ev.faceCount + ' 位'),
       document.createTextNode(ev.faceCountLean > ev.faceCount ? '的臉（偏頭 ' + ev.faceCountLean + ' 位）。' : '的臉。'));
     big.append(ss);
+    if (state.lift) big.append(liftLine(u));
     if (free && state.qsum && s) {   // compared with where the queue would have put you
       const q = state.qsum, diff = Math.round(s.faceCountLean.p50 - q.faceCountLean.p50);
       const cmp = el('span', 's cmp', '比排第 ' + Math.min(state.ticket, general()) + ' 位通常會站的位置（' + (q.frontProb >= 0.5 ? '最前排' : '第 ' + Math.round(q.row.p50 + 1) + ' 排') + '）' +
@@ -4993,6 +5141,21 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     if (state.armsUp) p.append(document.createTextNode('應援中（約 45% 舉單手拿螢光棒）。'));
     if (state.phonesUp) p.append(document.createTextNode('錄影中（約 22% 雙手舉手機，有人舉得特別高）。'));
     if (state.event !== 'normal') p.append(document.createTextNode(S.EVENTS[state.event].label + '：入場人數 ' + state.total + ' 人。'));
+  }
+  // before / after on the same run, who you now block, and the ceiling over your head
+  function liftLine(u) {
+    const line = el('span', 's cmp');
+    if (!u.lift) { line.textContent = '旁邊沒有人可以扛你，換個位置再起飛。'; return line; }
+    const c = state.liftCmp, ev = state.ev;
+    if (c) {
+      line.append(document.createTextNode('起飛前看得到 ' + c.faceCount + ' 位的臉 → 起飛後 '), el('b', null, ev.faceCount + ' 位'),
+        document.createTextNode('（同一個場面，只有你變高）。' + (c.blocked > 0 ? '你們擋住了後面 ' : '')));
+      if (c.blocked > 0) line.append(el('b', null, c.blocked + ' 人'), document.createTextNode('看推的臉。'));
+      else line.append(document.createTextNode('後面沒有人因此看不到推。'));
+    }
+    const room = VN.ceiling - S.standTop(u);
+    line.append(document.createTextNode(room < 0.5 ? ' ⚠️ 頭頂離天花板只剩 ' + Math.max(0, Math.round(room * 100)) + 'cm，小心。' : ' 頭頂離天花板約 ' + fmt1(room) + 'm。'));
+    return line;
   }
   function renderMembers() {
     const t = $('#memberTable'); t.textContent = '';
@@ -5045,7 +5208,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   let bucketW = null, bucketId = 0;
   function startBuckets() {
     const id = ++bucketId;
-    const p = params(), per = LOW ? 2 : 3;
+    const p = planParams(), per = LOW ? 2 : 3;
     $('#bucketStatus').textContent = '計算中…';
     if (bucketW) { bucketW.terminate(); bucketW = null; }
     bucketW = makeWorker();
@@ -5174,7 +5337,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     const step = Math.max(2, Math.round(N / target));
     const nums = [1]; for (let n = step; n < N; n += step) nums.push(n); if (nums[nums.length - 1] !== N) nums.push(N);
     curve.pts = []; curve.total = nums.length;
-    const base = params();
+    const base = planParams();
     if (curveW) { curveW.terminate(); curveW = null; }
     curveW = makeWorker();
     if (curveW) {
@@ -5334,7 +5497,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   const HEAT_SEEDS = [3001, 3002, 3003];
   let heatW = null, heatId = 0;
   function startHeat() {
-    const p = Object.assign(params(), { freeSpot: null }), key = JSON.stringify(p);
+    const p = Object.assign(planParams(), { freeSpot: null }), key = JSON.stringify(p);
     if (key === state.heatKey) { if (gl) gl.setHeat(state.heat); return; }   // same crowd and members: reuse
     const id = ++heatId; state.heatKey = key; state.heat = null; syncFree();
     if (heatW) { heatW.terminate(); heatW = null; }
@@ -5348,7 +5511,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   const aimLabel = a => { const b = $('#aimSeg [data-v="' + a + '"]'); return b ? b.textContent : a; };
   let aimW = null, aimId = 0;
   function startAims() {
-    const id = ++aimId, p = params();
+    const id = ++aimId, p = planParams();
     $('#aimNote').textContent = '計算中…'; $('#aimAns').textContent = '計算中…';
     if (aimW) { aimW.terminate(); aimW = null; }
     aimW = makeWorker();
@@ -5807,7 +5970,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
 
   /* ============ boot ============ */
   $('#height').value = String(state.userHeight); $('#heightOut').textContent = state.userHeight + 'cm';
-  syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene(); syncSex();
+  syncOshi(); syncTicket(); syncZoom(); syncShow(); syncScene(); syncSex(); syncLift();
   if (sharedView) {
     setPressed($('#aimSeg'), state.aim); setPressed($('#chaosSeg'), state.chaos); $('#chaosNote').textContent = CHAOS_TEXT[state.chaos];
     setPressed($('#countSeg'), String(state.memberCount)); $('#guardToggle').setAttribute('aria-pressed', String(state.frontGuard));
