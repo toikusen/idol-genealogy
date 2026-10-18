@@ -4827,8 +4827,14 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   // 偏頭 in the eye view: see what the "偏頭" numbers mean
   // 起飛: two fans beside you lift you onto their shoulders; same scene, you just see from higher up
   const syncLift = () => { const b = $('#liftBtn'); b.setAttribute('aria-pressed', String(state.lift)); b.textContent = state.lift ? '🛬 降落' : '🛫 起飛'; };
+  // lifting brings up the arrow keys (free mode) so you can be carried around; landing where you took off puts it away again
+  let liftFreeSpot = null;
   $('#liftBtn').addEventListener('click', () => {
-    state.lift = !state.lift; syncLift(); schedule();
+    state.lift = !state.lift; syncLift();
+    const u = state.sim && state.sim.user;
+    if (state.lift && !state.free) { liftFreeSpot = u ? u.spot : null; state.pinSeed = state.seed; setFree(true, true); }
+    else if (!state.lift && liftFreeSpot != null && u && u.spot === liftFreeSpot) { liftFreeSpot = null; setFree(false); }
+    else { if (!state.lift) liftFreeSpot = null; schedule(); }
     if (state.lift) track('oshiview_lift', { venue: VN.id });
   });
   $('#leanBox').addEventListener('click', e => {
@@ -4852,11 +4858,13 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
     $('#plan').hidden = on; $('#curvePanel').hidden = on;
     const w = $('#tkWarn'); w.hidden = !on; w.textContent = on ? '自由站位中：位置是你選的，順位只影響其他人怎麼站。' : '';
   }
-  function setFree(on) {
-    const u = state.sim && state.sim.user;
-    state.free = on ? (u ? { x: u.x, z: u.z } : { x: 0, z: 3 }) : null;
-    if (on && state.view === 'eye') $('#viewTabs [data-v="plan"]').click();   // the map (with the heat colours) is where you pick
-    if (on) state.luckKey = 'rep';
+  // fromLift: 起飛 turned it on for the arrow keys, so stay in the current view and run (same scene as before lifting)
+  function setFree(on, fromLift) {
+    const u = state.sim && state.sim.user, sp = u && state.sim.floorSpots && state.sim.floorSpots[u.spot];
+    state.free = on ? (sp || u ? { x: (sp || u).x, z: (sp || u).z } : { x: 0, z: 3 }) : null;
+    if (on && !fromLift && state.view === 'eye') $('#viewTabs [data-v="plan"]').click();   // the map (with the heat colours) is where you pick
+    if (on && !fromLift) state.luckKey = 'rep';
+    if (!on || !fromLift) state.pinSeed = null;   // only the 起飛 shortcut keeps the crowd you were looking at
     syncFree(); renderLuck(); schedule();
   }
   // stand on the floor spot nearest (x, z); the sim trades places with whoever stood there
@@ -4978,7 +4986,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
         // 起飛: the run is picked from the standing runs, so lifting shows the same scene, only higher
         const ground = p.lift ? Object.assign({}, p, { lift: false }) : p;
         const pickRows = p.lift ? S.runBatch(ground, msg.seeds) : rows, pickSummary = p.lift ? S.summarize(pickRows) : summary;
-        const rep = S.representativeSeed(pickRows, pickSummary), seed = S.pickSeed(pickRows, pickSummary, msg.luckKey);
+        const rep = S.representativeSeed(pickRows, pickSummary), seed = msg.pinSeed || S.pickSeed(pickRows, pickSummary, msg.luckKey);
         // free mode: where the queue would have put you, for the "比排隊的位置多看到…" line
         const qsum = p.freeSpot ? S.summarize(S.runBatch(Object.assign({}, p, { freeSpot: null }), msg.seeds)) : null;
         const v = view(p, seed);
@@ -5037,7 +5045,7 @@ button.venue-cta { background: none; font: inherit; cursor: pointer; }
   }
   function requestMain() {
     const id = ++reqId;
-    const msg = { type: 'main', id, params: params(), seeds: SEEDS, luckKey: state.luckKey };
+    const msg = { type: 'main', id, params: params(), seeds: SEEDS, luckKey: state.luckKey, pinSeed: state.free ? state.pinSeed : null };
     if (mainBusy && mainW) { mainW.terminate(); mainW = null; }   // drop stale work, compute only the latest
     if (!mainW) {
       mainW = makeWorker();
