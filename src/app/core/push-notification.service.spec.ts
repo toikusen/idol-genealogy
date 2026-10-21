@@ -19,6 +19,9 @@ const mockSwPush = {
 const mockDb = {
   from: jasmine.createSpy('from').and.returnValue({
     upsert: jasmine.createSpy('upsert').and.returnValue(Promise.resolve({ error: null })),
+    select: jasmine.createSpy('select').and.returnValue({
+      eq: jasmine.createSpy('selectEq').and.returnValue(Promise.resolve({ count: 1, error: null })),
+    }),
     delete: jasmine.createSpy('delete').and.returnValue({
       eq: jasmine.createSpy('eq').and.returnValue({
         eq: jasmine.createSpy('eq2').and.returnValue(Promise.resolve({ error: null })),
@@ -120,6 +123,53 @@ describe('PushNotificationService', () => {
       mockDb.from().upsert.and.returnValue(Promise.resolve({ error: { message: 'boom' } }));
 
       await expectAsync(service.ensureSubscribed()).toBeResolved();
+    });
+  });
+
+  describe('lostOnThisDevice', () => {
+    const storedRows = (count: number | null, error: unknown = null) =>
+      mockDb.from().select().eq.and.returnValue(Promise.resolve({ count, error }));
+    const installed = (standalone: boolean) =>
+      spyOn(window, 'matchMedia').and.returnValue({ matches: standalone } as MediaQueryList);
+
+    beforeEach(() => {
+      mockSwPush.isEnabled = true;
+      storedRows(1);
+    });
+
+    it('flags a reinstalled app: installed, never asked, but the account has a subscription', async () => {
+      spyOnProperty(Notification, 'permission', 'get').and.returnValue('default');
+      installed(true);
+      expect(await service.lostOnThisDevice()).toBeTrue();
+    });
+
+    it('stays quiet for an account that never subscribed anywhere', async () => {
+      spyOnProperty(Notification, 'permission', 'get').and.returnValue('default');
+      installed(true);
+      storedRows(0);
+      expect(await service.lostOnThisDevice()).toBeFalse();
+    });
+
+    it('stays quiet in a plain browser tab', async () => {
+      spyOnProperty(Notification, 'permission', 'get').and.returnValue('default');
+      installed(false);
+      expect(await service.lostOnThisDevice()).toBeFalse();
+    });
+
+    it('stays quiet once permission was granted or denied', async () => {
+      const permission = spyOnProperty(Notification, 'permission', 'get');
+      installed(true);
+      for (const p of ['granted', 'denied'] as NotificationPermission[]) {
+        permission.and.returnValue(p);
+        expect(await service.lostOnThisDevice()).withContext(p).toBeFalse();
+      }
+    });
+
+    it('treats a failed lookup as nothing lost', async () => {
+      spyOnProperty(Notification, 'permission', 'get').and.returnValue('default');
+      installed(true);
+      storedRows(null, { message: 'boom' });
+      expect(await service.lostOnThisDevice()).toBeFalse();
     });
   });
 });

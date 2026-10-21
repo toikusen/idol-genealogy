@@ -169,12 +169,21 @@ export class AppComponent {
       import('./core/admin-role.service'),
       import('./core/favorites.service'),
       import('./core/push-notification.service'),
-    ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }, { PushNotificationService }]) => {
+      import('./core/push-opt-in.service'),
+    ]).then(([{ SupabaseService }, { AdminRoleService }, { FavoritesService }, { PushNotificationService }, { PushOptInService }]) => {
       if (this.destroyed) return;
       const supabase = this.injector.get(SupabaseService);
       const adminRole = this.injector.get(AdminRoleService);
       const favorites = this.injector.get(FavoritesService);
       const push = this.injector.get(PushNotificationService);
+      const optIn = this.injector.get(PushOptInService);
+      // Push endpoints expire without warning; repair the stored one on every app start so a
+      // reaped row cannot silence this device forever. A reinstalled app has lost its
+      // permission too, which no silent repair can restore — ask again instead.
+      const repairPush = () => push.ensureSubscribed()
+        .then(() => push.lostOnThisDevice())
+        .then(lost => { if (lost) optIn.offer(); })
+        .catch(() => {});
       this.supabase = supabase;
 
       supabase.authState$.pipe(takeUntilDestroyed(this.destroyRef))
@@ -182,9 +191,7 @@ export class AppComponent {
           this.sessionSubject.next(session);
           if (session) {
             favorites.load(session.user.id).catch(() => {});
-            // Push endpoints expire without warning; repair the stored one on every app
-            // start so a reaped row cannot silence this device forever.
-            void push.ensureSubscribed();
+            void repairPush();
             this.showLoginPill.set(false);
           } else {
             favorites.reset();
@@ -201,7 +208,7 @@ export class AppComponent {
           this.sessionSubject.next(session);
           if (session) {
             favorites.load(session.user.id).catch(() => {});
-            void push.ensureSubscribed();
+            void repairPush();
             this.showLoginPill.set(false);
           } else {
             this.showLoginPill.set(true);

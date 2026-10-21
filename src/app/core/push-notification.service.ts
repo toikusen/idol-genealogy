@@ -69,6 +69,30 @@ export class PushNotificationService {
     }
   }
 
+  /**
+   * True when this installed app has no permission yet but the account already holds a
+   * subscription. On iOS that means a reinstall: deleting the Home Screen app drops both
+   * the permission and the subscription, yet Apple keeps accepting pushes for the dead
+   * endpoint, so nothing server-side can notice — and ensureSubscribed() cannot help
+   * because it never prompts. The caller re-offers the soft opt-in instead.
+   */
+  async lostOnThisDevice(): Promise<boolean> {
+    if (!this.isSupported() || this.permission !== 'default' || !this.isInstalled()) return false;
+    const session = await this.supabase.getSessionOnce();
+    if (!session) return false;
+    const { count, error } = await this.db.from('push_subscriptions')
+      .select('endpoint', { count: 'exact', head: true })
+      .eq('user_id', session.user.id);
+    return !error && (count ?? 0) > 0;
+  }
+
+  // A plain tab with permission 'default' is just someone who never opted in; only an
+  // installed app is a credible sign of "this used to work here".
+  private isInstalled(): boolean {
+    return window.matchMedia('(display-mode: standalone)').matches
+      || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  }
+
   private async saveSubscription(sub: PushSubscription): Promise<void> {
     const session = await this.supabase.getSessionOnce();
     if (!session) return;
