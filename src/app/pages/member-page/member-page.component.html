@@ -718,7 +718,7 @@
       </section>
 
       <!-- ══ Recent Events ══ -->
-      @if (activeGroups.length > 0 || member) {
+      @if (showRecentEvents) {
         <app-group-events [groups]="activeGroups" [member]="member" />
       }
 

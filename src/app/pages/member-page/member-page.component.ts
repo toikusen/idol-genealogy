@@ -25,6 +25,7 @@ import { memberPath, siteUrl } from '../../core/public-url.utils';
 import { MemberPageData } from '../../core/page-data.resolvers';
 import { memberIndexabilitySignals, isAdEligible } from '../../core/indexability.utils';
 import { normalizeSnsUrl } from '../../core/sns-url.utils';
+import { hasCareerEnded } from '../../core/member-career.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
 import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
@@ -46,6 +47,8 @@ export class MemberPageComponent implements OnInit {
   member: Member | null = null;
   histories: History[] = [];
   activeGroups: Group[] = [];
+  /** False once every history entry has ended (graduated/transferred/withdrawn). */
+  showRecentEvents = false;
 
   loading = true;
   deferredLoading = false;
@@ -218,6 +221,7 @@ export class MemberPageComponent implements OnInit {
     this.member = pageData.member;
     this.histories = pageData.histories;
     this.activeGroups = this.buildActiveGroups(pageData.histories);
+    this.showRecentEvents = !!pageData.member && !hasCareerEnded(pageData.histories);
     this.companyName = pageData.companyName;
     this.companyId = pageData.companyId;
     this.allGroupsList = pageData.allGroupsList;
