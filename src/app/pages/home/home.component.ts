@@ -408,7 +408,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       result_type: resultType,
       result_id: resultId,
       position,
-      source,
+      // GA4 reads a bare `source` param as the traffic source and overwrites attribution
+      click_source: source,
     });
   }
 
@@ -507,7 +508,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.analytics.trackEvent('venue_view', {
       venue_id: venue.id,
       venue_name: venue.name,
-      source,
+      view_source: source,
     });
   }
 

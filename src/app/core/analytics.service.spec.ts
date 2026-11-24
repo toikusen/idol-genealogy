@@ -23,8 +23,13 @@ describe('AnalyticsService', () => {
   it('trackPageView() should call gtag with page_view event', () => {
     service.trackPageView('/member/123');
     expect(gtagSpy).toHaveBeenCalledWith('event', 'page_view', {
-      page_path: '/member/123'
+      page_location: window.location.origin + '/member/123'
     });
+  });
+
+  it('trackPageView() should skip admin pages', () => {
+    service.trackPageView('/admin/members');
+    expect(gtagSpy).not.toHaveBeenCalled();
   });
 
   it('trackEvent() should call gtag with given event name and params', () => {

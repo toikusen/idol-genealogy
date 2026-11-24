@@ -13,9 +13,13 @@ export class AnalyticsService {
 
   trackPageView(url: string): void {
     if (!this.isBrowser) return;
+    // Staff-only pages would otherwise inflate page views
+    if (url.startsWith('/admin')) return;
     const gtag = (window as AnalyticsWindow).gtag;
     if (!gtag) return;
-    gtag('event', 'page_view', { page_path: url });
+    // page_location, not page_path: GA4 derives the path from the location, and a
+    // page_path that already carries a query string gets the query appended twice.
+    gtag('event', 'page_view', { page_location: window.location.origin + url });
   }
 
   trackEvent(eventName: string, params?: AnalyticsParams): void {
