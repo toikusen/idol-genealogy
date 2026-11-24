@@ -29,6 +29,7 @@ import { hasCareerEnded } from '../../core/member-career.utils';
 import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { FavoriteToggleComponent } from '../../shared/favorite-toggle/favorite-toggle.component';
 import { PhotoLightboxComponent } from '../../shared/photo-lightbox/photo-lightbox.component';
+import { SukigaoEntryComponent } from '../../shared/sukigao-entry/sukigao-entry.component';
 import {
   photographyBadgeColor,
   photographyBadgeTextColor,
@@ -39,7 +40,7 @@ import {
 @Component({
   selector: 'app-member-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MemberTimelineComponent, MemberCareerGraphComponent, ProposalPanelComponent, RecordEditHistoryComponent, SupabaseImgPipe, GroupEventsComponent, FavoriteToggleComponent, PhotoLightboxComponent, SukigaoEntryComponent],
   templateUrl: './member-page.component.html',
   styleUrl: './member-page.component.css',
 })
