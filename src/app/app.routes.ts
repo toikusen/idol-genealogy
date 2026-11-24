@@ -97,6 +97,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/group-page/group-page.component').then(m => m.GroupPageComponent)
   },
   {
+    path: 'events',
+    loadComponent: () => import('./pages/events/events.component').then(m => m.EventsComponent)
+  },
+  {
     path: 'leaderboard',
     resolve: { pageData: leaderboardPageResolver },
     loadComponent: () => import('./pages/leaderboard/leaderboard.component').then(m => m.LeaderboardComponent)

@@ -1,8 +1,10 @@
 // src/app/pages/home/home.component.spec.ts
-import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { HomeComponent } from './home.component';
+import { ScheduleComponent } from '../../shared/schedule/schedule.component';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
@@ -131,17 +133,18 @@ describe('HomeComponent', () => {
       expect(card.textContent).toContain('已玩 12,873 次');
     });
 
-    it('shows 別擋我推 as the first carousel card, 顏控9選 second', async () => {
+    it('shows 別擋我推 first, 顏控9選 second and 活動行程 third in the carousel', async () => {
       await setup();
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();
       const cards = fixture.nativeElement.querySelectorAll('app-swipe-carousel .sc-track > a');
-      expect(cards.length).toBe(2);
+      expect(cards.length).toBe(3);
       expect(cards[0].getAttribute('href')).toBe('/view');
       expect(cards[0].textContent).toContain('別擋我推');
       expect(cards[1].classList).toContain('home-sukigao');
+      expect(cards[2].getAttribute('href')).toBe('/events');
     });
 
     it('hides the play count until someone has played', async () => {
@@ -388,6 +391,9 @@ describe('HomeComponent', () => {
   // ── Events tab: schedule rendering, related-group chips, failure states ──
 
   describe('events tab schedule', () => {
+    const scheduleOf = (fixture: ComponentFixture<HomeComponent>): ScheduleComponent =>
+      fixture.debugElement.query(By.directive(ScheduleComponent)).componentInstance;
+
     function scheduleEvent(overrides: any = {}) {
       return {
         id: 'e1', title: 'Test Show', start: '2026-08-12T19:00:00+08:00', end: null,
@@ -527,7 +533,7 @@ describe('HomeComponent', () => {
       const text = fixture.nativeElement.textContent;
       expect(text).toContain('今日暫無活動行程');
       expect(text).toContain('未來 14 天暫無已知活動');
-      expect(fixture.componentInstance.scheduleLoaded).toBeTrue();
+      expect(scheduleOf(fixture).scheduleLoaded).toBeTrue();
       discardPeriodicTasks();
     }));
 
@@ -589,11 +595,14 @@ describe('HomeComponent', () => {
 
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      const schedule = scheduleOf(fixture);
       fixture.destroy();
       resolve(scheduleResult({ today: { dayKey: '2026-08-12', carryover: [], allDay: [], timed: [scheduleEvent()] } }));
       tick();
 
-      expect(fixture.componentInstance.schedule).toBeNull();
+      expect(schedule.schedule).toBeNull();
       discardPeriodicTasks();
     }));
   });

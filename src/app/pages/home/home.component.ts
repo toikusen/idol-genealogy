@@ -7,8 +7,7 @@ import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
 import { VenueService } from '../../core/venue.service';
-import { GoogleCalendarService, RelatedGroupRef, ScheduleEvent, ScheduleResult } from '../../core/google-calendar.service';
-import { addDays, taipeiDateParts, taipeiDayKey, taipeiTime } from '../../core/taipei-date.utils';
+import { GoogleCalendarService } from '../../core/google-calendar.service';
 import { SeoService } from '../../core/seo.service';
 import { AnalyticsService } from '../../core/analytics.service';
 import { SukigaoService } from '../../core/sukigao.service';
@@ -19,6 +18,7 @@ import { SupabaseImgPipe } from '../../shared/supabase-img.pipe';
 import { VenueMapComponent } from '../../shared/venue-map/venue-map.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SwipeCarouselComponent } from '../../shared/swipe-carousel/swipe-carousel.component';
+import { CALENDAR_EMBED_URL, ScheduleComponent } from '../../shared/schedule/schedule.component';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 import type { HomePageData } from '../../core/page-data.resolvers';
 
@@ -40,7 +40,7 @@ const VENUE_REGION_FILTERS: readonly VenueRegionFilter[] = ['all', 'north', 'cen
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe, VenueMapComponent, AdBannerComponent, SwipeCarouselComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe, VenueMapComponent, AdBannerComponent, SwipeCarouselComponent, ScheduleComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
@@ -267,9 +267,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       const raw = await this.memberService.getSoloMembers().catch(() => [] as Member[]);
       this.allSoloMembers = raw.filter(isPublicMemberRecord).map(sanitizePublicMemberRecord);
       this.companySections = this.buildCompanySections();
-    }
-    if (tab === 'events') {
-      void this.loadSchedule();
     }
     if (tab === 'venues' && !this.venuesLoaded) {
       this.venuesLoading = true;
@@ -643,89 +640,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     return group.company ?? null;
   }
 
-  readonly calendarUrl = 'https://calendar.google.com/calendar/u/0/embed?src=mr7kibfjcm3gu52v6t64lreras@group.calendar.google.com&ctz=Asia/Taipei&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0&bgcolor=%23FDF8FF';
-
-  schedule: ScheduleResult | null = null;
-  scheduleLoaded = false;
-  scheduleLoading = false;
-  /** Guards against a slower group-less pass landing after the enriched one. */
-  private scheduleEpoch = 0;
-
-  readonly maxChips = 4;
-
-  private async loadSchedule(): Promise<void> {
-    if (this.scheduleLoading || this.scheduleLoaded) return;
-    this.scheduleLoading = true;
-    const epoch = ++this.scheduleEpoch;
-    try {
-      // Render the schedule before the group catalog arrives; chips are an
-      // enhancement and must never gate the events themselves.
-      const base = await this.googleCalendarService.getSchedule([]);
-      if (epoch !== this.scheduleEpoch || this.destroyed) return;
-      this.schedule = base;
-      this.scheduleLoaded = true;
-      if (base.status !== 'ok') return;
-
-      await this.ensureBrowseCatalog().catch(() => undefined);
-      if (epoch !== this.scheduleEpoch || this.destroyed || this.allGroups.length === 0) return;
-
-      const enriched = await this.googleCalendarService.getSchedule(this.allGroups);
-      if (epoch !== this.scheduleEpoch || this.destroyed || enriched.status !== 'ok') return;
-      this.schedule = enriched;
-    } finally {
-      if (epoch === this.scheduleEpoch) this.scheduleLoading = false;
-    }
-  }
-
-  retrySchedule(): void {
-    if (this.scheduleLoading) return;
-    this.scheduleEpoch++;
-    this.schedule = null;
-    this.scheduleLoaded = false;
-    void this.loadSchedule();
-  }
-
-  get todayDisplayDate(): string {
-    if (!this.schedule) return '';
-    const { month, day, weekday } = taipeiDateParts(`${this.schedule.today.dayKey}T00:00:00+08:00`);
-    return `${month}/${day}（${weekday}）`;
-  }
-
-  get todayEventCount(): number {
-    const t = this.schedule?.today;
-    return t ? t.carryover.length + t.allDay.length + t.timed.length : 0;
-  }
-
-  dayHeading(dayKey: string): string {
-    const { month, day, weekday } = taipeiDateParts(`${dayKey}T00:00:00+08:00`);
-    const prefix = this.schedule && dayKey === addDays(this.schedule.today.dayKey, 1) ? '明日 · ' : '';
-    return `${prefix}${month}/${day}（${weekday}）`;
-  }
-
-  /** Start and end fall on different Taipei days. All-day events never qualify. */
-  isOvernightEvent(event: VenueCalendarEvent): boolean {
-    if (!event.end || event.isAllDay) return false;
-    return taipeiDayKey(event.start) !== taipeiDayKey(event.end);
-  }
-
-  allDayRange(event: ScheduleEvent): string {
-    const from = taipeiDateParts(`${taipeiDayKey(event.start)}T00:00:00+08:00`);
-    if (!event.allDayEndDayKey) return `${from.month}/${from.day}`;
-    const to = taipeiDateParts(`${event.allDayEndDayKey}T00:00:00+08:00`);
-    return `${from.month}/${from.day}–${to.month}/${to.day}`;
-  }
-
-  formatTodayEventTime(dateStr: string): string {
-    return dateStr ? taipeiTime(dateStr) : '';
-  }
-
-  visibleChips(event: ScheduleEvent): RelatedGroupRef[] {
-    return event.relatedGroups.slice(0, this.maxChips);
-  }
-
-  hiddenChipCount(event: ScheduleEvent): number {
-    return Math.max(0, event.relatedGroups.length - this.maxChips);
-  }
+  readonly calendarUrl = CALENDAR_EMBED_URL;
 
   get hasResults(): boolean {
     return this.memberResults.length > 0 || this.aliasResults.length > 0 || this.groupResults.length > 0 || this.companyResults.length > 0;
