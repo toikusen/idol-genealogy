@@ -1,0 +1,17 @@
+<a routerLink="/events" class="today-strip" (click)="trackClick()">
+  <span class="today-strip__head">
+    <span class="today-strip__dot" aria-hidden="true"></span>
+    <strong class="today-strip__heading">{{ view().heading }}</strong>
+    <span class="today-strip__more">{{ view().more }} <span aria-hidden="true">→</span></span>
+  </span>
+  <span class="today-strip__body">
+    @for (row of view().rows; track row.id) {
+      <span class="today-strip__row">
+        <span class="today-strip__time">{{ row.when }}</span>
+        <span class="today-strip__title">{{ row.title }}</span>
+      </span>
+    } @empty {
+      <span class="today-strip__note">{{ view().note }}</span>
+    }
+  </span>
+</a>

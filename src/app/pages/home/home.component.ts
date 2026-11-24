@@ -19,6 +19,7 @@ import { VenueMapComponent } from '../../shared/venue-map/venue-map.component';
 import { AdBannerComponent } from '../../shared/ad-banner/ad-banner.component';
 import { SwipeCarouselComponent } from '../../shared/swipe-carousel/swipe-carousel.component';
 import { CALENDAR_EMBED_URL, ScheduleComponent } from '../../shared/schedule/schedule.component';
+import { TodayStripComponent } from '../../shared/today-strip/today-strip.component';
 import { SITE_URL, siteUrl } from '../../core/public-url.utils';
 import type { HomePageData } from '../../core/page-data.resolvers';
 
@@ -40,7 +41,7 @@ const VENUE_REGION_FILTERS: readonly VenueRegionFilter[] = ['all', 'north', 'cen
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe, VenueMapComponent, AdBannerComponent, SwipeCarouselComponent, ScheduleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ProposalPanelComponent, SafeUrlPipe, SupabaseImgPipe, VenueMapComponent, AdBannerComponent, SwipeCarouselComponent, ScheduleComponent, TodayStripComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })

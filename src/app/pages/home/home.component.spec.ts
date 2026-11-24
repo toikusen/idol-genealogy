@@ -2,9 +2,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter, convertToParamMap } from '@angular/router';
+import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import { HomeComponent } from './home.component';
 import { ScheduleComponent } from '../../shared/schedule/schedule.component';
+import { TodayStripComponent } from '../../shared/today-strip/today-strip.component';
 import { MemberService } from '../../core/member.service';
 import { GroupService } from '../../core/group.service';
 import { CompanyService } from '../../core/company.service';
@@ -33,6 +35,17 @@ function company(overrides: Partial<Company> = {}): Company {
 }
 
 describe('HomeComponent', () => {
+  // The strip fetches the live calendar on init; it has its own spec.
+  @Component({ selector: 'app-today-strip', standalone: true, template: '' })
+  class TodayStripStubComponent {}
+
+  beforeEach(() => {
+    TestBed.overrideComponent(HomeComponent, {
+      remove: { imports: [TodayStripComponent] },
+      add: { imports: [TodayStripStubComponent] },
+    });
+  });
+
   let memberSpy: jasmine.SpyObj<MemberService>;
   let groupSpy: jasmine.SpyObj<GroupService>;
   let companySpy: jasmine.SpyObj<CompanyService>;
@@ -133,18 +146,17 @@ describe('HomeComponent', () => {
       expect(card.textContent).toContain('已玩 12,873 次');
     });
 
-    it('shows 別擋我推 first, 顏控9選 second and 活動行程 third in the carousel', async () => {
+    it('shows 別擋我推 as the first carousel card, 顏控9選 second', async () => {
       await setup();
       const fixture = TestBed.createComponent(HomeComponent);
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();
       const cards = fixture.nativeElement.querySelectorAll('app-swipe-carousel .sc-track > a');
-      expect(cards.length).toBe(3);
+      expect(cards.length).toBe(2);
       expect(cards[0].getAttribute('href')).toBe('/view');
       expect(cards[0].textContent).toContain('別擋我推');
       expect(cards[1].classList).toContain('home-sukigao');
-      expect(cards[2].getAttribute('href')).toBe('/events');
     });
 
     it('hides the play count until someone has played', async () => {

@@ -1,0 +1,95 @@
+:host {
+  display: block;
+  margin: 0 0 16px;
+}
+
+.today-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: border-color 0.15s ease-out;
+}
+
+.today-strip:hover,
+.today-strip:focus-visible {
+  border-color: var(--border-strong);
+}
+
+.today-strip__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The schedule's timeline dot: the one place this page marks "time". */
+.today-strip__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--section-event);
+}
+
+.today-strip__heading {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-heading);
+}
+
+.today-strip__more {
+  flex: none;
+  font-size: 0.8rem;
+  color: var(--section-event);
+}
+
+/* Two rows tall whatever the state, so nothing below shifts when data lands. */
+.today-strip__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 44px;
+  padding-left: 16px;
+}
+
+.today-strip__row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  font-size: 0.82rem;
+  line-height: 20px;
+}
+
+.today-strip__time {
+  flex: none;
+  min-width: 40px;
+  font-variant-numeric: tabular-nums;
+  color: var(--section-event);
+}
+
+.today-strip__title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.today-strip__note {
+  font-size: 0.82rem;
+  line-height: 20px;
+  color: var(--text-faint-70);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today-strip {
+    transition: none;
+  }
+}

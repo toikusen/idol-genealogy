@@ -90,6 +90,10 @@
       </div>
     </section>
 
+    @if (!hasResults) {
+      <app-today-strip />
+    }
+
     <!-- ══ Feature cards: 別擋我推 first, swipe either way for 顏控9選 ══ -->
     @if (!hasResults) {
       <app-swipe-carousel class="home-promos" label="精選功能">
@@ -105,7 +109,7 @@
           </svg>
         </span>
         <span class="home-sukigao__text">
-          <span class="home-sukigao__badge home-oshiview__badge">NEW 3D 模擬</span>
+          <span class="home-sukigao__badge home-oshiview__badge">3D 模擬</span>
           <strong class="home-sukigao__title">別擋我推</strong>
           <span class="home-sukigao__sub">輸入排隊順位和身高，看你站哪、看得到誰</span>
         </span>
@@ -116,34 +120,18 @@
           @for (f of sukigaoFaces; track f.id) {
             <span class="home-sukigao__face"><img [src]="f.photo_url | supabaseImg: 96 : 75" alt="" width="44" height="44" loading="lazy" decoding="async" /></span>
           } @empty {
-            <span class="home-sukigao__face home-sukigao__face--blank">💗</span>
+            <span class="home-sukigao__face"></span>
           }
           <span class="home-sukigao__face home-sukigao__face--nine">9</span>
         </span>
         <span class="home-sukigao__text">
-          <span class="home-sukigao__badge">NEW 小遊戲</span>
+          <span class="home-sukigao__badge">小遊戲</span>
           <strong class="home-sukigao__title">台灣地偶顏控9選</strong>
           <span class="home-sukigao__sub">
             憑直覺選出最中你臉的 9 位偶像@if (sukigaoPlays) {<span class="home-sukigao__plays"> · 已玩 {{ sukigaoPlays | number }} 次</span>}
           </span>
         </span>
         <span class="home-sukigao__cta" aria-hidden="true">開始玩<span class="home-sukigao__arrow">→</span></span>
-      </a>
-      <a routerLink="/events" class="home-oshiview" aria-label="看活動行程：今日與未來 14 天的地下偶像活動">
-        <span class="home-oshiview__art" aria-hidden="true">
-          <svg viewBox="0 0 64 44" width="54" height="37">
-            <rect x="12" y="6" width="40" height="34" rx="5" fill="#fff" stroke="#e879a0" stroke-width="2" />
-            <rect x="12" y="6" width="40" height="10" rx="5" fill="#e879a0" />
-            <circle cx="24" cy="25" r="2.6" fill="#cbb8e8" /><circle cx="32" cy="25" r="2.6" fill="#e879a0" /><circle cx="40" cy="25" r="2.6" fill="#cbb8e8" />
-            <circle cx="24" cy="33" r="2.6" fill="#cbb8e8" /><circle cx="32" cy="33" r="2.6" fill="#cbb8e8" />
-          </svg>
-        </span>
-        <span class="home-sukigao__text">
-          <span class="home-sukigao__badge home-oshiview__badge">今日活動</span>
-          <strong class="home-sukigao__title">活動行程</strong>
-          <span class="home-sukigao__sub">今日與未來 14 天的演出、特典會</span>
-        </span>
-        <span class="home-sukigao__cta home-oshiview__cta" aria-hidden="true">看行程<span class="home-sukigao__arrow">→</span></span>
       </a>
       </app-swipe-carousel>
     }

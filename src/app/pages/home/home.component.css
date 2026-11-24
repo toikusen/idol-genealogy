@@ -992,22 +992,16 @@ input::placeholder {
   border-radius: 18px;
   text-decoration: none;
   color: var(--text-primary);
-  background:
-    radial-gradient(120% 140% at 0% 0%, rgba(232, 121, 160, 0.18), transparent 60%),
-    radial-gradient(120% 140% at 100% 100%, rgba(155, 107, 214, 0.14), transparent 60%),
-    var(--bg-surface);
-  border: 1px solid rgba(232, 121, 160, 0.28);
-  box-shadow: 0 6px 24px rgba(232, 121, 160, 0.12);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  transition: border-color 0.15s ease-out;
 }
 
 .home-sukigao:hover,
 .home-sukigao:focus-visible,
 .home-oshiview:hover,
 .home-oshiview:focus-visible {
-  transform: translateY(-2px);
-  border-color: rgba(232, 121, 160, 0.5);
-  box-shadow: 0 10px 30px rgba(232, 121, 160, 0.2);
+  border-color: var(--border-strong);
 }
 
 .home-sukigao__faces {
@@ -1035,15 +1029,11 @@ input::placeholder {
   transform: scale(1.05);
 }
 
-.home-sukigao__face--blank {
-  font-size: 1.2rem;
-}
-
 .home-sukigao__face--nine {
-  background: linear-gradient(135deg, #f08fb4, #b07ae0);
+  background: var(--promo-accent);
   color: #fff;
   font-size: 1.15rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .home-sukigao__text {
@@ -1055,14 +1045,9 @@ input::placeholder {
 }
 
 .home-sukigao__badge {
-  align-self: flex-start;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #f08fb4, #b07ae0);
-  color: #fff;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--text-faint-70);
 }
 
 .home-sukigao__title {
@@ -1090,12 +1075,12 @@ input::placeholder {
   gap: 4px;
   padding: 8px 16px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #f08fb4, #e0679b);
+  /* white on this pink is 4.7:1 */
+  background: var(--promo-accent);
   color: #fff;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.06em;
-  box-shadow: 0 4px 14px rgba(224, 103, 155, 0.35);
 }
 
 .home-sukigao__arrow {
@@ -1143,22 +1128,14 @@ input::placeholder {
   }
 }
 
-/* ══ Feature carousel: the 別擋我推 card reuses the 顏控9選 layout above, in purple ══ */
+/* ══ Feature carousel: the 別擋我推 card reuses the 顏控9選 layout above ══ */
 .home-promos {
+  --promo-accent: #c2457d;
   margin: 0 0 32px;
 }
 
 .home-promos a {
   margin: 0;
-  /* the carousel clips sideways, so the shadow only falls downward */
-  box-shadow: 0 10px 18px -12px rgba(124, 92, 180, 0.45);
-}
-
-.home-oshiview {
-  background:
-    radial-gradient(120% 140% at 0% 0%, rgba(124, 108, 242, 0.18), transparent 60%),
-    var(--bg-surface);
-  border-color: rgba(124, 108, 242, 0.28);
 }
 
 .home-oshiview__art {
@@ -1169,9 +1146,4 @@ input::placeholder {
   height: 46px;
   border-radius: 12px;
   background: #1c1530;
-}
-
-.home-oshiview__badge,
-.home-oshiview__cta {
-  background: linear-gradient(135deg, #9b8cf5, #6b5ae0);
 }
