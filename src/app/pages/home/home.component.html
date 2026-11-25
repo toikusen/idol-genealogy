@@ -96,7 +96,7 @@
 
     <!-- ══ Feature cards: 別擋我推 first, swipe either way for 顏控9選 ══ -->
     @if (!hasResults) {
-      <app-swipe-carousel class="home-promos" label="精選功能">
+      <app-swipe-carousel class="home-promos" label="精選功能" [autoplayMs]="6000">
       <!-- /view is a static page outside the Angular app, so a plain href -->
       <a href="/view" class="home-oshiview" aria-label="試試別擋我推：輸入排隊順位和身高，3D 模擬你站哪、看得到誰">
         <span class="home-oshiview__art" aria-hidden="true">

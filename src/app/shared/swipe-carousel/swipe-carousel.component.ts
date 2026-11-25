@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, ViewEncapsulation, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Input, ViewEncapsulation, afterNextRender, computed, inject, signal } from '@angular/core';
 
 /** How far (px) a horizontal drag must travel before it counts as a swipe. */
 const SWIPE_MIN = 40;
@@ -9,6 +9,8 @@ const DECIDE_AT = 8;
  * One-slide-at-a-time carousel for projected cards (links). Swiping either way moves to the
  * neighbouring slide and wraps around, so with two slides any swipe shows the other one.
  * Dots below switch directly. Hidden slides are `inert` so keyboard users only reach the visible card.
+ * With `autoplayMs` set it advances on its own; the timer restarts after every switch and pauses
+ * while hovered, focused, dragged or in a hidden tab, and never runs under prefers-reduced-motion.
  */
 @Component({
   selector: 'app-swipe-carousel',
@@ -42,6 +44,8 @@ const DECIDE_AT = 8;
 })
 export class SwipeCarouselComponent {
   @Input() label = '';
+  /** Auto-advance interval in ms; 0 (default) disables autoplay. */
+  @Input() autoplayMs = 0;
   readonly index = signal(0);
   readonly count = signal(0);
   readonly dragging = signal(false);
@@ -53,6 +57,10 @@ export class SwipeCarouselComponent {
   private start: { x: number; y: number; id: number } | null = null;
   private decided = false;
   private suppressClick = false;
+  private timer?: ReturnType<typeof setTimeout>;
+  private hovered = false;
+  private focused = false;
+  private reducedMotion = false;
 
   constructor() {
     afterNextRender(() => {
@@ -65,7 +73,14 @@ export class SwipeCarouselComponent {
         e.preventDefault(); e.stopPropagation();
       }, true);
       this.host.addEventListener('dragstart', e => e.preventDefault());
+      this.host.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') this.hovered = true; });
+      this.host.addEventListener('pointerleave', () => (this.hovered = false));
+      this.host.addEventListener('focusin', () => (this.focused = true));
+      this.host.addEventListener('focusout', e => (this.focused = this.host.contains(e.relatedTarget as Node | null)));
+      this.reducedMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      this.schedule();
     });
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.timer));
   }
 
   /** Show slide `i`, wrapping past either end. */
@@ -74,6 +89,18 @@ export class SwipeCarouselComponent {
     if (!n) return;
     this.index.set(((i % n) + n) % n);
     this.syncInert();
+    this.schedule();
+  }
+
+  /** (Re)start the autoplay countdown; a paused tick just waits another round. */
+  private schedule(): void {
+    clearTimeout(this.timer);
+    if (!this.autoplayMs || this.count() < 2 || this.reducedMotion) return;
+    this.timer = setTimeout(() => {
+      const paused = this.hovered || this.focused || this.dragging() || document.hidden;
+      if (paused) this.schedule();
+      else this.go(this.index() + 1);
+    }, this.autoplayMs);
   }
 
   down(e: PointerEvent): void {

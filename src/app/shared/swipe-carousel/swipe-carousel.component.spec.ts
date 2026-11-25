@@ -73,3 +73,40 @@ describe('SwipeCarouselComponent', () => {
     expect(el.querySelectorAll('.sc-dot')[1].getAttribute('aria-current')).toBe('true');
   });
 });
+
+@Component({
+  standalone: true,
+  imports: [SwipeCarouselComponent],
+  template: `<app-swipe-carousel [autoplayMs]="1000"><a href="#a">A</a><a href="#b">B</a></app-swipe-carousel>`,
+})
+class AutoplayHostComponent {}
+
+describe('SwipeCarouselComponent autoplay', () => {
+  beforeEach(() => jasmine.clock().install());
+  afterEach(() => jasmine.clock().uninstall());
+
+  it('advances on its own, pauses on hover and restarts the countdown after a manual switch', async () => {
+    await TestBed.configureTestingModule({ imports: [AutoplayHostComponent] }).compileComponents();
+    const fixture = TestBed.createComponent(AutoplayHostComponent);
+    fixture.detectChanges();
+    TestBed.flushEffects?.();
+    fixture.detectChanges();
+    const host = fixture.debugElement.children[0];
+    const carousel: SwipeCarouselComponent = host.componentInstance;
+
+    jasmine.clock().tick(1000);
+    expect(carousel.index()).toBe(1);
+
+    host.nativeElement.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+    jasmine.clock().tick(3000);
+    expect(carousel.index()).toBe(1);
+    host.nativeElement.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
+
+    carousel.go(0);
+    jasmine.clock().tick(999);
+    expect(carousel.index()).toBe(0);
+    jasmine.clock().tick(1);
+    expect(carousel.index()).toBe(1);
+    fixture.destroy();
+  });
+});
